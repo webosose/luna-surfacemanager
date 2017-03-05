@@ -57,6 +57,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandSurfaceItem
     Q_PROPERTY(QString appId READ appId NOTIFY appIdChanged)
     Q_PROPERTY(QString type READ type NOTIFY typeChanged)
     Q_PROPERTY(WindowClass windowClass READ windowClass WRITE setWindowClass NOTIFY windowClassChanged)
+    Q_PROPERTY(bool launchLastApp READ launchLastApp NOTIFY launchLastAppChanged)
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)
     Q_PROPERTY(QString subtitle READ subtitle WRITE setSubtitle NOTIFY subtitleChanged)
     Q_PROPERTY(QString params READ params NOTIFY paramsChanged)
@@ -288,6 +289,16 @@ public:
     void unsetClosePolicy() { m_closePolicy.clear(); }
 
     /*!
+     * Convenience function to return the _WEBOS_LAUNCH_PREV_APP_AFTER_CLOSING for this surface.
+     */
+    bool launchLastApp() { return m_launchLastApp; }
+
+    /*!
+     * Function to set launch last app flag for an item.
+     */
+    void setLaunchLastApp(const bool& launchLastApp, bool updateProperty = true);
+
+    /*!
      * Convenience function to return the additional params(json text) for this surface.
      */
     QString params() { return m_params; }
@@ -471,6 +482,7 @@ signals:
     void typeChanged();
     void appIdChanged();
     void windowClassChanged();
+    void launchLastAppChanged();
     void titleChanged();
     void subtitleChanged();
     void paramsChanged();
@@ -530,6 +542,7 @@ private:
     QString m_title;
     QString m_subtitle;
     QString m_params;
+    bool m_launchLastApp;
 
     QString m_processId;
     bool m_exposed;

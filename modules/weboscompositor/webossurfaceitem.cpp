@@ -67,6 +67,7 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
         , m_grabKeyboardFocusOnClick(true)
         , m_closePolicy(QVariantMap())
         , m_itemStateReason(QString())
+        , m_launchLastApp(false)
 {
     if (surface) {
         connect(surface, SIGNAL(damaged(const QRegion &)), this, SLOT(onSurfaceDamaged(const QRegion &)));
@@ -455,6 +456,8 @@ void WebOSSurfaceItem::updateProperties(const QVariantMap &properties, const QSt
         setSubtitle(value.toString(), false);
     } else if (name == QLatin1String("params")) {
         setParams(value.toString());
+    } else if (name == QLatin1String("_WEBOS_LAUNCH_PREV_APP_AFTER_CLOSING")) {
+        setLaunchLastApp(value.toBool());
     }
 
     emit windowPropertiesChanged(properties);
@@ -525,6 +528,17 @@ void WebOSSurfaceItem::setParams(const QString& params, bool updateProperty)
         emit paramsChanged();
         if (updateProperty)
             setWindowProperty(QLatin1String("params"), m_params);
+    }
+}
+
+void WebOSSurfaceItem::setLaunchLastApp(const bool& launchLastApp, bool updateProperty)
+{
+    PMTRACE_FUNCTION;
+    if (m_launchLastApp != launchLastApp) {
+        m_launchLastApp = launchLastApp;
+        emit launchLastAppChanged();
+        if (updateProperty)
+            setWindowProperty(QLatin1String("_WEBOS_LAUNCH_PREV_APP_AFTER_CLOSING"), m_launchLastApp);
     }
 }
 
