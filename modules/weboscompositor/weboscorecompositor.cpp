@@ -327,7 +327,7 @@ void WebOSCoreCompositor::onSurfaceUnmapped() {
 
     if (item) {
         qInfo() << surface << item << item->appId() << item->itemState();
-        if (!item->isProxy()) {
+        if (item->itemState() != WebOSSurfaceItem::ItemStateProxy) {
             m_surfaceModel->surfaceUnmapped(item);
             emit surfaceUnmapped(item);
             if (!webOSWindowExtension())
@@ -352,9 +352,12 @@ void WebOSCoreCompositor::onSurfaceDestroyed() {
     qInfo() << surface << item << item->appId() << item->itemState();
 
     if (webOSWindowExtension()) {
+        if (item->itemState() == WebOSSurfaceItem::ItemStateNormal)
+            item->setItemState(WebOSSurfaceItem::ItemStateProxy);
+
         closeSurfaceItemByPolicy(item);
     } else {
-        if (!item->isProxy()) {
+        if (item->itemState() != WebOSSurfaceItem::ItemStateProxy) {
             m_surfacesOnUpdate.removeOne(item);
             removeSurfaceItem(item, true);
         } else {
@@ -437,7 +440,7 @@ void WebOSCoreCompositor::deleteProxyFor(WebOSSurfaceItem* newItem)
     QMutableListIterator<WebOSSurfaceItem*> si(m_surfaces);
     while (si.hasNext()) {
         WebOSSurfaceItem* item = si.next();
-        if (item->isProxy()
+        if (item->itemState() == WebOSSurfaceItem::ItemStateProxy
                 && newItem->appId() == item->appId()
                 && newItem != item) { //we don't want to remove item for mapped surface
             qDebug() << "deleting proxy" << item << " for newItem" << newItem;
@@ -607,9 +610,10 @@ void WebOSCoreCompositor::applySurfaceItemClosePolicy(const QString &reason, con
 
 void WebOSCoreCompositor::closeSurfaceItemByPolicy(WebOSSurfaceItem* item)
 {
-    //surface is not destoyed
-    //there is no action needed.
-    if (item->isSurfaced())
+    // close surface item by policy is performed only when
+    // surface destroyed (this is checked by isSurfaced())
+    // and stop signal received (this is checked by itemStateReason.isEmpty())
+    if (item->isSurfaced() || item->itemStateReason().isEmpty())
         return;
 
     // after surface is destroyed, do the following logic as its state

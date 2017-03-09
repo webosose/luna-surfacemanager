@@ -697,15 +697,15 @@ WebOSSurfaceItem::KeyMasks WebOSSurfaceItem::keyMask() const
 
 void WebOSSurfaceItem::setItemState(ItemState state, const QString &reason)
 {
+    setItemStateReason(reason);
+
     if (m_itemState != state) {
         m_itemState = state;
         emit itemStateChanged();
 
-        setItemStateReason(reason);
-
-        // Emit datachange to WindowModel whenever SurfaceItem is closing
+        // Emit datachange to WindowModel whenever SurfaceItem is proxy or closing
         // That affects all WindowModels, they can acts according to data change
-        if (m_itemState == ItemStateClosing) {
+        if (m_itemState == ItemStateProxy || m_itemState == ItemStateClosing) {
             emit dataChanged();
         }
     }
