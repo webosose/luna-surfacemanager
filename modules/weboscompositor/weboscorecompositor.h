@@ -115,7 +115,7 @@ public:
     void setCursorVisible(bool visibility);
     Q_INVOKABLE void updateCursorFocus();
 
-    void applySurfaceItemClosePolicy(const QString &reason, const QString &targetAppId);
+    void applySurfaceItemClosePolicy(const QString &reason, const QString &targetAppId, const bool isBackground);
 
     QVariantMap surfaceItemClosePolicy() { return m_surfaceItemClosePolicy; }
     void setSurfaceItemClosePolicy(QVariantMap &surfaceItemClosePolicy);
@@ -249,7 +249,7 @@ private:
     void setInputMethod(WebOSInputMethod* inputMethod);
 
     bool checkSurfaceItemClosePolicy(const QString &reason, WebOSSurfaceItem *item);
-    void closeSurfaceItemByPolicy(WebOSSurfaceItem* item);
+    void processSurfaceItem(WebOSSurfaceItem* item);
     WebOSSurfaceItem* getSurfaceItemByAppId(const QString& appId);
 
     //Global tick counter to get absolute time stamp for recent window model and LRU surface

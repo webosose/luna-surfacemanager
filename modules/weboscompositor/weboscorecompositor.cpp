@@ -289,7 +289,6 @@ void WebOSCoreCompositor::onSurfaceMapped() {
 
         //All mapped surface should have ItemStateNormal state.
         item->setItemState(WebOSSurfaceItem::ItemStateNormal);
-
         if (webOSWindowExtension()) {
             m_surfaceModel->surfaceMapped(item);
             if (!m_surfaces.contains(item))
@@ -325,13 +324,34 @@ void WebOSCoreCompositor::onSurfaceUnmapped() {
 
     WebOSSurfaceItem* item = qobject_cast<WebOSSurfaceItem*>(surface->surfaceItem());
 
-    if (item) {
-        qInfo() << surface << item << item->appId() << item->itemState();
+    if (!item) {
+        qWarning() << "No item for surface" << surface;
+        return;
+    }
+
+    qInfo() << surface << item << item->appId() << item->itemState();
+
+    if (webOSWindowExtension()) {
+        // Exceptionally, VKB should not synchronize with SAM's life status signal.
+        if (item->type() == "_WEBOS_WINDOW_TYPE_KEYBOARD") {
+            m_surfaceModel->surfaceUnmapped(item);
+            emit surfaceUnmapped(item);
+            m_surfaces.removeOne(item);
+            return;
+        }
+
+        if (item->itemState() == WebOSSurfaceItem::ItemStateNormal) {
+            item->setItemState(WebOSSurfaceItem::ItemStateHidden);
+            processSurfaceItem(item);
+        } else {
+            qWarning() << "Surface is unmapped, but was not in normal state." << item->appId() << item->itemState();
+            emit surfaceUnmapped(item); //We have to notify qml even for non-normal item
+        }
+    } else {
         if (item->itemState() != WebOSSurfaceItem::ItemStateProxy) {
             m_surfaceModel->surfaceUnmapped(item);
             emit surfaceUnmapped(item);
-            if (!webOSWindowExtension())
-                m_surfaces.removeOne(item);
+            m_surfaces.removeOne(item);
         } else {
             emit surfaceUnmapped(item); //We have to notify qml even for proxy item
         }
@@ -352,10 +372,10 @@ void WebOSCoreCompositor::onSurfaceDestroyed() {
     qInfo() << surface << item << item->appId() << item->itemState();
 
     if (webOSWindowExtension()) {
-        if (item->itemState() == WebOSSurfaceItem::ItemStateNormal)
+        if (item->itemState() == WebOSSurfaceItem::ItemStateNormal || item->itemState() == WebOSSurfaceItem::ItemStateHidden)
             item->setItemState(WebOSSurfaceItem::ItemStateProxy);
 
-        closeSurfaceItemByPolicy(item);
+        processSurfaceItem(item);
     } else {
         if (item->itemState() != WebOSSurfaceItem::ItemStateProxy) {
             m_surfacesOnUpdate.removeOne(item);
@@ -583,7 +603,7 @@ WebOSSurfaceItem* WebOSCoreCompositor::getSurfaceItemByAppId(const QString& appI
     return NULL;
 }
 
-void WebOSCoreCompositor::applySurfaceItemClosePolicy(const QString &reason, const QString &targetAppId)
+void WebOSCoreCompositor::applySurfaceItemClosePolicy(const QString &reason, const QString &targetAppId, const bool isBackground)
 {
     PMTRACE_FUNCTION;
 
@@ -599,29 +619,47 @@ void WebOSCoreCompositor::applySurfaceItemClosePolicy(const QString &reason, con
         return;
     }
 
-    bool closeSurfaceItem = checkSurfaceItemClosePolicy(reason, item);
-    if (closeSurfaceItem)
-        item->setItemState(WebOSSurfaceItem::ItemStateClosing, reason);
-    else
-        item->setItemState(WebOSSurfaceItem::ItemStateProxy, reason);
+    // if the app goes background (or pausing),
+    // then the app should have only Hidden state
+    if (isBackground)
+        item->setItemState(WebOSSurfaceItem::ItemStateHidden, reason);
+    else {
+        bool closeSurfaceItem = checkSurfaceItemClosePolicy(reason, item);
+        if (closeSurfaceItem)
+            item->setItemState(WebOSSurfaceItem::ItemStateClosing, reason);
+        else
+            item->setItemState(WebOSSurfaceItem::ItemStateProxy, reason);
+    }
 
-    closeSurfaceItemByPolicy(item);
+    processSurfaceItem(item);
 }
 
-void WebOSCoreCompositor::closeSurfaceItemByPolicy(WebOSSurfaceItem* item)
+void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item)
 {
-    // close surface item by policy is performed only when
-    // surface destroyed (this is checked by isSurfaced())
+    PMTRACE_FUNCTION;
+
+    // clean up surface item by policy is performed only when
+    // surface unmapped/destroyed (this is checked by isSurfaced() && surface()->isMapped())
     // and stop signal received (this is checked by itemStateReason.isEmpty())
-    if (item->isSurfaced() || item->itemStateReason().isEmpty())
+    if ((item->isSurfaced() && item->surface()->isMapped()) || item->itemStateReason().isEmpty())
         return;
 
-    // after surface is destroyed, do the following logic as its state
+    qInfo() << item << item->appId() << item->itemState() << item->itemStateReason();
+
+    // after surface is unmapped/destroyed, do the following logic as its state
     switch (item->itemState()) {
+        case WebOSSurfaceItem::ItemStateHidden:
+            m_surfaceModel->surfaceUnmapped(item);
+            emit surfaceUnmapped(item);
+            m_surfaces.removeOne(item);
+
+            // reset state reason to re-use
+            item->unsetItemStateReason();
+            break;
         case WebOSSurfaceItem::ItemStateProxy:
-            //Before perform destroy, minization is required.
-            //It will be performed in S-LSM according to its state.
             emit surfaceDestroyed(item);
+            // reset state reason to re-use
+            item->unsetItemStateReason();
 
             /* This means items will not use any graphic resource from related surface.
             / If there are more use case, the API should be moved to proper place.

@@ -139,6 +139,7 @@ public:
 
     enum ItemState {
         ItemStateNormal  = 1,
+        ItemStateHidden,
         ItemStateProxy,
         ItemStateClosing,
     };
@@ -424,6 +425,7 @@ public:
 
     QString itemStateReason() { return m_itemStateReason; }
     void setItemStateReason(const QString &reason);
+    void unsetItemStateReason() { m_itemStateReason.clear(); }
 
     WebOSSurfaceGroup* surfaceGroup() { return m_surfaceGroup; }
 
