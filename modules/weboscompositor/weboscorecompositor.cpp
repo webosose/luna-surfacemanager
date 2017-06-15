@@ -651,7 +651,6 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item)
         case WebOSSurfaceItem::ItemStateHidden:
             m_surfaceModel->surfaceUnmapped(item);
             emit surfaceUnmapped(item);
-            m_surfaces.removeOne(item);
 
             // reset state reason to re-use
             item->unsetItemStateReason();
