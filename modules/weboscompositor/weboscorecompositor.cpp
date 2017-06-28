@@ -664,6 +664,8 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item)
             / If there are more use case, the API should be moved to proper place.
             / ex)If there are some dying animation for the item, this should be called at the end of the animation. */
             item->releaseSurface();
+            // Clear old texture
+            item->update();
             break;
         case WebOSSurfaceItem::ItemStateClosing:
             removeSurfaceItem(item, true);
