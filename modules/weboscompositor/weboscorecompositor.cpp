@@ -340,13 +340,9 @@ void WebOSCoreCompositor::onSurfaceUnmapped() {
             return;
         }
 
-        if (item->itemState() == WebOSSurfaceItem::ItemStateNormal) {
+        if (item->itemState() == WebOSSurfaceItem::ItemStateNormal)
             item->setItemState(WebOSSurfaceItem::ItemStateHidden);
-            processSurfaceItem(item);
-        } else {
-            qWarning() << "Surface is unmapped, but was not in normal state." << item->appId() << item->itemState();
-            emit surfaceUnmapped(item); //We have to notify qml even for non-normal item
-        }
+        processSurfaceItem(item);
     } else {
         if (item->itemState() != WebOSSurfaceItem::ItemStateProxy) {
             m_surfaceModel->surfaceUnmapped(item);
