@@ -332,17 +332,17 @@ void WebOSCoreCompositor::onSurfaceUnmapped() {
     qInfo() << surface << item << item->appId() << item->itemState();
 
     if (webOSWindowExtension()) {
-        // Exceptionally, VKB should not synchronize with SAM's life status signal.
-        if (item->type() == "_WEBOS_WINDOW_TYPE_KEYBOARD") {
+        // If the item does not contain appId or it is not mapped yet,
+        // then the surface should be managed with the conventional wayland surface lifecycle.
+        if (item->appId().isEmpty() || !item->isMapped()) {
             m_surfaceModel->surfaceUnmapped(item);
             emit surfaceUnmapped(item);
             m_surfaces.removeOne(item);
-            return;
+        } else {
+            if (item->itemState() == WebOSSurfaceItem::ItemStateNormal)
+                item->setItemState(WebOSSurfaceItem::ItemStateHidden);
+            processSurfaceItem(item);
         }
-
-        if (item->itemState() == WebOSSurfaceItem::ItemStateNormal)
-            item->setItemState(WebOSSurfaceItem::ItemStateHidden);
-        processSurfaceItem(item);
     } else {
         if (item->itemState() != WebOSSurfaceItem::ItemStateProxy) {
             m_surfaceModel->surfaceUnmapped(item);
@@ -368,10 +368,15 @@ void WebOSCoreCompositor::onSurfaceDestroyed() {
     qInfo() << surface << item << item->appId() << item->itemState();
 
     if (webOSWindowExtension()) {
-        if (item->itemState() == WebOSSurfaceItem::ItemStateNormal || item->itemState() == WebOSSurfaceItem::ItemStateHidden)
-            item->setItemState(WebOSSurfaceItem::ItemStateProxy);
-
-        processSurfaceItem(item);
+        // If the item does not contain appId or it is not mapped yet,
+        // then the surface should be managed with the conventional wayland surface lifecycle.
+        if (item->appId().isEmpty() || !item->isMapped()) {
+            removeSurfaceItem(item, true);
+        } else {
+            if (item->itemState() == WebOSSurfaceItem::ItemStateNormal || item->itemState() == WebOSSurfaceItem::ItemStateHidden)
+                item->setItemState(WebOSSurfaceItem::ItemStateProxy);
+            processSurfaceItem(item);
+        }
     } else {
         if (item->itemState() != WebOSSurfaceItem::ItemStateProxy) {
             m_surfacesOnUpdate.removeOne(item);
@@ -610,6 +615,10 @@ void WebOSCoreCompositor::applySurfaceItemClosePolicy(const QString &reason, con
 
     WebOSSurfaceItem *item = getSurfaceItemByAppId(targetAppId);
 
+    // We assume that the following logic is only valid for an app which satisfies the following conditions:
+    // case 1. it has an app. Id
+    // case 2. it is already mapped.
+    // Otherwise, the surface item will be processed in the onSurfaceUnmapped and onSurfaceDestroyed properly.
     if (!item) {
         qDebug() << "The surface already unmapped: " << targetAppId;
         return;
