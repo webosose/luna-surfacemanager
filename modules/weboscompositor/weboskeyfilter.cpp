@@ -36,15 +36,6 @@ bool WebOSKeyFilter::handleKeyEvent(int keycode, bool pressed, bool autoRepeat)
 
     m_wasAutoRepeat = autoRepeat;
 
-    if (pressed) {
-        if (Q_UNLIKELY(m_disallowRelease))
-            m_disallowRelease = false;
-    }
-    else {
-        if (Q_UNLIKELY(m_disallowRelease))
-            return true;
-    }
-
     // pre-process; this has to be done before handling key event
     if (Q_LIKELY(!m_preProcess.isEmpty())) {
         // m_preProcess should have one of following prototypes:
@@ -137,7 +128,18 @@ bool WebOSKeyFilter::eventFilter(QObject *obj, QEvent *event)
     QEvent::Type type = event->type();
     if (type == QEvent::KeyPress || type == QEvent::KeyRelease) {
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-        return handleKeyEvent(keyEvent->key(), (type == QEvent::KeyPress), keyEvent->isAutoRepeat());
+        bool accepted = handleKeyEvent(keyEvent->key(), (type == QEvent::KeyPress), keyEvent->isAutoRepeat());
+
+        if (type == QEvent::KeyPress) {
+            if (Q_UNLIKELY(m_disallowRelease))
+                m_disallowRelease = false;
+        }
+        else {
+            if (Q_UNLIKELY(m_disallowRelease))
+                accepted = true;
+        }
+
+        return accepted;
     }
     return false;
 }
