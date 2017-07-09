@@ -28,7 +28,7 @@ class WEBOS_COMPOSITOR_EXT_EXPORT CompositorWindowClose : public QObject
 {
     Q_OBJECT
 public:
-    virtual void close(QWaylandSurfaceItem *item) { Q_UNUSED(item); }
+    virtual void close(QWaylandSurfaceItem *item, const QString& reason = QString()) { Q_UNUSED(item); Q_UNUSED(reason); }
 };
 
 QT_END_NAMESPACE

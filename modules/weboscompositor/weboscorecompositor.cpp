@@ -528,7 +528,7 @@ void WebOSCoreCompositor::surfaceAboutToBeDestroyed(QWaylandSurface *s)
     }
 }
 
-void WebOSCoreCompositor::closeWindow(QVariant window)
+void WebOSCoreCompositor::closeWindow(QVariant window, const QString& reason)
 {
     PMTRACE_FUNCTION;
     WebOSSurfaceItem* item = qvariant_cast<WebOSSurfaceItem *>(window);
@@ -537,7 +537,7 @@ void WebOSCoreCompositor::closeWindow(QVariant window)
         return;
     }
     if (webOSWindowExtension()) {
-        webOSWindowExtension()->windowClose()->close(item);
+        webOSWindowExtension()->windowClose()->close(item, reason);
     } else {
         item->setItemState(WebOSSurfaceItem::ItemStateClosing);
         if (item->surface() && item->surface()->client()) {

@@ -293,7 +293,7 @@ private slots:
 public slots:
     bool setFullscreenSurface(QWaylandSurface *surface);
 
-    void closeWindow(QVariant window);
+    void closeWindow(QVariant window, const QString& reason = QString());
     void closeWindowKeepItem(QVariant window);
     void destroyClientForWindow(QVariant window);
 };
