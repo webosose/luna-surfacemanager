@@ -604,13 +604,14 @@ WebOSSurfaceItem* WebOSCoreCompositor::getSurfaceItemByAppId(const QString& appI
     return NULL;
 }
 
-void WebOSCoreCompositor::applySurfaceItemClosePolicy(const QString &reason, const QString &targetAppId, const bool isBackground)
+void WebOSCoreCompositor::applySurfaceItemClosePolicy(QString reason, const QString &targetAppId, const bool isBackground)
 {
     PMTRACE_FUNCTION;
 
-    if (reason.isNull() || reason.isEmpty()) {
-        qWarning() << "Closed reason does not valid: " << reason;
-        return;
+    // if the reason does not exist, use a default reason
+    if (!m_surfaceItemClosePolicy.contains(reason)) {
+        qWarning() << "Closed reason does not valid: " << reason << "Reason will be used default one(undefined)";
+        reason = "undefined";
     }
 
     WebOSSurfaceItem *item = getSurfaceItemByAppId(targetAppId);

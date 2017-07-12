@@ -115,7 +115,7 @@ public:
     void setCursorVisible(bool visibility);
     Q_INVOKABLE void updateCursorFocus();
 
-    void applySurfaceItemClosePolicy(const QString &reason, const QString &targetAppId, const bool isBackground);
+    void applySurfaceItemClosePolicy(QString reason, const QString &targetAppId, const bool isBackground);
 
     QVariantMap surfaceItemClosePolicy() { return m_surfaceItemClosePolicy; }
     void setSurfaceItemClosePolicy(QVariantMap &surfaceItemClosePolicy);
