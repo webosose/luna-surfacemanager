@@ -22,6 +22,7 @@
 #include <QObject>
 #include <QList>
 #include <QQuickWindow>
+#include <QJSValue>
 
 #include <qwaylandquickcompositor.h>
 #include <qwaylandquicksurface.h>
@@ -293,7 +294,7 @@ private slots:
 public slots:
     bool setFullscreenSurface(QWaylandSurface *surface);
 
-    void closeWindow(QVariant window, const QString& reason = QString());
+    void closeWindow(QVariant window, QJSValue payload = QJSValue());
     void closeWindowKeepItem(QVariant window);
     void destroyClientForWindow(QVariant window);
 };

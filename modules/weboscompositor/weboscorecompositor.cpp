@@ -533,7 +533,7 @@ void WebOSCoreCompositor::surfaceAboutToBeDestroyed(QWaylandSurface *s)
     }
 }
 
-void WebOSCoreCompositor::closeWindow(QVariant window, const QString& reason)
+void WebOSCoreCompositor::closeWindow(QVariant window, QJSValue payload)
 {
     PMTRACE_FUNCTION;
     WebOSSurfaceItem* item = qvariant_cast<WebOSSurfaceItem *>(window);
@@ -542,7 +542,8 @@ void WebOSCoreCompositor::closeWindow(QVariant window, const QString& reason)
         return;
     }
     if (webOSWindowExtension()) {
-        webOSWindowExtension()->windowClose()->close(item, reason);
+        QJsonObject jsp = QJsonObject::fromVariantMap(payload.toVariant().toMap());
+        webOSWindowExtension()->windowClose()->close(item, jsp);
     } else {
         item->setItemState(WebOSSurfaceItem::ItemStateClosing);
         if (item->surface() && item->surface()->client()) {

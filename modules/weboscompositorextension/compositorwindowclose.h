@@ -18,6 +18,7 @@
 #define COMPOSITORWINDOWCLOSE_H
 
 #include <QObject>
+#include <QJsonObject>
 #include <compositorextensionglobal.h>
 
 QT_BEGIN_NAMESPACE
@@ -28,7 +29,7 @@ class WEBOS_COMPOSITOR_EXT_EXPORT CompositorWindowClose : public QObject
 {
     Q_OBJECT
 public:
-    virtual void close(QWaylandSurfaceItem *item, const QString& reason = QString()) { Q_UNUSED(item); Q_UNUSED(reason); }
+    virtual void close(QWaylandSurfaceItem *item, QJsonObject payload = QJsonObject()) { Q_UNUSED(item); Q_UNUSED(payload); }
 };
 
 QT_END_NAMESPACE
