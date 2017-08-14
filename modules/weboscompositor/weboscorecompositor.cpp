@@ -290,9 +290,12 @@ void WebOSCoreCompositor::onSurfaceMapped() {
         //All mapped surface should have ItemStateNormal state.
         item->setItemState(WebOSSurfaceItem::ItemStateNormal);
         if (webOSWindowExtension()) {
-            m_surfaceModel->surfaceMapped(item);
-            if (!m_surfaces.contains(item))
+            if (!m_surfaces.contains(item)) {
+                m_surfaceModel->surfaceMapped(item);
                 m_surfaces << item;
+            } else {
+                qDebug() << item << "This item already exists in m_surfaces.";
+            }
         } else {
             // if item is still in m_surfaces after deleteProxyFor, it's not a proxy
             // but a normal item
