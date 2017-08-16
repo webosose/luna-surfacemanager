@@ -702,12 +702,7 @@ void WebOSSurfaceItem::setItemState(ItemState state, const QString &reason)
     if (m_itemState != state) {
         m_itemState = state;
         emit itemStateChanged();
-
-        // Emit datachange to WindowModel whenever SurfaceItem is proxy or closing
-        // That affects all WindowModels, they can acts according to data change
-        if (m_itemState != ItemStateNormal) {
-            emit dataChanged();
-        }
+        emit dataChanged();
     }
 }
 

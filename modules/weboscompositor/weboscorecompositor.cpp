@@ -659,7 +659,6 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item)
     // after surface is unmapped/destroyed, do the following logic as its state
     switch (item->itemState()) {
         case WebOSSurfaceItem::ItemStateHidden:
-            m_surfaceModel->surfaceUnmapped(item);
             emit surfaceUnmapped(item);
 
             // reset state reason to re-use
