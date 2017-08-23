@@ -343,7 +343,7 @@ void WebOSCoreCompositor::onSurfaceUnmapped() {
             m_surfaces.removeOne(item);
         } else {
             if (item->itemState() == WebOSSurfaceItem::ItemStateNormal)
-                item->setItemState(WebOSSurfaceItem::ItemStateHidden);
+                item->setItemState(WebOSSurfaceItem::ItemStateHidden, item->itemStateReason());
             processSurfaceItem(item);
         }
     } else {
@@ -377,7 +377,7 @@ void WebOSCoreCompositor::onSurfaceDestroyed() {
             removeSurfaceItem(item, true);
         } else {
             if (item->itemState() == WebOSSurfaceItem::ItemStateNormal || item->itemState() == WebOSSurfaceItem::ItemStateHidden)
-                item->setItemState(WebOSSurfaceItem::ItemStateProxy);
+                item->setItemState(WebOSSurfaceItem::ItemStateProxy, item->itemStateReason());
             processSurfaceItem(item);
         }
     } else {
