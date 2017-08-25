@@ -368,7 +368,7 @@ void WebOSCoreCompositor::onSurfaceDestroyed() {
         return;
     }
 
-    qInfo() << surface << item << item->appId() << item->itemState();
+    qInfo() << surface << item << item->appId() << item->itemState() << item->itemStateReason();
 
     if (webOSWindowExtension()) {
         // If the item does not contain appId or it is not mapped yet,
@@ -608,7 +608,7 @@ WebOSSurfaceItem* WebOSCoreCompositor::getSurfaceItemByAppId(const QString& appI
     return NULL;
 }
 
-void WebOSCoreCompositor::applySurfaceItemClosePolicy(QString reason, const QString &targetAppId, const bool isBackground)
+void WebOSCoreCompositor::applySurfaceItemClosePolicy(QString reason, const QString &targetAppId)
 {
     PMTRACE_FUNCTION;
 
@@ -629,17 +629,7 @@ void WebOSCoreCompositor::applySurfaceItemClosePolicy(QString reason, const QStr
         return;
     }
 
-    // if the app goes background (or pausing),
-    // then the app should have only Hidden state
-    if (isBackground)
-        item->setItemState(WebOSSurfaceItem::ItemStateHidden, reason);
-    else {
-        bool closeSurfaceItem = checkSurfaceItemClosePolicy(reason, item);
-        if (closeSurfaceItem)
-            item->setItemState(WebOSSurfaceItem::ItemStateClosing, reason);
-        else
-            item->setItemState(WebOSSurfaceItem::ItemStateProxy, reason);
-    }
+    item->setItemStateReason(reason);
 
     processSurfaceItem(item);
 }
@@ -653,6 +643,11 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item)
     // and stop signal received (this is checked by itemStateReason.isEmpty())
     if ((item->isSurfaced() && item->surface()->isMapped()) || item->itemStateReason().isEmpty())
         return;
+
+    if ((item->itemState() == WebOSSurfaceItem::ItemStateProxy) &&
+        checkSurfaceItemClosePolicy(item->itemStateReason(), item)) {
+        item->setItemState(WebOSSurfaceItem::ItemStateClosing, item->itemStateReason());
+    }
 
     qInfo() << item << item->appId() << item->itemState() << item->itemStateReason();
 
