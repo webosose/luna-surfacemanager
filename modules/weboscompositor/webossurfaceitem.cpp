@@ -967,6 +967,9 @@ WebOSSurfaceItem::KeyMasks WebOSSurfaceItem::keyMaskFromQt(int key) const
     case Qt::Key_webOS_LiveZoom:
         retKeyMask = KeyMaskRemoteMagnifierGroup;
     break;
+    case Qt::Key_webOS_TVGuide:
+        retKeyMask = KeyMaskGuide;
+    break;
     default:
         /* If a client want to receive some special keys and the other keys have to be delivered to the parent,
              there are two approaches according to kinds of special keys.
@@ -997,7 +1000,8 @@ WebOSSurfaceItem::KeyMasks WebOSSurfaceItem::keyMaskFromQt(int key) const
                      ^ KeyMaskLocalDown
                      ^ KeyMaskLocalOk
                      ^ KeyMaskRemoteMagnifierGroup
-                     ^ KeyMaskMinimalPlaybackGroup;
+                     ^ KeyMaskMinimalPlaybackGroup
+                     ^ KeyMaskGuide;
     break;
     }
 
