@@ -99,6 +99,7 @@ protected slots:
 private slots:
     void removeSurfaceItem();
     void removeLayer(const QString& name);
+    void closeDeferredInvalidSurface();
 
 private:
     bool m_allowAnonymous;
@@ -116,6 +117,6 @@ private:
     bool assertOwner(Resource* resource);
     WebOSSurfaceItem* itemFromResource(struct ::wl_resource* surface);
     void removeFromGroup(WebOSSurfaceItem* item);
-
+    void closeInvalidSurface(WebOSSurfaceItem* item);
 };
 #endif

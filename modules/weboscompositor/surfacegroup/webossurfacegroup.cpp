@@ -183,8 +183,7 @@ void WebOSSurfaceGroup::webos_surface_group_attach(Resource *resource, struct ::
         }
     } else {
         qWarning("Layer '%s' does not exist in group '%s'", qPrintable(layer_name), qPrintable(m_name));
-        //Send close instead of wl_resource_post_error to keep client
-        m_groupCompositor->compositor()->closeWindow(QVariant::fromValue(item));
+        closeInvalidSurface(item);
     }
 }
 
@@ -260,6 +259,41 @@ void WebOSSurfaceGroup::removeFromGroup(WebOSSurfaceItem* item)
     }
 }
 
+void WebOSSurfaceGroup::closeInvalidSurface(WebOSSurfaceItem* item)
+{
+    if (!item) {
+        qWarning() << "Invalid Input WebOSSurfaceItem";
+        return;
+    }
+
+    if (item->appId().isEmpty()) {
+        qDebug() << item <<  "is empty, we are waiting for appId";
+        connect(item, SIGNAL(appIdChanged()), this, SLOT(closeDeferredInvalidSurface()));
+        return;
+    }
+
+    //Send close instead of wl_resource_post_error to keep client
+    if (m_groupCompositor && m_groupCompositor->compositor()) {
+        m_groupCompositor->compositor()->closeWindow(QVariant::fromValue(item));
+    }
+}
+
+void WebOSSurfaceGroup::closeDeferredInvalidSurface()
+{
+    WebOSSurfaceItem* item = qobject_cast<WebOSSurfaceItem *>(sender());
+
+    if (item->appId().isEmpty()) {
+        qDebug() << item <<  "is empty, we are waiting for appId";
+        return;
+    }
+
+    //Send close instead of wl_resource_post_error to keep client
+    if (m_groupCompositor && m_groupCompositor->compositor()) {
+        m_groupCompositor->compositor()->closeWindow(QVariant::fromValue(item));
+    }
+    disconnect(item, SIGNAL(appIdChanged()), this, SLOT(closeDeferredInvalidSurface()));
+}
+
 
 void WebOSSurfaceGroup::removeSurfaceItem()
 {
@@ -278,7 +312,9 @@ void WebOSSurfaceGroup::closeAttachedSurfaces()
     QList<WebOSSurfaceItem*> attachedItems = attachedClientSurfaceItems();
     foreach (WebOSSurfaceItem* i, attachedItems) {
         i->setItemState(WebOSSurfaceItem::ItemStateClosing);
-        m_groupCompositor->compositor()->closeWindow(QVariant::fromValue(i));
+        if (m_groupCompositor && m_groupCompositor->compositor()) {
+            m_groupCompositor->compositor()->closeWindow(QVariant::fromValue(i));
+        }
     }
 }
 

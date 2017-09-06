@@ -82,6 +82,7 @@ void WebOSSurfaceGroupCompositor::webos_surface_group_compositor_get_surface_gro
         // So make it as a dummy group to prevent client from crashed.
         WebOSSurfaceGroup* group = new WebOSSurfaceGroup;
         group->add(resource->client(), id, WEBOSSURFACEGROUP_VERSION);
+        group->setGroupCompositor(this);
     }
 }
 
