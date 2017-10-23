@@ -81,7 +81,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandSurfaceItem
     Q_PROPERTY(bool notifyPositionToClient READ notifyPositionToClient WRITE setNotifyPositionToClient NOTIFY notifyPositionToClientChanged)
     Q_PROPERTY(bool exposed READ exposed WRITE setExposed NOTIFY exposedChanged)
     Q_PROPERTY(bool hasKeyboardFocus READ hasKeyboardFocus NOTIFY hasKeyboardFocusChanged)
-    Q_PROPERTY(bool grabKeyboardFocusOnClick READ grabKeyboardFocusOnClick)
+    Q_PROPERTY(bool grabKeyboardFocusOnClick READ grabKeyboardFocusOnClick WRITE setGrabKeyboardFocusOnClick NOTIFY grabKeyboardFocusOnClickChanged)
     Q_PROPERTY(bool launchRequired READ isLaunchRequired WRITE setLaunchRequired NOTIFY launchRequiredChanged)
 
     Q_PROPERTY(WebOSSurfaceGroup* surfaceGroup READ surfaceGroup NOTIFY surfaceGroupChanged)
@@ -483,6 +483,7 @@ signals:
     void processIdChanged();
     void lastFullscreenTickChanged();
     void hasKeyboardFocusChanged();
+    void grabKeyboardFocusOnClickChanged();
 
     void cardSnapShotFilePathChanged();
 
