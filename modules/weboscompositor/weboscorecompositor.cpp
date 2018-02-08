@@ -118,8 +118,8 @@ void WebOSCoreCompositor::logger(QtMsgType type, const QMessageLogContext &conte
 #endif
 }
 
-WebOSCoreCompositor::WebOSCoreCompositor(QQuickWindow *window, ExtensionFlags extensions, const char *socketName)
-    : QWaylandQuickCompositor(window, socketName, compositorFlags)
+WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *socketName)
+    : QWaylandQuickCompositor(socketName, compositorFlags)
     , m_previousFullscreenSurface(0)
     , m_fullscreenSurface(0)
     , m_keyFilter(0)
@@ -142,44 +142,57 @@ WebOSCoreCompositor::WebOSCoreCompositor(QQuickWindow *window, ExtensionFlags ex
 
     checkWaylandSocket();
 
-    //For QtWayland shell surface in 5.4
-    addDefaultShell();
-
-    m_surfaceModel = new WebOSSurfaceModel();
-
-    setInputMethod(new WebOSInputMethod(this));
-
-    connect(window, SIGNAL(frameSwapped()), this, SLOT(frameSwappedSlot()));
-    connect(this, SIGNAL(fullscreenSurfaceChanged()), this, SIGNAL(fullscreenChanged()));
-
-    connect(window, SIGNAL(activeFocusItemChanged()), this, SLOT(handleActiveFocusItemChanged()));
-
-    connect(m_unixSignalHandler, &UnixSignalHandler::sighup, this, &WebOSCoreCompositor::reloadConfig);
-
-    connect(defaultInputDevice()->handle()->keyboardDevice(), &QtWayland::Keyboard::focusChanged, this, &WebOSCoreCompositor::activeSurfaceChanged);
-
-    QCoreApplication::instance()->installEventFilter(m_eventPreprocessor);
-
-    m_extensions = CompositorExtensionFactory::create(this);
-
-    m_shell = new WebOSShell(this);
-
     initializeExtensions(extensions);
-
-    m_inputManager = new WebOSInputManager(this);
-#ifdef MULTIINPUT_SUPPORT
-    m_inputDevicePreallocated = new WebOSInputDevice(this);
-#endif
-
-    // Set default state of Qt client windows to fullscreen
-    setClientFullScreenHint(true);
-
-    emit surfaceModelChanged();
-    emit windowChanged();
 }
 
 WebOSCoreCompositor::~WebOSCoreCompositor()
 {
+}
+
+
+void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
+{
+    static bool firstRegister = true;
+
+    createOutput(window, "webos", name);
+
+    connect(window, SIGNAL(frameSwapped()), this, SLOT(frameSwappedSlot()));
+    //TODO: check is it ok just to use primary window to handle activeFocusItem
+    connect(window, SIGNAL(activeFocusItemChanged()), this, SLOT(handleActiveFocusItemChanged()));
+
+    if (firstRegister) {
+        firstRegister = false;
+
+        //For QtWayland shell surface in 5.4
+        addDefaultShell();
+
+        m_surfaceModel = new WebOSSurfaceModel();
+
+        setInputMethod(new WebOSInputMethod(this));
+
+        connect(this, SIGNAL(fullscreenSurfaceChanged()), this, SIGNAL(fullscreenChanged()));
+
+        connect(m_unixSignalHandler, &UnixSignalHandler::sighup, this, &WebOSCoreCompositor::reloadConfig);
+
+        connect(defaultInputDevice()->handle()->keyboardDevice(), &QtWayland::Keyboard::focusChanged, this, &WebOSCoreCompositor::activeSurfaceChanged);
+
+        QCoreApplication::instance()->installEventFilter(m_eventPreprocessor);
+
+        m_extensions = CompositorExtensionFactory::create(this);
+
+        m_shell = new WebOSShell(this);
+
+        m_inputManager = new WebOSInputManager(this);
+#ifdef MULTIINPUT_SUPPORT
+        m_inputDevicePreallocated = new WebOSInputDevice(this);
+#endif
+
+        // Set default state of Qt client windows to fullscreen
+        setClientFullScreenHint(true);
+
+        emit surfaceModelChanged();
+        emit windowChanged();
+    }
 }
 
 void WebOSCoreCompositor::checkWaylandSocket() const
@@ -402,7 +415,12 @@ void WebOSCoreCompositor::onSurfaceDestroyed() {
 
 void WebOSCoreCompositor::frameSwappedSlot() {
     PMTRACE_FUNCTION;
-    sendFrameCallbacks(surfaces());
+    QWindow *window = qobject_cast<QWindow *>(sender());
+    QList<QWaylandSurface *> ss;
+    foreach (QWaylandSurface *s, surfaces())
+        if (s->output()->window() == window)
+            ss << s;
+    sendFrameCallbacks(ss);
 }
 
 /* Basic life cycle of surface and surface item.
@@ -708,8 +726,8 @@ void WebOSCoreCompositor::setCursorSurface(QWaylandSurface *surface, int hotspot
     PMTRACE_FUNCTION;
     if (surface) {
         QWaylandQuickSurface *qs = static_cast<QWaylandQuickSurface *>(surface);
-        disconnect(static_cast<QQuickWindow*>(window()), &QQuickWindow::beforeSynchronizing, qs, &QWaylandQuickSurface::updateTexture);
-        disconnect(static_cast<QQuickWindow*>(window()), &QQuickWindow::sceneGraphInvalidated, qs, &QWaylandQuickSurface::invalidateTexture);
+        disconnect(static_cast<QQuickWindow*>(qs->output()->window()), &QQuickWindow::beforeSynchronizing, qs, &QWaylandQuickSurface::updateTexture);
+        disconnect(static_cast<QQuickWindow*>(qs->output()->window()), &QQuickWindow::sceneGraphInvalidated, qs, &QWaylandQuickSurface::invalidateTexture);
     }
 
     foreach(WebOSSurfaceItem *item, m_surfaces) {

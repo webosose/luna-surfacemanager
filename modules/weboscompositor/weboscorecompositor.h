@@ -26,6 +26,7 @@
 
 #include <qwaylandquickcompositor.h>
 #include <qwaylandquicksurface.h>
+#include <qwaylandoutput.h>
 
 #include <WebOSCoreCompositor/weboskeyfilter.h>
 
@@ -57,7 +58,6 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCoreCompositor : public QObject, public QWayl
     // To retain backwards compatibility due to the setFullscreenSurface signature this
     // property is introduced
     Q_PROPERTY(WebOSSurfaceItem* fullscreen READ fullscreen WRITE setFullscreen NOTIFY fullscreenChanged)
-    Q_PROPERTY(QObject* window READ compositorWindow NOTIFY windowChanged)
 
     Q_PROPERTY(QSizeF output READ output WRITE setOutput NOTIFY outputChanged) // deprecated
 
@@ -81,8 +81,10 @@ public:
     };
     Q_DECLARE_FLAGS(ExtensionFlags, ExtensionFlag)
 
-    WebOSCoreCompositor(QQuickWindow *window, ExtensionFlags extensions = DefaultExtensions, const char *socketName = 0);
+    WebOSCoreCompositor(ExtensionFlags extensions = DefaultExtensions, const char *socketName = 0);
     virtual ~WebOSCoreCompositor();
+
+    virtual void registerWindow(QQuickWindow *window, QString name = QString("primary"));
 
     static void logger(QtMsgType type, const QMessageLogContext &context, const QString &message);
 
@@ -145,7 +147,7 @@ public:
     // See property comments
     WebOSSurfaceItem* fullscreen() const;
     void setFullscreen(WebOSSurfaceItem* item);
-    QObject* compositorWindow() const { return window(); }
+    QQuickWindow* window() const { return primaryOutput() ? static_cast<QQuickWindow *>(primaryOutput()->window()) : 0; }
 
     Q_INVOKABLE void emitLsmReady();
 

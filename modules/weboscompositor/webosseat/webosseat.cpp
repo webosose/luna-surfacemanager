@@ -48,13 +48,13 @@ WebOSInputManager::WebOSInputManager(WebOSCoreCompositor* compositor)
     connect(m_compositor, SIGNAL(cursorVisibleChanged()), this, SLOT(advertiseCursorVisibility()));
     getDeviceInfoFunc = (void(*)(uint32_t, QString&, uint32_t*, uint32_t*))
                         m_nativeInterface->nativeResourceForScreen("getDeviceInfoFunc",
-                        (static_cast<QWaylandCompositor*>(m_compositor))->window()->screen());
+                        m_compositor->window()->screen());
     setGrabStatusFunc = (void(*)(uint32_t, bool))
                         m_nativeInterface->nativeResourceForScreen("setGrabStatusFunc",
-                        (static_cast<QWaylandCompositor*>(m_compositor))->window()->screen());
+                        m_compositor->window()->screen());
     setCursorVisibilityFunc = (void(*)(QScreen*, bool))
-                              m_nativeInterface->nativeResourceForScreen("setCursorVisibilityFunc",
-                              (static_cast<QWaylandCompositor*>(m_compositor))->window()->screen());
+                        m_nativeInterface->nativeResourceForScreen("setCursorVisibilityFunc",
+                        m_compositor->window()->screen());
 }
 
 WebOSInputDevice* WebOSInputManager::findWebOSInputDevice(QtWaylandServer::wl_seat *seat)
@@ -104,7 +104,7 @@ void WebOSInputManager::webos_input_manager_set_cursor_visibility(Resource *reso
         return;
 
     if (setCursorVisibilityFunc)
-        setCursorVisibilityFunc(static_cast<QWaylandCompositor*>(m_compositor)->window()->screen(), visibility);
+        setCursorVisibilityFunc(m_compositor->window()->screen(), visibility);
 }
 
 void WebOSInputManager::webos_input_manager_get_webos_seat(Resource *resource,
