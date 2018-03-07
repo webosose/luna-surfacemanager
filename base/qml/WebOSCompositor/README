@@ -1,0 +1,14 @@
+How to override base components
+-------------------------------
+Add qmldir in WebOSCompositor directory with content as below.
+
+# Module name should be "WebOSCompositor"
+module WebOSCompositor
+
+# <TypeName> <Version> <File>
+# <TypeName>: One of type defined in WebOSCompositorBase
+# <Version>: 1.0
+# <File>: Relative file path that defines this type
+
+Views 1.0 views/ViewsExtended.qml
+Controllers 1.0 controllers/ControllersExtended.qml

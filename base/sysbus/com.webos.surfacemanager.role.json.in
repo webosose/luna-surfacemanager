@@ -1,0 +1,17 @@
+{
+    \"exeName\":\"$$WEBOS_INSTALL_BINS/surface-manager\",
+    \"type\": \"privileged\",
+    \"allowedNames\": [
+        \"com.webos.surfacemanager*\"
+    ],
+    \"permissions\": [
+        {
+            \"service\": \"com.webos.surfacemanager*\",
+            \"outbound\": [
+                \"com.lge.*\",
+                \"com.palm.*\",
+                \"com.webos.*\"
+            ]
+        }
+    ]
+}

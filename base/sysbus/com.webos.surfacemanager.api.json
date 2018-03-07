@@ -1,0 +1,14 @@
+{
+    "launcher.control": [
+        "com.webos.surfacemanager/closeByAppId"
+    ],
+    "launcher.status": [
+        "com.webos.surfacemanager/getForegroundAppInfo"
+    ],
+    "surfaces.control": [
+        "com.webos.surfacemanager/closeByAppId"
+    ],
+    "surfaces.status": [
+        "com.webos.surfacemanager/getForegroundAppInfo"
+    ]
+}

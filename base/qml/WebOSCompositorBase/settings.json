@@ -1,0 +1,10 @@
+{
+    "com.webos.surfacemanager": {
+        "imageResources": {
+        },
+        "launcher": {
+        },
+        "spinner": {
+        }
+    }
+}

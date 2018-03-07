@@ -1,0 +1,36 @@
+module WebOSCompositorBase
+
+# Singleton types
+singleton LS 1.0 global/LS.qml
+singleton Settings 1.0 global/Settings.qml
+singleton Utils 1.0 global/Utils.qml
+
+# Exported types
+Controllers 1.0 Controllers.qml
+DefaultSettings 1.0 DefaultSettings.qml
+Services 1.0 Services.qml
+Views 1.0 Views.qml
+CompositorController 1.0 controllers/CompositorController.qml
+DefaultAccessControlPolicy 1.0 controllers/DefaultAccessControlPolicy.qml
+DefaultKeyfilter 1.0 controllers/DefaultKeyfilter.qml
+ViewStateController 1.0 controllers/ViewStateController.qml
+FullscreenWindowModel 1.0 models/FullscreenWindowModel.qml
+KeyboardWindowModel 1.0 models/KeyboardWindowModel.qml
+OverlayWindowModel 1.0 models/OverlayWindowModel.qml
+PopupWindowModel 1.0 models/PopupWindowModel.qml
+ForegroundAppInfoMgr 1.0 services/ForegroundAppInfoMgr.qml
+LunaServiceAPI 1.0 services/LunaServiceAPI.qml
+FullscreenView 1.0 views/FullscreenView.qml
+KeyboardView 1.0 views/KeyboardView.qml
+Launcher 1.0 views/Launcher.qml
+OverlayView 1.0 views/OverlayView.qml
+PopupView 1.0 views/PopupView.qml
+Spinner 1.0 views/Spinner.qml
+BaseView 1.0 views/base/BaseView.qml
+FocusableView 1.0 views/base/FocusableView.qml
+SurfaceView 1.0 views/base/SurfaceView.qml
+NotificationService 1.0 views/notification/NotificationService.qml
+NotificationView 1.0 views/notification/NotificationView.qml
+
+# Internal types
+internal ScreenFreezer views/ScreenFreezer.qml
