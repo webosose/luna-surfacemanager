@@ -10,5 +10,5 @@ module WebOSCompositor
 # <Version>: 1.0
 # <File>: Relative file path that defines this type
 
-Views 1.0 views/ViewsExtended.qml
-Controllers 1.0 controllers/ControllersExtended.qml
+ViewStateController 1.0 controllers/MyViewStateController.qml
+ViewsRoot 1.0 views/MyViewsRoot.qml

@@ -21,40 +21,36 @@ import "../../WebOSCompositor"
 
 SurfaceView {
     id: root
-    layerNumber: 2
+    layerNumber: 3
     fill: true
     positioning: true
     consumeMouseEvents: true
 
-    Connections {
-        target: root.model
-
-        onSurfaceAdded: {
-            if (root.access) {
-                console.log("Surface added to OverlayView: " + item);
-                if (currentItem !== null)
-                    currentItem.close();
-                currentItem = item;
-                root.requestFocus();
-                item.parent = root;
-                item.opacity = 0.999;
-                item.useTextureAlpha = true;
-                root.openView();
-            } else {
-                item.close();
-                console.warn("AccessControl: OverlayView is restricted by the access control policy.");
-            }
-        }
-
-        onSurfaceRemoved: {
-            console.log("Surface removed from OverlayView: " + item);
-            if (currentItem == item)
-                currentItem = null;
-            root.releaseFocus();
+    onSurfaceAdded: {
+        if (root.access) {
+            // Close currentItem if exists
+            if (currentItem !== null)
+                currentItem.close();
+            currentItem = item;
+            currentItem.parent = root;
+            currentItem.opacity = 0.999;
+            currentItem.useTextureAlpha = true;
+            root.requestFocus();
+            root.openView();
+        } else {
             item.close();
-            if (!currentItem)
-                root.closeView();
+            console.warn("AccessControl: " + root + " is restricted by the access control policy.");
         }
+    }
+
+    onSurfaceRemoved: {
+        if (currentItem == item)
+            currentItem = null;
+        if (!currentItem) {
+            root.releaseFocus();
+            root.closeView();
+        }
+        item.close();
     }
 
     onClosed: {

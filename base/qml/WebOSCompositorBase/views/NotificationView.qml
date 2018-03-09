@@ -17,7 +17,8 @@
 import QtQuick 2.4
 import WebOSCompositorBase 1.0
 
-import "../../../WebOSCompositor"
+import "../../WebOSCompositor"
+import "notification"
 
 Item {
     id: notificationRoot
@@ -25,6 +26,7 @@ Item {
     property bool active: alertActive || pincodePromptActive // Exclude toast
     property bool modal: alertView.modalAlertsVisible
 
+    property bool access: true
     property bool acceptAlerts: true
     property bool acceptToasts: true
     property bool acceptPincodePrompts: true
@@ -40,9 +42,9 @@ Item {
 
     property NotificationService notificationService: NotificationService {
         id: notificationService
-        acceptAlerts: notificationRoot.acceptAlerts
-        acceptToasts: notificationRoot.acceptToasts
-        acceptPincodePrompts: notificationRoot.acceptPincodePrompts
+        acceptAlerts: notificationRoot.access && notificationRoot.acceptAlerts
+        acceptToasts: notificationRoot.access && notificationRoot.acceptToasts
+        acceptPincodePrompts: notificationRoot.access && notificationRoot.acceptPincodePrompts
     }
 
     function closeView() {
@@ -64,7 +66,7 @@ Item {
     PincodePromptView {
         id: pincodePromptView
         model: notificationService.pincodePromptModel
-        enabled: notificationRoot.acceptPincodePrompts
+        enabled: notificationRoot.access && notificationRoot.acceptPincodePrompts
 
         onOpening: {
             if (notificationRoot.alertActive)
@@ -94,7 +96,7 @@ Item {
     AlertView {
         id: alertView
         model: notificationService.alertModel
-        enabled: notificationRoot.acceptAlerts
+        enabled: notificationRoot.access && notificationRoot.acceptAlerts
 
         onOpening: {
             if (notificationRoot.pincodePromptActive)
@@ -115,7 +117,7 @@ Item {
     ToastView {
         id: toastView
         model: notificationService.toastModel
-        enabled: notificationRoot.acceptToasts
+        enabled: notificationRoot.access && notificationRoot.acceptToasts
 
         Connections {
             target: notificationService

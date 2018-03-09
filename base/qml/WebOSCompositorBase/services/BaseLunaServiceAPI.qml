@@ -19,21 +19,41 @@ import WebOSCoreCompositor 1.0
 import WebOSServices 1.0
 import WebOSCompositorBase 1.0
 
-import "../controllers/base/compositor.js" as CompositorLogic
+import "../../WebOSCompositor"
+import "base"
 
 Service {
     id: root
-    property var foregroundAppInfoMgr
 
-    appId: LS.appId
-    methods: ["closeByAppId", "getForegroundAppInfo", "captureCompositorOutput"]
+    methods: defaultMethods
+
+    property var views
+
+    readonly property var defaultMethods: ["closeByAppId", "getForegroundAppInfo", "captureCompositorOutput"]
+
+    readonly property ForegroundAppInfoMgr foregroundAppInfoMgr: ForegroundAppInfoMgr {
+        items: root.views.children
+        onForegroundAppInfoChanged: {
+            root.pushSubscription("getForegroundAppInfo");
+        }
+    }
 
     function closeByAppId(param) {
         var ret = {};
 
-        console.info("param: " + JSON.stringify(param));
+        console.info("LS2 method handler is called with param: " + JSON.stringify(param));
 
-        if (!CompositorLogic.closeByAppId(param.id)) {
+        // There is no clear spec defined for a case
+        // where given item is not a fullscreen surface.
+        // Historically however, it is expected to behave the same
+        // to com.webos.applicationManager/closeByAppId.
+        var item = Utils.surfaceForApplication(param.id);
+        if (item && !item.fullscreen) {
+            LS.adhoc.call("luna://com.webos.applicationManager", "/closeByAppId",
+                "{\"id\":\"" + param.id + "\"}");
+        } else if (item && !item.isProxy()) {
+            compositor.closeWindowKeepItem(item);
+        } else {
             ret.errorCode = 1;
             ret.errorText = "\"" + param.id + "\" is not running";
             console.warn("errorCode: " + ret.errorCode + ", errorText: " + ret.errorText);
@@ -44,14 +64,12 @@ Service {
 
     function getForegroundAppInfo(param) {
         var ret = {};
-        var retString;
 
-        console.info("param: " + JSON.stringify(param));
+        console.info("LS2 method handler is called with param: " + JSON.stringify(param));
 
         ret.foregroundAppInfo = foregroundAppInfoMgr.getForegroundAppInfo();
-        retString = JSON.stringify(ret);
 
-        return retString;
+        return JSON.stringify(ret);
     }
 
     function captureCompositorOutput(param) {
@@ -60,7 +78,7 @@ Service {
         var format = "";
         var ret = {};
 
-        console.info("param: " + JSON.stringify(param));
+        console.info("LS2 method handler is called with param: " + JSON.stringify(param));
 
         if (param.output && (typeof param.output === 'string' || param.output instanceof String)) {
             path = param.output;
@@ -77,7 +95,7 @@ Service {
         }
 
         if (param.appId) {
-            target = CompositorLogic.surfaceForApplication(param.appId);
+            target = Utils.surfaceForApplication(param.appId);
             if (!target) {
                 ret.errorCode = 103;
                 ret.errorText = "ERR_NO_SURFACE";

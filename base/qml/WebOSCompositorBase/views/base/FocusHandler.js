@@ -15,19 +15,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 .pragma library
-// sequence of layers containing Items
+// sequence of layers containing FocusableView objects
 // [ { layer #0 }, { layer #1 }, ... ]
 var focusChain = []
 
 /*!
  * The top item means the last item of the last layer.
  */
-
 function getTopItem() {
     var topLayer = focusChain.slice(-1)[0];
-    if (topLayer) {
+    if (topLayer)
         return topLayer[topLayer.length - 1];
-    }
     return null;
 }
 
@@ -62,8 +60,10 @@ function requestFocus(item){
 
     // Give focus to the top item
     var topItem = getTopItem();
-    if (topItem)
+    if (topItem) {
         topItem.forceActiveFocus();
+        topItem.focused();
+    }
 
     console.log(debug());
 }
@@ -101,8 +101,10 @@ function releaseFocus(item) {
 
     // Give focus to the top item
     var topItem = getTopItem();
-    if (topItem)
+    if (topItem) {
         topItem.forceActiveFocus();
+        topItem.focused();
+    }
 
     console.log(debug());
 }

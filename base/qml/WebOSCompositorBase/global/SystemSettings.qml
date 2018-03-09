@@ -29,50 +29,28 @@ SettingsService {
     property QtObject l10n: QtObject {
         property alias tr: root.emptyString
         property bool isRTL: false
+        property string locale: "en-US"
     }
 
-    property var subscriptions: [
-        // Handler should return subscribed value.
-        {
-            service: "com.webos.settingsservice",
-            method: "getSystemSettings",
-            token: 0,
-            handler: handleGetSystemSettings,
-            connected: false
-        },
-        {
-            service: "com.webos.service.config",
-            method: "getConfigs",
-            token: 0,
-            handler: handleGetConfigs,
-            connected: false
-        }
-    ];
+    property var defaultSubscriptions: []
+    property var extraSubscriptions: []
 
-    function handleGetSystemSettings(response) {
-        if (response.settings !== undefined) {
-            for (var keys in response.settings)
-                return response.settings[keys];
-        }
-    }
+    property var __subscriptions: defaultSubscriptions
+    property var __statusTokens: []
+    property var __pendingRequests: []
+    property var __subscribedRequestMap: ({})
+    property var __subscribedKeyValueMap: ({})
 
-    function handleGetConfigs(response) {
-        if (response.configs !== undefined) {
-            for (var keys in response.configs)
-                return response.configs[keys];
-        }
-    }
-
-    function subscribeOnDemand(serviceName, methodName, param) {
+    function subscribeOnDemand(serviceName, methodName, param, raw) {
         if (param["subscribe"] !== true)
             param["subscribe"] = true;
 
         var sortedParam = JSON.stringify(__sortObject(param));
-        var keyGenerated = serviceName + methodName + sortedParam;
+        var keyGenerated = serviceName + methodName + sortedParam + raw;
 
         if (__subscribedKeyValueMap[keyGenerated] == undefined) {
             // serviceName x methodName should provide only one matching item.
-            var targetPrototype = subscriptions.filter(
+            var targetPrototype = __subscriptions.filter(
                 function (element) {
                     return (element.service === serviceName &&
                     element.method === methodName);
@@ -84,6 +62,7 @@ SettingsService {
 
                 subscribeItem["params"] = sortedParam;
                 subscribeItem["key"] = keyGenerated;
+                subscribeItem["raw"] = raw;
 
                 console.info("Register subscription to " + serviceName + "/" + methodName + " " + sortedParam);
                 __subscribeService(subscribeItem);
@@ -97,11 +76,6 @@ SettingsService {
 
         return __subscribedKeyValueMap[keyGenerated].value;
     }
-
-    property var __statusTokens: []
-    property var __pendingRequests: []
-    property var __subscribedRequestMap: ({})
-    property var __subscribedKeyValueMap: ({})
 
     function __sortObject(obj) {
         return Object.keys(obj).sort().reduce(
@@ -120,7 +94,7 @@ SettingsService {
     }
 
     function __subscribeService(subscribeItem) {
-        if (subscribeItem.connected) {
+        if (subscribeItem.connected != undefined && subscribeItem.connected) {
             subscribeItem.token = call("luna://" + subscribeItem.service,
                                        "/" + subscribeItem.method,
                                        subscribeItem.params);
@@ -144,7 +118,7 @@ SettingsService {
 
     function __updateServerStatus(serviceName, connected) {
         // Update service status in prototype
-        subscriptions.reduce(
+        __subscriptions.reduce(
             function (xs, x) {
                 if (x.service === serviceName)
                     x.connected = connected;
@@ -176,18 +150,33 @@ SettingsService {
         }
     }
 
+    function __listenServerStatus() {
+        __statusTokens = [];
+        var token;
+        for (var item in __subscriptions) {
+            // Assume disconnected
+            __updateServerStatus(__subscriptions[item].service, false);
+            token = registerServerStatus(__subscriptions[item].service);
+            if (token != 0) {
+                console.info("registerServerStatus done for", __subscriptions[item].service, token);
+                __statusTokens.push(token);
+            } else {
+                console.error("Error on registerServerStatus for", __subscriptions[item].service);
+            }
+        }
+    }
+
     Component.onCompleted: {
         console.log("Start subscribing to SettingsService");
         subscribe();
 
-        var token;
-        for (var item in subscriptions) {
-            token = registerServerStatus(subscriptions[item].service);
-            if (token != 0)
-                __statusTokens.push(token);
-            else
-                console.error("Error on registerServerStatus for", subscriptions[item].service);
+        // Merge subscription lists
+        if (extraSubscriptions.length > 0) {
+            console.log("Merge subscription lists: " + __subscriptions.length + " + " + extraSubscriptions.length);
+            __subscriptions = __subscriptions.concat(extraSubscriptions);
         }
+
+        __listenServerStatus();
     }
 
     onL10nLoadSucceeded:    console.info("Localization: Loaded", file);
@@ -197,6 +186,8 @@ SettingsService {
     onError:                console.warn("Localization: An error occurred,", errorText);
 
     onCurrentLocaleChanged: {
+        if (currentLocale && currentLocale !== "")
+            l10n.locale = currentLocale;
         if (currentLocale &&
             (currentLocale.indexOf("he-") > -1 || currentLocale.indexOf("ar-") > -1 ||
             currentLocale.indexOf("ur-") > -1 || currentLocale.indexOf("ku-") > -1 ||
@@ -204,7 +195,7 @@ SettingsService {
             l10n.isRTL = true;
         else
             l10n.isRTL = false;
-        console.info("Localization: UI Locale changed. currentLocale: " + currentLocale + ", isRTL: " + l10n.isRTL);
+        console.info("Localization: UI Locale changed. locale: " + l10n.locale + "(" + currentLocale + "), isRTL: " + l10n.isRTL);
     }
 
     onResponse: {
@@ -224,15 +215,36 @@ SettingsService {
 
             if (item) {
                 var response = JSON.parse(payload);
-                if (response.returnValue !== undefined && response.returnValue) {
-                    if (__subscribedKeyValueMap[item.key].value = item.handler(response))
-                        console.log("Value updated: " + item.key + "=" + __subscribedKeyValueMap[item.key].value);
-                    else
-                        console.warn("Unhandled response for", item.service, payload);
+                if (item.raw) {
+                    __subscribedKeyValueMap[item.key].value = response;
+                    console.log("Value updated(raw mode): " + item.key + "=" + __subscribedKeyValueMap[item.key].value);
                 } else {
-                    console.warn("Error response from", item.service, payload);
+                    if (response.returnValue !== undefined && response.returnValue) {
+                        if (__subscribedKeyValueMap[item.key].value = item.handler(response))
+                            console.log("Value updated: " + item.key + "=" + __subscribedKeyValueMap[item.key].value);
+                        else
+                            console.warn("Unhandled response for", item.service, payload);
+                    } else {
+                        console.warn("Error response from", item.service, payload);
+                    }
                 }
             }
+        }
+    }
+
+    onCancelled: {
+        if (token == 0) {
+            console.warn("All LS2 calls have been cancelled for some reason. Re-listen to server status for all");
+            __listenServerStatus();
+        } else if (__statusTokens.indexOf(token) != -1) {
+            // Should not happen as it means someone else cancelled this unexpectedly!
+            // If it really happens, we'd better to cancel others too for simplicity.
+            // Be aware that we must remove the token cancelled from the array
+            // to avoid an infinite loop of cancel and onCancelled.
+            console.warn("A registerServerStatus call has been cancelled. Re-listen to server status for all", token);
+            while (__statusTokens.length > 0)
+                cancel(__statusTokens.pop());
+            __listenServerStatus();
         }
     }
 }

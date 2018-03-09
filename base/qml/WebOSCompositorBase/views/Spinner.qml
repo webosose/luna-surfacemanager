@@ -21,7 +21,7 @@ import "../../WebOSCompositor"
 
 FocusableView {
     id: root
-    layerNumber: 10
+    layerNumber: 11
     opacity: 0
     visible: opacity > 0
 

@@ -41,8 +41,10 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCompositorWindow : public QQuickView {
     Q_PROPERTY(bool cursorVisible READ cursorVisible NOTIFY cursorVisibleChanged)
 
 public:
-    WebOSCompositorWindow(QSurfaceFormat *surfaceFormat = 0);
+    WebOSCompositorWindow(QString geometryString = QString(), QSurfaceFormat *surfaceFormat = 0);
     ~WebOSCompositorWindow();
+
+    static bool parseGeometryString(QString string, QRect &geometry, int &rotation, double &ratio);
 
     void setCompositor(WebOSCoreCompositor* compositor);
     bool setCompositorMain(const QUrl& main);
@@ -54,7 +56,7 @@ public:
     bool outputClip() const;
 
     void setBaseGeometry(const QRect& baseGeometry, const int rotation, const double outputRatio);
-    Q_INVOKABLE void updateOutputGeometry(const int rotation);
+    Q_INVOKABLE void updateOutputGeometry(const int rotation, bool forced = false);
 
     bool outputGeometryPending() const;
     void setOutputGeometryPending(bool);

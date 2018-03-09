@@ -25,15 +25,24 @@ BaseView {
 
     width: currentItem ? currentItem.width : 0
     height: currentItem ? currentItem.height : 0
-    y: root.parent.height
+    anchors.bottom: root.parent.bottom
+    anchors.bottomMargin: -root.height
 
     property WindowModel model
     property Item currentItem: null
+    property bool allowed: root.access
+
+    Binding {
+        target: compositor
+        property: "inputMethod.allowed"
+        value: root.allowed
+    }
 
     Connections {
         target: root.model
 
         onSurfaceAdded: {
+            console.log("Adding item " + item + " to " + root);
             if (root.access) {
                 item.parent = root;
                 item.visible = true;
@@ -42,6 +51,7 @@ BaseView {
                 currentItem = item;
                 root.openView();
                 root.contentChanged();
+                console.log("Item added in " + root + ", currentItem: " + currentItem);
             } else {
                 item.close();
                 compositor.inputMethod.deactivate();
@@ -50,24 +60,29 @@ BaseView {
         }
 
         onSurfaceRemoved: {
-            var i = root.model.count - 1;
-            while (i >= 0) {
-                if (root.model.get(i) != item)
-                    break;
-                i--;
+            console.log("Removing item " + item + " from " + root);
+            if (currentItem == item) {
+                for (var i = root.model.count - 1; i>= 0; i--) {
+                    if (root.model.get(i) != item) {
+                        currentItem = root.model.get(i);
+                        break;
+                    }
+                }
+                if (currentItem == item) {
+                    root.closeView();
+                    currentItem = null;
+                }
             }
-            currentItem = i >= 0 ? root.model.get(i) : null;
             root.contentChanged();
-            if (currentItem == null)
-                root.closeView();
+            console.log("Item removed from " + root + ", currentItem: " + currentItem);
         }
     }
 
     openAnimation: SequentialAnimation {
         PropertyAnimation {
             target: root
-            property: "y"
-            to: root.parent.height - (root.currentItem ? root.currentItem.height : 0)
+            property: "anchors.bottomMargin"
+            to: 0
             duration: Settings.local.keyboardView.openAnimationDuration
             easing.type: Easing.InOutCubic
         }
@@ -76,8 +91,8 @@ BaseView {
     closeAnimation: SequentialAnimation {
         PropertyAnimation {
             target: root
-            property: "y"
-            to: root.parent.height
+            property: "anchors.bottomMargin"
+            to: -root.height
             duration: Settings.local.keyboardView.openAnimationDuration
             easing.type: Easing.InOutCubic
         }

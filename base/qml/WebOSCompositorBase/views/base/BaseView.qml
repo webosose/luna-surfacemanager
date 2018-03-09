@@ -28,6 +28,7 @@ FocusScope {
 
     property bool isOpen: state == "open"
     property bool access: true
+    property bool hasForegroundItem: false
     property SequentialAnimation openAnimation: defaultAnimation
     property SequentialAnimation closeAnimation: defaultAnimation
     property bool isTransitioning: openTransition.running || closeTransition.running

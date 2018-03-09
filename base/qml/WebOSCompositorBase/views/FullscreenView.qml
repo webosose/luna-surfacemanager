@@ -26,32 +26,85 @@ SurfaceView {
     positioning: true
     consumeMouseEvents: true
 
-    Connections {
-        target: root.model
+    onSurfaceAdded: {
+        if (root.access) {
+            var oldItem = currentItem || null;
+            currentItem = item;
+            currentItem.parent = root;
+            currentItem.opacity = 0.999;
+            currentItem.useTextureAlpha = true;
+            root.requestFocus();
+            root.openView();
+            if (oldItem)
+                oldItem.fullscreen = false;
+        } else {
+            item.close();
+            console.warn("AccessControl: " + root + " is restricted by the access control policy.");
+        }
+    }
 
-        onSurfaceAdded: {
-            if (root.access) {
-                console.log("Surface added to FullscreenView: " + item);
-                currentItem = item;
-                root.requestFocus();
-                item.parent = root;
-                root.openView();
-            } else {
-                item.close();
-                console.warn("AccessControl: FullScreenView is restricted by the access control policy.");
-            }
+    onSurfaceRemoved: {
+        if (currentItem == item)
+            currentItem = null;
+        if (!currentItem) {
+            root.releaseFocus();
+            root.closeView();
+        }
+        item.close();
+    }
+
+    Connections {
+        target: compositor
+
+        onSurfaceMapped: {
+            console.log("item:", item);
+            checkFullscreen(item);
         }
 
-        onSurfaceRemoved: {
-            console.log("Surface removed from FullscreenView: " + item);
-            if (currentItem == item)
-                currentItem = null;
-            root.releaseFocus();
-            item.parent = null;
-            item.close();
-            if (!currentItem)
-                root.closeView();
+        onSurfaceUnmapped: {
+            console.log("item:", item);
+            resetFullscreen(item);
+        }
+
+        onSurfaceDestroyed: {
+            console.log("item:", item);
+            resetFullscreen(item);
+        }
+
+        onFullscreenRequested: {
+            console.log("item:", item);
+            if (!checkFullscreen(item))
+                console.warn("request ignored, item:", item);
+        }
+
+        function checkFullscreen(item) {
+            if (!item.isProxy() && !item.isPartOfGroup() &&
+                (item.type == "_WEBOS_WINDOW_TYPE_CARD" || item.type == "_WEBOS_WINDOW_TYPE_RESTRICTED")) {
+                console.log("item: " + item + ", currently " + views.fullscreen.currentItem);
+
+                // Fullscreen surface item transition sequence
+                //  1) State change for currentItem to minimized
+                //  2) State change for new item to fullscreen
+                //  3) Turn on fullscreen flag for new item as true (add to the model)
+                //  4) Set new item as currentItem
+                //  5) Turn off fullscreen flag for old currentItem
+
+                if (root.currentItem)
+                    root.currentItem.state = Qt.WindowMinimized;
+
+                // Add item to the window model
+                item.state = Qt.WindowFullScreen;
+                item.fullscreen = true;
+
+                return true;
+            }
+
+            return false;
+        }
+
+        function resetFullscreen(item) {
+            if (item == root.currentItem)
+                item.fullscreen = false;
         }
     }
 }
-

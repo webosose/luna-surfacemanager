@@ -37,8 +37,8 @@ class CompositorExtension;
 class WebOSShell;
 class WebOSSurfaceGroupCompositor;
 
-#ifdef MULTIINPUT_SUPPORT
 class WebOSInputManager;
+#ifdef MULTIINPUT_SUPPORT
 class WebOSInputDevice;
 #endif
 /*!
@@ -87,9 +87,7 @@ public:
     QWaylandQuickSurface *fullscreenSurface() const;
     WebOSSurfaceModel* surfaceModel() const;
     WebOSInputMethod* inputMethod() const;
-#ifdef MULTIINPUT_SUPPORT
     WebOSInputManager* inputManager() { return m_inputManager; }
-#endif
 
     WebOSKeyFilter* keyFilter() { return m_keyFilter; }
 
@@ -152,9 +150,7 @@ public:
     void initTestPluginLoader();
 
     QList<QWaylandInputDevice *> inputDevices() const;
-#ifdef MULTIINPUT_SUPPORT
     QWaylandInputDevice *inputDeviceFor(QInputEvent *inputEvent) Q_DECL_OVERRIDE;
-#endif
 
     virtual bool getCursor(QWaylandSurface *surface, int hotSpotX, int hotSpotY, QCursor& cursor);
 
@@ -224,8 +220,8 @@ private:
     bool m_mouseEventEnabled;
 
     WebOSShell* m_shell;
-#ifdef MULTIINPUT_SUPPORT
     WebOSInputManager *m_inputManager;
+#ifdef MULTIINPUT_SUPPORT
     WebOSInputDevice *m_inputDevicePreallocated;
 #endif
     bool m_acquired;

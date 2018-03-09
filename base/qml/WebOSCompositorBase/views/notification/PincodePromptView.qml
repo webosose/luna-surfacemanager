@@ -21,7 +21,7 @@ import "../../../WebOSCompositor"
 
 FocusableView {
     id: root
-    layerNumber: 8
+    layerNumber: 7
     objectName: "pincodePromptView"
 
     property var model

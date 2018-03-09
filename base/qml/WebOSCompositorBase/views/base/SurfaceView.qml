@@ -22,6 +22,7 @@ import "../../../WebOSCompositor"
 
 FocusableView {
     id: root
+    hasForegroundItem: true
 
     property WindowModel model
     property bool fill: false
@@ -33,10 +34,16 @@ FocusableView {
     signal surfaceAdded(Item item)
     signal surfaceRemoved(Item item)
 
+    // For surface group
+    property bool grouped: false
+    property var groupedItems: []
+    signal groupFocused
+
     Connections {
         target: model
 
         onSurfaceAdded: {
+            console.log("Adding item " + item + " to " + root);
             if (root.fill) {
                 item.scale = Qt.binding(
                         function() {
@@ -51,12 +58,16 @@ FocusableView {
 
             root.surfaceTransformUpdated(item);
             root.surfaceAdded(item);
+            Utils.performanceLog.timeEnd("APP_LAUNCH", {"APP_ID": item.appId});
             root.contentChanged();
+            console.log("Item added in " + root + ", currentItem: " + currentItem);
         }
 
         onSurfaceRemoved: {
+            console.log("Removing item " + item + " from " + root);
             root.surfaceRemoved(item);
             root.contentChanged();
+            console.log("Item removed from " + root + ", currentItem: " + currentItem);
         }
     }
 
@@ -69,8 +80,10 @@ FocusableView {
         onWheel: {}
     }
 
-    onActiveFocusChanged: {
-        if (activeFocus && root.currentItem)
+    onFocused: {
+        if (grouped)
+            root.groupFocused();
+        else if (activeFocus && root.currentItem)
             root.currentItem.takeFocus();
     }
 }

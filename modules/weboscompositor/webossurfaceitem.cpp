@@ -463,6 +463,7 @@ void WebOSSurfaceItem::setAppId(const QString& appId, bool updateProperty)
     PMTRACE_FUNCTION;
     if (m_appId != appId) {
         m_appId = appId;
+        setObjectName(QString("surfaceItem_%1%2").arg(m_appId).arg(type()));
         emit appIdChanged();
         if (updateProperty)
             setWindowProperty(QLatin1String("appId"), m_appId);
@@ -474,6 +475,7 @@ void WebOSSurfaceItem::setType(const QString& type, bool updateProperty)
     PMTRACE_FUNCTION;
     if (m_type != type) {
         m_type = type;
+        setObjectName(QString("surfaceItem_%1%2").arg(appId()).arg(m_type));
         emit typeChanged();
         if (updateProperty)
             setWindowProperty(QLatin1String("_WEBOS_WINDOW_TYPE"), m_type);

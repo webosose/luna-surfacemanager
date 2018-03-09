@@ -19,22 +19,16 @@ import QtQuick 2.4
 Item {
     id: root
 
-    property var fullscreenView
-    property var overlayView
-    property var launcher
-    property var popupView
-    property var notification
-    property var keyboardView
-    property var spinner
+    property var views
 
     // Access properties for UI components and key events
     // true: allow to show(default), false: disallow to show
 
     Connections {
-        target: fullscreenView
+        target: views.fullscreen
 
         onContentChanged: {
-            if (fullscreenView.currentItem && fullscreenView.currentItem.type == "_WEBOS_WINDOW_TYPE_RESTRICTED")
+            if (views.fullscreen.currentItem && views.fullscreen.currentItem.type == "_WEBOS_WINDOW_TYPE_RESTRICTED")
                 toRestrictedMode();
             else
                 reset();
@@ -43,27 +37,24 @@ Item {
 
     function toRestrictedMode() {
         console.info("AccessControl: the restricted mode is set.");
-        fullscreenView.access = true;
-        overlayView.access = false;
-        launcher.access = false;
-        popupView.access = false;
-        notification.acceptAlerts = false;
-        notification.acceptToasts = false;
-        notification.acceptPincodePrompts = false;
-        keyboardView.access = true;
-        spinner.access = false;
+        for (var i = 0; i < views.children.length; i++) {
+            if (views.children[i] != views.fullscreen && typeof views.children[i].access !== "undefined") {
+                console.log("AccessControl: restrict access to " + views.children[i]);
+                views.children[i].access = false;
+            }
+        }
+
+        console.log("AccessControl: allow access only to " + views.fullscreen);
+        views.fullscreen.access = true;
     }
 
     function reset() {
         console.info("AccessControl: get back to the default access control policy.");
-        fullscreenView.access = true;
-        overlayView.access = true;
-        launcher.access = true;
-        popupView.access = true;
-        notification.acceptAlerts = true;
-        notification.acceptToasts = true;
-        notification.acceptPincodePrompts = true;
-        keyboardView.access = true;
-        spinner.access = true;
+        for (var i = 0; i < views.children.length; i++) {
+            if (typeof views.children[i].access !== "undefined") {
+                console.log("AccessControl: allow access to " + views.children[i]);
+                views.children[i].access = true;
+            }
+        }
     }
 }

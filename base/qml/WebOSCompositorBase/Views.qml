@@ -23,13 +23,7 @@ FocusScope {
     id: root
     focus: true
 
-    property var fullscreen: fullscreenViewId
-    property var overlay: overlayViewId
-    property var launcher: launcherId
-    property var popup: popupViewId
-    property var notification: notificationViewId
-    property var keyboardView: keyboardViewId
-    property var spinner: spinnerId
+    property alias views: viewsRoot
 
     FocusScope {
         id: compositorRoot
@@ -43,56 +37,15 @@ FocusScope {
         rotation: compositorWindow.outputRotation
         clip: compositorWindow.outputClip
 
-        FullscreenView {
-            id: fullscreenViewId
-            objectName: "fullscreenView"
-            anchors.fill: parent
-            model: FullscreenWindowModel {}
-        }
-
-        OverlayView {
-            id: overlayViewId
-            objectName: "overlayView"
-            anchors.fill: parent
-            model: OverlayWindowModel {}
-        }
-
-        Launcher {
-            id: launcherId
-            objectName: "launcher"
-            anchors.fill: parent
-        }
-
-        PopupView {
-            id: popupViewId
-            objectName: "popupView"
-            model: PopupWindowModel {}
-        }
-
-        NotificationView {
-            id: notificationViewId
-            objectName: "notificationView"
-            anchors.fill: parent
-        }
-
-        KeyboardView {
-            id: keyboardViewId
-            objectName: "keyboardView"
-            model: KeyboardWindowModel {}
-        }
-
-        Spinner {
-            id: spinnerId
-            objectName: "spinner"
+        ViewsRoot {
+            id: viewsRoot
             anchors.fill: parent
         }
 
         Loader {
-            id: debugOverlayId
             anchors.fill: parent
             source: Settings.local.debug.enable ? "views/debug/DebugOverlay.qml" : ""
         }
-
     }
 
     ScreenFreezer {

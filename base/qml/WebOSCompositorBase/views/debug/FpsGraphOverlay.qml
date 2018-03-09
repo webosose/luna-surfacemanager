@@ -19,7 +19,7 @@ import WebOS.DeveloperTools 1.0
 import WebOSCompositorBase 1.0
 
 Item {
-    id: fpsGraphOverlay
+    id: root
     anchors.fill: parent
     property bool spinnerRepaint: Settings.local.debug.spinnerRepaint
 
@@ -37,48 +37,27 @@ Item {
         }
     }
 
-    Rectangle {
-        height: 20
-        color: "green"
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        Text { text: "16ms (60fps)"; color: "white"; font.pixelSize: 18; }
-    }
-
-    Rectangle {
-        height: 1
-        color: "yellow"
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 100
-        Text { text: "100ms (10fps)"; color: "yellow"; font.pixelSize: 18; }
-    }
-
-    Rectangle {
-        height: 1
-        color: "red"
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 500
-        Text { text: "500ms"; color: "red"; font.pixelSize: 18; }
-    }
-
-    Rectangle {
-        id: flasher
-        color: "red"
-        opacity: .5
-        visible: false
-        anchors.fill: parent
-
-        Timer {
-            id: hideTimer
-            running: false
-            interval: 1000 / 60 // one frame
-            repeat: false
-            onTriggered: flasher.visible = false;
+    Repeater {
+        model: [
+            {"ms": 16, "color": "blue", "fontSize": 18},
+            {"ms": 50, "color": "green", "fontSize": 18},
+            {"ms": 100, "color": "yellow", "fontSize": 18},
+            {"ms": 500, "color": "orange", "fontSize": 18},
+            {"ms": 1000, "color": "red", "fontSize": 18}
+        ]
+        Rectangle {
+            height: 1
+            color: modelData.color
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: modelData.ms
+            Text {
+                text: modelData.ms + "ms (" + (1000 / modelData.ms) + "fps)"
+                color: modelData.color
+                font.pixelSize: modelData.fontSize
+                anchors.bottom: parent.top
+            }
         }
     }
 

@@ -78,28 +78,19 @@ public:
 
     Q_INVOKABLE bool handleKeyEvent(int keycode, bool pressed, bool autoRepeat);
 
-    Q_INVOKABLE void loadKeyFilters(QJSValue keyFilters, QObject *properties);
+    Q_INVOKABLE void resetKeyFilters();
+    Q_INVOKABLE void addKeyFilter(QJSValue keyFilter, QString handlerName = QString("unknown"));
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);
 
 private:
-    bool loadFile(QString filepath, QQmlEngine *engine);
-    bool setProperties(QObject *properties, QQmlEngine *engine);
-    void reset();
-
     QString m_preProcess;
     QString m_fallback;
     bool m_disallowRelease;
     bool m_wasAutoRepeat;
 
-    QMap<QString, QQmlEngine*> m_engineMap;
-    QList<QPair<QString, QQmlEngine*>> m_handlerList;
-
-    QJSValue m_keyFilters;
-    QObject *m_properties;
-    QPointer<WebOS> m_webos;
-    QPointer<WebOSKeyPolicy> m_webosKeyPolicy;
+    QList<QPair<QString, QJSValue>> m_handlerList;
 };
 
 #endif // WEBOSKEYFILTER_H

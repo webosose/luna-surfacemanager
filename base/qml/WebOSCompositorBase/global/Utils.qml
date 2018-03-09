@@ -18,11 +18,19 @@ pragma Singleton
 
 import QtQuick 2.4
 import WebOSCoreCompositor 1.0
+import PerformanceLog 1.0
+import PmTrace 1.0
+import PmLog 1.0
 
 Item {
     id: root
     objectName: "Utils"
 
+    property PmLog pmLog: PmLog { context: "LSM" }
+    property PerformanceLog performanceLog: PerformanceLog {}
+    property PmTrace pmTrace: PmTrace {}
+
+    // Supposed to be used privately
     ScreenShot {
         id: screenShot
     }
@@ -41,6 +49,17 @@ Item {
 
     function center(parent, me) {
         return (parent % 2 ? parent + 1 : parent) / 2 - (me % 2 ? me + 1 : me) / 2;
+    }
+
+    function surfaceForApplication(appId) {
+        var i, item;
+
+        for (i = compositor.surfaceModel.rowCount() - 1; i >= 0; i--) {
+            item = compositor.surfaceModel.data(compositor.surfaceModel.index(i, 0, 0));
+            if (item.appId === appId)
+                return item;
+        }
+        return null;
     }
 
     Component.onCompleted: console.info("Constructed a singleton type:", root);

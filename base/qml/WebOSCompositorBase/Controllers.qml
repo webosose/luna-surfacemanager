@@ -23,42 +23,24 @@ import "../WebOSCompositor"
 Item {
     id: root
     property var views
-    property KeyFilter keyFilter: keyFilterId
 
-    CompositorController {}
+    AccessControlPolicy {
+        id: accessControlPolicyId
+        views: root.views
+    }
+
+    KeyController {
+        id: keyControllerId
+        access: accessControlPolicyId
+        viewState: viewStateControllerId
+        views: root.views
+    }
 
     // Controllers for views
     ViewStateController {
-        fullscreenView: views.fullscreen
-        overlayView: views.overlay
-        launcher: views.launcher
-        popupView: views.popup
-        notification: views.notification
-        keyboardView: views.keyboardView
-        spinner: views.spinner
-
-        keyFilter: keyFilterId
-    }
-
-    DefaultKeyfilter {
-        id: keyFilterId
-    }
-
-    DefaultAccessControlPolicy {
-        fullscreenView: views.fullscreen
-        overlayView: views.overlay
-        launcher: views.launcher
-        popupView: views.popup
-        notification: views.notification
-        keyboardView: views.keyboardView
-        spinner: views.spinner
-    }
-
-    // Set keyFilter for compositor
-    // TODO: Add an interface for KeyFilter.compositor, then remove this
-    Binding {
-        target: compositor
-        property: "keyFilter"
-        value: keyFilterId
+        id: viewStateControllerId
+        access: accessControlPolicyId
+        keyController: keyControllerId
+        views: root.views
     }
 }

@@ -37,8 +37,8 @@
 #include "webosshellsurface.h"
 #ifdef MULTIINPUT_SUPPORT
 #include "webosinputdevice.h"
-#include "webosseat.h"
 #endif
+#include "webosseat.h"
 #include "webosinputmethod.h"
 #include "compositorextension.h"
 #include "compositorextensionfactory.h"
@@ -165,8 +165,8 @@ WebOSCoreCompositor::WebOSCoreCompositor(QQuickWindow *window, ExtensionFlags ex
 
     initializeExtensions(extensions);
 
-#ifdef MULTIINPUT_SUPPORT
     m_inputManager = new WebOSInputManager(this);
+#ifdef MULTIINPUT_SUPPORT
     m_inputDevicePreallocated = new WebOSInputDevice(this);
 #endif
 
@@ -761,9 +761,9 @@ QList<QWaylandInputDevice *> WebOSCoreCompositor::inputDevices() const
     return handle()->inputDevices();
 }
 
-#ifdef MULTIINPUT_SUPPORT
 QWaylandInputDevice *WebOSCoreCompositor::inputDeviceFor(QInputEvent *inputEvent)
 {
+#ifdef MULTIINPUT_SUPPORT
     QWaylandInputDevice *dev = NULL;
     // The last input device in the input device list must be default input device
     // which is QWaylandInputDevice, so that it always returns true for isOwner().
@@ -781,8 +781,10 @@ QWaylandInputDevice *WebOSCoreCompositor::inputDeviceFor(QInputEvent *inputEvent
     }
 
     return dev;
-}
+#else
+    return QWaylandCompositor::inputDeviceFor(inputEvent);
 #endif
+}
 
 WebOSCoreCompositor::EventPreprocessor::EventPreprocessor(WebOSCoreCompositor* compositor)
     : QObject()

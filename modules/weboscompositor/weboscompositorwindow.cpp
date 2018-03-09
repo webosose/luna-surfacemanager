@@ -19,6 +19,7 @@
 #include <QMetaObject>
 #include <QGuiApplication>
 #include <QScreen>
+#include <QRegularExpression>
 #include <QDebug>
 
 #include "weboscompositorwindow.h"
@@ -27,7 +28,7 @@
 #include "weboscompositorconfig.h"
 #endif
 
-WebOSCompositorWindow::WebOSCompositorWindow(QSurfaceFormat *surfaceFormat)
+WebOSCompositorWindow::WebOSCompositorWindow(QString geometryString, QSurfaceFormat *surfaceFormat)
     : QQuickView()
     , m_compositor(0)
     , m_baseGeometry(QRect(0, 0, 1920, 1080))
@@ -79,33 +80,28 @@ WebOSCompositorWindow::WebOSCompositorWindow(QSurfaceFormat *surfaceFormat)
         qWarning() << "OutputGeometry:" << this << "device pixel ratio unset, use default" << dpr;
     }
 
-    double d = 0;
-    if (!qEnvironmentVariableIsEmpty("WEBOS_COMPOSITOR_OUTPUT_RATIO"))
-        d = qgetenv("WEBOS_COMPOSITOR_OUTPUT_RATIO").toDouble();
-
-    if (d > 0) {
-        m_outputRatio = d;
-        qInfo() << "OutputGeometry:" << this << "outputRatio:" << m_outputRatio << "set by WEBOS_COMPOSITOR_OUTPUT_RATIO";
+    if (!geometryString.isEmpty()) {
+        qInfo() << "OutputGeometry: using geometryString" << geometryString;
+    } else if (geometryString.isEmpty() && !qEnvironmentVariableIsEmpty("WEBOS_COMPOSITOR_GEOMETRY")) {
+        geometryString = QString(qgetenv("WEBOS_COMPOSITOR_GEOMETRY"));
+        qInfo() << "OutputGeometry: using geometryString from WEBOS_COMPOSITOR_GEOMETRY" << geometryString;
     } else {
-        m_outputRatio = (double) dpr;
-        qInfo() << "OutputGeometry:" << this << "outputRatio:" << m_outputRatio << "set by devicePixelRatio";
+        geometryString = QString("1920x1080+0+0r0s1");
+        qWarning() << "OutputGeometry: no geometryString set, using default" << geometryString;
     }
 
-    QPoint offs;
-    offs.setX(qgetenv("WEBOS_COMPOSITOR_X").toInt());
-    offs.setY(qgetenv("WEBOS_COMPOSITOR_Y").toInt());
-    m_outputGeometry.setTopLeft(offs);
-
-    int i;
-    i = qgetenv("WEBOS_COMPOSITOR_WIDTH").toInt();
-    m_outputGeometry.setWidth(i > 0 ? i : screenSize.width() / dpr);
-    i = qgetenv("WEBOS_COMPOSITOR_HEIGHT").toInt();
-    m_outputGeometry.setHeight(i > 0 ? i : screenSize.height() / dpr);
-
-    m_outputRotation = qgetenv("WEBOS_COMPOSITOR_ROTATION").toInt();
-    if (m_outputRotation % 90) {
-        qWarning() << "OutputGeometry:" << this << "invalid output rotation from env" << m_outputRotation << "fallback to 0";
-        m_outputRotation = 0;
+    if (parseGeometryString(geometryString, m_outputGeometry, m_outputRotation, m_outputRatio)) {
+        if (m_outputRotation % 90) {
+            qWarning() << "OutputGeometry:" << this << "invalid output rotation from geometryString" << m_outputRotation << "fallback to 0";
+            m_outputRotation = 0;
+        }
+        if (m_outputRatio <= 0) {
+            qWarning() << "OutputGeometry:" << this << "invalid output ratio from geometryString" << m_outputRatio << "fallback to devicePixelRatio";
+            m_outputRatio = (double) dpr;
+        }
+    } else {
+        m_outputGeometry.setRect(0, 0, screenSize.width() / dpr, screenSize.height() / dpr);
+        qWarning() << "OutputGeometry: invalid geometry from geometryString, fallback to" << m_outputGeometry;
     }
 
     setResizeMode(QQuickView::SizeRootObjectToView);
@@ -129,6 +125,31 @@ WebOSCompositorWindow::~WebOSCompositorWindow()
 #ifdef USE_CONFIG
     delete m_config;
 #endif
+}
+
+bool WebOSCompositorWindow::parseGeometryString(QString string, QRect &geometry, int &rotation, double &ratio)
+{
+    // Syntax: WIDTH[x]HEIGHT[+/-]X[+/-]Y[r]ROTATION[s]RATIO
+    QRegularExpression re("([0-9]+)x([0-9]+)([\+\-][0-9]+)([\+\-][0-9]+)r([0-9]+)s([0-9]+\.?[0-9]*)");
+    QRegularExpressionMatch match = re.match(string);
+
+    if (match.hasMatch()) {
+        QString w = match.captured(1);
+        QString h = match.captured(2);
+        QString x = match.captured(3);
+        QString y = match.captured(4);
+        QString r = match.captured(5);
+        QString s = match.captured(6);
+        geometry.setRect(x.toInt(), y.toInt(), w.toInt(), h.toInt());
+        rotation = r.toInt();
+        ratio = s.toDouble();
+        qDebug() << "Geometry string" << string << "->" << w << h << x << y << r << s;
+        return true;
+    } else {
+        qWarning() << "Invalid geometry string" << string;
+    }
+
+    return false;
 }
 
 void WebOSCompositorWindow::setCompositor(WebOSCoreCompositor* compositor)
@@ -205,10 +226,11 @@ void WebOSCompositorWindow::setBaseGeometry(const QRect& baseGeometry, const int
         emit outputClipChanged();
     }
 
-    updateOutputGeometry(rotation);
+    // Initial output update
+    updateOutputGeometry(rotation, true);
 }
 
-void WebOSCompositorWindow::updateOutputGeometry(const int rotation)
+void WebOSCompositorWindow::updateOutputGeometry(const int rotation, bool forced)
 {
     if (Q_UNLIKELY(!m_compositor)) {
         qWarning() << this << "compositor is not set yet!";
@@ -231,7 +253,7 @@ void WebOSCompositorWindow::updateOutputGeometry(const int rotation)
     newGeometry.setWidth(rotation % 180 ? m_baseGeometry.height() : m_baseGeometry.width());
     newGeometry.setHeight(rotation % 180 ? m_baseGeometry.width() : m_baseGeometry.height());
 
-    if (m_outputGeometry != newGeometry || rotation != m_outputRotation) {
+    if (forced || m_outputGeometry != newGeometry || rotation != m_outputRotation) {
         setNewOutputGeometry(newGeometry, rotation);
 
         bool pending = false;
@@ -292,7 +314,7 @@ void WebOSCompositorWindow::applyOutputGeometry()
     }
 
     if (m_newOutputRotationPending != -1) {
-        updateOutputGeometry(m_newOutputRotationPending);
+        updateOutputGeometry(m_newOutputRotationPending, false);
         m_newOutputRotationPending = -1;
     }
 }

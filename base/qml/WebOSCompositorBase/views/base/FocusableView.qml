@@ -26,6 +26,7 @@ BaseView {
 
     signal requestFocus
     signal releaseFocus
+    signal focused
 
     property int layerNumber
 

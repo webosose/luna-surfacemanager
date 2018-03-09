@@ -15,24 +15,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import QtQuick 2.4
-import WebOSServices 1.0
-import WebOSCompositorBase 1.0
-
-import "../WebOSCompositor"
 
 Item {
-    id: root
-
     property var views
-
-    BaseLunaServiceAPI {
-        id: baseService
-        appId: LS.appId
-        views: root.views
-    }
-
-    ExtendedLunaServiceAPI {
-        id: extendedService
-        views: root.views
-    }
 }

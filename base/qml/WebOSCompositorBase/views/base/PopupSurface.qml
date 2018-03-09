@@ -31,6 +31,9 @@ FocusScope {
         applyLocationHints();
     }
 
+    onXChanged: source.xChanged();
+    onYChanged: source.yChanged();
+
     onFocusChanged: {
         console.log("PopupSurface: focus changed", focus);
         if (focus && source != undefined)

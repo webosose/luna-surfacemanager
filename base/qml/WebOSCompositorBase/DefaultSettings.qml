@@ -15,22 +15,48 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import QtQuick 2.4
+import WebOS.Global 1.0
 
 QtObject {
+    readonly property url imagePath: "file://" + WebOS.qmlDir + "/WebOSCompositorBase/resources/images/"
     readonly property var settings: {
         "compositor": {
             "geometryPendingInterval": 2000
         },
-        "localization": {
-            "imports": []
+        "debug": {
+            "enable": false,
+            "focusHighlight": false,
+            "fpsGraphOverlay": false,
+            "spinnerRepaint": false,
+            "touchOverlay": false,
+            "resourceMonitor": false,
+            "logConsole": false,
+            "logFilter": {
+                "debug": true,
+                "warning": true,
+                "critical": true,
+                "fatal": true
+            },
+            "focusConsole": false,
+            "surfaceConsole": false,
+            "debugWindow": {
+                "x": 100,
+                "y": 100,
+                "width": 600,
+                "height": 500,
+                "opacity": 0.8
+            }
         },
         "imageResources": {
-            "settings": Qt.resolvedUrl("resources/images/settings.png"),
-            "spinner": Qt.resolvedUrl("resources/images/spinner.gif"),
-            "pinBox": Qt.resolvedUrl("resources/images/pinprompt_box_n.png"),
-            "pinBoxFocused": Qt.resolvedUrl("resources/images/pinprompt_box_f.png"),
-            "pinBoxDot": Qt.resolvedUrl("resources/images/pinprompt_box_dot_n.png"),
-            "pinBoxDotFocused": Qt.resolvedUrl("resources/images/pinprompt_box_dot_f.png")
+            "settings": imagePath + "settings.png",
+            "spinner": imagePath + "spinner.gif",
+            "pinBox": imagePath + "pinprompt_box_n.png",
+            "pinBoxFocused": imagePath + "pinprompt_box_f.png",
+            "pinBoxDot": imagePath + "pinprompt_box_dot_n.png",
+            "pinBoxDotFocused": imagePath + "pinprompt_box_dot_f.png"
+        },
+        "keyboardView": {
+            "openAnimationDuration": 500
         },
         "launcher": {
             "width": 800,
@@ -40,13 +66,8 @@ QtObject {
             "settingsIconSize": 70,
             "slideAnimationDuration": 500
         },
-        "keyboardView": {
-            "openAnimationDuration": 500
-        },
-        "spinner": {
-            "timeout": 20000,
-            "scrimOpacity": 0.7,
-            "fadeAnimationDuration": 500
+        "localization": {
+            "imports": []
         },
         "notification": {
             "scrimOpacity": 0.3,
@@ -142,29 +163,10 @@ QtObject {
                 "slideAnimationDuration": 500
             }
         },
-        "debug": {
-            "enable": false,
-            "focusHighlight": false,
-            "fpsGraphOverlay": false,
-            "spinnerRepaint": false,
-            "touchOverlay": false,
-            "resourceMonitor": false,
-            "logConsole": false,
-            "logFilter": {
-                "debug": true,
-                "warning": true,
-                "critical": true,
-                "fatal": true
-            },
-            "focusConsole": false,
-            "surfaceConsole": false,
-            "debugWindow": {
-                "x": 100,
-                "y": 100,
-                "width": 600,
-                "height": 500,
-                "opacity": 0.8
-            }
+        "spinner": {
+            "timeout": 20000,
+            "scrimOpacity": 0.7,
+            "fadeAnimationDuration": 500
         }
     }
 }

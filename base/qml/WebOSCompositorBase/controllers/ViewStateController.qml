@@ -20,93 +20,95 @@ import WebOSCompositorBase 1.0
 Item {
     id: root
 
-    property var fullscreenView
-    property var overlayView
-    property var launcher
-    property var popupView
-    property var notification
-    property var keyboardView
-    property var spinner
+    property var access
+    property var keyController
+    property var views
 
-    property var keyFilter
-
-    property var country: Settings.subscribe("com.webos.settingsservice", "getSystemSettings", {"category":"option", "keys":["country"]});
+    // Though unused, have these to check if Settings.subscribe() works correctly
+    property string country: Settings.subscribe("com.webos.settingsservice", "getSystemSettings", {"category":"option", "keys":["country"]}) || ""
+    property var allConfigs: Settings.subscribe("com.webos.service.config", "getConfigs", {"configNames":["com.webos.surfacemanager.*"]}, true) || {}
 
     onCountryChanged: {
         console.info("com.webos.settingsservice, option, country:", country);
     }
 
+    onAllConfigsChanged: {
+        console.info("com.webos.service.config, com.webos.surfacemanager.*:", JSON.stringify(allConfigs));
+    }
+
     Connections {
-        target: fullscreenView
+        target: views.fullscreen
         onSurfaceAdded: {
-            if (spinner)
-                spinner.closeView();
-            if (keyboardView)
-                keyboardView.closeView();
-            if (notification)
-                notification.closeView();
-            if (popupView)
-                popupView.closeView();
-            if (launcher)
-                launcher.closeView();
-            if (overlayView)
-                overlayView.closeView();
+            if (views.spinner)
+                views.spinner.closeView();
+            if (views.keyboard)
+                views.keyboard.closeView();
+            if (views.notification)
+                views.notification.closeView();
+            if (views.popup)
+                views.popup.closeView();
+            if (views.launcher)
+                views.launcher.closeView();
+            if (views.overlay)
+                views.overlay.closeView();
         }
     }
 
     Connections {
-        target: overlayView
+        target: views.overlay
         onSurfaceAdded: {
-            if (spinner)
-                spinner.closeView();
-            if (keyboardView)
-                keyboardView.closeView();
-            if (notification)
-                notification.closeView();
-            if (popupView)
-                popupView.closeView();
-            if (launcher)
-                launcher.closeView();
+            if (views.spinner)
+                views.spinner.closeView();
+            if (views.keyboard)
+                views.keyboard.closeView();
+            if (views.notification)
+                views.notification.closeView();
+            if (views.popup)
+                views.popup.closeView();
+            if (views.launcher)
+                views.launcher.closeView();
         }
     }
 
     Connections {
-        target: launcher
+        target: views.launcher
         onOpening: {
-            if (spinner)
-                spinner.closeView();
-            if (keyboardView)
-                keyboardView.closeView();
-            if (notification)
-                notification.closeView();
-            if (popupView)
-                popupView.closeView();
-            if (overlayView)
-                overlayView.closeView();
+            if (views.spinner)
+                views.spinner.closeView();
+            if (views.keyboard)
+                views.keyboard.closeView();
+            if (views.notification)
+                views.notification.closeView();
+            if (views.popup)
+                views.popup.closeView();
+            if (views.overlay)
+                views.overlay.closeView();
         }
     }
 
     Connections {
-        target: popupView
+        target: views.popup
         onSurfaceAdded: {
-            if (spinner)
-                spinner.closeView();
-            if (keyboardView)
-                keyboardView.closeView();
+            if (views.spinner)
+                views.spinner.closeView();
+            if (views.keyboard)
+                views.keyboard.closeView();
+            if (views.notification)
+                views.notification.closeView();
         }
     }
 
     Connections {
-        target: spinner
+        target: views.spinner
         onOpening: {
-            if (keyboardView)
-                keyboardView.closeView();
-            if (popupView)
-                popupView.closeView();
-            if (launcher)
-                launcher.closeView();
-            if (overlayView)
-                overlayView.closeView();
+            if (views.keyboard)
+                views.keyboard.closeView();
+            if (views.popup)
+                views.popup.closeView();
+            if (views.launcher)
+                views.launcher.closeView();
+            if (views.overlay)
+                views.overlay.closeView();
         }
     }
 
@@ -115,31 +117,36 @@ Item {
         onAppLifeStatusChanged: {
             console.info(status, appId, extraInfo);
             if (status === "launching") {
-                var needSpinner = false;
-                try {
-                    var extra = JSON.parse(extraInfo);
-                    if (!extra.noSplash || extra.spinner)
-                        needSpinner = true;
-                } catch (e) {
-                    console.warn("extraInfo in getAppLifeStatus is absent");
-                    needSpinner = true;
+                console.log("appInfo for " + appId + ": " + JSON.stringify(LS.applicationManager.appInfoList[appId]));
+                if (views.spinner && appId != null) {
+                    var needSpinner = false;
+                    try {
+                        var extra = JSON.parse(extraInfo);
+                        if (!extra.noSplash || extra.spinner)
+                            needSpinner = true;
+                    } catch (e) {
+                        console.warn("extraInfo in getAppLifeStatus is absent, rely on appInfo instead");
+                        if (!LS.applicationManager.appInfoList[appId].noSplashOnLaunch ||
+                            LS.applicationManager.appInfoList[appId].spinnerOnLaunch)
+                            needSpinner = true;
+                    }
+                    if (needSpinner)
+                        views.spinner.start(appId);
                 }
-                if (spinner && appId != null && needSpinner)
-                    spinner.start(appId);
             } else if (status === "stop") {
-                if (spinner && appId == spinner.appId)
-                    spinner.closeView();
+                if (views.spinner && appId == views.spinner.appId)
+                    views.spinner.closeView();
             }
         }
     }
 
     Connections {
-        target: keyFilter
+        target: keyController
         onHomePressed: {
-            if (notification && notification.active)
-                notification.closeView();
-            else if (launcher && !(notification && notification.modal))
-                launcher.toggleHome();
+            if (views.notification && views.notification.active)
+                views.notification.closeView();
+            else if (views.launcher && !(views.notification && views.notification.modal))
+                views.launcher.toggleHome();
         }
     }
 

@@ -34,12 +34,12 @@ FocusScope {
     // Controllers
     Controllers {
         id: controllersId
-        views: viewsId
+        views: viewsId.views
     }
 
     // Services
     Services {
         id: servicesId
-        views: viewsId
+        views: viewsId.views
     }
 }

@@ -25,7 +25,7 @@ import "../../WebOSCompositor"
 
 FocusableView {
     id: root
-    layerNumber: 3
+    layerNumber: 4
 
     onOpening: root.requestFocus();
     onClosed: root.releaseFocus();
@@ -36,6 +36,7 @@ FocusableView {
     }
 
     function launch(id, params) {
+        Utils.performanceLog.time("APP_LAUNCH", {"APP_ID": id});
         LS.adhoc.call("luna://com.webos.applicationManager", "/launch",
             "{\"id\":\"" + id + "\", \"params\":" + JSON.stringify(params) + "}");
     }
@@ -85,7 +86,10 @@ FocusableView {
                     text: title
                     iconSource: icon
                     onTriggered: checked = false; // not to be checked on clicked
-                    onClicked: launch(id, params)
+                    onClicked: {
+                        launch(id, params);
+                        root.closeView();
+                    }
                     WebOSMouseArea {
                         anchors.fill: parent
                         hoverEnabled: true
@@ -108,7 +112,10 @@ FocusableView {
                     iconSource: Settings.local.imageResources.settings
                     implicitWidth: Settings.local.launcher.settingsIconSize
                     implicitHeight: Settings.local.launcher.settingsIconSize
-                    onClicked: launch("com.palm.app.settings", {});
+                    onClicked: {
+                        launch("com.palm.app.settings", {});
+                        root.closeView();
+                    }
                 }
             }
         }

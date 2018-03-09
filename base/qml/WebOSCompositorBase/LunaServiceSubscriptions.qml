@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 LG Electronics, Inc.
+// Copyright (c) 2018 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,17 +16,7 @@
 
 import QtQuick 2.4
 
-import "base/compositor.js" as CompositorLogic
-
-Item {
-    id: root
-
-    // CompositorLogics
-    Connections {
-        target: compositor
-        onSurfaceMapped:       CompositorLogic.surfaceMapped(item);
-        onSurfaceUnmapped:     CompositorLogic.surfaceUnmapped(item);
-        onFullscreenRequested: CompositorLogic.fullscreenRequested(item);
-        onSurfaceDestroyed:    CompositorLogic.surfaceDestroyed(item);
-    }
+QtObject {
+    // Refer to DefaultSubscriptions.qml for the schema
+    property var list: []
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 LG Electronics, Inc.
+// Copyright (c) 2018 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,24 +15,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import QtQuick 2.4
-import WebOSServices 1.0
-import WebOSCompositorBase 1.0
+import WebOS.Global 1.0
 
-import "../WebOSCompositor"
-
-Item {
-    id: root
-
-    property var views
-
-    BaseLunaServiceAPI {
-        id: baseService
-        appId: LS.appId
-        views: root.views
-    }
-
-    ExtendedLunaServiceAPI {
-        id: extendedService
-        views: root.views
-    }
+QtObject {
+    property var list: [
+        "file://" + WebOS.qmlDir + "/WebOSCompositorBase/settings.json",
+        "file://" + WebOS.qmlDir + "/WebOSCompositor/settings.json"
+    ]
 }

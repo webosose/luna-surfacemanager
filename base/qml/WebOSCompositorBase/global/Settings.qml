@@ -33,12 +33,18 @@ Item {
     readonly property alias system: systemSettings.settings
     readonly property alias l10n: systemSettings.l10n
 
-    function subscribe(type, method, key) {
-        return systemSettings.subscribeOnDemand(type, method, key);
+    function subscribe(type, method, key, returnRaw) {
+        if (typeof returnRaw != "boolean")
+            returnRaw = false;
+        return systemSettings.subscribeOnDemand(type, method, key, returnRaw);
     }
 
     DefaultSettings {
         id: defaultSettingsData
+    }
+
+    LocalSettingsFiles {
+        id: localSettingsFiles
     }
 
     LocalSettings {
@@ -46,10 +52,7 @@ Item {
 
         rootElement: root.appId
         defaultSettings: defaultSettingsData.settings
-        files: [
-            Qt.resolvedUrl("../settings.json"),
-            Qt.resolvedUrl("../../WebOSCompositor/settings.json")
-        ]
+        files: localSettingsFiles.list
 
         Connections {
             target: compositor
@@ -60,13 +63,27 @@ Item {
         }
     }
 
+    DefaultSubscriptions {
+        id: defaultSubscriptionsData
+    }
+
+    LunaServiceSubscriptions {
+        id: extraSubscriptionsData
+    }
+
     SystemSettings {
         id: systemSettings
         appId: root.appId
+        defaultSubscriptions: defaultSubscriptionsData.list
+        extraSubscriptions: extraSubscriptionsData.list
         l10nFileNameBase: "luna-surfacemanager"
         l10nDirName: WebOS.localizationDir + "/" + l10nFileNameBase
         l10nPluginImports: root.local.localization.imports
     }
 
-    Component.onCompleted: console.info("Constructed a singleton type:", root);
+    Component.onCompleted: {
+        Utils.pmLog.info("PMLOG_START", {}, "");
+        Utils.pmTrace.traceLog("Settings onCompleted");
+        console.info("Constructed a singleton type:", root);
+    }
 }

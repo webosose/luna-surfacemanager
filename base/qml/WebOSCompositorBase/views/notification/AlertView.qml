@@ -21,7 +21,7 @@ import "../../../WebOSCompositor"
 
 FocusableView {
     id: root
-    layerNumber: 9
+    layerNumber: 8
     objectName: "alertView"
 
     property var model

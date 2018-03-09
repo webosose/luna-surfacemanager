@@ -23,57 +23,51 @@ import "base/popuphandler.js" as PopupHandler
 
 SurfaceView {
     id: root
-    layerNumber: 5
+    layerNumber: 6
     fill: false
     positioning: false
     consumeMouseEvents: false
 
     property Component component: Qt.createComponent("base/PopupSurface.qml", root)
 
-    Connections {
-        target: root.model
-
-        onSurfaceAdded: {
-            if (root.access) {
-                console.log("PopupView: Surface added", item);
-                if (PopupHandler.addPopup(component, root, item)) {
-                    currentItem = item;
-                    PopupHandler.giveFocus();
-                    root.requestFocus();
-                    root.openView();
-                } else {
-                    console.warn("PopupView: Error creating object");
-                }
-            } else {
-                item.close();
-                console.warn("AccessControl: PopupView is restricted by the access control policy.");
-            }
-        }
-
-        onSurfaceRemoved: {
-            console.log("PopupView: Surface removed", item);
-            // Remove and close the surface item.
-            var popupCount = PopupHandler.removePopup(item);
-            console.log("PopupView: releasing", popupCount);
-            if (popupCount > 0) {
-                console.log("PopupView: Popup was removed, focus is moved to the previous item");
-                currentItem = PopupHandler.getCurrentPopup();
+    onSurfaceAdded: {
+        if (root.access) {
+            if (PopupHandler.addPopup(component, root, item)) {
+                currentItem = item;
                 PopupHandler.giveFocus();
+                root.requestFocus();
+                root.openView();
             } else {
-                currentItem = null;
-                root.releaseFocus();
-                root.closeView();
+                console.warn("PopupView: Error creating object");
             }
+        } else {
+            item.close();
+            console.warn("AccessControl: " + root + " is restricted by the access control policy.");
         }
+    }
+
+    onSurfaceRemoved: {
+        // Remove and close the surface item.
+        var popupCount = PopupHandler.removePopup(item);
+        console.log("PopupView: releasing", popupCount);
+        if (popupCount > 0) {
+            console.log("PopupView: Popup was removed, focus is moved to the previous item");
+            currentItem = PopupHandler.getCurrentPopup();
+            PopupHandler.giveFocus();
+        } else {
+            currentItem = null;
+            root.releaseFocus();
+            root.closeView();
+        }
+    }
+
+    onClosed: {
+        PopupHandler.closeAllPopup();
     }
 
     onFocusChanged: {
         console.log("PopupView: focus", focus);
         if (focus)
             PopupHandler.giveFocus();
-    }
-
-    onClosed: {
-        PopupHandler.closeAllPopup();
     }
 }
