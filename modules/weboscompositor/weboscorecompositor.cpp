@@ -30,6 +30,7 @@
 
 #include "weboscorecompositor.h"
 #include "weboscompositorwindow.h"
+#include "webosforeign.h"
 #include "weboswindowmodel.h"
 #include "webosgroupedwindowmodel.h"
 #include "webossurfacemodel.h"
@@ -130,6 +131,7 @@ WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *
     , m_directRendering(false)
     , m_fullscreenTick(0)
     , m_surfaceGroupCompositor(0)
+    , m_foreign(nullptr)
     , m_unixSignalHandler(new UnixSignalHandler(this))
     , m_eventPreprocessor(new EventPreprocessor(this))
     , m_inputMethod(0)
@@ -1002,6 +1004,9 @@ void WebOSCoreCompositor::initializeExtensions(WebOSCoreCompositor::ExtensionFla
     if (extensions & WebOSCoreCompositor::SurfaceGroupExtension) {
         m_surfaceGroupCompositor = new WebOSSurfaceGroupCompositor(this);
     }
+
+    if (extensions & WebOSCoreCompositor::WebOSForeignExtension)
+        m_foreign = new WebOSForeign(this);
 }
 
 void WebOSCoreCompositor::initTestPluginLoader()

@@ -44,6 +44,7 @@ class WebOSInputManager;
 #ifdef MULTIINPUT_SUPPORT
 class WebOSInputDevice;
 #endif
+class WebOSForeign;
 /*!
  * \class WebOSCompositor class
  *
@@ -73,10 +74,10 @@ public:
     enum ExtensionFlag {
         NoExtensions = 0x00,
         SurfaceGroupExtension = 0x01,
+        WebOSForeignExtension = 0x02,
         // TODO: Change multinput from a config option to a flag to reduce ifdefs and
         // increase code readability
-
-        DefaultExtensions = SurfaceGroupExtension
+        DefaultExtensions = SurfaceGroupExtension | WebOSForeignExtension
     };
     Q_DECLARE_FLAGS(ExtensionFlags, ExtensionFlag)
 
@@ -255,6 +256,9 @@ private:
     quint32 m_fullscreenTick;
 
     WebOSSurfaceGroupCompositor* m_surfaceGroupCompositor;
+
+    WebOSForeign* m_foreign;
+
     UnixSignalHandler* m_unixSignalHandler;
 
     CompositorExtension *webOSWindowExtension();

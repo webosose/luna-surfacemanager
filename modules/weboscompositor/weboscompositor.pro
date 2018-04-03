@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2018 LG Electronics, Inc.
+# Copyright (c) 2014-2019 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -109,6 +109,9 @@ include(surfacegroup/surfacegroup.pri)
 
 INCLUDEPATH += webosseat/
 include(webosseat/webosseat.pri)
+
+INCLUDEPATH += foreign/
+include(foreign/webosforeign.pri)
 
 # The module specific defines are added the MODULE_DEFINES variable
 # this variable gets processed in qt_module_pris.prf and the content
