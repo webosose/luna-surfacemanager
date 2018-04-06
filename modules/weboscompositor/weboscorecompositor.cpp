@@ -544,6 +544,10 @@ void WebOSCoreCompositor::closeWindow(QVariant window, QJSValue payload)
         qWarning() << "called with null or not a surface, ignored.";
         return;
     }
+
+    item->deleteSnapShot();
+    item->setCardSnapShotFilePath(NULL);
+
     if (webOSWindowExtension()) {
         QJsonObject jsp = QJsonObject::fromVariantMap(payload.toVariant().toMap());
         webOSWindowExtension()->windowClose()->close(item, jsp);
