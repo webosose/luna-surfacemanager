@@ -26,13 +26,15 @@ HEADERS += compositorextension.h \
            compositorextensionplugin.h \
            compositorxinput.h \
            compositorxoutput.h \
-           compositorxpointer.h
+           compositorxpointer.h \
+           compositorwindowclose.h
 
 headers.files = compositorextension.h \
                 compositorextensionplugin.h \
                 compositorxinput.h \
                 compositorxoutput.h \
-                compositorxpointer.h
+                compositorxpointer.h \
+                compositorwindowclose.h
 
 CONFIG += create_pc create_prl no_install_prl
 

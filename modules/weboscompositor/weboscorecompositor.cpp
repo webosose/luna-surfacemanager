@@ -133,6 +133,7 @@ WebOSCoreCompositor::WebOSCoreCompositor(QQuickWindow *window, ExtensionFlags ex
     , m_unixSignalHandler(new UnixSignalHandler(this))
     , m_eventPreprocessor(new EventPreprocessor(this))
     , m_inputMethod(0)
+    , m_surfaceItemClosePolicy(QVariantMap())
 #ifdef MULTIINPUT_SUPPORT
     , m_lastMouseEventFrom(0)
 #endif
@@ -252,7 +253,10 @@ void WebOSCoreCompositor::setInputMethod(WebOSInputMethod* inputMethod)
 
 bool WebOSCoreCompositor::isMapped(WebOSSurfaceItem *item)
 {
-    return item->surface() && m_surfaces.contains(item);
+    if (webOSWindowExtension())
+        return item->surface() && m_surfaceModel->indexFromItem(item).isValid();
+    else
+        return item->surface() && m_surfaces.contains(item);
 }
 /*
  * update our internal model of mapped surface in response to wayland surfaces being mapped
@@ -286,11 +290,17 @@ void WebOSCoreCompositor::onSurfaceMapped() {
         //All mapped surface should have ItemStateNormal state.
         item->setItemState(WebOSSurfaceItem::ItemStateNormal);
 
-        // if item is still in m_surfaces after deleteProxyFor, it's not a proxy
-        // but a normal item
-        if (!m_surfaces.contains(item)) {
+        if (webOSWindowExtension()) {
             m_surfaceModel->surfaceMapped(item);
-            m_surfaces << item;
+            if (!m_surfaces.contains(item))
+                m_surfaces << item;
+        } else {
+            // if item is still in m_surfaces after deleteProxyFor, it's not a proxy
+            // but a normal item
+            if (!m_surfaces.contains(item)) {
+                m_surfaceModel->surfaceMapped(item);
+                m_surfaces << item;
+            }
         }
 
         qDebug() << item << "Items in compositor: " <<  getItems();
@@ -320,7 +330,8 @@ void WebOSCoreCompositor::onSurfaceUnmapped() {
         if (!item->isProxy()) {
             m_surfaceModel->surfaceUnmapped(item);
             emit surfaceUnmapped(item);
-            m_surfaces.removeOne(item);
+            if (!webOSWindowExtension())
+                m_surfaces.removeOne(item);
         } else {
             emit surfaceUnmapped(item); //We have to notify qml even for proxy item
         }
@@ -333,14 +344,19 @@ void WebOSCoreCompositor::onSurfaceDestroyed() {
 
     WebOSSurfaceItem* item = qobject_cast<WebOSSurfaceItem*>(surface->surfaceItem());
 
-    if (item) {
-        qInfo() << surface << item << item->appId() << item->itemState();
+    if (!item) {
+        qWarning() << "No item for surface" << surface;
+        return;
+    }
+
+    qInfo() << surface << item << item->appId() << item->itemState();
+
+    if (webOSWindowExtension()) {
+        closeSurfaceItemByPolicy(item);
+    } else {
         if (!item->isProxy()) {
-            m_surfaceModel->surfaceDestroyed(item);
-            emit surfaceDestroyed(item);
-            m_surfaces.removeOne(item);
             m_surfacesOnUpdate.removeOne(item);
-            delete item;
+            removeSurfaceItem(item, true);
         } else {
             emit surfaceDestroyed(item); //We have to notify qml even for proxy item
             // This means items will not use any graphic resource from related surface.
@@ -351,10 +367,10 @@ void WebOSCoreCompositor::onSurfaceDestroyed() {
             item->updateTexture();
             item->update();
         }
-    }
 
-    if (surface == m_fullscreenSurface)
-        setFullscreenSurface(NULL);
+        if (surface == m_fullscreenSurface)
+            setFullscreenSurface(NULL);
+    }
 }
 
 void WebOSCoreCompositor::frameSwappedSlot() {
@@ -433,6 +449,17 @@ void WebOSCoreCompositor::deleteProxyFor(WebOSSurfaceItem* newItem)
     }
 }
 
+void WebOSCoreCompositor::removeSurfaceItem(WebOSSurfaceItem* item, bool emitSurfaceDestroyed)
+{
+    PMTRACE_FUNCTION;
+
+    m_surfaceModel->surfaceDestroyed(item);
+    if (emitSurfaceDestroyed)
+        emit surfaceDestroyed(item);
+    m_surfaces.removeOne(item);
+    delete item;
+}
+
 WebOSSurfaceItem* WebOSCoreCompositor::fullscreen() const
 {
     return m_fullscreenSurface ? qobject_cast<WebOSSurfaceItem*>(m_fullscreenSurface->surfaceItem()) : NULL;
@@ -490,16 +517,21 @@ void WebOSCoreCompositor::closeWindow(QVariant window)
         qWarning() << "called with null or not a surface, ignored.";
         return;
     }
-    item->setItemState(WebOSSurfaceItem::ItemStateClosing);
-    if (item->surface() && item->surface()->client()) {
-        item->close();
+    if (webOSWindowExtension()) {
+        webOSWindowExtension()->windowClose()->close(item);
     } else {
-        m_surfaceModel->surfaceDestroyed(item);
-        m_surfaces.removeOne(item);
-        delete item;
+        item->setItemState(WebOSSurfaceItem::ItemStateClosing);
+        if (item->surface() && item->surface()->client()) {
+            item->close();
+        } else {
+            removeSurfaceItem(item, false);
+        }
     }
 }
 
+// NOTE: After Unified App Lifecycle Management,
+// This function may not be called anywhere.
+// However, we will remain this function to keep backward compatibility.
 void WebOSCoreCompositor::closeWindowKeepItem(QVariant window)
 {
     PMTRACE_FUNCTION;
@@ -508,11 +540,96 @@ void WebOSCoreCompositor::closeWindowKeepItem(QVariant window)
         qWarning() << "called with null or not a surface, ignored.";
         return;
     }
-    // Set as proxy unless marked as closing
-    if (item->itemState() != WebOSSurfaceItem::ItemStateClosing)
-        item->setItemState(WebOSSurfaceItem::ItemStateProxy);
-    if (item->surface() && item->surface()->client())
-        item->close();
+
+    if (webOSWindowExtension()) {
+        webOSWindowExtension()->windowClose()->close(item);
+    } else {
+        // Set as proxy unless marked as closing
+        if (item->itemState() != WebOSSurfaceItem::ItemStateClosing)
+            item->setItemState(WebOSSurfaceItem::ItemStateProxy);
+        if (item->surface() && item->surface()->client())
+            item->close();
+    }
+}
+
+CompositorExtension *WebOSCoreCompositor::webOSWindowExtension()
+{
+    return m_extensions.value("webos-window-extension");
+}
+
+bool WebOSCoreCompositor::checkSurfaceItemClosePolicy(const QString &reason, WebOSSurfaceItem *item)
+{
+    PMTRACE_FUNCTION;
+
+    QVariantMap itemClosePolicy = item->closePolicy();
+    if (itemClosePolicy.contains(reason))
+        return itemClosePolicy.value(reason).toBool();
+
+    return m_surfaceItemClosePolicy.value(reason).toBool();
+}
+
+WebOSSurfaceItem* WebOSCoreCompositor::getSurfaceItemByAppId(const QString& appId)
+{
+    QMutableListIterator<WebOSSurfaceItem*> si(m_surfaces);
+    while (si.hasNext()) {
+        WebOSSurfaceItem* item = si.next();
+        if (item->appId() == appId) {
+            return item;
+        }
+    }
+    return NULL;
+}
+
+void WebOSCoreCompositor::applySurfaceItemClosePolicy(const QString &reason, const QString &targetAppId)
+{
+    PMTRACE_FUNCTION;
+
+    if (reason.isNull() || reason.isEmpty()) {
+        qWarning() << "Closed reason does not valid: " << reason;
+        return;
+    }
+
+    WebOSSurfaceItem *item = getSurfaceItemByAppId(targetAppId);
+
+    if (!item) {
+        qDebug() << "The surface already unmapped: " << targetAppId;
+        return;
+    }
+
+    bool closeSurfaceItem = checkSurfaceItemClosePolicy(reason, item);
+    if (closeSurfaceItem)
+        item->setItemState(WebOSSurfaceItem::ItemStateClosing, reason);
+    else
+        item->setItemState(WebOSSurfaceItem::ItemStateProxy, reason);
+
+    closeSurfaceItemByPolicy(item);
+}
+
+void WebOSCoreCompositor::closeSurfaceItemByPolicy(WebOSSurfaceItem* item)
+{
+    //surface is not destoyed
+    //there is no action needed.
+    if (item->isSurfaced())
+        return;
+
+    // after surface is destroyed, do the following logic as its state
+    switch (item->itemState()) {
+        case WebOSSurfaceItem::ItemStateProxy:
+            //Before perform destroy, minization is required.
+            //It will be performed in S-LSM according to its state.
+            emit surfaceDestroyed(item);
+
+            /* This means items will not use any graphic resource from related surface.
+            / If there are more use case, the API should be moved to proper place.
+            / ex)If there are some dying animation for the item, this should be called at the end of the animation. */
+            item->releaseSurface();
+            break;
+        case WebOSSurfaceItem::ItemStateClosing:
+            removeSurfaceItem(item, true);
+            break;
+        default:
+            break;
+    }
 }
 
 void WebOSCoreCompositor::destroyClientForWindow(QVariant window) {
@@ -647,6 +764,14 @@ void WebOSCoreCompositor::setCursorVisible(bool visibility)
         m_cursorVisible = visibility;
         emit cursorVisibleChanged();
         static_cast<WebOSCompositorWindow *>(window())->setCursorVisible(visibility);
+    }
+}
+
+void WebOSCoreCompositor::setSurfaceItemClosePolicy(QVariantMap &surfaceItemClosePolicy)
+{
+    if (!surfaceItemClosePolicy.isEmpty() && m_surfaceItemClosePolicy != surfaceItemClosePolicy) {
+        m_surfaceItemClosePolicy = surfaceItemClosePolicy;
+        emit surfaceItemClosePolicyChanged();
     }
 }
 

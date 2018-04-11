@@ -65,6 +65,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCoreCompositor : public QObject, public QWayl
     Q_PROPERTY(WebOSInputMethod* inputMethod READ inputMethod NOTIFY inputMethodChanged)
     Q_PROPERTY(bool directRendering READ directRendering NOTIFY directRenderingChanged)
     Q_PROPERTY(bool cursorVisible READ cursorVisible NOTIFY cursorVisibleChanged) // deprecated
+    Q_PROPERTY(QVariantMap surfaceItemClosePolicy READ surfaceItemClosePolicy WRITE setSurfaceItemClosePolicy NOTIFY surfaceItemClosePolicyChanged)
 
     Q_PROPERTY(WebOSKeyFilter* keyFilter READ keyFilter WRITE setKeyFilter NOTIFY keyFilterChanged)
     Q_PROPERTY(WebOSSurfaceItem* activeSurface READ activeSurface NOTIFY activeSurfaceChanged)
@@ -113,6 +114,13 @@ public:
     bool cursorVisible() const { return m_cursorVisible; } // deprecated
     void setCursorVisible(bool visibility);
     Q_INVOKABLE void updateCursorFocus();
+
+    void applySurfaceItemClosePolicy(const QString &reason, const QString &targetAppId);
+
+    QVariantMap surfaceItemClosePolicy() { return m_surfaceItemClosePolicy; }
+    void setSurfaceItemClosePolicy(QVariantMap &surfaceItemClosePolicy);
+
+    void removeSurfaceItem(WebOSSurfaceItem* item, bool emitSurfaceDestroyed);
 
     //Notify which surface has pointer
     virtual void notifyPointerEnteredSurface(QWaylandSurface *surface);
@@ -188,6 +196,7 @@ signals:
 
     void cursorVisibleChanged(); // deprecated
     void mouseEventEnabledChanged();
+    void surfaceItemClosePolicyChanged();
 
     //Unix signals to QT signals;
     void reloadConfig(); //SIGHUP
@@ -215,6 +224,7 @@ private:
     /*! Holds the surfaces that have been mapped or are proxies */
     QList<WebOSSurfaceItem*> m_surfaces;
     QHash<QString, CompositorExtension *> m_extensions;
+    QVariantMap m_surfaceItemClosePolicy;
 
     bool m_cursorVisible; // deprecated
     bool m_mouseEventEnabled;
@@ -238,11 +248,17 @@ private:
 
     void setInputMethod(WebOSInputMethod* inputMethod);
 
+    bool checkSurfaceItemClosePolicy(const QString &reason, WebOSSurfaceItem *item);
+    void closeSurfaceItemByPolicy(WebOSSurfaceItem* item);
+    WebOSSurfaceItem* getSurfaceItemByAppId(const QString& appId);
+
     //Global tick counter to get absolute time stamp for recent window model and LRU surface
     quint32 m_fullscreenTick;
 
     WebOSSurfaceGroupCompositor* m_surfaceGroupCompositor;
     UnixSignalHandler* m_unixSignalHandler;
+
+    CompositorExtension *webOSWindowExtension();
 
     class EventPreprocessor : public QObject
     {

@@ -65,6 +65,8 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
         , m_surfaceGroup(0)
         , m_hasKeyboardFocus(false)
         , m_grabKeyboardFocusOnClick(true)
+        , m_closePolicy(QVariantMap())
+        , m_itemStateReason(QString())
 {
     if (surface) {
         connect(surface, SIGNAL(damaged(const QRegion &)), this, SLOT(onSurfaceDamaged(const QRegion &)));
@@ -679,17 +681,37 @@ WebOSSurfaceItem::KeyMasks WebOSSurfaceItem::keyMask() const
     return m_shellSurface ? m_shellSurface->keyMask() : KeyMaskDefault;
 }
 
-void WebOSSurfaceItem::setItemState(ItemState state)
+void WebOSSurfaceItem::setItemState(ItemState state, const QString &reason)
 {
     if (m_itemState != state) {
         m_itemState = state;
         emit itemStateChanged();
+
+        setItemStateReason(reason);
 
         // Emit datachange to WindowModel whenever SurfaceItem is closing
         // That affects all WindowModels, they can acts according to data change
         if (m_itemState == ItemStateClosing) {
             emit dataChanged();
         }
+    }
+}
+
+void WebOSSurfaceItem::setItemStateReason(const QString &reason)
+{
+    if (m_itemStateReason != reason) {
+        m_itemStateReason = reason;
+
+        emit itemStateReasonChanged();
+    }
+}
+
+void WebOSSurfaceItem::setClosePolicy(QVariantMap &policy)
+{
+    if (m_closePolicy != policy) {
+        m_closePolicy = policy;
+
+        emit closePolicyChanged();
     }
 }
 

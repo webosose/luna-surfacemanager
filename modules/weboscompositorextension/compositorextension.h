@@ -24,6 +24,7 @@
 #include "compositorxinput.h"
 #include "compositorxoutput.h"
 #include "compositorxpointer.h"
+#include "compositorwindowclose.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -41,9 +42,11 @@ public:
     virtual CompositorXInput *xInput() { return 0; }
     virtual CompositorXOutput *xOutput() { return 0; }
     virtual CompositorXPointer *xPointer() { return 0; }
+    virtual CompositorWindowClose *windowClose() { return 0; }
 
     virtual void handleHomeExposed() { }
     virtual void handleHomeUnexposed() { }
+
 private Q_SLOTS:
     void handleItemExposed(QString &);
     void handleItemUnexposed(QString &);

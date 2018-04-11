@@ -184,7 +184,7 @@ void WebOSSurfaceGroup::webos_surface_group_attach(Resource *resource, struct ::
     } else {
         qWarning("Layer '%s' does not exist in group '%s'", qPrintable(layer_name), qPrintable(m_name));
         //Send close instead of wl_resource_post_error to keep client
-        item->close();
+        m_groupCompositor->compositor()->closeWindow(QVariant::fromValue(item));
     }
 }
 
@@ -278,7 +278,7 @@ void WebOSSurfaceGroup::closeAttachedSurfaces()
     QList<WebOSSurfaceItem*> attachedItems = attachedClientSurfaceItems();
     foreach (WebOSSurfaceItem* i, attachedItems) {
         i->setItemState(WebOSSurfaceItem::ItemStateClosing);
-        i->close();
+        m_groupCompositor->compositor()->closeWindow(QVariant::fromValue(i));
     }
 }
 

@@ -73,6 +73,8 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandSurfaceItem
     Q_PROPERTY(LocationHints locationHint READ locationHint NOTIFY locationHintChanged)
     Q_PROPERTY(KeyMasks keyMask READ keyMask NOTIFY keyMaskChanged)
     Q_PROPERTY(ItemState itemState READ itemState WRITE setItemState NOTIFY itemStateChanged)
+    Q_PROPERTY(QString itemStateReason READ itemStateReason NOTIFY itemStateReasonChanged)
+    Q_PROPERTY(QVariantMap closePolicy READ closePolicy WRITE setClosePolicy NOTIFY closePolicyChanged RESET unsetClosePolicy)
 
     Q_PROPERTY(Qt::WindowState state READ state WRITE setState NOTIFY stateChanged)
     Q_PROPERTY(bool notifyPositionToClient READ notifyPositionToClient WRITE setNotifyPositionToClient NOTIFY notifyPositionToClientChanged)
@@ -139,6 +141,7 @@ public:
         ItemStateProxy,
         ItemStateClosing,
     };
+    Q_ENUM(ItemState)
 
     WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuickSurface* surface);
     ~WebOSSurfaceItem();
@@ -268,6 +271,21 @@ public:
      * Function to set subtitle for proxy item.
      */
     void setSubtitle(const QString &subtitle, bool updateProperty = true);
+
+    /*!
+     * Convenience function to return the close policy for this surface.
+     */
+    QVariantMap closePolicy() { return m_closePolicy; }
+
+    /*!
+     * Function to set close policy for this surface.
+     */
+    void setClosePolicy(QVariantMap &policy);
+
+    /*!
+     * Function to unset close policy for this surface.
+     */
+    void unsetClosePolicy() { m_closePolicy.clear(); }
 
     /*!
      * Convenience function to return the additional params(json text) for this surface.
@@ -401,7 +419,10 @@ public:
     void setLaunchRequired(bool required);
 
     ItemState itemState() { return m_itemState; }
-    void setItemState(ItemState state);
+    void setItemState(ItemState state, const QString &reason = QString());
+
+    QString itemStateReason() { return m_itemStateReason; }
+    void setItemStateReason(const QString &reason);
 
     WebOSSurfaceGroup* surfaceGroup() { return m_surfaceGroup; }
 
@@ -414,6 +435,8 @@ public:
     KeyMasks keyMaskFromQt(int key) const;
 
     bool isMapped();
+
+    void sendCloseToGroupItems();
 
     void setCursorSurface(QWaylandSurface *surface, int hotSpotX, int hotSpotY);
 
@@ -468,6 +491,8 @@ signals:
     void notifyPositionToClientChanged();
     void exposedChanged();
     void launchRequiredChanged();
+    void itemStateReasonChanged();
+    void closePolicyChanged();
 
     void surfaceGroupChanged();
 
@@ -495,6 +520,7 @@ private:
     QString m_backgroundColor;
     WebOSShellSurface* m_shellSurface;
     ItemState m_itemState;
+    QString m_itemStateReason;
 
     bool m_notifyPositionToClient;
 
@@ -513,7 +539,7 @@ private:
 
     WebOSSurfaceGroup* m_surfaceGroup;
 
-    void sendCloseToGroupItems();
+    QVariantMap m_closePolicy;
 
     bool getCursorFromSurface(QWaylandSurface *surface, int hotSpotX, int hotSpotY, QCursor& cursor);
 
