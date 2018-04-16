@@ -155,20 +155,29 @@ int main(int argc, char *argv[])
             delete compositorPluginLoader;
     }
 
+    // Figure out the primary screen name
+    int displays = qgetenv("WEBOS_COMPOSITOR_DISPLAYS").toInt();
+    QString primaryScreen;
+    if (displays > 1)
+        primaryScreen = qgetenv("WEBOS_COMPOSITOR_PRIMARY_SCREEN");
+    else
+        displays = 1; // we have a single display
+
     if (compositorWindow) {
         qInfo() << "Using the extended compositorWindow from the plugin" << compositorPluginName;
     } else {
         qInfo() << "Using WebOSCompositorWindow (default compositor window)";
-        compositorWindow = new WebOSCompositorWindow();
+        compositorWindow = new WebOSCompositorWindow(primaryScreen);
     }
 
     if (compositor) {
         qInfo() << "Using the extended compositor from the plugin" << compositorPluginName;
     } else {
         qInfo() << "Using WebOSCoreCompositor (default compositor)";
-        compositor = new WebOSCoreCompositor(compositorWindow, WebOSCoreCompositor::NoExtensions);
+        compositor = new WebOSCoreCompositor(WebOSCoreCompositor::NoExtensions);
     }
 
+    compositor->registerWindow(compositorWindow, "window-0");
     compositor->registerTypes();
 
     compositorWindow->engine()->addImportPath(QStringLiteral("qrc:/"));
@@ -189,6 +198,23 @@ int main(int argc, char *argv[])
     compositorWindow->installEventFilter(new EventFilter(compositor));
 
     compositorWindow->showWindow();
+
+    // Extra windows
+    if (displays > 1) {
+        qInfo() << "Initializing extra windows, expected" << displays - 1;
+        QList<WebOSCompositorWindow *> extraWindows = WebOSCompositorWindow::initializeExtraWindows(displays - 1);
+        for (int i = 0; i < extraWindows.size(); i++) {
+            WebOSCompositorWindow *extraWindow = extraWindows.at(i);
+            QString name = QString("window-%1").arg(i + 1);
+            compositor->registerWindow(extraWindow, name);
+            extraWindow->setCompositor(compositor);
+            extraWindow->showWindow();
+            qInfo() << "Initialized an extra window" << extraWindow << "bound to wayland display" << name;
+        }
+
+        // Focus the main window
+        compositorWindow->requestActivate();
+    }
 
     g_timeout_add(10000, (GSourceFunc)deferredDeleter, NULL);
 
