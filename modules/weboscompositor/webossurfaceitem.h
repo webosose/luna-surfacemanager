@@ -167,6 +167,16 @@ public:
     Q_INVOKABLE bool isSurfaced() const { return surface() && surface()->client(); }
 
     /*!
+     * Return whether the item is proxy or not.
+     */
+    Q_INVOKABLE bool isProxy() const { return m_itemState == ItemStateProxy; }
+
+    /*!
+     * Return whether the item is closing or not.
+     */
+    Q_INVOKABLE bool isClosing() const { return m_itemState == ItemStateClosing; }
+
+    /*!
      * Returns whether the surface is made fullscreen.
      */
     bool fullscreen() const;
