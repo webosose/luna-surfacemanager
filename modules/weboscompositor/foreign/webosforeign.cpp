@@ -14,6 +14,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include "avoutputd_communicator.h"
 #include "punchthroughelement.h"
 #include "weboscorecompositor.h"
 #include "weboscompositorwindow.h"
@@ -40,6 +41,20 @@ WebOSForeign::WebOSForeign(WebOSCoreCompositor* compositor)
     : QtWaylandServer::wl_webos_foreign(compositor->waylandDisplay(), WEBOSFOREIGN_VERSION)
     , m_compositor(compositor)
 {
+    if (m_compositor) {
+        AVOutputdCommunicator *pAVOutputdCommunicator = AVOutputdCommunicator::instance();
+        if (pAVOutputdCommunicator) {
+            WebOSCompositorWindow *pWebOSCompositorWindow = qobject_cast<WebOSCompositorWindow *>(compositor->window());
+            if (pWebOSCompositorWindow)
+                pWebOSCompositorWindow->rootContext()->setContextProperty(QLatin1String("avoutputdCommunicator"), pAVOutputdCommunicator);
+            else
+                qFatal("Failed to get the window instance");
+        } else {
+            qFatal("Failed to get AVOutputdCommunicator instance");
+        }
+    } else {
+        qFatal("Cannot constructed without a compositor instance");
+    }
 }
 
 void WebOSForeign::webos_foreign_export_element(Resource *resource,
@@ -129,6 +144,9 @@ void WebOSExported::webos_exported_set_exported_window(
                 qwlDestinationRegion.boundingRect().height());
         }
     }
+
+    AVOutputdCommunicator::instance()->setDisplayWindow(
+        m_sourceRect, m_destinationRect, QString("MAIN"));
 
     m_exportedItem->setX(m_destinationRect.x());
     m_exportedItem->setY(m_destinationRect.y());
