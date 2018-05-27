@@ -112,6 +112,18 @@ WebOSExported::WebOSExported(
     m_exportedItem->setWidth(m_destinationRect.width());
     m_exportedItem->setHeight(m_destinationRect.height());
     m_exportedItem->setClip(true);
+
+#if 0 // DEBUG
+    QUrl debugUIQml = QUrl(QString("file://") +
+                           QString(WEBOS_INSTALL_QML) +
+                           QString("/WebOSCompositorBase/views/debug/exportedItemDebug.qml"));
+    QQmlEngine* engine =
+        (static_cast<WebOSCompositorWindow *>(compositor->window()))->engine();
+    QQmlComponent component(engine, debugUIQml);
+    QQuickItem *object = qobject_cast<QQuickItem*>(component.create());
+    object->setParentItem(m_exportedItem);
+    engine->setObjectOwnership(object, QQmlEngine::CppOwnership);
+#endif
 }
 
 void WebOSExported::webos_exported_set_exported_window(
