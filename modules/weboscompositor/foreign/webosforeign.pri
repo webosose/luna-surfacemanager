@@ -14,6 +14,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+DEFINES += WEBOS_INSTALL_QML=\\\"$$WEBOS_INSTALL_QML\\\" \
+
 CONFIG += wayland-scanner compositor-private
 WAYLANDSERVERSOURCES += $$[QT_INSTALL_DATA]/wayland-webos/webos-foreign.xml
 
