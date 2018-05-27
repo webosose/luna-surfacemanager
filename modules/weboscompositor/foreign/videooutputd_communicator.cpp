@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019 LG Electronics, Inc.
+// Copyright (c) 2018 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,24 +16,24 @@
 
 #include <QCoreApplication>
 
-#include "avoutputd_communicator.h"
+#include "videooutputd_communicator.h"
 
-AVOutputdCommunicator* AVOutputdCommunicator::m_instance = nullptr;
+VideoOutputdCommunicator* VideoOutputdCommunicator::m_instance = nullptr;
 
-AVOutputdCommunicator::AVOutputdCommunicator(QObject *parent)
+VideoOutputdCommunicator::VideoOutputdCommunicator(QObject *parent)
     : QObject(parent)
 {
 }
 
-AVOutputdCommunicator* AVOutputdCommunicator::instance()
+VideoOutputdCommunicator* VideoOutputdCommunicator::instance()
 {
     if (m_instance == nullptr)
-        m_instance = new AVOutputdCommunicator(QCoreApplication::instance());
+        m_instance = new VideoOutputdCommunicator(QCoreApplication::instance());
 
     return m_instance;
 }
 
-void AVOutputdCommunicator::setDisplayWindow(QRect sourceRectangle, QRect destinationRectangle, QString sink)
+void VideoOutputdCommunicator::setDisplayWindow(QRect sourceRectangle, QRect destinationRectangle, QString sink)
 {
     emit setVideoDisplayWindowRequested(sourceRectangle, destinationRectangle, sink);
 }

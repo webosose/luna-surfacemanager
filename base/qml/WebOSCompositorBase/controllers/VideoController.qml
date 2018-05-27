@@ -23,9 +23,9 @@ Item {
     // TODO: Is this needed per display? See PLAT-85432.
 
     Connections {
-        target: avoutputdCommunicator
+        target: videooutputdCommunicator
         onSetVideoDisplayWindowRequested: {
-            // luna-send -n 1 -f luna://com.webos.service.avoutput/video/display/setDisplayWindow '{ \
+            // luna-send -n 1 -f luna://com.webos.service.videooutputd/video/display/setDisplayWindow '{ \
             //     "sourceInput":{"width":640,"height":360,"x":0,"y":0}, \
             //     "displayOutput":{"width":960,"height":540,"x":160,"y":0}, \
             //     "sink":"MAIN", \
@@ -50,7 +50,7 @@ Item {
                                     });
 
             console.warn("Calling setVideoDisplayWindow:", params);
-            LS.adhoc.call("luna://com.webos.service.avoutput", "/video/display/setDisplayWindow", params);
+            LS.adhoc.call("luna://com.webos.service.videooutput", "/video/display/setDisplayWindow", params);
         }
     }
 }

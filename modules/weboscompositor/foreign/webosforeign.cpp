@@ -14,7 +14,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include "avoutputd_communicator.h"
+#include "videooutputd_communicator.h"
 #include "punchthroughelement.h"
 #include "weboscorecompositor.h"
 #include "weboscompositorwindow.h"
@@ -109,15 +109,15 @@ WebOSForeign::WebOSForeign(WebOSCoreCompositor* compositor)
 void WebOSForeign::registeredWindow()
 {
     if (m_compositor) {
-        AVOutputdCommunicator *pAVOutputdCommunicator = AVOutputdCommunicator::instance();
-        if (pAVOutputdCommunicator) {
+        VideoOutputdCommunicator *pVideoOutputdCommunicator = VideoOutputdCommunicator::instance();
+        if (pVideoOutputdCommunicator) {
             WebOSCompositorWindow *pWebOSCompositorWindow = qobject_cast<WebOSCompositorWindow *>(m_compositor->window());
             if (pWebOSCompositorWindow)
-                pWebOSCompositorWindow->rootContext()->setContextProperty(QLatin1String("avoutputdCommunicator"), pAVOutputdCommunicator);
+                pWebOSCompositorWindow->rootContext()->setContextProperty(QLatin1String("videooutputdCommunicator"), pVideoOutputdCommunicator);
             else
                 qFatal("Failed to get the window instance");
         } else {
-            qFatal("Failed to get AVOutputdCommunicator instance");
+            qFatal("Failed to get VideoOutputdCommunicator instance");
         }
     } else {
         qFatal("Cannot constructed without a compositor instance");
@@ -239,7 +239,7 @@ void WebOSExported::webos_exported_set_exported_window(
     }
 
     if (m_foreign->m_compositor->window()) {
-        AVOutputdCommunicator::instance()->setDisplayWindow(
+        VideoOutputdCommunicator::instance()->setDisplayWindow(
             m_sourceRect, m_destinationRect, QString("MAIN"));
     }
 

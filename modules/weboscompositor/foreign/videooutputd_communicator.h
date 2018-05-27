@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2018 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,18 +14,18 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef AVOUTPUTD_COMMUNICATOR_H
-#define AVOUTPUTD_COMMUNICATOR_H
+#ifndef VIDEOOUTPUTD_COMMUNICATOR_H
+#define VIDEOOUTPUTD_COMMUNICATOR_H
 
 #include <QObject>
 #include <QRect>
 #include <QString>
 
-class AVOutputdCommunicator : public QObject
+class VideoOutputdCommunicator : public QObject
 {
     Q_OBJECT
 public:
-    static AVOutputdCommunicator* instance();
+    static VideoOutputdCommunicator* instance();
 
     void setDisplayWindow(QRect sourceRectangle, QRect destinationRectangle, QString sink = QString("MAIN"));
 
@@ -33,10 +33,10 @@ signals:
     void setVideoDisplayWindowRequested(const QRect sourceRectangle, const QRect destinationRectangle, const QString sink);
 
 protected:
-    AVOutputdCommunicator(QObject *parent = Q_NULLPTR);
+    VideoOutputdCommunicator(QObject *parent = Q_NULLPTR);
 
 private:
-    static AVOutputdCommunicator* m_instance;
+    static VideoOutputdCommunicator* m_instance;
 };
 
-#endif  //#ifndef AVOUTPUTD_COMMUNICATOR_H
+#endif  //#ifndef VIDEOOUTPUTD_COMMUNICATOR_H
