@@ -18,10 +18,12 @@ CONFIG += wayland-scanner compositor-private
 WAYLANDSERVERSOURCES += $$[QT_INSTALL_DATA]/wayland-webos/webos-foreign.xml
 
 SOURCES += \
-    $$PWD/webosforeign.cpp
+    $$PWD/webosforeign.cpp \
+    $$PWD/avoutputd_communicator.cpp
 
 HEADERS += \
     $$PWD/webosforeign.h \
-    $$PWD/punchthroughelement.h
+    $$PWD/punchthroughelement.h \
+    $$PWD/avoutputd_communicator.h
 
 INCLUDEPATH += $$PWD/../
