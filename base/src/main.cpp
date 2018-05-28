@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 LG Electronics, Inc.
+// Copyright (c) 2017-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
         qInfo() << "Using the extended compositor from the plugin" << compositorPluginName;
     } else {
         qInfo() << "Using WebOSCoreCompositor (default compositor)";
-        compositor = new WebOSCoreCompositor(WebOSCoreCompositor::NoExtensions);
+        compositor = new WebOSCoreCompositor(WebOSCoreCompositor::WebOSForeignExtension);
     }
 
     compositor->registerWindow(compositorWindow, "window-0");
