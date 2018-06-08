@@ -107,12 +107,7 @@ WebOSExported::WebOSExported(
     , m_exportedItem(new QQuickItem(surfaceItem))
     , m_exportedType(exportedType)
 {
-    m_exportedItem->setX(m_destinationRect.x());
-    m_exportedItem->setY(m_destinationRect.y());
-    m_exportedItem->setWidth(m_destinationRect.width());
-    m_exportedItem->setHeight(m_destinationRect.height());
     m_exportedItem->setClip(true);
-
 #if 0 // DEBUG
     QUrl debugUIQml = QUrl(QString("file://") +
                            QString(WEBOS_INSTALL_QML) +
@@ -164,6 +159,13 @@ void WebOSExported::webos_exported_set_exported_window(
     m_exportedItem->setY(m_destinationRect.y());
     m_exportedItem->setWidth(m_destinationRect.width());
     m_exportedItem->setHeight(m_destinationRect.height());
+
+    if (m_punchThroughItem) {
+        m_punchThroughItem->setWidth(m_exportedItem->width());
+        m_punchThroughItem->setHeight(m_exportedItem->height());
+    }
+
+    emit geometryChanged();
 }
 
 void WebOSExported::setPunchTrough()
@@ -220,6 +222,11 @@ WebOSImported::WebOSImported(WebOSExported* exported,
                                          WEBOSIMPORTED_VERSION)
     , m_exported(exported)
 {
+    connect(exported, &WebOSExported::geometryChanged,
+            this, &WebOSImported::updateGeometry);
+    if (exported && exported->m_destinationRect.isValid())
+        send_destination_region_changed(exported->m_destinationRect.width(),
+                                        exported->m_destinationRect.height());
 }
 
 WebOSImported::~WebOSImported()
@@ -233,6 +240,23 @@ WebOSImported::~WebOSImported()
         //When wl_exported deleted...
         wl_resource_destroy(resource->handle);
     }
+}
+
+void WebOSImported::updateGeometry()
+{
+    if (m_childSurface) {
+        switch (m_textureAlign) {
+        case WebOSImported::surface_alignment::surface_alignment_stretch:
+            disconnect(m_childSurface->surface(), &QWaylandSurface::sizeChanged, 0, 0);
+            m_childSurface->setWidth(m_exported->m_exportedItem->width());
+            m_childSurface->setHeight(m_exported->m_exportedItem->height());
+            break;
+        }
+        //TODO: handle other cases.
+    }
+
+    send_destination_region_changed(m_exported->m_exportedItem->width(),
+                                    m_exported->m_exportedItem->height());
 }
 
 void WebOSImported::webos_imported_attach_punchthrough(Resource* r)
@@ -268,5 +292,6 @@ void WebOSImported::webos_imported_attach_surface(
 
         m_childSurface = quickSurface->surfaceItem();
         m_exported->setParentOf(m_childSurface);
+        updateGeometry();  //Resize texture if needed.
     }
 }
