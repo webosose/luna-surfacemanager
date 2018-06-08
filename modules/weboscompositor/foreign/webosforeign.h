@@ -84,6 +84,9 @@ public:
     void assigneWindowId(QString windowId);
     void setParentOf(QWaylandSurfaceItem* surfaceItem);
 
+signals:
+    void geometryChanged();
+
 protected:
     virtual void webos_exported_destroy_resource(Resource *) override;
     virtual void webos_exported_set_exported_window(Resource *resource,
@@ -112,6 +115,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSImported :
 public:
     WebOSImported() = delete;
     ~WebOSImported();
+    void updateGeometry();
 
 protected:
     virtual void webos_imported_attach_punchthrough(Resource *) override;
@@ -124,6 +128,7 @@ private:
     WebOSExported* m_exported = nullptr;
     QWaylandSurfaceItem* m_childSurface = nullptr;
     bool m_punched = false;
+    enum surface_alignment m_textureAlign = surface_alignment::surface_alignment_stretch;
 
     friend class WebOSForeign;
 };
