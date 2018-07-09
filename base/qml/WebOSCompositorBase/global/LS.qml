@@ -39,7 +39,7 @@ QtObject {
 
         onConnectedChanged: {
             if (connected) {
-                subscribeAppLifeStatus();
+                subscribeAppLifeEvents();
                 subscribeApplicationList();
             }
         }

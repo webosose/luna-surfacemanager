@@ -114,26 +114,25 @@ Item {
 
     Connections {
         target: LS.applicationManager
-        onAppLifeStatusChanged: {
-            console.info(status, appId, extraInfo);
-            if (status === "launching") {
-                console.log("appInfo for " + appId + ": " + JSON.stringify(LS.applicationManager.appInfoList[appId]));
-                if (views.spinner && appId != null) {
+        onAppLifeEventsChanged: {
+            console.info(event, appId);
+            if (event === "splash") {
+                if (appId != null && (showSplash || showSpinner))
+                    views.spinner.start(appId);
+            } else if (event === "launch") {
+                //This part should be removed once "splash" event becomes available.
+                if (views.spinner && !views.spinner.isOpen && appId != null) {
                     var needSpinner = false;
-                    try {
-                        var extra = JSON.parse(extraInfo);
-                        if (!extra.noSplash || extra.spinner)
-                            needSpinner = true;
-                    } catch (e) {
-                        console.warn("extraInfo in getAppLifeStatus is absent, rely on appInfo instead");
-                        if (!LS.applicationManager.appInfoList[appId].noSplashOnLaunch ||
-                            LS.applicationManager.appInfoList[appId].spinnerOnLaunch)
-                            needSpinner = true;
+                    var foregroundItems = Utils.foregroundList(root.views.children);
+                    if (foregroundItems.length === 0) {
+                        needSpinner = true;
+                    } else if (foregroundItems[0].appId !== appId) {
+                        needSpinner = true;
                     }
                     if (needSpinner)
                         views.spinner.start(appId);
                 }
-            } else if (status === "stop") {
+            } else if (event === "stop") {
                 if (views.spinner && appId == views.spinner.appId)
                     views.spinner.closeView();
             }
