@@ -62,5 +62,23 @@ Item {
         return null;
     }
 
+    function foregroundList(viewList) {
+        var ret = [];
+        for (var i = 0; i < viewList.length; i++) {
+            if (viewList[i].hasForegroundItem == true) {
+                if (viewList[i].grouped == true && viewList[i].groupedItems) {
+                    for (var j = 0; j < viewList[i].groupedItems.length; j++) {
+                        ret.push(viewList[i].groupedItems[j]);
+                        console.log("Foreground item(in group) " + viewList[i].groupedItems[j].appId + " in " + viewList[i]);
+                    }
+                } else if (viewList[i].currentItem) {
+                    ret.push(viewList[i].currentItem);
+                    console.log("Foreground item " + viewList[i].currentItem.appId + " in " + viewList[i]);
+                }
+            }
+        }
+        return ret;
+    }
+
     Component.onCompleted: console.info("Constructed a singleton type:", root);
 }

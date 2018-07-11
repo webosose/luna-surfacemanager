@@ -32,7 +32,7 @@ Service {
     readonly property var defaultMethods: ["closeByAppId", "getForegroundAppInfo", "captureCompositorOutput"]
 
     readonly property ForegroundAppInfoMgr foregroundAppInfoMgr: ForegroundAppInfoMgr {
-        items: root.views.children
+        foregroundItems: Utils.foregroundList(root.views.children)
         onForegroundAppInfoChanged: {
             root.pushSubscription("getForegroundAppInfo");
         }

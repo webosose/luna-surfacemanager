@@ -19,28 +19,10 @@ import QtQuick 2.4
 QtObject {
     id: root
 
-    property var items
+    property bool init: false
+    property var foregroundItems
 
     signal foregroundAppInfoChanged
-
-    property bool init: false
-    property var foregroundItems: {
-        var ret = [];
-        for (var i = 0; i < root.items.length; i++) {
-            if (root.items[i].hasForegroundItem == true) {
-                if (root.items[i].grouped == true && root.items[i].groupedItems) {
-                    for (var j = 0; j < root.items[i].groupedItems.length; j++) {
-                        ret.push(root.items[i].groupedItems[j]);
-                        console.log("Foreground item(in group) " + root.items[i].groupedItems[j].appId + " in " + root.items[i]);
-                    }
-                } else if (root.items[i].currentItem) {
-                    ret.push(root.items[i].currentItem);
-                    console.log("Foreground item " + root.items[i].currentItem.appId + " in " + root.items[i]);
-                }
-            }
-        }
-        return ret;
-    }
 
     onForegroundItemsChanged: {
         if (!init) init = initialized();

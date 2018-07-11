@@ -20,7 +20,7 @@ import WebOSCompositorBase 1.0
 import "../../WebOSCompositor"
 
 FocusScope {
-    id: compositorRoot
+    id: root
     focus: true
 
     property alias fullscreen: fullscreenViewId
