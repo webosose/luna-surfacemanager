@@ -47,18 +47,29 @@ QtObject {
         onApplicationListChanged: {
             var res = JSON.parse(applicationList);
             if (res.apps) {
+                var newList = [];
                 // Make a hash table by appId
                 for (var i = 0; res.apps[i]; i++) {
                     if (res.apps[i].id)
-                        appInfoList[res.apps[i].id] = res.apps[i];
+                        newList[res.apps[i].id] = res.apps[i];
                 }
-            }
-            // "app" is returned when the information of an app has been installed/updated/removed.
-            if (res.app) {
-                if (res.change == "added" || res.change == "updated")
-                    appInfoList[res.app.id] = res.app;
-                if (res.change == "removed")
-                    appInfoList[res.app.id] = undefined;
+                appInfoList = newList;
+            } else if (res.app && res.change !== undefined) {
+                // "app" is returned for any change of an individual app
+                var newList = appInfoList;
+                switch (res.change) {
+                    case "added":
+                    case "updated":
+                        newList[res.app.id] = res.app;
+                        break;
+                    case "removed":
+                        newList[res.app.id] = undefined;
+                        break;
+                    default:
+                        console.warn("Unhandled response for listApps:", applicationList);
+                        return;
+                }
+                appInfoList = newList;
             }
         }
     }
