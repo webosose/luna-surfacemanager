@@ -15,6 +15,15 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+# PmLog
+PmLogCtl def surface-manager > /dev/null 2>&1
+# pmlog(<level>, <message>)
+pmlog() {
+    if [ ! -z "$1" -a ! -z "$2" ]; then
+        PmLogCtl logkv surface-manager "$1" LSM "category=\"startup\"" "$2" > /dev/null 2>&1
+    fi
+}
+
 # Default environments that can be overriden
 export QT_IM_MODULE=none
 export WEBOS_COMPOSITOR_PLATFORM=eglfs
@@ -22,10 +31,14 @@ export WEBOS_COMPOSITOR_PLATFORM=eglfs
 # Import product specific environment variables
 PRODUCT_ENVIRONMENT=@WEBOS_INSTALL_SYSCONFDIR@/surface-manager.d/product.env
 if [ -f ${PRODUCT_ENVIRONMENT} ]; then
+    pmlog info "Processing ${PRODUCT_ENVIRONMENT} for product specific environment variables."
     source ${PRODUCT_ENVIRONMENT}
+else
+    pmlog warning "Missing ${PRODUCT_ENVIRONMENT}. Use default values."
 fi
 
 # Compositor geometry
 export WEBOS_COMPOSITOR_GEOMETRY=$(luna-send -n 1 -a com.webos.surfacemanager luna://com.webos.service.config/getConfigs '{"configNames":["com.webos.surfacemanager.compositorGeometry"]}' | grep -oE "[0-9]+x[0-9]+[\+\-][0-9]+[\+\-][0-9]+r[0-9]+s[0-9]+\.?[0-9]*" || echo "1920x1080+0+0r0s1")
 
+pmlog info "Starting @WEBOS_INSTALL_BINS@/surface-manager with flags -platform ${WEBOS_COMPOSITOR_PLATFORM} ..."
 exec @WEBOS_INSTALL_BINS@/surface-manager -platform ${WEBOS_COMPOSITOR_PLATFORM}
