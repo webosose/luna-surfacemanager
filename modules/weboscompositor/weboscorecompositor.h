@@ -229,6 +229,8 @@ private:
 
     QList<WebOSSurfaceItem*> m_surfacesOnUpdate;
 
+    void checkWaylandSocket() const;
+
     void setCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY, WaylandClient *client);
 
     void deleteProxyFor(WebOSSurfaceItem* item);

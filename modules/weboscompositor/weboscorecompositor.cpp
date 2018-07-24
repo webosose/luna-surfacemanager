@@ -24,6 +24,7 @@
 #include <QQuickWindow>
 #include <QCoreApplication>
 #include <QFileInfo>
+#include <QDir>
 #include <QQmlComponent>
 #include <QProcess>
 
@@ -141,6 +142,9 @@ WebOSCoreCompositor::WebOSCoreCompositor(QQuickWindow *window, ExtensionFlags ex
 #endif
 {
     qInfo() << "LSM Starting... with flags" << compositorFlags;
+
+    checkWaylandSocket();
+
     //For QtWayland shell surface in 5.4
     addDefaultShell();
 
@@ -179,6 +183,30 @@ WebOSCoreCompositor::WebOSCoreCompositor(QQuickWindow *window, ExtensionFlags ex
 
 WebOSCoreCompositor::~WebOSCoreCompositor()
 {
+}
+
+void WebOSCoreCompositor::checkWaylandSocket() const
+{
+    QByteArray name(socketName());
+    // Similar logic as in wl_display_add_socket()
+    if (name.isEmpty()) {
+        name = qgetenv("WAYLAND_DISPLAY");
+        if (name.isEmpty())
+            name = "wayland-0";
+    }
+
+    QFileInfo sInfo(QString("%1/%2").arg(qgetenv("XDG_RUNTIME_DIR").constData()).arg(name.data()));
+    QFileInfo dInfo(sInfo.absoluteDir().absolutePath());
+    if (QFile::setPermissions(sInfo.absoluteFilePath(),
+                QFileDevice::ReadOwner | QFileDevice::WriteOwner |
+                QFileDevice::ReadGroup | QFileDevice::WriteGroup)) {
+        // TODO: Qt doesn't provide a method to chown at the moment
+        QString cmd = QString("/bin/chown %1:%2 %3").arg(dInfo.owner()).arg(dInfo.group()).arg(sInfo.absoluteFilePath());
+        qDebug() << "Setting ownership of" << sInfo.absoluteFilePath() << "by" << cmd;
+        QProcess::startDetached(cmd);
+    } else {
+        qCritical() << "Unable to set permission for" << sInfo.absoluteFilePath();
+    }
 }
 
 void WebOSCoreCompositor::registerTypes()
