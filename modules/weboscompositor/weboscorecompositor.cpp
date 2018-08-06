@@ -56,13 +56,9 @@
 // Need to access QtWayland::Keyboard::focusChanged
 #include <QtCompositor/private/qwlsurface_p.h>
 
-// This will disable the qt specific key extension protocol. All key events are sent either via the
-// text input protocol when editing or via wl_keyboard when not editing
-static QWaylandCompositor::ExtensionFlags compositorFlags = (
-                                                        QWaylandCompositor::WindowManagerExtension |
-                                                        QWaylandCompositor::OutputExtension |
-                                                        QWaylandCompositor::SurfaceExtension
-                                                    );
+// Specify qtwayland extensions as needed.
+// Refer to qwaylandcompositor.h for available extensions.
+static QWaylandCompositor::ExtensionFlags compositorFlags = 0;
 
 #ifdef USE_PMLOGLIB
 #include <PmLogLib.h>
