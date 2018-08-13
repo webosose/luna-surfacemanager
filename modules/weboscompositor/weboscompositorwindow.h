@@ -41,9 +41,10 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCompositorWindow : public QQuickView {
     Q_PROPERTY(bool cursorVisible READ cursorVisible NOTIFY cursorVisibleChanged)
 
 public:
-    WebOSCompositorWindow(QString geometryString = QString(), QSurfaceFormat *surfaceFormat = 0);
+    WebOSCompositorWindow(QString screenName = QString(), QString geometryString = QString(), QSurfaceFormat *surfaceFormat = 0);
     ~WebOSCompositorWindow();
 
+    static QList<WebOSCompositorWindow *> initializeExtraWindows(int count);
     static bool parseGeometryString(QString string, QRect &geometry, int &rotation, double &ratio);
 
     void setCompositor(WebOSCoreCompositor* compositor);
@@ -84,6 +85,8 @@ private:
 #ifdef USE_CONFIG
     WebOSCompositorConfig* m_config;
 #endif
+
+    QUrl m_main;
 
     QRect m_baseGeometry;
     QRect m_outputGeometry;

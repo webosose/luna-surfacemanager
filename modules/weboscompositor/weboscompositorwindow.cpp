@@ -20,6 +20,9 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include <QRegularExpression>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 #include <QDebug>
 
 #include "weboscompositorwindow.h"
@@ -28,7 +31,9 @@
 #include "weboscompositorconfig.h"
 #endif
 
-WebOSCompositorWindow::WebOSCompositorWindow(QString geometryString, QSurfaceFormat *surfaceFormat)
+#include <qpa/qplatformscreen.h>
+
+WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometryString, QSurfaceFormat *surfaceFormat)
     : QQuickView()
     , m_compositor(0)
     , m_baseGeometry(QRect(0, 0, 1920, 1080))
@@ -43,6 +48,25 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString geometryString, QSurfaceFor
     , m_outputGeometryPendingInterval(0)
     , m_cursorVisible(false)
 {
+    if (screenName.isEmpty()) {
+        setScreen(QGuiApplication::primaryScreen());
+        qInfo() << "Using the primary screen" << screen() << "for this window" << this;
+    } else {
+        QList<QScreen *> screens = QGuiApplication::screens();
+        qInfo() << "Screens:" << screens;
+        for (int i = 0; i < screens.count(); i++) {
+            if (screenName == screens.at(i)->handle()->name()) {
+                setScreen(screens.at(i));
+                qInfo() << "Setting a screen" << screen() << "for this window" << this;
+                break;
+            }
+        }
+        if (!screen()) {
+            setScreen(QGuiApplication::primaryScreen());
+            qWarning() << "No screen named as" << screenName << ", trying to use the primary screen" << screen() << "for this window" << this;
+        }
+    }
+
     if (surfaceFormat) {
         setFormat(*surfaceFormat);
     } else {
@@ -127,6 +151,53 @@ WebOSCompositorWindow::~WebOSCompositorWindow()
 #endif
 }
 
+QList<WebOSCompositorWindow *> WebOSCompositorWindow::initializeExtraWindows(int count)
+{
+    QList<WebOSCompositorWindow *> list;
+    if (!qEnvironmentVariableIsEmpty("WEBOS_COMPOSITOR_EXTRA_WINDOWS")) {
+        QJsonDocument doc = QJsonDocument::fromJson(qgetenv("WEBOS_COMPOSITOR_EXTRA_WINDOWS"));
+        if (doc.isArray()) {
+            if (count != doc.array().size())
+                qWarning() << "Expected" << count << "display(s) but" << doc.array().size() << "element(s) in WEBOS_COMPOSITOR_EXTRA_WINDOWS, setting up the minimum windows";
+            for (int i = 0; i < count && i < doc.array().size(); i++) {
+                QJsonObject obj = doc.array().at(i).toObject();
+                QString screenName = obj.value(QStringLiteral("screen")).toString();
+                if (screenName.isEmpty()) {
+                    qWarning() << "ExtraWindow: 'screen' is missing in an element of WEBOS_COMPOSITOR_EXTRA_WINDOWS, skipped";
+                    continue;
+                }
+                QString geometryString = obj.value(QStringLiteral("geometry")).toString();
+                if (geometryString.isEmpty()) {
+                    qWarning() << "ExtraWindow: 'geometry' is missing in an element of WEBOS_COMPOSITOR_EXTRA_WINDOWS, skipped";
+                    continue;
+                }
+                QString outputName = obj.value(QStringLiteral("output")).toString();
+                if (outputName.isEmpty()) {
+                    qWarning() << "ExtraWindow: 'output' is missing in an element of WEBOS_COMPOSITOR_EXTRA_WINDOWS, skipped";
+                    continue;
+                }
+                QString mainQml = obj.value(QStringLiteral("main")).toString();
+                if (mainQml.isEmpty()) {
+                    qWarning() << "ExtraWindow: 'main' is missing in an element of WEBOS_COMPOSITOR_EXTRA_WINDOWS, skipped";
+                    continue;
+                }
+                WebOSCompositorWindow *extraWindow = new WebOSCompositorWindow(screenName, geometryString);
+                if (extraWindow) {
+                    extraWindow->setCompositorMain(QUrl(mainQml));
+                    list.append(extraWindow);
+                    qInfo() << "ExtraWindow: an extra compositor window is added," << extraWindow << screenName << geometryString << outputName << mainQml;
+                } else {
+                    qWarning() << "ExtraWindow: could not instantiate an extra compositor window for" << screenName << geometryString << outputName << mainQml;
+                }
+            }
+        } else {
+            qWarning() << "ExtraWindow: WEBOS_COMPOSITOR_EXTRA_WINDOWS does not contain a JSON array";
+        }
+    }
+
+    return list;
+}
+
 bool WebOSCompositorWindow::parseGeometryString(QString string, QRect &geometry, int &rotation, double &ratio)
 {
     // Syntax: WIDTH[x]HEIGHT[+/-]X[+/-]Y[r]ROTATION[s]RATIO
@@ -167,11 +238,6 @@ void WebOSCompositorWindow::setCompositor(WebOSCoreCompositor* compositor)
 #ifdef USE_CONFIG
         rootContext()->setContextProperty(QLatin1String("config"), m_config->config());
 #endif
-
-        QString overridePath = QString::fromUtf8(qgetenv("WEBOS_COMPOSITOR_MAIN"));
-        if (!overridePath.isEmpty()) {
-            setCompositorMain(QUrl::fromLocalFile(overridePath));
-        }
     }
 }
 
@@ -179,14 +245,39 @@ bool WebOSCompositorWindow::setCompositorMain(const QUrl& main)
 {
     // Allow the source setting only once
     if (source().isValid()) {
-        qCritical() << this << "Trying to override current source";
+        qCritical() << "Trying to override current source for window" << this;
         return false;
     }
 
-    if (!m_compositor)
-        qWarning() << this << "No compositor assigned, assuming that it is loaded from QML";
+    if (!main.isEmpty()) {
+        m_main = main;
+        qInfo() << "Using main QML" << m_main << "for window" << this;
+    } else if (!qEnvironmentVariableIsEmpty("WEBOS_COMPOSITOR_MAIN")) {
+        m_main = QString(qgetenv("WEBOS_COMPOSITOR_MAIN"));
+        qInfo() << "Using main QML from WEBOS_COMPOSITOR_MAIN" << m_main << "for window" << this;
+    }
 
-    setSource(main);
+    if (!m_main.isValid()) {
+        qCritical() << this << "main QML" << m_main << "is not valid for window" << this;
+        return false;
+    }
+
+    if (m_compositor) {
+        setSource(m_main);
+        qInfo() << "Loaded main QML" << m_main << "for window" << this;
+    } else {
+        qWarning() << "No compositor assigned, will try to load" << m_main << "when showing the window" << this;
+    }
+
+    return true;
+}
+
+void WebOSCompositorWindow::showWindow()
+{
+    if (!source().isValid() && m_main.isValid()) {
+        qInfo() << "Try to load main QML again" << m_main << "for window" << this;
+        setSource(m_main);
+    }
 
     // Set the default cursor of the root item
     if (rootObject())
@@ -194,12 +285,7 @@ bool WebOSCompositorWindow::setCompositorMain(const QUrl& main)
     else
         qWarning() << this << "Root object is not set. Could not set the default cursor.";
 
-    return true;
-}
-
-void WebOSCompositorWindow::showWindow()
-{
-    qDebug() << this << "Showing compositor window";
+    qInfo() << "Showing compositor window" << this;
     show();
 }
 

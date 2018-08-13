@@ -138,7 +138,7 @@ WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *
     , m_lastMouseEventFrom(0)
 #endif
 {
-    qInfo() << "LSM Starting... with flags" << compositorFlags;
+    qInfo() << "Creating WebOSCoreCompositor with flags" << compositorFlags;
 
     checkWaylandSocket();
 
