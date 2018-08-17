@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 LG Electronics, Inc.
+// Copyright (c) 2014-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -240,7 +240,7 @@ private:
 
     void checkWaylandSocket() const;
 
-    void setCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY, WaylandClient *client);
+    void setCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY, wl_client *client) Q_DECL_OVERRIDE;
 
     void deleteProxyFor(WebOSSurfaceItem* item);
     void initializeExtensions(WebOSCoreCompositor::ExtensionFlags extensions);

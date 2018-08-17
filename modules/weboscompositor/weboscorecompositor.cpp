@@ -407,7 +407,7 @@ void WebOSCoreCompositor::frameSwappedSlot() {
     QWindow *window = qobject_cast<QWindow *>(sender());
     QList<QWaylandSurface *> ss;
     foreach (QWaylandSurface *s, surfaces())
-        if (s->output()->window() == window)
+        if (s->mainOutput()->window() == window)
             ss << s;
     sendFrameCallbacks(ss);
 }
@@ -751,6 +751,7 @@ void WebOSCoreCompositor::destroyClientForWindow(QVariant window) {
 
 bool WebOSCoreCompositor::getCursor(QWaylandSurface *surface, int hotSpotX, int hotSpotY, QCursor& cursor)
 {
+    Q_UNUSED(surface);
     // webOS specific cursor handling with reserved hotspot values
     // 1) 255: ArrowCursor
     // 2) 254: BlankCursor
@@ -764,17 +765,17 @@ bool WebOSCoreCompositor::getCursor(QWaylandSurface *surface, int hotSpotX, int 
     return false;
 }
 
-void WebOSCoreCompositor::setCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY, WaylandClient *client)
+void WebOSCoreCompositor::setCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY, wl_client *client)
 {
     PMTRACE_FUNCTION;
     if (surface) {
         QWaylandQuickSurface *qs = static_cast<QWaylandQuickSurface *>(surface);
-        disconnect(static_cast<QQuickWindow*>(qs->output()->window()), &QQuickWindow::beforeSynchronizing, qs, &QWaylandQuickSurface::updateTexture);
-        disconnect(static_cast<QQuickWindow*>(qs->output()->window()), &QQuickWindow::sceneGraphInvalidated, qs, &QWaylandQuickSurface::invalidateTexture);
+        disconnect(static_cast<QQuickWindow*>(qs->mainOutput()->window()), &QQuickWindow::beforeSynchronizing, qs, &QWaylandQuickSurface::updateTexture);
+        disconnect(static_cast<QQuickWindow*>(qs->mainOutput()->window()), &QQuickWindow::sceneGraphInvalidated, qs, &QWaylandQuickSurface::invalidateTexture);
     }
 
     foreach(WebOSSurfaceItem *item, m_surfaces) {
-        if (item->surface() && !item->surface()->handle()->isCursorSurface() && item->surface()->client() == client)
+        if (item->surface() && !item->surface()->handle()->isCursorSurface() && item->surface()->client()->client() == client)
             item->setCursorSurface(surface, hotspotX, hotspotY);
     }
 }

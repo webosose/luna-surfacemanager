@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@
 
 #include <qwaylandsurfaceitem.h>
 #include <qwaylandsurface.h>
+#include <qwaylandclient.h>
 #include <wayland-server.h>
 
 #include <sys/types.h>
@@ -342,7 +343,9 @@ public:
      */
     QString processId() {
         pid_t pid;
-        struct wl_client *client = surface() ? static_cast<struct wl_client *>(surface()->client()) : NULL;
+
+        // Look more info here: https://doc.qt.io/qt-5/qwaylandclient.html
+        struct wl_client *client = surface() ? surface()->client()->client() : NULL;
         if (client)
             wl_client_get_credentials(client, &pid, 0,0);
         else
