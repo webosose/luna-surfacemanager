@@ -17,6 +17,9 @@
 #ifndef WEBOSCOMPOSITORWINDOW_H
 #define WEBOSCOMPOSITORWINDOW_H
 
+
+#include <QtQuick/qquickitem.h>
+
 #include <WebOSCoreCompositor/weboscompositorexport.h>
 
 #include <QQmlEngine>
@@ -145,6 +148,11 @@ private:
 protected:
     virtual bool event(QEvent *) override;
     bool m_hasPageFlipNotifier = false;
+
+    /* QQuickWindow hasn't support tablet event yet, so WebOS implements it here.
+     * WebOSCompositorWindow should deliver tablet event
+     * to proper quick item(webossurfaceitem) on behalf of QQuickWindow. */
+    bool handleTabletEvent(QQuickItem* item, QTabletEvent *);
 
 signals:
     void outputGeometryChanged();

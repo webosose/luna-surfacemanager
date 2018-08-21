@@ -29,6 +29,9 @@
 
 #include <qpa/qplatformscreen.h>
 
+#include <private/qquickitem_p.h>
+#include <private/qquickwindow_p.h>
+
 #include "weboscompositorwindow.h"
 #include "weboscorecompositor.h"
 #include "webossurfaceitem.h"
@@ -941,6 +944,11 @@ bool WebOSCompositorWindow::event(QEvent *e)
             // First UpdateRequest, just fall through to start sync
         }
         break;
+    case QEvent::TabletPress:
+    case QEvent::TabletMove:
+    case QEvent::TabletRelease:
+        handleTabletEvent(QQuickWindowPrivate::get(this)->contentItem, static_cast<QTabletEvent *>(e));
+        return true;
     default:
         break;
     }
@@ -955,4 +963,40 @@ void WebOSCompositorWindow::onQmlError(const QList<QQmlError> &errors)
         qWarning() << *it;
     qWarning("=========================================");
     QCoreApplication::exit(1);
+}
+
+bool WebOSCompositorWindow::handleTabletEvent(QQuickItem* item, QTabletEvent* event)
+{
+    //The Algorithm finds top-most item that can handle tablet event.
+    //Main idea is borrowed from QQuickWindowPrivate::deliverHoverEvent().
+    QQuickItemPrivate *itemPrivate = QQuickItemPrivate::get(item);
+
+    if (itemPrivate->flags & QQuickItem::ItemClipsChildrenToShape) {
+        QPointF p = item->mapFromScene(event->posF());
+        if (!item->contains(p))
+            return false;
+    }
+
+    QList<QQuickItem *> children = itemPrivate->paintOrderChildItems();
+    for (int ii = children.count() - 1; ii >= 0; --ii) {
+        QQuickItem *child = children.at(ii);
+        if (!child->isVisible() || !child->isEnabled() || QQuickItemPrivate::get(child)->culled)
+            continue;
+        if (handleTabletEvent(child, event))
+            return true;
+    }
+
+    QPointF p = item->mapFromScene(event->posF());
+
+    if (item->contains(p) && item->hasActiveFocus() && itemPrivate->hoverEnabled) {
+        QTabletEvent ev(event->type(), p, p, event->device(), event->pointerType(),
+                        event->pressure(), event->xTilt(), event->yTilt(), event->tangentialPressure(),
+                        event->rotation(), event->z(), event->modifiers(), event->uniqueId(), event->button(), event->buttons());
+        ev.accept();
+        if (QCoreApplication::sendEvent(item, &ev)) {
+            event->accept();
+            return true;
+        }
+    }
+    return false;
 }

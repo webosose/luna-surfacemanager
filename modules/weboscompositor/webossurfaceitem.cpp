@@ -29,6 +29,9 @@
 #ifdef MULTIINPUT_SUPPORT
 #include "webosinputdevice.h"
 #endif
+
+#include "webostablet/webostablet.h"
+
 #include <QDateTime>
 #include <QQmlEngine>
 #include <QOpenGLTexture>
@@ -229,6 +232,24 @@ bool WebOSSurfaceItem::contains(const QPointF& point) const
 bool WebOSSurfaceItem::isMapped()
 {
     return m_compositor && m_compositor->isMapped(this);
+}
+
+bool WebOSSurfaceItem::event(QEvent* ev)
+{
+    switch (ev->type()) {
+    case QEvent::TabletMove:
+    case QEvent::TabletPress:
+    case QEvent::TabletRelease:
+        tabletEvent((QTabletEvent*)ev);
+        return true;
+    }
+    return QQuickItem::event(ev);
+}
+
+void WebOSSurfaceItem::tabletEvent(QTabletEvent* event)
+{
+    if (m_compositor->tabletDevice())
+        m_compositor->tabletDevice()->postTabletEvent(event, surface()->primaryView());
 }
 
 void WebOSSurfaceItem::hoverMoveEvent(QHoverEvent *event)

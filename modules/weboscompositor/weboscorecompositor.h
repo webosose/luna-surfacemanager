@@ -46,7 +46,10 @@ class WebOSInputManager;
 #ifdef MULTIINPUT_SUPPORT
 class WebOSInputDevice;
 #endif
+
 class WebOSForeign;
+class WebOSTablet;
+
 /*!
  * \class WebOSCoreCompositor class
  *
@@ -106,6 +109,8 @@ public:
     WebOSSurfaceModel* surfaceModel() const;
     WebOSInputMethod* inputMethod() const;
     WebOSInputManager* inputManager() { return m_inputManager; }
+
+    QSharedPointer<WebOSTablet> tabletDevice() { return m_webosTablet; }
 
     WebOSKeyFilter* keyFilter() { return m_keyFilter; }
 
@@ -321,6 +326,9 @@ private:
     WebOSInputDevice *m_inputDevicePreallocated;
     int m_lastMouseEventFrom;
 #endif
+
+    QSharedPointer<WebOSTablet> m_webosTablet;
+
     bool m_acquired;
     bool m_directRendering;
 

@@ -29,9 +29,11 @@
         "^qwayland-server-webos-surface-group.h",
         "^qwayland-server-webos-input-manager.h",
         "^qwayland-server-webos-foreign.h",
+        "^qwayland-server-webos-tablet.h",
         "^wayland-webos-input-manager-server-protocol.h",
         "^wayland-webos-surface-group-server-protocol.h",
         "^wayland-webos-foreign-server-protocol.h",
+        "^wayland-webos-tablet-server-protocol.h",
     ],
 );
 @private_headers = ( qr/^qwayland-.*\.h/, qr/^wayland-.*-protocol\.h/ );

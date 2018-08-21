@@ -117,6 +117,9 @@ include(webosseat/webosseat.pri)
 INCLUDEPATH += foreign/
 include(foreign/webosforeign.pri)
 
+INCLUDEPATH += webostablet/
+include(webostablet/webostablet.pri)
+
 # The module specific defines are added the MODULE_DEFINES variable
 # this variable gets processed in qt_module_pris.prf and the content
 # gets included into the resulting qt_lib_weboscompositor.pri

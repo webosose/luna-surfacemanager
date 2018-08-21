@@ -48,6 +48,7 @@
 #include "webosevent.h"
 #include "compositorextension.h"
 #include "compositorextensionfactory.h"
+#include "webostablet.h"
 
 #include "webossurfacegroupcompositor.h"
 #include "webosscreenshot.h"
@@ -270,6 +271,7 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
 #ifdef MULTIINPUT_SUPPORT
         m_inputDevicePreallocated = new WebOSInputDevice(this);
 #endif
+        m_webosTablet.reset(new WebOSTablet(this));
         // Set default state of Qt client windows to fullscreen
         QWaylandQtWindowManager *wmExtension = QWaylandQtWindowManager::findIn(this);
         if (wmExtension != nullptr)
@@ -1376,6 +1378,14 @@ bool WebOSCoreCompositor::EventPreprocessor::eventFilter(QObject *obj, QEvent *e
     }
 #endif
 
+    // These events are only sent to QGuiApp. So deliver these to all tablet client.
+
+    if (event->type() == QEvent::TabletEnterProximity ||
+        event->type() == QEvent::TabletEnterProximity) {
+        if (m_compositor->tabletDevice())
+            m_compositor->tabletDevice()->advertiseApproximation((QTabletEvent*)event);
+        eventAccepted = true;
+    }
     return eventAccepted;
 }
 
