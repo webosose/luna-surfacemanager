@@ -51,6 +51,7 @@ private:
     QList<Resource *> m_cursorVisibleClient;
 
 protected:
+    void webos_input_manager_set_cursor_visibility(Resource *resource, uint32_t visibility);
     void webos_input_manager_get_webos_seat(Resource *resource, uint32_t id, struct ::wl_resource *seat);
     void webos_input_manager_bind_resource(Resource *resource);
     void webos_input_manager_destroy_resource(Resource *resource);

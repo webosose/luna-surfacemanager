@@ -37,6 +37,9 @@ static void (*getDeviceInfoFunc)(uint32_t devId, QString &devName,
 /* Native function pointer to set keyboard grabbed status */
 static void (*setGrabStatusFunc)(uint32_t devId, bool grabbed);
 
+/* Native function to set cursor visibility */
+static void (*setCursorVisibilityFunc)(QScreen* screen, bool visibility);
+
 WebOSInputManager::WebOSInputManager(WebOSCoreCompositor* compositor)
     : QtWaylandServer::wl_webos_input_manager(compositor->waylandDisplay(), WEBOSINPUTMANAGER_VERSION)
     , m_compositor(compositor)
@@ -49,6 +52,9 @@ WebOSInputManager::WebOSInputManager(WebOSCoreCompositor* compositor)
     setGrabStatusFunc = (void(*)(uint32_t, bool))
                         m_nativeInterface->nativeResourceForScreen("setGrabStatusFunc",
                         (static_cast<QWaylandCompositor*>(m_compositor))->window()->screen());
+    setCursorVisibilityFunc = (void(*)(QScreen*, bool))
+                              m_nativeInterface->nativeResourceForScreen("setCursorVisibilityFunc",
+                              (static_cast<QWaylandCompositor*>(m_compositor))->window()->screen());
 }
 
 WebOSInputDevice* WebOSInputManager::findWebOSInputDevice(QtWaylandServer::wl_seat *seat)
@@ -88,6 +94,17 @@ void WebOSInputManager::setGrabStatus(int deviceId, bool grabbed)
 {
     if (setGrabStatusFunc)
         setGrabStatusFunc(deviceId, grabbed);
+}
+
+void WebOSInputManager::webos_input_manager_set_cursor_visibility(Resource *resource, uint32_t visibility)
+{
+    Q_UNUSED(resource);
+
+    if (m_compositor->cursorVisible() == visibility)
+        return;
+
+    if (setCursorVisibilityFunc)
+        setCursorVisibilityFunc(static_cast<QWaylandCompositor*>(m_compositor)->window()->screen(), visibility);
 }
 
 void WebOSInputManager::webos_input_manager_get_webos_seat(Resource *resource,
