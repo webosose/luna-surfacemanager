@@ -80,7 +80,7 @@ SurfaceView {
         function checkFullscreen(item) {
             if (!item.isProxy() && !item.isPartOfGroup() &&
                 (item.type == "_WEBOS_WINDOW_TYPE_CARD" || item.type == "_WEBOS_WINDOW_TYPE_RESTRICTED")) {
-                console.log("item: " + item + ", currently " + views.fullscreen.currentItem);
+                console.log("item: " + item + ", currently " + currentItem);
 
                 // Fullscreen surface item transition sequence
                 //  1) State change for currentItem to minimized
