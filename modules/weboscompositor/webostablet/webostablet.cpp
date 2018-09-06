@@ -37,7 +37,8 @@ bool WebOSTablet::postTabletEvent(QTabletEvent* event, QWaylandView* view)
     wl_client* client = view->surface()->waylandClient();
     Resource* target = resourceMap().contains(client) ? resourceMap().value(client) : nullptr;
     if (target) {
-        send_tablet_event(target->handle, event->uniqueId(), event->pointerType(), event->buttons(),
+        const QByteArray& uniqueIdArray = QByteArray::number(event->uniqueId());
+        send_tablet_event(target->handle, uniqueIdArray, event->pointerType(), event->buttons(),
                       wl_fixed_from_double(event->globalPosF().x()),
                       wl_fixed_from_double(event->globalPosF().y()),
                       event->xTilt(), event->yTilt(),
@@ -50,6 +51,7 @@ bool WebOSTablet::postTabletEvent(QTabletEvent* event, QWaylandView* view)
 
 void WebOSTablet::advertiseApproximation(QTabletEvent* event)
 {
+    const QByteArray& uniqueIdArray = QByteArray::number(event->uniqueId());
     foreach (const Resource* res, resourceMap().values())
-        send_tablet_event(res->handle, event->uniqueId(), event->pointerType(), 0, 0, 0, 0, 0, 0, 0);
+        send_tablet_event(res->handle, uniqueIdArray, event->pointerType(), 0, 0, 0, 0, 0, 0, 0);
 }
