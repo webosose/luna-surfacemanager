@@ -50,7 +50,7 @@ SurfaceView {
             root.releaseFocus();
             root.closeView();
         }
-        item.close();
+        item.parent = null;
     }
 
     Connections {
