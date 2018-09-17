@@ -36,7 +36,9 @@ const struct text_model_interface WaylandTextModel::textModelImplementation = {
     WaylandTextModel::textModelSetMaxTextLength,
     WaylandTextModel::textModelSetPlatformData,
     WaylandTextModel::textModelShowInputPanel,
-    WaylandTextModel::textModelHideInputPanel
+    WaylandTextModel::textModelHideInputPanel,
+    WaylandTextModel::textModelSetInputPanelRect,
+    WaylandTextModel::textModelResetInputPanelRect,
 };
 
 WaylandTextModel::WaylandTextModel(WaylandInputMethod* inputMethod, struct wl_client *client, struct wl_resource *resource, uint32_t id)
@@ -227,9 +229,24 @@ void WaylandTextModel::textModelHideInputPanel(struct wl_client *client, struct 
 {
 }
 
+void WaylandTextModel::textModelSetInputPanelRect(struct wl_client *client, struct wl_resource *resource, int32_t x, int32_t y, uint32_t width, uint32_t height)
+{
+    WaylandTextModel* that = static_cast<WaylandTextModel*>(resource->data);
+    QRect requestedGeometry(x, y, width, height);
+    that->m_inputMethod->setPreferredPanelRect(requestedGeometry);
+    qDebug() << "Client request InputPanelRect:" << requestedGeometry;
+}
+
+void WaylandTextModel::textModelResetInputPanelRect(struct wl_client *client, struct wl_resource *resource)
+{
+    WaylandTextModel* that = static_cast<WaylandTextModel*>(resource->data);
+    that->m_inputMethod->resetPreferredPanelRect();
+}
+
 void WaylandTextModel::destroyTextModel(struct wl_resource *resource)
 {
     WaylandTextModel* that = static_cast<WaylandTextModel*>(resource->data);
+    that->m_inputMethod->resetPreferredPanelRect();
     that->m_active = false;
     emit that->destroyed();
     delete that;

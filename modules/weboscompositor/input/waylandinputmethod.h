@@ -18,6 +18,7 @@
 #define WAYLANDINPUTMETHOD_H
 
 #include <QObject>
+#include <QRect>
 
 #include <wayland-server.h>
 #include <wayland-input-method-server-protocol.h>
@@ -38,6 +39,11 @@ class WaylandInputMethod : public QObject {
     Q_PROPERTY(bool active READ active)
     Q_PROPERTY(bool allowed READ allowed WRITE setAllowed NOTIFY allowedChanged)
 
+    Q_PROPERTY(QRect panelRect READ panelRect WRITE setPanelRect NOTIFY panelRectChanged)
+    Q_PROPERTY(QSize panelSurfaceSize READ panelSurfaceSize NOTIFY panelSurfaceSizeChanged)
+    Q_PROPERTY(QRect preferredPanelRect READ preferredPanelRect NOTIFY preferredPanelRectChanged)
+    Q_PROPERTY(bool hasPreferredPanelRect READ hasPreferredPanelRect NOTIFY hasPreferredPanelRectChanged)
+
 public:
     WaylandInputMethod(QWaylandCompositor* compositor);
     ~WaylandInputMethod();
@@ -53,6 +59,16 @@ public:
     bool allowed() const { return m_allowed; };
     void setAllowed(bool allowed);
 
+    QRect panelRect() const;
+    void setPanelRect(const QRect& rect);
+
+    QSize panelSurfaceSize() const;
+
+    QRect preferredPanelRect() const { return m_preferredPanelRect; }
+    void setPreferredPanelRect(const QRect& rect);
+    void resetPreferredPanelRect();
+    bool hasPreferredPanelRect() const { return m_hasPreferredPanelRect; }
+
 public slots:
     void deactivate();
 
@@ -67,7 +83,13 @@ signals:
 
     void allowedChanged();
 
+    void panelRectChanged();
+    void panelSurfaceSizeChanged();
+    void preferredPanelRectChanged();
+    void hasPreferredPanelRectChanged();
+
 private:
+    void setHasPreferredPanelRect(const bool flag);
 
     QWaylandCompositor* m_compositor;
     WaylandTextModelFactory* m_factory;
@@ -75,6 +97,8 @@ private:
 
     WaylandInputMethodContext* m_activeContext;
     WaylandInputPanel* m_inputPanel;
+    QRect m_preferredPanelRect;
+    bool m_hasPreferredPanelRect;
     WaylandInputMethodManager* m_inputMethodManager;
     bool m_allowed;
 };

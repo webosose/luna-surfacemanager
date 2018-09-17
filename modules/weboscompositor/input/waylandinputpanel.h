@@ -83,19 +83,25 @@ public:
 
     static const struct input_panel_interface inputPanelImplementation;
 
-    WaylandInputPanelSurface* activePanelSurface() { return m_activeSurface; }
+    QRect inputPanelRect() const { return m_rect; }
+    void setInputPanelRect(const QRect& rect);
+    QSize inputPanelSurfaceSize() const;
 
 signals:
-    void inputPanelStateChanged(InputPanelState state);
-    void inputPanelSizeChanged(const QRect &rect);
+    void reportPanelState(InputPanelState state);
+    void reportPanelRect(const QRect& rect);
+    void inputPanelRectChanged(const QRect& rect);
+    void inputPanelSurfaceSizeChanged(const QSize& size);
 
 private slots:
-    void onInputPanelMapped();
-    void onInputPanelUnmapped();
+    void onInputPanelSurfaceMapped();
+    void onInputPanelSurfaceUnmapped();
+    void updateInputPanelSurfaceSize();
     void updateInputPanelState();
 
 private:
     void updateActiveInputPanelSurface(WaylandInputPanelSurface *surface = 0);
+    void setInputPanelSurfaceSize(const QSize& size);
 
     QWaylandCompositor* m_compositor;
     wl_resource* m_resource;
@@ -104,6 +110,7 @@ private:
 
     InputPanelState m_state;
     QRect m_rect;
+    QSize m_inputPanelSurfaceSize;
 };
 
 #endif //WAYLANDINPUTPANEL_H

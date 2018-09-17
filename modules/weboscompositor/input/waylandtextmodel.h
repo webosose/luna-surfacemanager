@@ -59,7 +59,8 @@ public:
     static void textModelSetPlatformData(struct wl_client *client, struct wl_resource *resource, const char *text);
     static void textModelShowInputPanel(struct wl_client *client, struct wl_resource *resource);
     static void textModelHideInputPanel(struct wl_client *client, struct wl_resource *resource);
-
+    static void textModelSetInputPanelRect(struct wl_client *client, struct wl_resource *resource, int32_t x, int32_t y, uint32_t width, uint32_t height);
+    static void textModelResetInputPanelRect(struct wl_client *client, struct wl_resource *resource);
 
     static void destroyTextModel(struct wl_resource *resource);
 

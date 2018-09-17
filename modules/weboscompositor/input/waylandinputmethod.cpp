@@ -32,6 +32,7 @@ WaylandInputMethod::WaylandInputMethod(QWaylandCompositor* compositor)
     , m_resource(0)
     , m_activeContext(0)
     , m_inputPanel(0)
+    , m_hasPreferredPanelRect(false)
     , m_inputMethodManager(0)
     , m_allowed(true)
 {
@@ -41,8 +42,9 @@ WaylandInputMethod::WaylandInputMethod(QWaylandCompositor* compositor)
     m_inputPanel = new WaylandInputPanel(compositor);
     m_inputMethodManager = new WaylandInputMethodManager(this);
 
-    connect(this, SIGNAL(inputMethodBound(bool)), m_inputMethodManager, SLOT(onInputMethodAvaliable(bool)), Qt::QueuedConnection);
-
+    connect(m_inputPanel, &WaylandInputPanel::inputPanelRectChanged, this, &WaylandInputMethod::panelRectChanged);
+    connect(m_inputPanel, &WaylandInputPanel::inputPanelSurfaceSizeChanged, this, &WaylandInputMethod::panelSurfaceSizeChanged);
+    connect(this, &WaylandInputMethod::inputMethodBound, m_inputMethodManager, &WaylandInputMethodManager::onInputMethodAvaliable, Qt::QueuedConnection);
 }
 
 WaylandInputMethod::~WaylandInputMethod()
@@ -111,5 +113,54 @@ void WaylandInputMethod::setAllowed(bool allowed)
 
         if (!m_allowed)
             deactivate();
+    }
+}
+
+QRect WaylandInputMethod::panelRect() const
+{
+    if (m_inputPanel)
+        return m_inputPanel->inputPanelRect();
+
+    qWarning() << "No input panel created, panel rect is empty";
+    return QRect();
+}
+
+void WaylandInputMethod::setPanelRect(const QRect& rect)
+{
+    if (m_inputPanel)
+        m_inputPanel->setInputPanelRect(rect);
+    else
+        qWarning() << "No input panel created, unable to set panel rect";
+}
+
+QSize WaylandInputMethod::panelSurfaceSize() const
+{
+    if (m_inputPanel)
+        return m_inputPanel->inputPanelSurfaceSize();
+
+    qWarning() << "No active panel surface, surface size is empty";
+    return QSize();
+}
+
+void WaylandInputMethod::setPreferredPanelRect(const QRect& rect)
+{
+    if (m_preferredPanelRect != rect) {
+        m_preferredPanelRect = rect;
+        emit preferredPanelRectChanged();
+        setHasPreferredPanelRect(true);
+    }
+}
+
+void WaylandInputMethod::resetPreferredPanelRect()
+{
+    setHasPreferredPanelRect(false);
+    m_preferredPanelRect.setRect(0, 0, 0, 0);
+}
+
+void WaylandInputMethod::setHasPreferredPanelRect(const bool flag)
+{
+    if (m_hasPreferredPanelRect != flag) {
+        m_hasPreferredPanelRect = flag;
+        emit hasPreferredPanelRectChanged();
     }
 }

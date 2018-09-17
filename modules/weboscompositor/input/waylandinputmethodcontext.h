@@ -83,7 +83,7 @@ public slots:
     void modifiers(uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group) Q_DECL_OVERRIDE;
 
     void updatePanelState(const WaylandInputPanel::InputPanelState state) const;
-    void updatePanelSize(const QRect &rect) const;
+    void updatePanelRect(const QRect& rect) const;
     void continueTextModelActivation();
 
 Q_SIGNALS:

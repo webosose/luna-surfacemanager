@@ -79,10 +79,10 @@ WaylandInputMethodContext::WaylandInputMethodContext(WaylandInputMethod* inputMe
     connect(model, SIGNAL(maxTextLengthChanged(uint32_t)), this, SLOT(maxTextLengthTextModel(uint32_t)));
     connect(model, SIGNAL(platformDataChanged(const QString&)), this, SLOT(platformDataModel(const QString&)));
 
-    connect(m_inputMethod->inputPanel(), &WaylandInputPanel::inputPanelStateChanged,
+    connect(m_inputMethod->inputPanel(), &WaylandInputPanel::reportPanelState,
             this, &WaylandInputMethodContext::updatePanelState);
-    connect(m_inputMethod->inputPanel(), &WaylandInputPanel::inputPanelSizeChanged,
-            this, &WaylandInputMethodContext::updatePanelSize);
+    connect(m_inputMethod->inputPanel(), &WaylandInputPanel::reportPanelRect,
+            this, &WaylandInputMethodContext::updatePanelRect);
 }
 
 void WaylandInputMethodContext::destroyInputMethodContext(struct wl_resource* resource)
@@ -270,7 +270,7 @@ void WaylandInputMethodContext::updatePanelState(const WaylandInputPanel::InputP
     m_textModel->sendInputPanelState(state);
 }
 
-void WaylandInputMethodContext::updatePanelSize(const QRect &rect) const
+void WaylandInputMethodContext::updatePanelRect(const QRect& rect) const
 {
     if (!m_textModel)
         return;
