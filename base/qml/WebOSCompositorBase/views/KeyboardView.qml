@@ -23,18 +23,63 @@ import "../../WebOSCompositor"
 BaseView {
     id: root
 
-    width: currentItem ? currentItem.width : 0
-    height: currentItem ? currentItem.height : 0
-    anchors.bottom: root.parent.bottom
-    anchors.bottomMargin: -root.height
-
     property WindowModel model
     property Item currentItem: null
     property bool allowed: root.access
+    property bool reopen: false
+
+    x: compositor.inputMethod.panelRect.x
+    y: compositor.inputMethod.panelRect.y
+    width: compositor.inputMethod.panelRect.width
+    height: compositor.inputMethod.panelRect.height
+    clip: compositor.inputMethod.hasPreferredPanelRect
 
     Binding {
-        target: compositor
-        property: "inputMethod.allowed"
+        target: compositor.inputMethod
+        property: "panelRect"
+        value: if (compositor.inputMethod.hasPreferredPanelRect) {
+            // Floating
+            compositor.inputMethod.preferredPanelRect
+        } else if (compositor.inputMethod.panelSurfaceSize.height > 0) {
+            // Anchored at bottom, depending on panel surface size
+            Qt.rect(
+                0,
+                root.parent.height - compositor.inputMethod.panelSurfaceSize.height,
+                root.parent.width,
+                compositor.inputMethod.panelSurfaceSize.height
+            )
+        } else {
+            // Default
+            Qt.rect(
+                0,
+                root.parent.height - Settings.local.keyboardView.height,
+                root.parent.width,
+                Settings.local.keyboardView.height
+            )
+        }
+    }
+
+    Connections {
+        target: compositor.inputMethod
+        onPanelRectChanged: {
+            root.reopenView();
+        }
+        onHasPreferredPanelRectChanged: {
+            root.reopenView();
+        }
+    }
+
+    Item {
+        id: keyboardArea
+        width: root.width
+        height: root.height
+        anchors.bottom: root.bottom
+        anchors.bottomMargin: -height
+    }
+
+    Binding {
+        target: compositor.inputMethod
+        property: "allowed"
         value: root.allowed
     }
 
@@ -44,7 +89,11 @@ BaseView {
         onSurfaceAdded: {
             console.log("Adding item " + item + " to " + root);
             if (root.access) {
-                item.parent = root;
+                item.parent = keyboardArea;
+                // Scale while preserving aspect ratio
+                item.x = Qt.binding(function() { return Utils.center(keyboardArea.width, item.width); });
+                item.y = Qt.binding(function() { return Utils.center(keyboardArea.height, item.height); });
+                item.scale = Qt.binding(function() { return Math.min(keyboardArea.width / item.width, keyboardArea.height / item.height); });
                 item.visible = true;
                 item.opacity = 0.999;
                 item.useTextureAlpha = true;
@@ -80,7 +129,7 @@ BaseView {
 
     openAnimation: SequentialAnimation {
         PropertyAnimation {
-            target: root
+            target: keyboardArea
             property: "anchors.bottomMargin"
             to: 0
             duration: Settings.local.keyboardView.openAnimationDuration
@@ -90,19 +139,39 @@ BaseView {
 
     closeAnimation: SequentialAnimation {
         PropertyAnimation {
-            target: root
+            target: keyboardArea
             property: "anchors.bottomMargin"
-            to: -root.height
-            duration: Settings.local.keyboardView.openAnimationDuration
+            to: -keyboardArea.height
+            duration: 0
             easing.type: Easing.InOutCubic
+        }
+        PauseAnimation {
+            // Pause in the middle of re-opening to avoid keyboards in different sizes shown momentarily
+            duration: root.reopen ? 500 : 0
         }
     }
 
     onClosed: {
+        if (root.reopen) {
+            root.reopen = false;
+            if (compositor.inputMethod.active)
+                root.openView();
+            else
+                console.warn("Abort re-opening as the input method appears to be inactive.")
+            return;
+        }
         if (root.model.count > 0) {
             // Deactivate the input method context as it must be the case
             // that someone else wants to close this view.
             compositor.inputMethod.deactivate();
+        }
+    }
+
+    function reopenView() {
+        if (isOpen) {
+            console.log("Re-opening view:", root);
+            root.reopen = true;
+            root.closeView();
         }
     }
 }

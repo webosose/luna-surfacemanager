@@ -56,6 +56,7 @@ QtObject {
             "pinBoxDotFocused": imagePath + "pinprompt_box_dot_f.png"
         },
         "keyboardView": {
+            "height": 324,
             "openAnimationDuration": 500
         },
         "launcher": {
