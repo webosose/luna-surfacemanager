@@ -240,16 +240,17 @@ bool WebOSSurfaceItem::event(QEvent* ev)
     case QEvent::TabletMove:
     case QEvent::TabletPress:
     case QEvent::TabletRelease:
-        tabletEvent((QTabletEvent*)ev);
-        return true;
+        return tabletEvent((QTabletEvent*)ev);
     }
     return QQuickItem::event(ev);
 }
 
-void WebOSSurfaceItem::tabletEvent(QTabletEvent* event)
+bool WebOSSurfaceItem::tabletEvent(QTabletEvent* event)
 {
     if (m_compositor->tabletDevice())
-        m_compositor->tabletDevice()->postTabletEvent(event, surface()->primaryView());
+        return m_compositor->tabletDevice()->postTabletEvent(event, surface()->primaryView());
+    else
+        return false;
 }
 
 void WebOSSurfaceItem::hoverMoveEvent(QHoverEvent *event)

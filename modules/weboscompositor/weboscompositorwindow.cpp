@@ -988,12 +988,39 @@ bool WebOSCompositorWindow::handleTabletEvent(QQuickItem* item, QTabletEvent* ev
 
     QPointF p = item->mapFromScene(event->posF());
 
-    if (item->contains(p) && item->hasActiveFocus() && itemPrivate->hoverEnabled) {
+    if (item->contains(p) && itemPrivate->acceptedMouseButtons()) {
         QTabletEvent ev(event->type(), p, p, event->device(), event->pointerType(),
                         event->pressure(), event->xTilt(), event->yTilt(), event->tangentialPressure(),
                         event->rotation(), event->z(), event->modifiers(), event->uniqueId(), event->button(), event->buttons());
         ev.accept();
         if (QCoreApplication::sendEvent(item, &ev)) {
+            event->accept();
+            return true;
+        } else {
+            QEvent::Type eventType = QEvent::None;
+            switch (event->type()) {
+            case QEvent::TabletPress:
+                eventType = QEvent::MouseButtonPress;
+                break;
+            case QEvent::TabletRelease:
+                eventType = QEvent::MouseButtonRelease;
+                break;
+            case QEvent::TabletMove:
+                eventType = QEvent::None;
+                break;
+            default:
+                Q_UNREACHABLE();
+            }
+
+            if (eventType != QEvent::None) {
+                QMouseEvent mouseEvent(eventType, p, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+                mouseEvent.accept();
+#ifdef DEBUG_WEBOS_TABLET
+                qDebug() << "Send synthetic" << &mouseEvent;
+#endif
+                QCoreApplication::sendEvent(item, &mouseEvent);
+            }
+            //MOVE event is not handled at this time. So we just ignore this event.
             event->accept();
             return true;
         }
