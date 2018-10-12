@@ -24,4 +24,14 @@
     "qtdeclarative" => "",
     "qtwayland" => "",
 );
-
+%inject_headers = (
+    "$basedir/modules/weboscompositor" => [
+        "^qwayland-server-webos-surface-group.h",
+        "^qwayland-server-webos-input-manager.h",
+        "^qwayland-server-webos-foreign.h",
+        "^wayland-webos-input-manager-server-protocol.h",
+        "^wayland-webos-surface-group-server-protocol.h",
+        "^wayland-webos-foreign-server-protocol.h",
+    ],
+);
+@private_headers = ( qr/^qwayland-.*\.h/, qr/^wayland-.*-protocol\.h/ );
