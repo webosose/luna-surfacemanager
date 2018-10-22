@@ -62,7 +62,8 @@ BaseView {
     Connections {
         target: compositor.inputMethod
         onPanelRectChanged: {
-            root.reopenView();
+            if (!compositor.inputMethod.hasPreferredPanelRect)
+                root.reopenView();
         }
         onHasPreferredPanelRectChanged: {
             root.reopenView();
