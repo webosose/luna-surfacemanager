@@ -162,7 +162,7 @@ BaseView {
                 console.warn("Abort re-opening as the input method appears to be inactive.")
             return;
         }
-        if (root.model.count > 0) {
+        if (!root.isOpen && root.model.count > 0) {
             // Deactivate the input method context as it must be the case
             // that someone else wants to close this view.
             compositor.inputMethod.deactivate();
@@ -170,7 +170,7 @@ BaseView {
     }
 
     function reopenView() {
-        if (isOpen) {
+        if (root.isOpen) {
             console.log("Re-opening view:", root);
             root.reopen = true;
             root.closeView();
