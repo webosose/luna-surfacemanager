@@ -187,6 +187,13 @@ bool WebOSCompositorWindow::setCompositorMain(const QUrl& main)
         qWarning() << this << "No compositor assigned, assuming that it is loaded from QML";
 
     setSource(main);
+
+    // Set the default cursor of the root item
+    if (rootObject())
+        rootObject()->setCursor(QCursor(Qt::ArrowCursor));
+    else
+        qWarning() << this << "Root object is not set. Could not set the default cursor.";
+
     return true;
 }
 
