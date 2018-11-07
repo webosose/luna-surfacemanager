@@ -19,14 +19,48 @@ import QtQuick 2.4
 QtObject {
     id: root
 
-    property bool init: false
-    property var foregroundItems
+    // Changes will be notified only if enabled is set
+    property bool enabled: true
+    property var foregroundItems: []
+
+    property bool __init: false
+    property var __foregroundItemsNotified: []
 
     signal foregroundAppInfoChanged
 
+    function checkAndNotify() {
+        var diff = false;
+        if (foregroundItems.length != __foregroundItemsNotified.length) {
+            diff = true;
+        } else {
+            for (var i = 0; i < foregroundItems.length; i++) {
+                if (foregroundItems[i] != __foregroundItemsNotified[i]) {
+                    diff = true;
+                    break;
+                }
+            }
+        }
+
+        if (diff) {
+            if (enabled)
+                root.foregroundAppInfoChanged();
+            else
+                console.warning("Foreground app info changed but skipped notifying it");
+
+            // Update the notified list
+            __foregroundItemsNotified = [];
+            for (var i = 0; i < foregroundItems.length; i++)
+                __foregroundItemsNotified.push(foregroundItems[i]);
+        } else {
+            console.log("Skipped notifying as the foreground item list is identical");
+        }
+    }
+
     onForegroundItemsChanged: {
-        if (!init) init = initialized();
-        if (init) root.foregroundAppInfoChanged();
+        if (!__init)
+            __init = initialized();
+        if (__init)
+            checkAndNotify();
     }
 
     function initialized() {
