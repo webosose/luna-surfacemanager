@@ -36,7 +36,7 @@ class WaylandInputMethod : public QObject {
 
     Q_OBJECT
 
-    Q_PROPERTY(bool active READ active)
+    Q_PROPERTY(bool active READ active NOTIFY activeChanged)
     Q_PROPERTY(bool allowed READ allowed WRITE setAllowed NOTIFY allowedChanged)
 
     Q_PROPERTY(QRect panelRect READ panelRect WRITE setPanelRect NOTIFY panelRectChanged)
@@ -76,11 +76,9 @@ public slots:
     void contextDeactivated();
 
 signals:
-    void inputMethodActivated();
-    void inputMethodDeactivated();
-
     void inputMethodBound(bool);
 
+    void activeChanged();
     void allowedChanged();
 
     void panelRectChanged();

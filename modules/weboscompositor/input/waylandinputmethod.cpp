@@ -84,7 +84,7 @@ void WaylandInputMethod::contextActivated()
         return;
     }
     m_activeContext = context;
-    emit inputMethodActivated();
+    emit activeChanged();
 }
 
 void WaylandInputMethod::contextDeactivated()
@@ -95,7 +95,7 @@ void WaylandInputMethod::contextDeactivated()
         return;
     }
     m_activeContext = NULL;
-    emit inputMethodDeactivated();
+    emit activeChanged();
 }
 
 void WaylandInputMethod::deactivate()
