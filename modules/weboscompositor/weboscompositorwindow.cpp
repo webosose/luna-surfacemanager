@@ -71,6 +71,7 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
     , m_cursorVisible(false)
     , m_output(nullptr)
     , m_inputDevice(nullptr)
+    , m_mouseGrabberItem(nullptr)
 {
     if (screenName.isEmpty()) {
         setScreen(QGuiApplication::primaryScreen());
@@ -996,7 +997,7 @@ bool WebOSCompositorWindow::handleTabletEvent(QQuickItem* item, QTabletEvent* ev
                         event->z(), event->modifiers(), event->uniqueId(),
                         event->button(), event->buttons());
         ev.accept();
-        if (!mouseGrabberItem() && QCoreApplication::sendEvent(item, &ev)) {
+        if (!m_mouseGrabberItem && QCoreApplication::sendEvent(item, &ev)) {
             event->accept();
             return true;
         } else {
@@ -1019,11 +1020,13 @@ bool WebOSCompositorWindow::translateTabletToMouse(QTabletEvent* event, QQuickIt
                                Qt::LeftButton, Qt::LeftButton, event->modifiers());
         QQuickWindow::mousePressEvent(&mouseEvent);
         accepted = mouseEvent.isAccepted();
+        m_mouseGrabberItem = mouseGrabberItem();
     } else if (event->type() == QEvent::TabletRelease) {
         QMouseEvent mouseEvent(QEvent::MouseButtonRelease, event->pos(),
                                Qt::LeftButton, Qt::NoButton, event->modifiers());
         QQuickWindow::mouseReleaseEvent(&mouseEvent);
         accepted = mouseEvent.isAccepted();
+        m_mouseGrabberItem = nullptr;
     } else if (event->type() == QEvent::TabletMove) {
         QMouseEvent mouseEvent(QEvent::MouseMove, event->pos(),
                                Qt::LeftButton, Qt::LeftButton, event->modifiers());

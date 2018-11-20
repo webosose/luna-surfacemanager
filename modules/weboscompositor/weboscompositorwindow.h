@@ -193,6 +193,9 @@ private:
     void sendOutputGeometry() const;
     void applyOutputGeometry();
 
+    // Keeps track of the item currently receiving mouse events
+    QQuickItem *m_mouseGrabberItem;
+
 private slots:
     void onOutputGeometryDone();
     void onOutputGeometryPendingExpired();
