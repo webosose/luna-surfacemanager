@@ -27,6 +27,7 @@ pmlog() {
 # Default environments that can be overriden
 export QT_IM_MODULE=none
 export WEBOS_COMPOSITOR_PLATFORM=eglfs
+export WEBOS_CURSOR_TIMEOUT=0
 
 # Import product specific environment variables
 PRODUCT_ENVIRONMENT=@WEBOS_INSTALL_SYSCONFDIR@/surface-manager.d/product.env

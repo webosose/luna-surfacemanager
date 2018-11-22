@@ -30,22 +30,36 @@
 const char* EGLFS_CURSOR_DESCRIPTION = WEBOS_INSTALL_DATADIR "/icons/webos/cursors/cursor.json";
 #endif
 
-class EventFilter : public QObject
-{
+class EventFilter : public QObject {
+
+    Q_OBJECT
+
 public:
     EventFilter(WebOSCoreCompositor *compositor)
         : m_compositor(compositor)
+        , m_cursorTimeout(0)
+        , m_cursorTimer(0)
     {
-        m_compositor->setCursorVisible(true);
+        // Set up the cursor timer if the timeout value is given
+        if (qEnvironmentVariableIsSet("WEBOS_CURSOR_TIMEOUT")) {
+            QByteArray env = qgetenv("WEBOS_CURSOR_TIMEOUT");
+            m_cursorTimeout = env.toInt();
+            if (m_cursorTimeout > 0) {
+                m_cursorTimer = new QTimer(this);
+                connect(m_cursorTimer, &QTimer::timeout, this, &EventFilter::onCursorTimerExpired);
+                qDebug("Cursor timeout is set as %d <- WEBOS_CURSOR_TIMEOUT=%s", m_cursorTimeout, env.constData());
+                showCursor();
+            }
+        }
     }
 
     bool eventFilter(QObject *object, QEvent *event)
     {
         Q_UNUSED(object);
 
-        // TODO:
-        // Check if this conflicts the cursor visibility control logic in IM.
-        // If not, consider moving it to the event filter in WebOSCoreCompositor.
+        // NOTE:
+        // This cursor visiblity control refers to what libim has.
+        // In case libim changes its behavior we have to follow it.
         switch (event->type()) {
         case QEvent::KeyPress:
             switch ((static_cast<QKeyEvent *>(event))->key()) {
@@ -53,7 +67,7 @@ public:
             case Qt::Key_Up:
             case Qt::Key_Right:
             case Qt::Key_Down:
-                m_compositor->setCursorVisible(false);
+                hideCursor();
                 break;
             }
             break;
@@ -62,15 +76,39 @@ public:
         case QEvent::MouseButtonRelease:
         case QEvent::MouseMove:
         case QEvent::Wheel:
-            m_compositor->setCursorVisible(true);
+            showCursor();
             break;
         }
 
         return false;
     }
 
+private slots:
+    void onCursorTimerExpired()
+    {
+        qDebug("Cursor timeout expired");
+        m_compositor->setCursorVisible(false);
+        hideCursor();
+    }
+
 private:
+    void showCursor()
+    {
+        m_compositor->setCursorVisible(true);
+        if (m_cursorTimer)
+            m_cursorTimer->start(m_cursorTimeout);
+    }
+
+    void hideCursor()
+    {
+        if (m_cursorTimer)
+            m_cursorTimer->stop();
+        m_compositor->setCursorVisible(false);
+    }
+
     WebOSCoreCompositor *m_compositor;
+    QTimer *m_cursorTimer;
+    int m_cursorTimeout;
 };
 
 static gboolean deferredDeleter(gpointer data)
@@ -146,3 +184,5 @@ int main(int argc, char *argv[])
 
     return app.exec();
 }
+
+#include "main.moc"
