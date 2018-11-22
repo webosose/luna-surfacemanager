@@ -19,6 +19,8 @@
 #include <QObject>
 #include <QFile>
 #include <QDebug>
+#include <QResource>
+#include <QQmlEngine>
 
 #include <glib.h>
 
@@ -169,8 +171,16 @@ int main(int argc, char *argv[])
 
     compositor->registerTypes();
 
+    compositorWindow->engine()->addImportPath(QStringLiteral("qrc:/"));
+    QResource::registerResource(WEBOS_INSTALL_QML "/WebOSCompositorBase/WebOSCompositorBase.rcc");
+    QResource::registerResource(WEBOS_INSTALL_QML "/WebOSCompositor/WebOSCompositor.rcc");
+
     compositorWindow->setCompositor(compositor);
+#ifdef USE_QRESOURCES
+    compositorWindow->setCompositorMain(QUrl("qrc:/WebOSCompositorBase/main.qml"));
+#else
     compositorWindow->setCompositorMain(QUrl("file://" WEBOS_INSTALL_QML "/WebOSCompositorBase/main.qml"));
+#endif
 
 #ifdef UPSTART_SIGNALING
     compositor->emitLsmReady();

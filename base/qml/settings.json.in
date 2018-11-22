@@ -1,0 +1,15 @@
+{
+    "com.webos.surfacemanager": {
+        "debug": {
+            "enable": false,
+            "focusHighlight": false,
+            "fpsGraphOverlay": false,
+            "spinnerRepaint": false,
+            "touchOverlay": false,
+            "resourceMonitor": false,
+            "logConsole": false,
+            "focusConsole": false,
+            "surfaceConsole": false
+        }
+    }
+}

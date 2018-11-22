@@ -20,7 +20,8 @@ import QtQuick 2.4
 import WebOS.Global 1.0
 import WebOSCompositorBase 1.0
 
-import "../../WebOSCompositor"
+import "qrc:/WebOSCompositor"
+import "file:///usr/lib/qml/WebOSCompositor"
 
 Item {
     id: root

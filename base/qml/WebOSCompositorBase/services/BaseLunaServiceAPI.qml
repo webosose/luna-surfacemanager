@@ -19,7 +19,8 @@ import WebOSCoreCompositor 1.0
 import WebOSServices 1.0
 import WebOSCompositorBase 1.0
 
-import "../../WebOSCompositor"
+import "qrc:/WebOSCompositor"
+import "file:///usr/lib/qml/WebOSCompositor"
 import "base"
 
 Service {

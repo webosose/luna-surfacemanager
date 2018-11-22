@@ -37,5 +37,9 @@ cursor_theme {
     DEFINES += CURSOR_THEME
 }
 
+use_qresources {
+    DEFINES += USE_QRESOURCES
+}
+
 target.path = $$WEBOS_INSTALL_BINS
 INSTALLS += target

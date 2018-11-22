@@ -15,10 +15,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import QtQuick 2.4
-import WebOS.Global 1.0
 
 QtObject {
-    readonly property url imagePath: "file://" + WebOS.qmlDir + "/WebOSCompositorBase/resources/images/"
+    readonly property url imagePath: "resources/images/"
     readonly property var settings: {
         "compositor": {
             "geometryPendingInterval": 2000
