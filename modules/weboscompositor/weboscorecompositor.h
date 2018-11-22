@@ -31,10 +31,10 @@
 #include <WebOSCoreCompositor/weboskeyfilter.h>
 
 #include "unixsignalhandler.h"
+#include "webossurfaceitem.h"
 
 class WebOSInputMethod;
 class WebOSSurfaceModel;
-class WebOSSurfaceItem;
 class CompositorExtension;
 class WebOSShell;
 class WebOSSurfaceGroupCompositor;
@@ -252,7 +252,7 @@ private:
     void setInputMethod(WebOSInputMethod* inputMethod);
 
     bool checkSurfaceItemClosePolicy(const QString &reason, WebOSSurfaceItem *item);
-    void processSurfaceItem(WebOSSurfaceItem* item);
+    void processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfaceItem::ItemState stateToBe);
     WebOSSurfaceItem* getSurfaceItemByAppId(const QString& appId);
 
     //Global tick counter to get absolute time stamp for recent window model and LRU surface
