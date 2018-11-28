@@ -56,7 +56,7 @@ QtObject {
         },
         "keyboardView": {
             "height": 324,
-            "openAnimationDuration": 500
+            "slideAnimationDuration": 500
         },
         "launcher": {
             "width": 800,

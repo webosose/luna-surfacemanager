@@ -33,11 +33,12 @@ BaseView {
     y: compositor.inputMethod.panelRect.y
     width: compositor.inputMethod.panelRect.width
     height: compositor.inputMethod.panelRect.height
-    clip: compositor.inputMethod.hasPreferredPanelRect
+    clip: true
 
     Binding {
         target: compositor.inputMethod
         property: "panelRect"
+        when: compositor.inputMethod.active
         value: if (compositor.inputMethod.hasPreferredPanelRect) {
             // Floating
             compositor.inputMethod.preferredPanelRect
@@ -63,11 +64,31 @@ BaseView {
     Connections {
         target: compositor.inputMethod
         onPanelRectChanged: {
-            if (!compositor.inputMethod.hasPreferredPanelRect)
+            if (compositor.inputMethod.active && !compositor.inputMethod.hasPreferredPanelRect)
                 root.reopenView();
         }
         onHasPreferredPanelRectChanged: {
-            root.reopenView();
+            if (compositor.inputMethod.active)
+                root.reopenView();
+        }
+    }
+
+    ShaderEffectSource {
+        id: keyboardBacked
+        anchors.fill: keyboardArea
+
+        function activate() {
+            sourceItem = keyboardArea
+            live = true;
+        }
+
+        function freeze() {
+            live = false;
+        }
+
+        function release() {
+            live = true;
+            sourceItem = null;
         }
     }
 
@@ -133,8 +154,9 @@ BaseView {
         PropertyAnimation {
             target: keyboardArea
             property: "anchors.bottomMargin"
+            from: -keyboardArea.height
             to: 0
-            duration: Settings.local.keyboardView.openAnimationDuration
+            duration: Settings.local.keyboardView.slideAnimationDuration
             easing.type: Easing.InOutCubic
         }
     }
@@ -143,8 +165,9 @@ BaseView {
         PropertyAnimation {
             target: keyboardArea
             property: "anchors.bottomMargin"
+            from: 0
             to: -keyboardArea.height
-            duration: 0
+            duration: root.reopen ? 0 : Settings.local.keyboardView.slideAnimationDuration
             easing.type: Easing.InOutCubic
         }
         PauseAnimation {
@@ -153,7 +176,16 @@ BaseView {
         }
     }
 
+    onOpened: {
+        keyboardBacked.activate();
+    }
+
+    onClosing: {
+        keyboardBacked.freeze();
+    }
+
     onClosed: {
+        keyboardBacked.release();
         if (root.reopen) {
             root.reopen = false;
             if (compositor.inputMethod.active)
