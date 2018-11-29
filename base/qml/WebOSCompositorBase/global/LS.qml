@@ -49,7 +49,7 @@ QtObject {
             if (res.apps) {
                 var newList = [];
                 // Make a hash table by appId
-                for (var i = 0; res.apps[i]; i++) {
+                for (var i = 0; i < res.apps.length; i++) {
                     if (res.apps[i].id)
                         newList[res.apps[i].id] = res.apps[i];
                 }
