@@ -75,6 +75,8 @@ WaylandInputMethodContext::WaylandInputMethodContext(WaylandInputMethod* inputMe
             this, SLOT(updateSurroundingText(const QString&, uint32_t, uint32_t)));
     connect(model, SIGNAL(reset(uint32_t)), this, SLOT(resetContext(uint32_t)));
     connect(model, SIGNAL(commit()), this, SLOT(commit()));
+    connect(model, SIGNAL(showInputPanel()), this, SLOT(showInputPanel()));
+    connect(model, SIGNAL(hideInputPanel()), this, SLOT(hideInputPanel()));
     connect(model, SIGNAL(actionInvoked(uint32_t, uint32_t)), this, SLOT(invokeAction(uint32_t, uint32_t)));
     connect(model, SIGNAL(maxTextLengthChanged(uint32_t)), this, SLOT(maxTextLengthTextModel(uint32_t)));
     connect(model, SIGNAL(platformDataChanged(const QString&)), this, SLOT(platformDataModel(const QString&)));
@@ -481,4 +483,16 @@ void WaylandInputMethodContext::releaseGrabImpl()
 #endif
 
     m_grabbed = false;
+}
+
+void WaylandInputMethodContext::showInputPanel()
+{
+    if (m_resource && m_inputMethod->handle())
+        input_method_send_show_input_panel(m_inputMethod->handle(), m_resource);
+}
+
+void WaylandInputMethodContext::hideInputPanel()
+{
+    if (m_resource && m_inputMethod->handle())
+        input_method_send_hide_input_panel(m_inputMethod->handle(), m_resource);
 }

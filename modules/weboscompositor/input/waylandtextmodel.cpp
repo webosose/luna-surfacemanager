@@ -223,10 +223,18 @@ void WaylandTextModel::textModelSetPlatformData(struct wl_client *client, struct
 
 void WaylandTextModel::textModelShowInputPanel(struct wl_client *client, struct wl_resource *resource)
 {
+    WaylandTextModel* that = static_cast<WaylandTextModel*>(resource->data);
+    if (that->isActive()) {
+        emit that->showInputPanel();
+    }
 }
 
 void WaylandTextModel::textModelHideInputPanel(struct wl_client *client, struct wl_resource *resource)
 {
+    WaylandTextModel* that = static_cast<WaylandTextModel*>(resource->data);
+    if (that->isActive()) {
+        emit that->hideInputPanel();
+    }
 }
 
 void WaylandTextModel::textModelSetInputPanelRect(struct wl_client *client, struct wl_resource *resource, int32_t x, int32_t y, uint32_t width, uint32_t height)

@@ -83,6 +83,8 @@ Q_SIGNALS:
     void enterKeyTypeChanged(uint32_t enter_key_type);
     void surroundingTextChanged(const QString& text, uint32_t cursor, uint32_t anchor);
     void commit();
+    void showInputPanel();
+    void hideInputPanel();
     void actionInvoked(uint32_t button, uint32_t index);
     void maxTextLengthChanged(uint32_t length);
     void platformDataChanged(const QString& text);

@@ -77,6 +77,8 @@ public slots:
     void maxTextLengthTextModel(uint32_t length);
     void platformDataModel(const QString& text);
 
+    void showInputPanel();
+    void hideInputPanel();
 
     void focused(QtWayland::Surface* surface) Q_DECL_OVERRIDE;
     void key(uint32_t serial, uint32_t time, uint32_t key, uint32_t state) Q_DECL_OVERRIDE;
