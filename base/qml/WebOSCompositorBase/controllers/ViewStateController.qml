@@ -120,14 +120,19 @@ Item {
                 if (appId != null && (showSplash || showSpinner))
                     views.spinner.start(appId);
             } else if (event === "launch") {
-                //This part should be removed once "splash" event becomes available.
+                // FIXME: Remove once "splash" event works.
                 if (views.spinner && !views.spinner.isOpen && appId != null) {
                     var needSpinner = false;
-                    var foregroundItems = Utils.foregroundList(root.views.children);
-                    if (foregroundItems.length === 0) {
+                    if (!LS.applicationManager.appInfoList[appId].noSplashOnLaunch ||
+                        LS.applicationManager.appInfoList[appId].spinnerOnLaunch) {
                         needSpinner = true;
-                    } else if (foregroundItems[0].appId !== appId) {
-                        needSpinner = true;
+                        var foregroundItems = Utils.foregroundList(root.views.children);
+                        for (var i = 0; i < foregroundItems.length; i++) {
+                            if (foregroundItems[i].appId == appId) {
+                                needSpinner = false;
+                                break;
+                            }
+                        }
                     }
                     if (needSpinner)
                         views.spinner.start(appId);
