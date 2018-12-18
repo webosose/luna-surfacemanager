@@ -29,6 +29,7 @@ FocusableView {
     property bool fill: false
     property bool positioning: false
     property bool consumeMouseEvents: false
+    property bool focusOnSurface: true
     property Item currentItem
 
     signal surfaceTransformUpdated(Item item)
@@ -82,9 +83,13 @@ FocusableView {
     }
 
     onFocused: {
-        if (grouped)
+        if (grouped) {
             root.groupFocused();
-        else if (activeFocus && root.currentItem)
-            root.currentItem.takeFocus();
+        } else if (activeFocus && root.currentItem) {
+            if (root.focusOnSurface)
+                root.currentItem.takeFocus();
+            else
+                console.warn("focusOnSurface is unset, skip setting focus on the current surface");
+        }
     }
 }
