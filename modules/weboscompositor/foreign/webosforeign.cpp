@@ -235,11 +235,15 @@ void WebOSExported::webos_exported_set_exported_window(
                 qwlDestinationRegion.boundingRect().y(),
                 qwlDestinationRegion.boundingRect().width(),
                 qwlDestinationRegion.boundingRect().height());
+
+            qDebug() << "exported_window destination region : " << m_destinationRect;
         }
     }
 
     if (m_foreign->m_compositor->window() && !m_contextId.isNull())
         VideoOutputdCommunicator::instance()->setDisplayWindow(m_sourceRect, m_destinationRect, m_contextId);
+    else
+        qDebug() << "Do not call setDisplayWindow. Punch through is not working";
 
     m_exportedItem->setX(m_destinationRect.x());
     m_exportedItem->setY(m_destinationRect.y());
@@ -394,6 +398,8 @@ void WebOSImported::webos_imported_attach_punchthrough(Resource* r, const QStrin
 {
     Q_UNUSED(r);
 
+    qDebug() << "attach_punchthrough is called with contextId " << contextId;
+    
     if (m_exported->m_destinationRect.isValid() && !contextId.isNull())
         VideoOutputdCommunicator::instance()->setDisplayWindow(m_exported->m_sourceRect, m_exported->m_destinationRect, contextId);
 
@@ -403,6 +409,20 @@ void WebOSImported::webos_imported_attach_punchthrough(Resource* r, const QStrin
     if (!m_punched) {
         m_exported->setPunchTrough();
         m_punched = true;
+    }
+}
+
+void WebOSImported::webos_imported_detach_punchthrough(Resource* r)
+{
+    Q_UNUSED(r);
+
+    qDebug() << "detach_punchthrough is called";
+
+    m_exported->m_contextId = nullptr;
+
+    if (m_punched) {
+        m_exported->detach();
+        m_punched = false;
     }
 }
 
@@ -418,6 +438,8 @@ void WebOSImported::webos_imported_attach_surface(
         Resource* resource,
         struct ::wl_resource* surface)
 {
+    qDebug() << "attach_surface is called";
+
     if (m_punched) {
         qWarning() << "Imported can only have one state, punch-trough or texture";
         return;
@@ -439,4 +461,12 @@ void WebOSImported::webos_imported_attach_surface(
         m_exported->setParentOf(m_childSurface);
         updateGeometry();  //Resize texture if needed.
     }
+}
+
+void WebOSImported::webos_imported_detach_surface(
+        Resource * resource,
+        struct ::  wl_resource *surface)
+{
+    qDebug() <<"detach_surface is called";
+    m_childSurface->setParentItem(nullptr);
 }

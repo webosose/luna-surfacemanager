@@ -127,9 +127,12 @@ public:
 protected:
     virtual void webos_imported_attach_punchthrough(Resource *,
                                                  const QString& contextId) override;
+    virtual void webos_imported_detach_punchthrough(Resource *) override;
     virtual void webos_imported_destroy_resource(Resource *) override;
     virtual void webos_imported_attach_surface(Resource *resource,
                                                struct ::wl_resource *surface) override;
+    virtual void webos_imported_detach_surface(Resource * resource,
+                                                struct ::  wl_resource *surface) override;
 
 private:
     WebOSImported(WebOSExported* exported, struct wl_client* client, uint32_t id);
