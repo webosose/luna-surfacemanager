@@ -108,6 +108,7 @@ private:
     QRect m_sourceRect;
     QRect m_destinationRect;
     QString m_windowId;
+    QString m_contextId;
 
     friend class WebOSForeign;
     friend class WebOSImported;
@@ -124,7 +125,8 @@ public:
     void updateGeometry();
 
 protected:
-    virtual void webos_imported_attach_punchthrough(Resource *) override;
+    virtual void webos_imported_attach_punchthrough(Resource *,
+                                                 const QString& contextId) override;
     virtual void webos_imported_destroy_resource(Resource *) override;
     virtual void webos_imported_attach_surface(Resource *resource,
                                                struct ::wl_resource *surface) override;

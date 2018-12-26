@@ -238,10 +238,8 @@ void WebOSExported::webos_exported_set_exported_window(
         }
     }
 
-    if (m_foreign->m_compositor->window()) {
-        VideoOutputdCommunicator::instance()->setDisplayWindow(
-            m_sourceRect, m_destinationRect, QString("MAIN"));
-    }
+    if (m_foreign->m_compositor->window() && !m_contextId.isNull())
+        VideoOutputdCommunicator::instance()->setDisplayWindow(m_sourceRect, m_destinationRect, m_contextId);
 
     m_exportedItem->setX(m_destinationRect.x());
     m_exportedItem->setY(m_destinationRect.y());
@@ -392,9 +390,16 @@ void WebOSImported::updateGeometry()
                                     m_exported->m_exportedItem->height());
 }
 
-void WebOSImported::webos_imported_attach_punchthrough(Resource* r)
+void WebOSImported::webos_imported_attach_punchthrough(Resource* r, const QString& contextId)
 {
     Q_UNUSED(r);
+
+    if (m_exported->m_destinationRect.isValid() && !contextId.isNull())
+        VideoOutputdCommunicator::instance()->setDisplayWindow(m_exported->m_sourceRect, m_exported->m_destinationRect, contextId);
+
+    if (!contextId.isNull())
+        m_exported->m_contextId = contextId;
+
     if (!m_punched) {
         m_exported->setPunchTrough();
         m_punched = true;

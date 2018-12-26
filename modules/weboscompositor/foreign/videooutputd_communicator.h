@@ -27,10 +27,10 @@ class VideoOutputdCommunicator : public QObject
 public:
     static VideoOutputdCommunicator* instance();
 
-    void setDisplayWindow(QRect sourceRectangle, QRect destinationRectangle, QString sink = QString("MAIN"));
+    void setDisplayWindow(QRect sourceRectangle, QRect destinationRectangle, QString contextId);
 
 signals:
-    void setVideoDisplayWindowRequested(const QRect sourceRectangle, const QRect destinationRectangle, const QString sink);
+    void setVideoDisplayWindowRequested(const QRect sourceRectangle, const QRect destinationRectangle, const QString contextId);
 
 protected:
     VideoOutputdCommunicator(QObject *parent = Q_NULLPTR);

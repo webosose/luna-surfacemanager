@@ -33,7 +33,7 @@ VideoOutputdCommunicator* VideoOutputdCommunicator::instance()
     return m_instance;
 }
 
-void VideoOutputdCommunicator::setDisplayWindow(QRect sourceRectangle, QRect destinationRectangle, QString sink)
+void VideoOutputdCommunicator::setDisplayWindow(QRect sourceRectangle, QRect destinationRectangle, QString contextId)
 {
-    emit setVideoDisplayWindowRequested(sourceRectangle, destinationRectangle, sink);
+    emit setVideoDisplayWindowRequested(sourceRectangle, destinationRectangle, contextId);
 }
