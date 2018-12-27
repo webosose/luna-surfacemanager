@@ -206,7 +206,9 @@ int main(int argc, char *argv[])
         for (int i = 0; i < extraWindows.size(); i++) {
             WebOSCompositorWindow *extraWindow = extraWindows.at(i);
             QString name = QString("window-%1").arg(i + 1);
-            compositor->registerWindow(extraWindow, name);
+            // FIXME: Skip adding wl_output for extra window
+            // until clients are ready to handle multiple wl_output objects
+            //compositor->registerWindow(extraWindow, name);
             extraWindow->setCompositor(compositor);
             extraWindow->showWindow();
             qInfo() << "Initialized an extra window" << extraWindow << "bound to wayland display" << name;
