@@ -380,7 +380,7 @@ void WebOSCompositorWindow::sendOutputGeometry() const
         return;
     }
 
-    m_compositor->commitOutputUpdate(m_newOutputGeometry, m_newOutputRotation, m_outputRatio);
+    m_compositor->commitOutputUpdate(static_cast<QQuickWindow *>(const_cast<WebOSCompositorWindow *>(this)), m_newOutputGeometry, m_newOutputRotation, m_outputRatio);
 }
 
 void WebOSCompositorWindow::applyOutputGeometry()

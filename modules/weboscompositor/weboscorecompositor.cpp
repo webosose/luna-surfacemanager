@@ -154,7 +154,14 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
 {
     static bool firstRegister = true;
 
-    createOutput(window, "webos", name);
+    QWaylandOutput *output = createOutput(window, "webos", name);
+
+    if (!output) {
+        qCritical() << "Failed to create QWaylandOutput for window" << window << name;
+        return;
+    }
+
+    m_outputs.insert(window, output);
 
     connect(window, SIGNAL(frameSwapped()), this, SLOT(frameSwappedSlot()));
     //TODO: check is it ok just to use primary window to handle activeFocusItem
@@ -890,22 +897,6 @@ void WebOSCoreCompositor::emitLsmReady()
     QProcess::startDetached(upstartCmd);
 }
 
-
-void WebOSCoreCompositor::setOutput(const QSizeF& size)
-{
-    QSize s = size.toSize();
-    if (outputGeometry().size() != s) {
-        setOutputGeometry(QRect(0, 0, s.width(), s.height()));
-        emit outputChanged();
-    }
-
-}
-
-QSizeF WebOSCoreCompositor::output() const
-{
-    return outputGeometry().size();
-}
-
 int WebOSCoreCompositor::prepareOutputUpdate()
 {
     foreach (WebOSSurfaceItem *item, m_surfaces) {
@@ -920,20 +911,27 @@ int WebOSCoreCompositor::prepareOutputUpdate()
     return m_surfacesOnUpdate.count();
 }
 
-void WebOSCoreCompositor::commitOutputUpdate(QRect geometry, int rotation, double ratio)
+void WebOSCoreCompositor::commitOutputUpdate(QQuickWindow *window, QRect geometry, int rotation, double ratio)
 {
-    qInfo() << "OutputGeometry: sending output update to clients:" << geometry << rotation << ratio;
+    qInfo() << "OutputGeometry: sending output update to clients:" << window << geometry << rotation << ratio;
 
-    setOutput(geometry.size() * ratio);
+    QWaylandOutput *output = m_outputs.value(window);
+
+    if (!output) {
+        qWarning() << "Could not update output as no output found for given window" << window;
+        return;
+    }
+
+    output->setGeometry(QRect(QPoint(), geometry.size() * ratio));
 
     if (rotation % 360 == 270)
-        setScreenOrientation(Qt::PortraitOrientation);
+        setScreenOrientation(output, Qt::PortraitOrientation);
     else if (rotation % 360 == 90)
-        setScreenOrientation(Qt::InvertedPortraitOrientation);
+        setScreenOrientation(output, Qt::InvertedPortraitOrientation);
     else if (rotation % 360 == 180)
-        setScreenOrientation(Qt::InvertedLandscapeOrientation);
+        setScreenOrientation(output, Qt::InvertedLandscapeOrientation);
     else
-        setScreenOrientation(Qt::LandscapeOrientation);
+        setScreenOrientation(output, Qt::LandscapeOrientation);
 }
 
 void WebOSCoreCompositor::finalizeOutputUpdate()

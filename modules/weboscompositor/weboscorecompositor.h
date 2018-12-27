@@ -21,6 +21,7 @@
 
 #include <QObject>
 #include <QList>
+#include <QMap>
 #include <QQuickWindow>
 #include <QJSValue>
 
@@ -58,8 +59,6 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCoreCompositor : public QObject, public QWayl
     // To retain backwards compatibility due to the setFullscreenSurface signature this
     // property is introduced
     Q_PROPERTY(WebOSSurfaceItem* fullscreen READ fullscreen WRITE setFullscreen NOTIFY fullscreenChanged)
-
-    Q_PROPERTY(QSizeF output READ output WRITE setOutput NOTIFY outputChanged) // deprecated
 
     Q_PROPERTY(bool mouseEventEnabled READ mouseEventEnabled WRITE setMouseEventEnabled NOTIFY mouseEventEnabledChanged)
 
@@ -151,11 +150,8 @@ public:
 
     Q_INVOKABLE void emitLsmReady();
 
-    void setOutput(const QSizeF& size); // deprecated
-    QSizeF output() const; // deprecated
-
     int prepareOutputUpdate();
-    void commitOutputUpdate(QRect geometry, int rotation, double ratio);
+    void commitOutputUpdate(QQuickWindow *window, QRect geometry, int rotation, double ratio);
     void finalizeOutputUpdate();
 
     void initTestPluginLoader();
@@ -195,7 +191,6 @@ signals:
     void itemUnexposed(QString &item);
 
     void windowChanged();
-    void outputChanged(); // deprecated
 
     void cursorVisibleChanged(); // deprecated
     void mouseEventEnabledChanged();
@@ -241,6 +236,7 @@ private:
     bool m_directRendering;
 
     QList<WebOSSurfaceItem*> m_surfacesOnUpdate;
+    QMap<QQuickWindow *, QWaylandOutput *> m_outputs;
 
     void checkWaylandSocket() const;
 
