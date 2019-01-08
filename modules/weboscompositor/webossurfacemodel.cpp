@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -224,7 +224,11 @@ void WebOSSurfaceModel::surfaceMapped(WebOSSurfaceItem *item)
 {
     PMTRACE_FUNCTION;
     Q_ASSERT(item);
-    appendRow(item);
+    QModelIndex index = indexFromItem(item);
+    if (!index.isValid())
+        appendRow(item);
+    else
+        qWarning() << "Item already exists in the model" << item;
 }
 
 void WebOSSurfaceModel::surfaceDestroyed(WebOSSurfaceItem *item)
