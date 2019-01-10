@@ -137,6 +137,7 @@ public:
         KeyMaskRemoteMagnifierGroup = 1 << 21,
         KeyMaskMinimalPlaybackGroup = 1 << 22,
         KeyMaskGuide                = 1 << 23,
+        KeyMaskTeletextActiveGroup  = 1 << 24,
         KeyMaskDefault = 0xFFFFFFF8
     };
     Q_DECLARE_FLAGS(KeyMasks, KeyMask)
