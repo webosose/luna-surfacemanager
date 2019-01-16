@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 LG Electronics, Inc.
+// Copyright (c) 2014-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -487,6 +487,7 @@ void WebOSCoreCompositor::removeSurfaceItem(WebOSSurfaceItem* item, bool emitSur
 {
     PMTRACE_FUNCTION;
 
+    qInfo() << "removing item" << item << item->itemState() << item->itemStateReason();
     m_surfaceModel->surfaceDestroyed(item);
     if (emitSurfaceDestroyed)
         emit surfaceDestroyed(item);
@@ -649,22 +650,45 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfac
 {
     PMTRACE_FUNCTION;
 
-    qDebug() << item << item->itemState() << item->itemStateReason();
+    qDebug() << item << item->itemState() << stateToBe << item->itemStateReason() << item->isSurfaced();
 
+    // Possible state transitions
+    // 1) ItemStateNormal
+    //    This is the default state when an item is created. No transitions allowed to this from others.
+    // 2) ItemStateHidden
+    //    Indicates the item has not a visible surface. Only an item in ItemStateNormal can transition
+    //    to this state by a surfaceUnmapped signal.
+    // 3) ItemStateProxy
+    //    Indicates the surface of the item has been destroyed. An item in ItemStateNormal or Hidden
+    //    can transition to this state by a surfaceDestroyed signal.
+    // 4) ItemStateClosing
+    //    Indicates the item has been set for its state reason and is about to be destroyed.
+    //    Note that the corresponding surface may exist and be even in visible state while the item is
+    //    in this state. An item in this state should also be handled properly when it received a
+    //    surfaceUnmapped or surfaceDestroyed signal.
     switch (stateToBe) {
     case WebOSSurfaceItem::ItemStateNormal:
         qWarning() << "no transition to ItemStateNormal for" << item << item->itemState() << item->itemStateReason();
         break;
     case WebOSSurfaceItem::ItemStateHidden:
-        if (item->itemState() == WebOSSurfaceItem::ItemStateNormal &&
-            (!item->isSurfaced() || !item->surface()->isMapped())) {
-            qInfo() << "transitioning to ItemStateHidden for" << item << item->itemState() << item->itemStateReason();
-            item->setItemState(WebOSSurfaceItem::ItemStateHidden, item->itemStateReason());
+        if (!item->isSurfaced() || !item->surface()->isMapped()) {
+            switch (item->itemState()) {
+            case WebOSSurfaceItem::ItemStateNormal:
+                qInfo() << "transitioning to ItemStateHidden for" << item << item->itemState() << item->itemStateReason();
+                item->setItemState(WebOSSurfaceItem::ItemStateHidden, item->itemStateReason());
+                // Fall through
+            case WebOSSurfaceItem::ItemStateClosing:
+                qInfo() << "handling surfaceUnmapped for " << item << item->itemState() << item->itemStateReason();
+                m_surfaceModel->surfaceUnmapped(item);
+                emit surfaceUnmapped(item);
+                break;
+            default:
+                qWarning() << "unhandled case of a transition to ItemStateHidden for" << item << item->itemState() << item->itemStateReason();
+                break;
 
-            m_surfaceModel->surfaceUnmapped(item);
-            emit surfaceUnmapped(item);
+            }
         } else {
-            qWarning() << "no transition to ItemStateHidden for" << item << item->itemState() << item->itemStateReason() << item->isSurfaced();
+            qWarning() << "not ready to be ItemStateHidden," << item << item->itemState() << item->itemStateReason();
         }
         if (item->itemState() == WebOSSurfaceItem::ItemStateHidden && !item->itemStateReason().isEmpty()) {
             // reset state reason to re-use
@@ -672,16 +696,22 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfac
         }
         break;
     case WebOSSurfaceItem::ItemStateProxy:
-        if ((item->itemState() == WebOSSurfaceItem::ItemStateNormal || item->itemState() == WebOSSurfaceItem::ItemStateHidden) &&
-            (!item->isSurfaced() || !item->surface()->isMapped())) {
-            if (!item->itemStateReason().isEmpty() && checkSurfaceItemClosePolicy(item->itemStateReason(), item)) {
-                qInfo() << "transitioning to ItemStateProxy and ItemStateClosing for" << item << item->itemState() << item->itemStateReason();
-                item->setItemState(WebOSSurfaceItem::ItemStateProxy, item->itemStateReason());
-                processSurfaceItem(item, WebOSSurfaceItem::ItemStateClosing);
-            } else {
-                qInfo() << "transitioning to ItemStateProxy for" << item << item->itemState() << item->itemStateReason();
-                item->setItemState(WebOSSurfaceItem::ItemStateProxy, item->itemStateReason());
-
+        if (!item->isSurfaced() || !item->surface()->isMapped()) {
+            switch (item->itemState()) {
+            case WebOSSurfaceItem::ItemStateNormal:
+            case WebOSSurfaceItem::ItemStateHidden:
+                if (!item->itemStateReason().isEmpty() && checkSurfaceItemClosePolicy(item->itemStateReason(), item)) {
+                    qInfo() << "transitioning to ItemStateProxy and ItemStateClosing for" << item << item->itemState() << item->itemStateReason();
+                    item->setItemState(WebOSSurfaceItem::ItemStateProxy, item->itemStateReason());
+                    processSurfaceItem(item, WebOSSurfaceItem::ItemStateClosing);
+                    break;
+                } else {
+                    qInfo() << "transitioning to ItemStateProxy for" << item << item->itemState() << item->itemStateReason();
+                    item->setItemState(WebOSSurfaceItem::ItemStateProxy, item->itemStateReason());
+                    // Fall through
+                }
+            case WebOSSurfaceItem::ItemStateClosing:
+                qInfo() << "handling surfaceDestroyed for " << item << item->itemState() << item->itemStateReason();
                 emit surfaceDestroyed(item);
 
                 /* This means items will not use any graphic resource from related surface.
@@ -690,19 +720,23 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfac
                 item->releaseSurface();
                 // Clear old texture
                 item->update();
+                break;
+            default:
+                qWarning() << "unhandled case of the transition to ItemStateProxy for" << item << item->itemState() << item->itemStateReason();
+                break;
             }
         } else {
-            qWarning() << "no transition to ItemStateProxy for" << item << item->itemState() << item->itemStateReason() << item->isSurfaced();
+            qWarning() << "not ready to be ItemStateProxy," << item << item->itemState() << item->itemStateReason();
         }
         break;
     case WebOSSurfaceItem::ItemStateClosing:
+        qInfo() << "transitioning to ItemStateClosing for" << item << item->itemState() << item->itemStateReason();
+        item->setItemState(WebOSSurfaceItem::ItemStateClosing, item->itemStateReason());
         if (!item->isSurfaced() || !item->surface()->isMapped()) {
-            qInfo() << "transitioning to ItemStateClosing for" << item << item->itemState() << item->itemStateReason();
-            item->setItemState(WebOSSurfaceItem::ItemStateClosing, item->itemStateReason());
-        }
-        if (item->itemState() == WebOSSurfaceItem::ItemStateClosing) {
             // remove item
             removeSurfaceItem(item, true);
+        } else {
+            qWarning() << "item is not yet ready to be removed," << item << item->itemState() << item->itemStateReason();
         }
         break;
     default:
