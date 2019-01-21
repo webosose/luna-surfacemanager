@@ -195,9 +195,7 @@ void WaylandInputMethodContext::grabKeyboard(struct wl_client *client, struct wl
 void WaylandInputMethodContext::focused(QtWayland::Surface* surface)
 {
     Q_ASSERT(m_keyboard);
-    if (!surface)
-        deactivate();
-    else if (m_grabResource)
+    if (m_grabResource)
         m_keyboard->sendKeyModifiers(m_grabResource, 1);
 }
 

@@ -89,6 +89,9 @@ Q_SIGNALS:
     void maxTextLengthChanged(uint32_t length);
     void platformDataChanged(const QString& text);
 
+public Q_SLOTS:
+    void handleActiveFocusChanged();
+
 private:
 
     static const struct text_model_interface textModelImplementation;

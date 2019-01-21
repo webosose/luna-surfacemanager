@@ -19,6 +19,7 @@
 #include <QWaylandCompositor>
 #include <QWaylandInputDevice>
 #include <QWaylandSurface>
+#include <QWaylandSurfaceItem>
 #include <QtCompositor/private/qwlsurface_p.h>
 #include <QDebug>
 #include <QRect>
@@ -151,6 +152,11 @@ void WaylandTextModel::textModelActivate(struct wl_client *client, struct wl_res
     if (!that->isActive()) {
         that->m_surface = surface;
         that->m_active = true;
+
+        // We are interested in when the surface gets unfocused
+        QWaylandSurfaceItem *item = static_cast<QWaylandSurfaceItem *>(surfaceRequested->views().first());
+        connect(item, &QQuickItem::activeFocusChanged, that, &WaylandTextModel::handleActiveFocusChanged, Qt::UniqueConnection);
+
         emit that->activated();
     } else {
         qDebug() << "already active for" << surfaceRequested;
@@ -258,4 +264,18 @@ void WaylandTextModel::destroyTextModel(struct wl_resource *resource)
     that->m_active = false;
     emit that->destroyed();
     delete that;
+}
+
+void WaylandTextModel::handleActiveFocusChanged()
+{
+    QWaylandSurfaceItem *item = qobject_cast<QWaylandSurfaceItem *>(sender());
+
+    if (item && m_active && m_surface) {
+        QWaylandSurface *surfaceRequested = QtWayland::Surface::fromResource(m_surface)->waylandSurface();
+        if (surfaceRequested->views().contains(static_cast<QWaylandSurfaceView *>(item)) && item->hasActiveFocus() == false) {
+            // Deactivate the current context as the associated surface item has been unfocused
+            qWarning() << "deactivate input method context as the requesting surface item gets unfocused" << item;
+            m_inputMethod->deactivate();
+        }
+    }
 }
