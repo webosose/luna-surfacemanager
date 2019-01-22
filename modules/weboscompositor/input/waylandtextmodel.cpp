@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -270,12 +270,8 @@ void WaylandTextModel::handleActiveFocusChanged()
 {
     QWaylandSurfaceItem *item = qobject_cast<QWaylandSurfaceItem *>(sender());
 
-    if (item && m_active && m_surface) {
-        QWaylandSurface *surfaceRequested = QtWayland::Surface::fromResource(m_surface)->waylandSurface();
-        if (surfaceRequested->views().contains(static_cast<QWaylandSurfaceView *>(item)) && item->hasActiveFocus() == false) {
-            // Deactivate the current context as the associated surface item has been unfocused
-            qWarning() << "deactivate input method context as the requesting surface item gets unfocused" << item;
-            m_inputMethod->deactivate();
-        }
+    if (item && !item->hasActiveFocus() && m_active && m_inputMethod->isActiveModel(this)) {
+        qWarning() << "deactivate the current context as the surface item initiated it gets unfocused" << item;
+        m_inputMethod->deactivate();
     }
 }

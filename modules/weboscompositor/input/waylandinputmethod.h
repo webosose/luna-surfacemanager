@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 
 class QWaylandCompositor;
 class WaylandTextModelFactory;
+class WaylandTextModel;
 class WaylandInputMethodContext;
 class WaylandInputPanel;
 class WaylandInputMethodManager;
@@ -56,6 +57,7 @@ public:
     WaylandInputPanel* inputPanel() { return m_inputPanel; }
     WaylandInputMethodManager* inputMethodManager() const { return m_inputMethodManager; }
     Q_INVOKABLE bool active() const { return m_activeContext != NULL; }
+    bool isActiveModel(WaylandTextModel *model) const;
     bool allowed() const { return m_allowed; };
     void setAllowed(bool allowed);
 

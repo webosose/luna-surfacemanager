@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -103,6 +103,11 @@ void WaylandInputMethod::deactivate()
     if (m_activeContext) {
         m_activeContext->deactivate();
     }
+}
+
+bool WaylandInputMethod::isActiveModel(WaylandTextModel *model) const
+{
+    return m_activeContext && m_activeContext->textModel() == model;
 }
 
 void WaylandInputMethod::setAllowed(bool allowed)
