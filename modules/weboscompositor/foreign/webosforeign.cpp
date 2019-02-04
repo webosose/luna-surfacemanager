@@ -41,10 +41,15 @@ WebOSForeign::WebOSForeign(WebOSCoreCompositor* compositor)
     : QtWaylandServer::wl_webos_foreign(compositor->waylandDisplay(), WEBOSFOREIGN_VERSION)
     , m_compositor(compositor)
 {
+}
+
+
+void WebOSForeign::registeredWindow()
+{
     if (m_compositor) {
         AVOutputdCommunicator *pAVOutputdCommunicator = AVOutputdCommunicator::instance();
         if (pAVOutputdCommunicator) {
-            WebOSCompositorWindow *pWebOSCompositorWindow = qobject_cast<WebOSCompositorWindow *>(compositor->window());
+            WebOSCompositorWindow *pWebOSCompositorWindow = qobject_cast<WebOSCompositorWindow *>(m_compositor->window());
             if (pWebOSCompositorWindow)
                 pWebOSCompositorWindow->rootContext()->setContextProperty(QLatin1String("avoutputdCommunicator"), pAVOutputdCommunicator);
             else
@@ -152,8 +157,10 @@ void WebOSExported::webos_exported_set_exported_window(
         }
     }
 
-    AVOutputdCommunicator::instance()->setDisplayWindow(
-        m_sourceRect, m_destinationRect, QString("MAIN"));
+    if (m_foreign->m_compositor->window()) {
+        AVOutputdCommunicator::instance()->setDisplayWindow(
+            m_sourceRect, m_destinationRect, QString("MAIN"));
+    }
 
     m_exportedItem->setX(m_destinationRect.x());
     m_exportedItem->setY(m_destinationRect.y());
