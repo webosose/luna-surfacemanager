@@ -46,6 +46,7 @@ public:
     };
 
     WebOSForeign(WebOSCoreCompositor* compositor);
+    void registeredWindow();
 
 protected:
     virtual void webos_foreign_export_element(Resource *resource,

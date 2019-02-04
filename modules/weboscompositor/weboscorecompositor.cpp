@@ -195,9 +195,10 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
 #ifdef MULTIINPUT_SUPPORT
         m_inputDevicePreallocated = new WebOSInputDevice(this);
 #endif
-
         // Set default state of Qt client windows to fullscreen
         setClientFullScreenHint(true);
+
+        m_foreign->registeredWindow();
 
         emit surfaceModelChanged();
         emit windowChanged();
