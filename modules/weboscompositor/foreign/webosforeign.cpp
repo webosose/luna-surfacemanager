@@ -410,11 +410,13 @@ void WebOSImported::webos_imported_attach_punchthrough(Resource* r, const QStrin
         m_exported->setPunchTrough();
         m_punched = true;
     }
+    send_punchthrough_attached(contextId);
 }
 
 void WebOSImported::webos_imported_detach_punchthrough(Resource* r)
 {
     Q_UNUSED(r);
+    QString contextId = m_exported->m_contextId;
 
     qDebug() << "detach_punchthrough is called";
 
@@ -424,6 +426,7 @@ void WebOSImported::webos_imported_detach_punchthrough(Resource* r)
         m_exported->detach();
         m_punched = false;
     }
+    send_punchthrough_detached(contextId);
 }
 
 void WebOSImported::webos_imported_destroy_resource(Resource* r)
@@ -442,6 +445,7 @@ void WebOSImported::webos_imported_attach_surface(
 
     if (m_punched) {
         qWarning() << "Imported can only have one state, punch-trough or texture";
+        send_surface_attached(nullptr);
         return;
     }
 
@@ -461,6 +465,7 @@ void WebOSImported::webos_imported_attach_surface(
         m_exported->setParentOf(m_childSurface);
         updateGeometry();  //Resize texture if needed.
     }
+    send_surface_attached(surface);
 }
 
 void WebOSImported::webos_imported_detach_surface(
@@ -469,4 +474,6 @@ void WebOSImported::webos_imported_detach_surface(
 {
     qDebug() <<"detach_surface is called";
     m_childSurface->setParentItem(nullptr);
+
+    send_surface_detached(surface);
 }
