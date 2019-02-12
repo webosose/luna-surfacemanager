@@ -1,4 +1,4 @@
-// Copyright (c) 2018 LG Electronics, Inc.
+// Copyright (c) 2018-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -118,7 +118,6 @@ BaseView {
                 item.y = Qt.binding(function() { return Utils.center(keyboardArea.height, item.height); });
                 item.scale = Qt.binding(function() { return Math.min(keyboardArea.width / item.width, keyboardArea.height / item.height); });
                 item.visible = true;
-                item.opacity = 0.999;
                 item.useTextureAlpha = true;
                 currentItem = item;
                 root.openView();
