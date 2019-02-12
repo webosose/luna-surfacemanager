@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 LG Electronics, Inc.
+// Copyright (c) 2014-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -68,20 +68,10 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
     }
 
     if (surfaceFormat) {
+        qInfo () << "Using surface format given:" << *surfaceFormat;
         setFormat(*surfaceFormat);
     } else {
-        // The alpha size in the target device is 8 bbp, but for example on the
-        // desktop the buffer size is different and trying to use an invalid
-        // size will cause a crash.
-        int alphaSize = 8;
-#ifdef PLATFORM_ALPHA_BUFFER_SIZE
-        alphaSize = PLATFORM_ALPHA_BUFFER_SIZE;
-#endif
-
-        QSurfaceFormat sf;
-        sf.setAlphaBufferSize(alphaSize);
-        sf.setRenderableType(QSurfaceFormat::OpenGLES);
-        setFormat(sf);
+        qInfo () << "Using default surface format:" << format();
     }
 
     setClearBeforeRendering(true);
