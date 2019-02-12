@@ -136,8 +136,11 @@ WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *
     , m_eventPreprocessor(new EventPreprocessor(this))
     , m_inputMethod(0)
     , m_surfaceItemClosePolicy(QVariantMap())
+    , m_inputManager(0)
+    , m_surfaceModel(0)
 #ifdef MULTIINPUT_SUPPORT
     , m_lastMouseEventFrom(0)
+    , m_inputDevicePreallocated(0)
 #endif
 {
     qInfo() << "Creating WebOSCoreCompositor with flags" << compositorFlags;
