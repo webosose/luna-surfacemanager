@@ -195,6 +195,7 @@ private:
 
     // Keeps track of the item currently receiving mouse events
     QQuickItem *m_mouseGrabberItem;
+    QQuickItem *m_tabletGrabberItem = nullptr;
 
 private slots:
     void onOutputGeometryDone();

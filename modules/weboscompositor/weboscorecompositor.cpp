@@ -1381,7 +1381,7 @@ bool WebOSCoreCompositor::EventPreprocessor::eventFilter(QObject *obj, QEvent *e
     // These events are only sent to QGuiApp. So deliver these to all tablet client.
 
     if (event->type() == QEvent::TabletEnterProximity ||
-        event->type() == QEvent::TabletEnterProximity) {
+        event->type() == QEvent::TabletLeaveProximity) {
         if (m_compositor->tabletDevice())
             m_compositor->tabletDevice()->advertiseApproximation((QTabletEvent*)event);
         eventAccepted = true;
