@@ -290,10 +290,10 @@ void WebOSImported::webos_imported_attach_surface(
         return;
     }
 
-    //TODO: Need method to adjust Z order.
-    QtWayland::Surface* qwlSurface =
-        QtWayland::Surface::fromResource(surface);
     if (surface) {
+        //TODO: Need method to adjust Z order.
+        QtWayland::Surface* qwlSurface =
+            QtWayland::Surface::fromResource(surface);
         QWaylandQuickSurface *quickSurface =
             qobject_cast<QWaylandQuickSurface *>(qwlSurface->waylandSurface());
 
