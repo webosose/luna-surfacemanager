@@ -199,7 +199,7 @@ WebOSExported::~WebOSExported()
         m_importList.takeFirst()->destroyResource();
 
     // delete m_punchThroughItem in detach
-    detach();
+    detachImportedItem();
     m_foreign->m_exportedList.removeAll(this);
 
     // Usually it is deleted by QObjectPrivate::deleteChildren with its parent surfaceItem.
@@ -270,8 +270,10 @@ void WebOSExported::setPunchTrough()
     }
 }
 
-void WebOSExported::detach()
+void WebOSExported::detachImportedItem()
 {
+    qDebug() << "WebOSExported::detachImportedItem" << this;
+
     if (m_punchThroughItem) {
         m_punchThroughItem->setX(0);
         m_punchThroughItem->setY(0);
@@ -281,6 +283,7 @@ void WebOSExported::detach()
         delete m_punchThroughItem;
         m_punchThroughItem = nullptr;
     }
+    emit detach();
 }
 
 void WebOSExported::assigneWindowId(QString windowId)
@@ -318,6 +321,12 @@ void WebOSExported::setParentOf(QQuickItem *item)
 
 void WebOSExported::webos_exported_destroy_resource(Resource *r)
 {
+    qWarning() << "webos_exported_destroy_resource is called" << this;
+
+    detachImportedItem();
+
+    m_foreign->m_exportedList.removeAll(this);
+
     Q_ASSERT(resourceMap().size() == 0);
     delete this;
 }
@@ -342,7 +351,6 @@ void WebOSExported::startImportedMirroring(QWaylandSurfaceItem *parent)
         mirror->initialize(mirror, m_exportedItem, parent);
         mirror->setHandler(mirror, m_exportedItem, source);
     }
-
 }
 
 WebOSImported::WebOSImported(WebOSExported* exported,
@@ -353,6 +361,8 @@ WebOSImported::WebOSImported(WebOSExported* exported,
 {
     connect(exported, &WebOSExported::geometryChanged,
             this, &WebOSImported::updateGeometry);
+    connect(exported, &WebOSExported::detach,
+            this, &WebOSImported::detached);
     if (exported && exported->m_destinationRect.isValid())
         send_destination_region_changed(exported->m_destinationRect.width(),
                                         exported->m_destinationRect.height());
@@ -362,11 +372,11 @@ WebOSImported::~WebOSImported()
 {
     if (!m_exported)
         return;
+    else
+        m_exported->m_importList.removeAll(this);
 
-    if (m_punched)
-        m_exported->detach();
-
-    m_exported->m_importList.removeAll(this);
+    if (m_punched && m_exported)
+        m_exported->detachImportedItem();
 }
 
 void WebOSImported::destroyResource()
@@ -383,15 +393,34 @@ void WebOSImported::updateGeometry()
         switch (m_textureAlign) {
         case WebOSImported::surface_alignment::surface_alignment_stretch:
             disconnect(m_childSurface->surface(), &QWaylandSurface::sizeChanged, 0, 0);
-            m_childSurface->setWidth(m_exported->m_exportedItem->width());
-            m_childSurface->setHeight(m_exported->m_exportedItem->height());
+            if (m_exported && m_exported->m_exportedItem) {
+                m_childSurface->setWidth(m_exported->m_exportedItem->width());
+                m_childSurface->setHeight(m_exported->m_exportedItem->height());
+            }
             break;
         }
         //TODO: handle other cases.
     }
 
-    send_destination_region_changed(m_exported->m_exportedItem->width(),
+    if (m_exported && m_exported->m_exportedItem) {
+        send_destination_region_changed(m_exported->m_exportedItem->width(),
                                     m_exported->m_exportedItem->height());
+    }
+}
+
+void WebOSImported::detached()
+{
+    qWarning() << "WebOSImported::detached is called " << this;
+
+    m_exported = nullptr;
+
+    if (m_punched) {
+        webos_imported_detach_punchthrough(nullptr);
+    }
+
+    if (m_surfaceAttached) {
+        webos_imported_detach_surface(nullptr, nullptr);
+    }
 }
 
 void WebOSImported::webos_imported_attach_punchthrough(Resource* r, const QString& contextId)
@@ -399,7 +428,12 @@ void WebOSImported::webos_imported_attach_punchthrough(Resource* r, const QStrin
     Q_UNUSED(r);
 
     qDebug() << "attach_punchthrough is called with contextId " << contextId;
-    
+
+    if (!m_exported) {
+        send_punchthrough_attached(nullptr);
+        return;
+    }
+
     if (m_exported->m_destinationRect.isValid() && !contextId.isNull())
         VideoOutputdCommunicator::instance()->setDisplayWindow(m_exported->m_sourceRect, m_exported->m_destinationRect, contextId);
 
@@ -416,16 +450,17 @@ void WebOSImported::webos_imported_attach_punchthrough(Resource* r, const QStrin
 void WebOSImported::webos_imported_detach_punchthrough(Resource* r)
 {
     Q_UNUSED(r);
-    QString contextId = m_exported->m_contextId;
+    QString contextId = nullptr;
 
     qDebug() << "detach_punchthrough is called";
 
-    m_exported->m_contextId = nullptr;
-
-    if (m_punched) {
-        m_exported->detach();
+    if (m_exported && m_punched) {
+        contextId = m_exported->m_contextId;
+        m_exported->m_contextId = nullptr;
         m_punched = false;
+        m_exported->detachImportedItem();
     }
+
     send_punchthrough_detached(contextId);
 }
 
@@ -433,6 +468,7 @@ void WebOSImported::webos_imported_destroy_resource(Resource* r)
 {
     Q_UNUSED(r);
 
+    qWarning() << "webos_imported_destroy_resource is called" << this;
     if (resourceMap().isEmpty())
         delete this;
 }
@@ -443,7 +479,7 @@ void WebOSImported::webos_imported_attach_surface(
 {
     qDebug() << "attach_surface is called";
 
-    if (m_punched) {
+    if (m_punched || !m_exported) {
         qWarning() << "Imported can only have one state, punch-trough or texture";
         send_surface_attached(nullptr);
         return;
@@ -465,6 +501,7 @@ void WebOSImported::webos_imported_attach_surface(
         m_exported->setParentOf(m_childSurface);
         updateGeometry();  //Resize texture if needed.
     }
+    m_surfaceAttached = true;
     send_surface_attached(surface);
 }
 
@@ -473,7 +510,10 @@ void WebOSImported::webos_imported_detach_surface(
         struct ::  wl_resource *surface)
 {
     qDebug() <<"detach_surface is called";
-    m_childSurface->setParentItem(nullptr);
 
+    if (m_childSurface)
+        m_childSurface->setParentItem(nullptr);
+
+    m_surfaceAttached = false;
     send_surface_detached(surface);
 }
