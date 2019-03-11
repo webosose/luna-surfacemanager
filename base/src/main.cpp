@@ -50,7 +50,7 @@ public:
                 m_cursorTimer = new QTimer(this);
                 connect(m_cursorTimer, &QTimer::timeout, this, &EventFilter::onCursorTimerExpired);
                 qDebug("Cursor timeout is set as %d <- WEBOS_CURSOR_TIMEOUT=%s", m_cursorTimeout, env.constData());
-                showCursor();
+                m_cursorTimer->start(m_cursorTimeout);
             }
         }
     }
@@ -177,6 +177,16 @@ int main(int argc, char *argv[])
         compositor = new WebOSCoreCompositor(WebOSCoreCompositor::WebOSForeignExtension);
     }
 
+    /* https://doc.qt.io/qt-5/qobject.html#installEventFilter
+       - "If multiple event filters are installed on a single object,
+          the filter that was installed last is activated first."
+       If there is an extended compositor, it can have event filters.
+       Considering inheritance, the extended event filters should be called first,
+       so that they can decide consume or pass events to base's event filter.
+       For that, the base's event filter should be installed prior to 'registerWindow'
+       where extended compositor installs filters. */
+    compositorWindow->installEventFilter(new EventFilter(compositor));
+
     compositor->registerWindow(compositorWindow, "window-0");
     compositor->registerTypes();
 
@@ -195,8 +205,6 @@ int main(int argc, char *argv[])
     compositor->emitLsmReady();
 #endif
 
-    compositorWindow->installEventFilter(new EventFilter(compositor));
-
     compositorWindow->showWindow();
 
     // Extra windows
@@ -206,6 +214,9 @@ int main(int argc, char *argv[])
         for (int i = 0; i < extraWindows.size(); i++) {
             WebOSCompositorWindow *extraWindow = extraWindows.at(i);
             QString name = QString("window-%1").arg(i + 1);
+            // FIXME: Consider adding below if we need to call registerWindow
+            // for an extra window
+            //extraWindow->installEventFilter(new EventFilter(compositor));
             // FIXME: Skip adding wl_output for extra window
             // until clients are ready to handle multiple wl_output objects
             //compositor->registerWindow(extraWindow, name);
