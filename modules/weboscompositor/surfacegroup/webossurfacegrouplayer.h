@@ -42,11 +42,17 @@ public:
     void setZ(int z) { m_layoutInfo->setProperty("z", z); }
     int z() { return m_layoutInfo->property("z").toInt(); }
 
+    void setKeyIndex(int keyIndex) { m_keyIndex = keyIndex; }
+    int keyIndex() { return m_keyIndex; }
+
     QSharedPointer<QObject> layoutInfo();
 
     bool attached() const { return m_attached; }
     WebOSSurfaceItem* attachedSurface() const { return m_attached; }
     void attach(WebOSSurfaceItem* item);
+
+signals:
+    void layerKeyIndexChanged(const QString& name);
 
 public slots:
     void detachSurface();
@@ -56,6 +62,7 @@ signals:
 
 protected:
     virtual void webos_surface_group_layer_set_z_index(Resource *resource, int32_t z_index);
+    virtual void webos_surface_group_layer_set_key_index(Resource *resource, int32_t key_index);
     virtual void webos_surface_group_layer_destroy_resource(Resource *resource);
     virtual void webos_surface_group_layer_destroy(Resource *resource);
 
@@ -64,5 +71,6 @@ private:
     WebOSSurfaceGroup* m_group;
     QSharedPointer<QObject> m_layoutInfo;
     WebOSSurfaceItem* m_attached;
+    int m_keyIndex;
 };
 #endif

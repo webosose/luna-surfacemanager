@@ -34,6 +34,7 @@ WebOSSurfaceGroup::WebOSSurfaceGroup()
     , m_keyboardFocusedSurface(0)
     , m_groupCompositor(0)
     , time(0)
+    , m_useKeyIndex(false)
 {
 }
 
@@ -42,6 +43,7 @@ WebOSSurfaceGroup::~WebOSSurfaceGroup()
     qDebug("deleting group '%s'", qPrintable(m_name));
     m_layers.clear();
     m_zOrderedSurfaceLayoutInfoList.clear();
+    m_keyOrderedItems.clear();
 }
 
 void WebOSSurfaceGroup::webos_surface_group_bind_resource(Resource *resource)
@@ -180,6 +182,7 @@ void WebOSSurfaceGroup::webos_surface_group_attach(Resource *resource, struct ::
             addZOrderedSurfaceLayoutInfoList(item, l->layoutInfo());
             l->attach(item);
             item->setSurfaceGroup(this);
+            updateKeyOrdredSurface(l->keyIndex(), item);
         }
     } else {
         qWarning("Layer '%s' does not exist in group '%s'", qPrintable(layer_name), qPrintable(m_name));
@@ -231,6 +234,8 @@ void WebOSSurfaceGroup::removeFromGroup(WebOSSurfaceItem* item)
     item->disconnect(this);
     QSharedPointer<QObject> li = takeLayoutInfoFor(item);
     li.clear();
+
+    removeSurfaceFromKeyOrdredItems(item);
 
     // Remove the surface from a layer
     foreach(WebOSSurfaceGroupLayer* l, m_layers.values()) {
@@ -304,6 +309,7 @@ void WebOSSurfaceGroup::removeSurfaceItem()
 void WebOSSurfaceGroup::removeLayer(const QString& name)
 {
     qDebug("Removing layer '%s' for group '%s'", qPrintable(name), qPrintable(m_name));
+    removeLayerFromKeyOrdredItems(m_layers[name]->keyIndex());
     m_layers.take(name);
 }
 
@@ -342,6 +348,17 @@ void WebOSSurfaceGroup::webos_surface_group_focus_layer(Resource *resource, cons
     }
 }
 
+
+void WebOSSurfaceGroup::webos_surface_group_commit_key_index(Resource *resource, uint32_t commit)
+{
+    Q_UNUSED(resource);
+
+    if (commit)
+        makeKeyOrderedItems();
+
+    m_useKeyIndex = commit;
+}
+
 void WebOSSurfaceGroup::setRootItem(WebOSSurfaceItem* item)
 {
     if (m_root != item) {
@@ -349,6 +366,7 @@ void WebOSSurfaceGroup::setRootItem(WebOSSurfaceItem* item)
         if (m_root) {
             QSharedPointer<QObject> li = QSharedPointer<QObject>(new QObject);
             addZOrderedSurfaceLayoutInfoList(m_root, li);
+            updateKeyOrdredSurface(0, m_root);
         } else {
             m_zOrderedSurfaceLayoutInfoList.clear();
         }
@@ -452,4 +470,92 @@ void WebOSSurfaceGroup::sortZOrderedSurfaceLayoutInfoList()
     if (!m_zOrderedSurfaceLayoutInfoList.isEmpty()) {
         qSort(m_zOrderedSurfaceLayoutInfoList.begin(), m_zOrderedSurfaceLayoutInfoList.end(), zOrderedLessThan);
     }
+}
+
+bool WebOSSurfaceGroup::allowLayerKeyOrder()
+{
+    if (m_allowAnonymous || !m_useKeyIndex || m_keyOrderedItems.isEmpty())
+        return false;
+    return true;
+}
+
+bool keyOrderedLessThan(const QPair<WebOSSurfaceItem *, int> pair1, const QPair<WebOSSurfaceItem *, int> pair2)
+{
+    return pair1.second <  pair2.second;
+}
+
+void WebOSSurfaceGroup::makeKeyOrderedItems()
+{
+    m_keyOrderedItems.clear();
+
+    m_keyOrderedItems.append(qMakePair(m_root, 0));
+    foreach (WebOSSurfaceGroupLayer* l, m_layers.values()) {
+        if (l->keyIndex())
+            m_keyOrderedItems.append(qMakePair(l->attachedSurface(), l->keyIndex()));
+    }
+    if (!m_keyOrderedItems.isEmpty()) {
+        std::sort(m_keyOrderedItems.begin(), m_keyOrderedItems.end(), keyOrderedLessThan);
+    }
+}
+
+void WebOSSurfaceGroup::removeSurfaceFromKeyOrdredItems(WebOSSurfaceItem* item)
+{
+    if (item && !m_keyOrderedItems.isEmpty()) {
+        for (int i = (m_keyOrderedItems.size() - 1) ; i >= 0 ; --i) {
+            if (m_keyOrderedItems[i].first == item) {
+                m_keyOrderedItems[i].first = NULL;
+            }
+        }
+    }
+}
+
+void WebOSSurfaceGroup::removeLayerFromKeyOrdredItems(int keyIndex)
+{
+    if (!m_keyOrderedItems.isEmpty()) {
+        for (int i = (m_keyOrderedItems.size() - 1) ; i >= 0 ; --i) {
+            if (m_keyOrderedItems[i].second == keyIndex) {
+                m_keyOrderedItems.removeAt(i);
+                break;
+            }
+        }
+    }
+}
+
+void WebOSSurfaceGroup::updateKeyOrdredSurface(int keyIndex, WebOSSurfaceItem* item)
+{
+    if (!m_keyOrderedItems.isEmpty()) {
+        for (int i = (m_keyOrderedItems.size() - 1) ; i >= 0 ; --i) {
+            if (m_keyOrderedItems[i].second == keyIndex) {
+                m_keyOrderedItems[i].first = item;
+                break;
+            }
+        }
+    }
+}
+
+WebOSSurfaceItem* WebOSSurfaceGroup::nextKeyOrderedSurfaceGroupItem(WebOSSurfaceItem* currentItem)
+{
+    WebOSSurfaceItem* returnItem = NULL;
+    int currentItemIndex = m_keyOrderedItems.size() - 1;
+
+    if (currentItem) {
+        if (!m_keyOrderedItems.isEmpty()) {
+            for (int i = (m_keyOrderedItems.size() - 1) ; i >= 0 ; --i) {
+                if (m_keyOrderedItems[i].first == currentItem) {
+                    currentItemIndex = i;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (currentItemIndex > 0) {
+        for (int i = currentItemIndex ; i >= 0 ; --i) {
+            if (i > 0 && m_keyOrderedItems[i - 1].first) {
+                returnItem = qobject_cast<WebOSSurfaceItem *>(m_keyOrderedItems[i - 1].first);
+                break;
+            }
+        }
+    }
+    return returnItem;
 }

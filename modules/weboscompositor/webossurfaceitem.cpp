@@ -443,7 +443,11 @@ void WebOSSurfaceItem::processKeyEvent(QKeyEvent *event)
         inputDevice->setKeyboardFocus(surface());
         inputDevice->sendFullKeyEvent(event);
     } else if (m_surfaceGroup) {
-        WebOSSurfaceItem *nextItem = m_surfaceGroup->nextZOrderedSurfaceGroupItem(this);
+        WebOSSurfaceItem *nextItem = NULL;
+        if (m_surfaceGroup->allowLayerKeyOrder())
+            nextItem = m_surfaceGroup->nextKeyOrderedSurfaceGroupItem(this);
+        else
+            nextItem = m_surfaceGroup->nextZOrderedSurfaceGroupItem(this);
         if (nextItem) {
             nextItem->processKeyEvent(event);
         }

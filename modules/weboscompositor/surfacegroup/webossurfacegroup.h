@@ -65,6 +65,13 @@ public:
 
     WebOSSurfaceItem* nextZOrderedSurfaceGroupItem(WebOSSurfaceItem* currentItem);
 
+    bool allowLayerKeyOrder();
+    void makeKeyOrderedItems();
+    void removeSurfaceFromKeyOrdredItems(WebOSSurfaceItem* item);
+    void removeLayerFromKeyOrdredItems(int keyIndex);
+    void updateKeyOrdredSurface(int keyIndex, WebOSSurfaceItem* item);
+    WebOSSurfaceItem* nextKeyOrderedSurfaceGroupItem(WebOSSurfaceItem* currentItem);
+
 signals:
     void allowAnonymousChanged();
     void itemsChanged();
@@ -86,6 +93,8 @@ protected:
 
     virtual void webos_surface_group_focus_owner(Resource *resource);
     virtual void webos_surface_group_focus_layer(Resource *resource, const QString &layer);
+
+    virtual void webos_surface_group_commit_key_index(Resource *resource, uint32_t commit);
 
     void addZOrderedSurfaceLayoutInfoList(WebOSSurfaceItem* item, QSharedPointer<QObject> layoutInfo);
     void removeZOrderedSurfaceLayoutInfoList(WebOSSurfaceItem* item);
@@ -121,5 +130,7 @@ private:
     int time;
 
     QList< QPair<WebOSSurfaceItem *, QSharedPointer<QObject> > > m_zOrderedSurfaceLayoutInfoList;
+    QList<QPair<WebOSSurfaceItem *, int>> m_keyOrderedItems;
+    bool m_useKeyIndex;
 };
 #endif

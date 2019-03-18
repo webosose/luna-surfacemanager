@@ -26,6 +26,7 @@ WebOSSurfaceGroupLayer::WebOSSurfaceGroupLayer(WebOSSurfaceGroup* group, struct 
     : QtWaylandServer::wl_webos_surface_group_layer(client, id, WEBOSSURFACEGROUPLAYER_VERSION)
     , m_group(group)
     , m_attached(0)
+    , m_keyIndex(0)
 {
     m_layoutInfo.reset(new QObject);
     m_layoutInfo->setProperty("hint", false);
@@ -48,6 +49,13 @@ void WebOSSurfaceGroupLayer::webos_surface_group_layer_set_z_index(Resource *res
     if (m_attached) {
         emit m_attached->zOrderChanged(z());
     }
+}
+
+void WebOSSurfaceGroupLayer::webos_surface_group_layer_set_key_index(Resource *resource, int32_t key_index)
+{
+    Q_UNUSED(resource);
+    setKeyIndex(key_index);
+    emit layerKeyIndexChanged(m_name);
 }
 
 void WebOSSurfaceGroupLayer::webos_surface_group_layer_destroy_resource(Resource *resource)
