@@ -781,7 +781,8 @@ void WebOSCoreCompositor::setCursorSurface(QWaylandSurface *surface, int hotspot
     }
 
     foreach(WebOSSurfaceItem *item, m_surfaces) {
-        if (item->surface() && !item->surface()->handle()->isCursorSurface() && item->surface()->client()->client() == client)
+        if (item->surface() && !item->surface()->handle()->isCursorSurface() &&
+                item->surface()->client() && item->surface()->client()->client() == client)
             item->setCursorSurface(surface, hotspotX, hotspotY);
     }
 }

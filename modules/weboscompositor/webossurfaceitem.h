@@ -345,7 +345,7 @@ public:
         pid_t pid;
 
         // Look more info here: https://doc.qt.io/qt-5/qwaylandclient.html
-        struct wl_client *client = surface() ? surface()->client()->client() : NULL;
+        struct wl_client *client = surface() && surface()->client() ? surface()->client()->client() : NULL;
         if (client)
             wl_client_get_credentials(client, &pid, 0,0);
         else
