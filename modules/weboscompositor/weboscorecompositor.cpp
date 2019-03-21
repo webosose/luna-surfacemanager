@@ -714,18 +714,19 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfac
                 } else {
                     qInfo() << "transitioning to ItemStateProxy for" << item << item->itemState() << item->itemStateReason();
                     item->setItemState(WebOSSurfaceItem::ItemStateProxy, item->itemStateReason());
-                    // Fall through
+                    emit surfaceDestroyed(item);
+
+                    /* This means items will not use any graphic resource from related surface.
+                    / If there are more use case, the API should be moved to proper place.
+                    / ex)If there are some dying animation for the item, this should be called at the end of the animation. */
+                    item->releaseSurface();
+                    // Clear old texture
+                    item->update();
                 }
             case WebOSSurfaceItem::ItemStateClosing:
                 qInfo() << "handling surfaceDestroyed for " << item << item->itemState() << item->itemStateReason();
-                emit surfaceDestroyed(item);
-
-                /* This means items will not use any graphic resource from related surface.
-                / If there are more use case, the API should be moved to proper place.
-                / ex)If there are some dying animation for the item, this should be called at the end of the animation. */
-                item->releaseSurface();
-                // Clear old texture
-                item->update();
+                // remove item
+                removeSurfaceItem(item, true);
                 break;
             default:
                 qWarning() << "unhandled case of the transition to ItemStateProxy for" << item << item->itemState() << item->itemStateReason();
