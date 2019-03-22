@@ -412,13 +412,15 @@ void WebOSImported::detached()
 {
     qWarning() << "WebOSImported::detached is called " << this;
 
-    m_exported = nullptr;
-
+    // exported for punch through is destroyed
     if (m_punched) {
+        m_exported = nullptr;
         webos_imported_detach_punchthrough(nullptr);
     }
 
+   // exported for texture surface is destroyed
     if (m_surfaceAttached) {
+        m_exported = nullptr;
         webos_imported_detach_surface(nullptr, nullptr);
     }
 }
