@@ -710,7 +710,6 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfac
                     qInfo() << "transitioning to ItemStateProxy and ItemStateClosing for" << item << item->itemState() << item->itemStateReason();
                     item->setItemState(WebOSSurfaceItem::ItemStateProxy, item->itemStateReason());
                     processSurfaceItem(item, WebOSSurfaceItem::ItemStateClosing);
-                    break;
                 } else {
                     qInfo() << "transitioning to ItemStateProxy for" << item << item->itemState() << item->itemStateReason();
                     item->setItemState(WebOSSurfaceItem::ItemStateProxy, item->itemStateReason());
@@ -723,6 +722,7 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfac
                     // Clear old texture
                     item->update();
                 }
+                break;
             case WebOSSurfaceItem::ItemStateClosing:
                 qInfo() << "handling surfaceDestroyed for " << item << item->itemState() << item->itemStateReason();
                 // remove item
