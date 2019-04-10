@@ -402,6 +402,7 @@ void WebOSSurfaceItem::touchEvent(QTouchEvent *event)
     } else {
         QWaylandQuickItem::touchEvent(event);
     }
+    event->setAccepted(e.isAccepted());
 }
 
 void WebOSSurfaceItem::hoverEnterEvent(QHoverEvent *event)
