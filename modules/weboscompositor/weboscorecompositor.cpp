@@ -943,7 +943,7 @@ void WebOSCoreCompositor::emitLsmReady()
 int WebOSCoreCompositor::prepareOutputUpdate()
 {
     foreach (WebOSSurfaceItem *item, m_surfaces) {
-        if (!item->surface() || item->width() == item->height())
+        if (!item->surface() || item->width() == item->height() || item->state() == Qt::WindowMinimized)
             continue;
 
         connect(item->surface(), &QWaylandSurface::sizeChanged, this, &WebOSCoreCompositor::onSurfaceSizeChanged);
