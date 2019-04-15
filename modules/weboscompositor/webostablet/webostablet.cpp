@@ -1,4 +1,4 @@
-// Copyright (c) 2018 LG Electronics, Inc.
+// Copyright (c) 2018-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,6 +27,10 @@
 
 #define WEBOSTABLET_VERSION 1
 
+//wl_fixed_t has 8 bits of decimal precision. So we can't send data such as 1/4096.
+//So use this scale value to use 23 bits of integer precision.
+#define TABLET_PRESSURE_SCALE_FACTOR 1000000
+
 WebOSTablet::WebOSTablet(WebOSCoreCompositor* compositor)
     : QtWaylandServer::wl_webos_tablet(compositor->display(), WEBOSTABLET_VERSION)
 {
@@ -42,7 +46,7 @@ bool WebOSTablet::postTabletEvent(QTabletEvent* event, QWaylandView* view)
                       wl_fixed_from_double(event->globalPosF().x()),
                       wl_fixed_from_double(event->globalPosF().y()),
                       event->xTilt(), event->yTilt(),
-                      wl_fixed_from_double(event->pressure()),
+                      wl_fixed_from_double(event->pressure() * TABLET_PRESSURE_SCALE_FACTOR),
                       wl_fixed_from_double(event->rotation()));
         return true;
     }
