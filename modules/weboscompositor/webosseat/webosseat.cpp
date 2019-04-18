@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@
 #include <QScreen>
 #include <QWaylandCompositor>
 #include <QString>
-#include <QtCompositor/private/qwlinputdevice_p.h>
 
 #define WEBOSINPUTMANAGER_VERSION 1
 #define WEBOSSEAT_VERSION 1
@@ -41,7 +40,7 @@ static void (*setGrabStatusFunc)(uint32_t devId, bool grabbed);
 static void (*setCursorVisibilityFunc)(QScreen* screen, bool visibility);
 
 WebOSInputManager::WebOSInputManager(WebOSCoreCompositor* compositor)
-    : QtWaylandServer::wl_webos_input_manager(compositor->waylandDisplay(), WEBOSINPUTMANAGER_VERSION)
+    : QtWaylandServer::wl_webos_input_manager(compositor->display(), WEBOSINPUTMANAGER_VERSION)
     , m_compositor(compositor)
     , m_nativeInterface(QGuiApplication::platformNativeInterface())
 {
@@ -57,29 +56,27 @@ WebOSInputManager::WebOSInputManager(WebOSCoreCompositor* compositor)
                         m_compositor->window()->screen());
 }
 
-WebOSInputDevice* WebOSInputManager::findWebOSInputDevice(QtWaylandServer::wl_seat *seat)
+WebOSInputDevice* WebOSInputManager::findWebOSInputDevice(struct ::wl_resource *seatWl)
 {
-    QtWaylandServer::wl_seat *seatDefault =
-        static_cast<QtWaylandServer::wl_seat *>(m_compositor->defaultInputDevice()->handle());
+    QWaylandSeat *seatResource = QWaylandSeat::fromSeatResource(seatWl);
+    QWaylandSeat *seatDefault = m_compositor->defaultSeat();
 
     //Default Input device doesn't have WebOSInputDevice
-    if (seatDefault == seat)
+    if (seatDefault == seatResource)
         return NULL;
 
-    QWaylandInputDevice *findInputDev = NULL;
-    QList<QWaylandInputDevice *> devices = m_compositor->inputDevices();
-    foreach (QWaylandInputDevice *device, devices)
+    QWaylandSeat *findInputDev = NULL;
+    QList<QWaylandSeat *> seats = m_compositor->inputDevices();
+    foreach (QWaylandSeat *seat, seats)
     {
-        QtWayland::InputDevice *d = device->handle();
-        QtWaylandServer::wl_seat *comparedSeat = static_cast<QtWaylandServer::wl_seat *>(d);
-        if (comparedSeat == seat) {
-            findInputDev = device;
-            return static_cast<WebOSInputDevice*>(device);
+        if (seat == seatResource) {
+            findInputDev = seat;
+            return static_cast<WebOSInputDevice*>(seat);
         }
     }
 
     qWarning() << "SHOULD NOT HAPPEN! All input devices except default MUST HAVE WebOSInputDevice!";
-    Q_ASSERT(seatDefault == seat || findInputDev);
+    Q_ASSERT(seatDefault == seatResource || findInputDev);
     return NULL;
 }
 
@@ -113,8 +110,7 @@ void WebOSInputManager::webos_input_manager_get_webos_seat(Resource *resource,
 {
     WebOSInputManager *im = static_cast<WebOSInputManager*>(resource->webos_input_manager_object);
 
-    WebOSInputDevice *webosInputDev =
-        findWebOSInputDevice(static_cast<QtWaylandServer::wl_seat::Resource *>(seat->data)->seat_object);
+    WebOSInputDevice *webosInputDev = findWebOSInputDevice(seat);
 
     // NOTE: Will be freed from WebOSSeat::webos_seat_destroy_resource()
     new WebOSSeat(im, resource->client(), id, webosInputDev);

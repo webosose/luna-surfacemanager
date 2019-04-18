@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 LG Electronics, Inc.
+// Copyright (c) 2014-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 #include "webosgroupedwindowmodel.h"
 #include "weboscorecompositor.h"
 
-#include <QtCompositor/private/qwlsurface_p.h>
+#include <QtWaylandCompositor/private/qwaylandsurface_p.h>
 #include <QDebug>
 #include <QQmlPropertyMap>
 #include <QQmlEngine>
@@ -225,9 +225,9 @@ bool WebOSSurfaceGroup::assertOwner(Resource* r)
 
 WebOSSurfaceItem* WebOSSurfaceGroup::itemFromResource(struct ::wl_resource* surface)
 {
-    QtWayland::Surface* s = QtWayland::Surface::fromResource(surface);
+    QWaylandSurface* s = QWaylandSurface::fromResource(surface);
     if (s) {
-        QWaylandQuickSurface *qsurface = qobject_cast<QWaylandQuickSurface *>(s->waylandSurface());
+        QWaylandQuickSurface *qsurface = qobject_cast<QWaylandQuickSurface *>(s);
         return qobject_cast<WebOSSurfaceItem*>(qsurface->surfaceItem());
     }
     qWarning("Could not resolve wl_surface@%d to surface item", surface->object.id);

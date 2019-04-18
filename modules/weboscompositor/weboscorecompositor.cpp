@@ -14,11 +14,12 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include <qwaylandsurfaceitem.h>
-#include <QWaylandInputDevice>
-#include <QtCompositor/private/qwlkeyboard_p.h>
-#include <QtCompositor/private/qwlinputdevice_p.h>
-#include <QtCompositor/private/qwlcompositor_p.h>
+#include <qwaylandquickitem.h>
+#include <QWaylandSeat>
+#include <QtWaylandCompositor/private/qwaylandkeyboard_p.h>
+#include <QtWaylandCompositor/private/qwaylandseat_p.h>
+#include <QtWaylandCompositor/private/qwaylandcompositor_p.h>
+#include <QtWaylandCompositor/qwaylandqtwindowmanager.h>
 
 #include <QDebug>
 #include <QQuickWindow>
@@ -27,6 +28,8 @@
 #include <QDir>
 #include <QQmlComponent>
 #include <QProcess>
+#include <QScreen>
+#include <QWaylandQuickOutput>
 
 #include "weboscorecompositor.h"
 #include "weboscompositorwindow.h"
@@ -52,18 +55,46 @@
 #include "webosinputmethod.h"
 #include "waylandinputmethod.h"
 
+#include "weboskeyboard.h"
+
 #include "weboscompositortracer.h"
 
 // Need to access QtWayland::Keyboard::focusChanged
-#include <QtCompositor/private/qwlsurface_p.h>
-
-// Specify qtwayland extensions as needed.
-// Refer to qwaylandcompositor.h for available extensions.
-static QWaylandCompositor::ExtensionFlags compositorFlags = 0;
+#include <QtWaylandCompositor/private/qwaylandsurface_p.h>
 
 #ifdef USE_PMLOGLIB
 #include <PmLogLib.h>
 #endif
+
+class WebOSCoreCompositorPrivate : public QWaylandCompositorPrivate
+{
+public:
+    WebOSCoreCompositorPrivate(WebOSCoreCompositor *compositor)
+        : QWaylandCompositorPrivate(compositor)
+    {};
+
+protected:
+    QWaylandSurface *createDefaultSurface() override {
+        return new QWaylandQuickSurface();
+    }
+    Q_DECLARE_PUBLIC(WebOSCoreCompositor)
+};
+
+
+class WebOSWaylandSeat : public QWaylandSeat {
+public:
+    WebOSWaylandSeat(QWaylandCompositor *compositor)
+        : QWaylandSeat(compositor)
+    {}
+
+    virtual void setCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY, wl_client *client)
+    {
+        QWaylandSeat::setCursorSurface(surface, hotspotX, hotspotY, client);
+        WebOSCoreCompositor *webos_compositor = dynamic_cast<WebOSCoreCompositor *>(compositor());
+        webos_compositor->setCursorSurface(surface, hotspotX, hotspotY, client);
+    }
+};
+
 
 void WebOSCoreCompositor::logger(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
@@ -121,7 +152,7 @@ void WebOSCoreCompositor::logger(QtMsgType type, const QMessageLogContext &conte
 }
 
 WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *socketName)
-    : QWaylandQuickCompositor(socketName, compositorFlags)
+    : QWaylandQuickCompositor()
     , m_previousFullscreenSurface(0)
     , m_fullscreenSurface(0)
     , m_keyFilter(0)
@@ -138,18 +169,19 @@ WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *
     , m_inputMethod(0)
     , m_surfaceItemClosePolicy(QVariantMap())
     , m_inputManager(0)
-    , m_surfaceModel(0)
+    , m_surfaceModel(nullptr)
+    , m_wlShell(new QWaylandWlShell(this))
 #ifdef MULTIINPUT_SUPPORT
     , m_lastMouseEventFrom(0)
     , m_inputDevicePreallocated(0)
 #endif
     , m_respawned(false)
 {
-    qInfo() << "Creating WebOSCoreCompositor with flags" << compositorFlags;
-
-    checkDaemonFiles();
+    setSocketName(socketName);
 
     initializeExtensions(extensions);
+
+    connect(this, &QWaylandCompositor::surfaceCreated, this, &WebOSCoreCompositor::surfaceCreated);
 }
 
 WebOSCoreCompositor::~WebOSCoreCompositor()
@@ -175,11 +207,20 @@ void WebOSCoreCompositor::insertToWindows(WebOSCompositorWindow *window)
     emit windowsChanged();
 }
 
+void WebOSCoreCompositor::create()
+{
+    QWaylandQuickCompositor::create();
+    checkDaemonFiles();
+}
+
 void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
 {
     static bool firstRegister = true;
 
-    QWaylandOutput *output = createOutput(window, "webos", name);
+    QWaylandQuickOutput *output = new QWaylandQuickOutput(this, window);
+    QWaylandOutputMode mode(m_outputGeometry.isValid() ? m_outputGeometry.size() : window->size(), 60000);
+    output->addMode(mode, true);
+    output->setCurrentMode(mode);
 
     if (!output) {
         qCritical() << "Failed to create QWaylandOutput for window" << window << name;
@@ -190,26 +231,23 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
     insertToWindows(webosWindow);
     webosWindow->setOutput(output);
 
-    connect(window, SIGNAL(frameSwapped()), this, SLOT(frameSwappedSlot()));
-    // TODO: check is it ok just to use primary window to handle activeFocusItem
-    connect(window, SIGNAL(activeFocusItemChanged()), this, SLOT(handleActiveFocusItemChanged()));
+    connect(window, &QQuickWindow::frameSwapped, this, &WebOSCoreCompositor::frameSwappedSlot);
+    //TODO: check is it ok just to use primary window to handle activeFocusItem
+    connect(window, &QQuickWindow::activeFocusItemChanged, this, &WebOSCoreCompositor::handleActiveFocusItemChanged);
 
     if (firstRegister) {
         firstRegister = false;
 
-        //For QtWayland shell surface in 5.4
-        addDefaultShell();
+        setDefaultOutput(output);
 
         m_surfaceModel = new WebOSSurfaceModel();
 
         setInputMethod(new WebOSInputMethod(this));
 
-        connect(this, SIGNAL(fullscreenSurfaceChanged()), this, SIGNAL(fullscreenChanged()));
-
         connect(m_unixSignalHandler, &UnixSignalHandler::sighup, this, &WebOSCoreCompositor::reloadConfig);
 
         // TODO: support multiple keyboard focus
-        connect(defaultInputDevice()->handle()->keyboardDevice(), &QtWayland::Keyboard::focusChanged, this, &WebOSCoreCompositor::activeSurfaceChanged);
+        connect(defaultSeat()->keyboard(), &QWaylandKeyboard::focusChanged, this, &WebOSCoreCompositor::activeSurfaceChanged);
 
         QCoreApplication::instance()->installEventFilter(m_eventPreprocessor);
 
@@ -222,7 +260,9 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
         m_inputDevicePreallocated = new WebOSInputDevice(this);
 #endif
         // Set default state of Qt client windows to fullscreen
-        setClientFullScreenHint(true);
+        QWaylandQtWindowManager *wmExtension = QWaylandQtWindowManager::findIn(this);
+        if (wmExtension != nullptr)
+            wmExtension->setShowIsFullScreen(true);
 
         m_foreign->registeredWindow();
 
@@ -230,12 +270,12 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
         emit windowChanged();
 
         // Use defaultInputDevice for primary window
-        webosWindow->setInputDevice(defaultInputDevice());
+        webosWindow->setInputDevice(defaultSeat());
     } else {
         // Create dedicated InputDevice for secondary windows
         // Pointer is for mouseFocus which is needed for touch
-        QWaylandInputDevice *device =
-            new WebOSInputDevice(this, QWaylandInputDevice::Keyboard | QWaylandInputDevice::Touch | QWaylandInputDevice::Pointer);
+        QWaylandSeat *device =
+            new WebOSInputDevice(this, QWaylandSeat::Keyboard | QWaylandSeat::Touch | QWaylandSeat::Pointer);
         webosWindow->setInputDevice(device);
     }
 }
@@ -250,6 +290,8 @@ void WebOSCoreCompositor::checkDaemonFiles()
         name = qgetenv("WAYLAND_DISPLAY");
         if (name.isEmpty())
             name = "wayland-0";
+
+        setSocketName(name);
     }
 
     QFileInfo sInfo(QString("%1/%2").arg(xdgDir.constData()).arg(name.data()));
@@ -336,13 +378,8 @@ bool WebOSCoreCompositor::isMapped(WebOSSurfaceItem *item)
  * update our internal model of mapped surface in response to wayland surfaces being mapped
  * and unmapped. WindowModels use this as their source of windows.
  */
-void WebOSCoreCompositor::onSurfaceMapped() {
+void WebOSCoreCompositor::onSurfaceMapped(QWaylandSurface *surface, WebOSSurfaceItem* item) {
     PMTRACE_FUNCTION;
-    QWaylandQuickSurface *surface = qobject_cast<QWaylandQuickSurface *>(sender());
-    // qtwayland project uses the wayland-cursor library to provide a distinct surface to
-    // which to render on, so we check if the surface has a shell surface associated with it as
-    // we do not want to list the cursor surface with the 'normal' ones.
-    WebOSSurfaceItem* item = qobject_cast<WebOSSurfaceItem*>(surface->surfaceItem());
 
     if (item) {
         if (item->isPartOfGroup()) {
@@ -386,12 +423,12 @@ void WebOSCoreCompositor::onSurfaceMapped() {
 
 WebOSSurfaceItem* WebOSCoreCompositor::activeSurface()
 {
-    QWaylandSurface* active = defaultInputDevice()->keyboardFocus();
+    QWaylandSurface* active = defaultSeat()->keyboardFocus();
     if (!active)
         return 0;
 
     Q_ASSERT(active->views().first());
-    QWaylandSurfaceItem *item = static_cast<QWaylandSurfaceItem*>(active->views().first());
+    QWaylandQuickItem *item = static_cast<QWaylandQuickItem*>(active->views().first()->renderObject());
     return qobject_cast<WebOSSurfaceItem*>(item);
 }
 
@@ -423,11 +460,8 @@ WebOSCompositorWindow *WebOSCoreCompositor::window(int displayId)
     return m_windows[displayId];
 }
 
-void WebOSCoreCompositor::onSurfaceUnmapped() {
+void WebOSCoreCompositor::onSurfaceUnmapped(QWaylandSurface *surface, WebOSSurfaceItem* item) {
     PMTRACE_FUNCTION;
-    QWaylandQuickSurface *surface = qobject_cast<QWaylandQuickSurface *>(sender());
-
-    WebOSSurfaceItem* item = qobject_cast<WebOSSurfaceItem*>(surface->surfaceItem());
 
     if (!item) {
         qWarning() << "No item for surface" << surface;
@@ -456,11 +490,8 @@ void WebOSCoreCompositor::onSurfaceUnmapped() {
     }
 }
 
-void WebOSCoreCompositor::onSurfaceDestroyed() {
+void WebOSCoreCompositor::onSurfaceDestroyed(QWaylandSurface *surface, WebOSSurfaceItem* item) {
     PMTRACE_FUNCTION;
-    QWaylandQuickSurface *surface = qobject_cast<QWaylandQuickSurface *>(sender());
-
-    WebOSSurfaceItem* item = qobject_cast<WebOSSurfaceItem*>(surface->surfaceItem());
 
     if (!item) {
         qWarning() << "No item for surface" << surface;
@@ -484,7 +515,7 @@ void WebOSCoreCompositor::onSurfaceDestroyed() {
             // This means items will not use any graphic resource from related surface.
             // If there are more use case, the API should be moved to proper place.
             // ex)If there are some dying animation for the item, this should be called at the end of the animation.
-            item->releaseSurface();
+            item->view()->setSurface(nullptr);
         }
 
         if (surface == m_fullscreenSurface)
@@ -495,11 +526,9 @@ void WebOSCoreCompositor::onSurfaceDestroyed() {
 void WebOSCoreCompositor::frameSwappedSlot() {
     PMTRACE_FUNCTION;
     QWindow *window = qobject_cast<QWindow *>(sender());
-    QList<QWaylandSurface *> ss;
-    foreach (QWaylandSurface *s, surfaces())
-        if (s->mainOutput()->window() == window)
-            ss << s;
-    sendFrameCallbacks(ss);
+    QWaylandOutput *output = outputFor(window);
+    if (output != NULL)
+        output->sendFrameCallbacks();
 }
 
 /* Basic life cycle of surface and surface item.
@@ -508,31 +537,35 @@ void WebOSCoreCompositor::frameSwappedSlot() {
 
    2. delete QtWayland::Surface { delete QWaylandSurface {
         ~QObject() {
-         emit destroyed(QObject *) -> WebOSCoreCompositor::surfaceDestroyed() / QWaylandSurfaceItem::surfaceDestroyed()
+         emit destroyed(QObject *) -> WebOSCoreCompositor::surfaceDestroyed() / QWaylandQuickItem::surfaceDestroyed()
          deleteChilderen -> ~QWaylandSurfacePrivate()
         }
       }}
 
    We will delete QWebOSSurfaceItem in WebOSCoreCompositor::surfaceDestroyed as a pair of surfaceCreated.
-   For that, we have to guarantee WebOSCoreCompositor::surfaceDestroyed is called before QWaylandSurfaceItem::surfaceDestroyed.
-   Otherwise, the surface item will lose a reference for surface in QWaylandSurfaceItem::surfaceDestroyed.
+   For that, we have to guarantee WebOSCoreCompositor::surfaceDestroyed is called before QWaylandQuickItem::surfaceDestroyed.
+   Otherwise, the surface item will lose a reference for surface in QWaylandQuickItem::surfaceDestroyed.
    After all, ~QWebOSSurfaceItem cannot clear surface's reference, then the surface still have invaild reference to
    surface item which is already freed. */
 
 void WebOSCoreCompositor::surfaceCreated(QWaylandSurface *surface) {
     PMTRACE_FUNCTION;
-    // There are two surfaceDestroyed functions (a slot and a signal) need to
-    // cast to point to the right one, otherwise compilation fails
-    connect(surface, &QWaylandSurface::surfaceDestroyed, this, &WebOSCoreCompositor::onSurfaceDestroyed);
-    connect(surface, SIGNAL(mapped()), this, SLOT(onSurfaceMapped()));
-    connect(surface, SIGNAL(unmapped()), this, SLOT(onSurfaceUnmapped()));
 
     /* Ensure that WebOSSurfaceItem is created after surfaceDestroyed is connected.
        Refer to upper comment about life cycle of surface and surface item. */
     WebOSSurfaceItem *item = new WebOSSurfaceItem(this, static_cast<QWaylandQuickSurface *>(surface));
-    // ensure that the item will not resize by default. QtWayland is missing a inline
-    // initializer for the member variable in the contructor
-    item->setResizeSurfaceToItem(false);
+
+    connect(surface, &QWaylandSurface::hasContentChanged, [this, surface, item] {
+        if (surface->hasContent())
+            this->onSurfaceMapped(surface, item);
+        else
+            this->onSurfaceUnmapped(surface, item);
+    });
+
+    connect(surface, &QWaylandSurface::destroyed, [this, surface, item] {
+        this->onSurfaceDestroyed(surface, item);
+    });
+
     qInfo() << surface << item << "client pid:" << item->processId();
 }
 
@@ -621,6 +654,7 @@ bool WebOSCoreCompositor::setFullscreenSurface(QWaylandSurface *s) {
             m_previousFullscreenSurface = m_fullscreenSurface;
         }
         m_fullscreenSurface = surface;
+        emit fullscreenChanged();
         emit fullscreenSurfaceChanged();
         // This is here for a transitional period, see signal comments
         emit fullscreenSurfaceChanged(m_previousFullscreenSurface, m_fullscreenSurface);
@@ -768,7 +802,7 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfac
         qWarning() << "no transition to ItemStateNormal for" << item << item->itemState() << item->itemStateReason();
         break;
     case WebOSSurfaceItem::ItemStateHidden:
-        if (!item->isSurfaced() || !item->surface()->isMapped()) {
+        if (!item->isSurfaced() || !item->surface()->hasContent()) {
             switch (item->itemState()) {
             case WebOSSurfaceItem::ItemStateNormal:
                 qInfo() << "transitioning to ItemStateHidden for" << item << item->itemState() << item->itemStateReason();
@@ -795,7 +829,7 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfac
         }
         break;
     case WebOSSurfaceItem::ItemStateProxy:
-        if (!item->isSurfaced() || !item->surface()->isMapped()) {
+        if (!item->isSurfaced() || !item->surface()->hasContent()) {
             switch (item->itemState()) {
             case WebOSSurfaceItem::ItemStateNormal:
             case WebOSSurfaceItem::ItemStateHidden:
@@ -822,7 +856,7 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfac
                     /* This means items will not use any graphic resource from related surface.
                     / If there are more use case, the API should be moved to proper place.
                     / ex)If there are some dying animation for the item, this should be called at the end of the animation. */
-                    item->releaseSurface();
+                    item->view()->setSurface(nullptr);
                     // Clear old texture
                     item->update();
                 }
@@ -843,7 +877,7 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfac
     case WebOSSurfaceItem::ItemStateClosing:
         qInfo() << "transitioning to ItemStateClosing for" << item << item->itemState() << item->itemStateReason();
         item->setItemState(WebOSSurfaceItem::ItemStateClosing, item->itemStateReason());
-        if (!item->isSurfaced() || !item->surface()->isMapped()) {
+        if (!item->isSurfaced() || !item->surface()->hasContent()) {
             // remove item
             removeSurfaceItem(item, true);
         } else {
@@ -856,7 +890,7 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfac
 }
 
 void WebOSCoreCompositor::destroyClientForWindow(QVariant window) {
-    QWaylandSurface *surface = qobject_cast<QWaylandSurfaceItem *>(qvariant_cast<QObject *>(window))->surface();
+    QWaylandSurface *surface = qobject_cast<QWaylandQuickItem *>(qvariant_cast<QObject *>(window))->surface();
     destroyClientForSurface(surface);
 }
 
@@ -880,8 +914,15 @@ void WebOSCoreCompositor::setCursorSurface(QWaylandSurface *surface, int hotspot
 {
     PMTRACE_FUNCTION;
 
+    if (surface) {
+        auto view = surface->primaryView();
+        auto qs = static_cast<WebOSSurfaceItem*>(view->renderObject());
+        if (qs)
+            surface->disconnect(SIGNAL(hasContentChanged()));
+    }
+
     foreach(WebOSSurfaceItem *item, m_surfaces) {
-        if (item->surface() && !item->surface()->handle()->isCursorSurface() &&
+        if (item->surface() && !item->surface()->isCursorSurface() &&
                 item->surface()->client() && item->surface()->client()->client() == client)
             item->setCursorSurface(surface, hotspotX, hotspotY);
     }
@@ -898,15 +939,14 @@ void WebOSCoreCompositor::setMouseFocus(QWaylandSurface* surface)
     }
 
 #ifdef MULTIINPUT_SUPPORT
-    QPointF curPosition = static_cast<QPointF>(QCursor::pos());
-    foreach (QWaylandInputDevice *dev, inputDevices()) {
-        if (!surface->views().isEmpty())
-            dev->setMouseFocus(surface->views().first(), curPosition, curPosition);
+    foreach (QWaylandSeat *dev, inputDevices()) {
+        if (surface && !surface->views().isEmpty())
+            dev->setMouseFocus(surface->views().first());
     }
 #else
     QWaylandQuickSurface *qsurface = static_cast<QWaylandQuickSurface *>(surface);
-    QPointF curPosition = static_cast<QPointF>(QCursor::pos());
-    defaultInputDevice()->setMouseFocus(qsurface->surfaceItem(), curPosition, curPosition);
+    QWaylandQuickItem *item = qsurface->surfaceItem();
+    defaultSeat()->setMouseFocus(item ? item->view(): nullptr);
 #endif
 }
 
@@ -914,10 +954,10 @@ void WebOSCoreCompositor::setMouseFocus(QWaylandSurface* surface)
 void WebOSCoreCompositor::resetMouseFocus(QWaylandSurface *surface)
 {
     QPointF curPosition = static_cast<QPointF>(QCursor::pos());
-    foreach (QWaylandInputDevice *dev, inputDevices()) {
+    foreach (QWaylandSeat *dev, inputDevices()) {
         if (surface && !surface->views().isEmpty()
             && dev->mouseFocus() == surface->views().first())
-            dev->setMouseFocus(NULL, curPosition, curPosition);
+            dev->setMouseFocus(NULL);
     }
 }
 #endif
@@ -1019,9 +1059,9 @@ void WebOSCoreCompositor::setMouseEventEnabled(bool enable)
 }
 
 #ifdef MULTIINPUT_SUPPORT
-QWaylandInputDevice *WebOSCoreCompositor::queryInputDevice(QInputEvent *inputEvent)
+QWaylandSeat *WebOSCoreCompositor::queryInputDevice(QInputEvent *inputEvent)
 {
-    /* We will use defaultInputDevice for device id 0 */
+    /* We will use defaultSeat for device id 0 */
     if (WebOSInputDevice::getDeviceId(inputEvent) == 0)
         return 0;
 
@@ -1055,6 +1095,28 @@ int WebOSCoreCompositor::prepareOutputUpdate()
     return m_surfacesOnUpdate.count();
 }
 
+static void setScreenOrientation(QWaylandOutput *output, Qt::ScreenOrientation orientation) {
+        bool isPortrait = output->window()->screen()->nativeOrientation() == Qt::PortraitOrientation;
+
+        switch (orientation) {
+        case Qt::PrimaryOrientation:
+            output->setTransform(QWaylandOutput::TransformNormal);
+            break;
+        case Qt::LandscapeOrientation:
+            output->setTransform(isPortrait ? QWaylandOutput::Transform270 : QWaylandOutput::TransformNormal);
+            break;
+        case Qt::PortraitOrientation:
+            output->setTransform(isPortrait ? QWaylandOutput::TransformNormal : QWaylandOutput::Transform270);
+            break;
+        case Qt::InvertedLandscapeOrientation:
+            output->setTransform(isPortrait ? QWaylandOutput::Transform90 : QWaylandOutput::Transform180);
+            break;
+        case Qt::InvertedPortraitOrientation:
+            output->setTransform(isPortrait ? QWaylandOutput::Transform180 : QWaylandOutput::Transform90);
+            break;
+        }
+}
+
 void WebOSCoreCompositor::commitOutputUpdate(QQuickWindow *window, QRect geometry, int rotation, double ratio)
 {
     qInfo() << "OutputGeometry: sending output update to clients:" << window << geometry << rotation << ratio;
@@ -1067,7 +1129,9 @@ void WebOSCoreCompositor::commitOutputUpdate(QQuickWindow *window, QRect geometr
         return;
     }
 
-    output->setGeometry(QRect(QPoint(), geometry.size() * ratio));
+    QWaylandOutputMode mode(geometry.size() * ratio, output->currentMode().refreshRate());
+    output->addMode(mode, true);
+    output->setCurrentMode(mode);
 
     if (rotation % 360 == 270)
         setScreenOrientation(output, Qt::PortraitOrientation);
@@ -1122,19 +1186,20 @@ void WebOSCoreCompositor::initTestPluginLoader()
     CompositorExtensionFactory::watchTestPluginDir();
 }
 
-QList<QWaylandInputDevice *> WebOSCoreCompositor::inputDevices() const
+QList<QWaylandSeat *> WebOSCoreCompositor::inputDevices() const
 {
-    return handle()->inputDevices();
+    Q_D(const WebOSCoreCompositor);
+    return d->seats;
 }
 
-QWaylandInputDevice *WebOSCoreCompositor::inputDeviceFor(QInputEvent *inputEvent)
+QWaylandSeat *WebOSCoreCompositor::seatFor(QInputEvent *inputEvent)
 {
 #ifdef MULTIINPUT_SUPPORT
-    QWaylandInputDevice *dev = NULL;
-    // The last input device in the input device list must be default input device
-    // which is QWaylandInputDevice, so that it always returns true for isOwner().
-    for (int i = 0; i < inputDevices().size() - 1; i++) {
-        QWaylandInputDevice *candidate = inputDevices().at(i);
+    QWaylandSeat *dev = NULL;
+    // The first input device in the input device list must be default input device
+    // which is QWaylandSeat, so that it always returns true for isOwner().
+    for (int i = 1; i < inputDevices().size(); i++) {
+        QWaylandSeat *candidate = inputDevices().at(i);
         if (candidate->isOwner(inputEvent)) {
             dev = candidate;
             return dev;
@@ -1143,7 +1208,7 @@ QWaylandInputDevice *WebOSCoreCompositor::inputDeviceFor(QInputEvent *inputEvent
 
     dev =  queryInputDevice(inputEvent);
     if (!dev) {
-        dev = defaultInputDevice();
+        dev = defaultSeat();
     }
 
     return dev;
@@ -1175,19 +1240,19 @@ QWaylandInputDevice *WebOSCoreCompositor::inputDeviceFor(QInputEvent *inputEvent
             return static_cast<WebOSCompositorWindow *>(wWheel->window())->inputDevice();
     }
 
-    return QWaylandCompositor::inputDeviceFor(inputEvent);
+    return QWaylandCompositor::seatFor(inputEvent);
 #endif
 }
 
-QWaylandInputDevice *WebOSCoreCompositor::keyboardDeviceForWindow(QQuickWindow *window)
+QWaylandSeat *WebOSCoreCompositor::keyboardDeviceForWindow(QQuickWindow *window)
 {
     if (!window)
-        return defaultInputDevice();
+        return defaultSeat();
 
     return static_cast<WebOSCompositorWindow *>(window)->inputDevice();
 }
 
-QWaylandInputDevice *WebOSCoreCompositor::keyboardDeviceForDisplayId(int displayId)
+QWaylandSeat *WebOSCoreCompositor::keyboardDeviceForDisplayId(int displayId)
 {
     if (displayId < 0 || displayId >= m_windows.size()) {
         qWarning() << "Cannot get keyboard device for displayId" << displayId;
@@ -1213,17 +1278,21 @@ bool WebOSCoreCompositor::EventPreprocessor::eventFilter(QObject *obj, QEvent *e
 
 #ifdef MULTIINPUT_SUPPORT
         // Make sure input device ready before synchronizing modifier state.
-        m_compositor->inputDeviceFor(ke);
+        m_compositor->seatFor(ke);
 
         // Update key modifier state for all input devices
         // so that they're always in sync with lock state.
-        foreach (QWaylandInputDevice *dev, m_compositor->inputDevices()) {
-            dev->updateModifierState(ke);
+        foreach (QWaylandSeat *dev, m_compositor->inputDevices()) {
+            auto keyboard = dev->keyboard();
+            if (keyboard && keyboard->focusClient()) {
+                QWaylandKeyboardPrivate::get(keyboard)->updateModifierState(ke->nativeScanCode(), (ke->type() == QEvent::KeyPress)? 1 : 0, ke->isAutoRepeat());
+                keyboard->sendKeyModifiers(keyboard->focusClient(), m_compositor->nextSerial());
+            }
         }
 #else
-        // TODO: update modifier for dedicated keyboards
-        // Why should it be done in event filter, not the handler of the event?
-        m_compositor->defaultInputDevice()->updateModifierState(ke);
+        auto keyboard = m_compositor->defaultSeat()->keyboard();
+        if (keyboard && keyboard->focusClient())
+            keyboard->sendKeyModifiers(keyboard->focusClient(), m_compositor->nextSerial());
 #endif
     }
 
@@ -1236,3 +1305,36 @@ bool WebOSCoreCompositor::EventPreprocessor::eventFilter(QObject *obj, QEvent *e
 
     return eventAccepted;
 }
+
+QWaylandSeat *WebOSCoreCompositor::createSeat()
+{
+    return new WebOSWaylandSeat(this);
+}
+
+QWaylandPointer *WebOSCoreCompositor::createPointerDevice(QWaylandSeat *seat)
+{
+    return QWaylandQuickCompositor::createPointerDevice(seat);
+}
+
+QWaylandKeyboard *WebOSCoreCompositor::createKeyboardDevice(QWaylandSeat *seat)
+{
+    return new WebOSKeyboard(seat);
+}
+
+QWaylandTouch *WebOSCoreCompositor::createTouchDevice(QWaylandSeat *seat)
+{
+    return QWaylandQuickCompositor::createTouchDevice(seat);
+}
+
+void WebOSCoreCompositor::registerSeat(QWaylandSeat *seat)
+{
+    Q_D(WebOSCoreCompositor);
+    d->seats.append(seat);
+}
+
+void WebOSCoreCompositor::unregisterSeat(QWaylandSeat *seat)
+{
+    Q_D(WebOSCoreCompositor);
+    d->seats.removeOne(seat);
+}
+

@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2019 LG Electronics, Inc.
+# Copyright (c) 2014-2020 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ OBJECTS_DIR = .obj
 # For using path macro like MODULE_BASE_OUTDIR
 load(qt_build_paths)
 
-QT += qml quick compositor quick-private core-private compositor-private weboscompositorextension
+QT += qml quick waylandcompositor quick-private core-private waylandcompositor-private weboscompositorextension
 CONFIG += debug
 
 DEFINES += QT_COMPOSITOR_QUICK \
@@ -53,6 +53,7 @@ HEADERS += \
     weboskeyfilter.h \
     webosinputdevice.h \
     webosevent.h \
+    weboskeyboard.h \
     compositorextensionfactory.h \
     unixsignalhandler.h
 
@@ -68,6 +69,7 @@ SOURCES += \
     webosscreenshot.cpp \
     weboskeyfilter.cpp \
     webosinputdevice.cpp \
+    weboskeyboard.cpp \
     compositorextensionfactory.cpp \
     unixsignalhandler.cpp
 

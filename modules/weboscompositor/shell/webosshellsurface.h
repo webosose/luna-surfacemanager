@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -74,8 +74,13 @@ public:
     QVariant property(const QString &propertyName) const;
     void setProperty(const QString &name, const QVariant &value, bool notify = true);
 
+    bool isTransient() const { return m_transient; }
+    void requestSize(const QSize &size);
+
 public slots:
     void exposed(const QRegion& region);
+    // Catch shell surface becoming transient, so we can support legacy transient* functions in WebOSSurfaceItem
+    void handleSetTransient(QWaylandSurface *parentSurface, const QPoint &relativeToParent, bool inactive);
 
 signals:
     void locationHintChanged();
@@ -112,5 +117,6 @@ private:
     QVariantMap m_properties;
     QRegion m_exposed;
     WebOSSurfaceItem* m_surface;
+    bool m_transient;
 };
 #endif

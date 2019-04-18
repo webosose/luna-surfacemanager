@@ -36,15 +36,16 @@
 
 #include <qweboskeyextension.h>
 
-#include <QtCompositor/qwaylandbufferref.h>
-#include <QtCompositor/private/qwlinputdevice_p.h>
-#include <QtCompositor/private/qwlkeyboard_p.h>
-#include <QtCompositor/private/qwlpointer_p.h>
+#include <QtWaylandCompositor/qwaylandseat.h>
+#include <QtWaylandCompositor/private/qwaylandkeyboard_p.h>
+#include <QtWaylandCompositor/private/qwaylandpointer_p.h>
+#include <QtWaylandCompositor/qwaylandbufferref.h>
 
 #include "weboscompositortracer.h"
+#include "weboskeyboard.h"
 
 WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuickSurface* surface)
-        : QWaylandSurfaceItem(surface)
+        : QWaylandQuickItem()
         , m_compositor(compositor)
         , m_fullscreen(false)
         , m_lastFullscreenTick(0)
@@ -75,6 +76,8 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
         , m_itemStateReason(QString())
         , m_launchLastApp(false)
 {
+    setSurface(surface);
+
     if (surface) {
         connect(surface, SIGNAL(damaged(const QRegion &)), this, SLOT(onSurfaceDamaged(const QRegion &)));
     }
@@ -211,13 +214,12 @@ void WebOSSurfaceItem::takeWlKeyboardFocus() const
     }
 #ifdef MULTIINPUT_SUPPORT
     /* set keyboard focus for all devices */
-    foreach (QWaylandInputDevice *dev, m_compositor->inputDevices()) {
+    foreach (QWaylandSeat *dev, m_compositor->inputDevices())
         if (dev)
             dev->setKeyboardFocus(surface());
-    }
 #else
     /* set keyboard focus for this item */
-    QWaylandInputDevice *dev = m_compositor->keyboardDeviceForWindow(window());
+    QWaylandSeat *dev = m_compositor->keyboardDeviceForWindow(window());
     if (dev)
         dev->setKeyboardFocus(surface());
 #endif
@@ -245,7 +247,7 @@ void WebOSSurfaceItem::mouseMoveEvent(QMouseEvent * event)
 {
     WebOSMouseEvent e(event->type(), mapToTarget(QPointF(event->pos())).toPoint(),
                   event->button(), event->buttons(), event->modifiers(), window());
-    QWaylandSurfaceItem::mouseMoveEvent(&e);
+    QWaylandQuickItem::mouseMoveEvent(&e);
 }
 
 void WebOSSurfaceItem::mousePressEvent(QMouseEvent *event)
@@ -256,15 +258,15 @@ void WebOSSurfaceItem::mousePressEvent(QMouseEvent *event)
     if (surface()) {
         WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
 #ifdef MULTIINPUT_SUPPORT
-        QWaylandInputDevice *inputDevice = getInputDevice(&e);
-        QWaylandInputDevice *keyboardDevice = inputDevice;
+        QWaylandSeat *inputDevice = getInputDevice(&e);
+        QWaylandSeat *keyboardDevice = inputDevice;
 #else
-        QWaylandInputDevice *inputDevice = w->inputDevice();
-        QWaylandInputDevice *keyboardDevice = getInputDevice();
+        QWaylandSeat *inputDevice = w->inputDevice();
+        QWaylandSeat *keyboardDevice = getInputDevice();
 #endif
         if (inputDevice && keyboardDevice) {
-            if (inputDevice->mouseFocus() != this)
-                inputDevice->setMouseFocus(this, e.localPos(), e.windowPos());
+            if (inputDevice->mouseFocus() != view())
+                inputDevice->setMouseFocus(view());
 
             if (inputDevice->mouseFocus()
                     && inputDevice->mouseFocus()->surface() != keyboardDevice->keyboardFocus()
@@ -275,13 +277,13 @@ void WebOSSurfaceItem::mousePressEvent(QMouseEvent *event)
             }
 
             if (!w->accessible()) {
-                inputDevice->sendMousePressEvent(e.button(), e.localPos(), e.windowPos());
+                inputDevice->sendMousePressEvent(e.button());
             } else {
                 // In accessibility mode there should be no extra mouse move event sent.
                 // That is why we call another version of sendMousePressEvent here
                 // which sends a button event only.
-                inputDevice->handle()->pointerDevice()->setMouseFocus(this, e.localPos(), e.windowPos());
-                inputDevice->handle()->pointerDevice()->sendMousePressEvent(e.button());
+                inputDevice->setMouseFocus(view());
+                inputDevice->sendMousePressEvent(e.button());
             }
         } else {
             qWarning() << "no input device for this event";
@@ -297,15 +299,15 @@ void WebOSSurfaceItem::mouseReleaseEvent(QMouseEvent *event)
     WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
 
     if (!w->accessible()) {
-        QWaylandSurfaceItem::mouseReleaseEvent(&e);
+        QWaylandQuickItem::mouseReleaseEvent(&e);
     } else {
         // In accessibility mode there should be no extra mouse move event sent.
         // That is why we call another version of sendMousePressEvent here
         // which sends a button event only.
-        QWaylandInputDevice *inputDevice = w->inputDevice();
+        QWaylandSeat *inputDevice = w->inputDevice();
         if (inputDevice) {
-            inputDevice->handle()->pointerDevice()->setMouseFocus(this, e.localPos(), e.windowPos());
-            inputDevice->handle()->pointerDevice()->sendMouseReleaseEvent(e.button());
+            inputDevice->setMouseFocus(view());
+            inputDevice->sendMouseReleaseEvent(e.button());
         } else {
             qWarning() << "no input device for this event";
         }
@@ -320,15 +322,15 @@ void WebOSSurfaceItem::wheelEvent(QWheelEvent *event)
 
     if (surface()) {
 #ifdef MULTIINPUT_SUPPORT
-        QWaylandInputDevice *inputDevice = getInputDevice(&e);
+        QWaylandSeat *inputDevice = getInputDevice(&e);
 #else
-        QWaylandInputDevice *inputDevice = static_cast<WebOSCompositorWindow *>(window())->inputDevice();
+        QWaylandSeat *inputDevice = static_cast<WebOSCompositorWindow *>(window())->inputDevice();
 #endif
-        if (inputDevice && inputDevice->mouseFocus() != this)
-            inputDevice->setMouseFocus(this, e.pos(), mapToScene(e.pos()));
+        if (inputDevice && inputDevice->mouseFocus() != view())
+            inputDevice->setMouseFocus(view());
     }
 
-    QWaylandSurfaceItem::wheelEvent(&e);
+    QWaylandQuickItem::wheelEvent(&e);
 }
 
 void WebOSSurfaceItem::touchEvent(QTouchEvent *event)
@@ -343,7 +345,7 @@ void WebOSSurfaceItem::touchEvent(QTouchEvent *event)
     if (!event->window())
         e.setWindow(window());
 
-    QWaylandSurfaceItem::touchEvent(&e);
+    QWaylandQuickItem::touchEvent(&e);
 }
 
 void WebOSSurfaceItem::hoverEnterEvent(QHoverEvent *event)
@@ -351,59 +353,60 @@ void WebOSSurfaceItem::hoverEnterEvent(QHoverEvent *event)
     if (acceptHoverEvents() && surface()) {
         WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
 #ifdef MULTIINPUT_SUPPORT
-        QWaylandInputDevice *inputDevice = m_compositor->inputDeviceFor(event);
+        QWaylandSeat *inputDevice = m_compositor->seatFor(event);
 #else
-        QWaylandInputDevice *inputDevice = w->inputDevice();
+        QWaylandSeat *inputDevice = w->inputDevice();
 #endif
         if (inputDevice) {
-            inputDevice->handle()->setMouseFocus(this, event->pos(), mapToScene(event->pos()));
+            inputDevice->setMouseFocus(view());
             // In accessibility mode, there should be an explicit mouse move event
             // for an item where a hover event arrives.
             if (w->accessible())
-                inputDevice->sendMouseMoveEvent(event->pos(), mapToScene(event->pos()));
+                inputDevice->sendMouseMoveEvent(view(), event->pos(), mapToScene(event->pos()));
         } else {
             qWarning() << "no input device for this event";
         }
     }
     m_compositor->notifyPointerEnteredSurface(this->surface());
+    QWaylandQuickItem::hoverEnterEvent(event);
 }
 
 void WebOSSurfaceItem::hoverLeaveEvent(QHoverEvent *event)
 {
-    Q_UNUSED(event);
 
     if (acceptHoverEvents() && surface()) {
 #ifdef MULTIINPUT_SUPPORT
         m_compositor->resetMouseFocus(surface());
 #else
-        QWaylandInputDevice *inputDevice = static_cast<WebOSCompositorWindow *>(window())->inputDevice();
+        QWaylandSeat *inputDevice = static_cast<WebOSCompositorWindow *>(window())->inputDevice();
         if (inputDevice)
-            inputDevice->handle()->setMouseFocus(NULL, event->pos(), mapToScene(event->pos()));
+            inputDevice->setMouseFocus(nullptr);
         else
             qWarning() << "no input device for this event";
 #endif
     }
     m_compositor->notifyPointerLeavedSurface(this->surface());
+    QWaylandQuickItem::hoverLeaveEvent(event);
 }
 
-QWaylandInputDevice* WebOSSurfaceItem::getInputDevice(QInputEvent *event) const
+QWaylandSeat* WebOSSurfaceItem::getInputDevice(QInputEvent *event) const
 {
 #ifdef MULTIINPUT_SUPPORT
     if (!event)
         return nullptr;
 
-    return m_compositor->inputDeviceFor(event);
+    return m_compositor->seatFor(event);
 #else
     if (!event || event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease)
         return m_compositor->keyboardDeviceForWindow(window());
 
-    return m_compositor->defaultInputDevice();
+    return m_compositor->defaultSeat();
 #endif
 }
 
-void WebOSSurfaceItem::takeFocus(QWaylandInputDevice *device)
+void WebOSSurfaceItem::takeFocus(QWaylandSeat *device)
 {
-    QWaylandSurfaceItem::takeFocus(device ? device : getInputDevice());
+    QWaylandQuickItem::takeFocus(device ? device : getInputDevice());
 }
 
 void WebOSSurfaceItem::mouseUngrabEvent()
@@ -411,17 +414,17 @@ void WebOSSurfaceItem::mouseUngrabEvent()
 #ifdef MULTIINPUT_SUPPORT
     if (surface()) {
         QTouchEvent e(QEvent::TouchCancel);
-        for (int i = 0; i < m_compositor->inputDevices().size()-1; i++) {
-            QWaylandInputDevice *dev = m_compositor->inputDevices().at(i);
+        for (int i = 1; i < m_compositor->inputDevices().size(); i++) {
+            QWaylandSeat *dev = m_compositor->inputDevices().at(i);
             if (!surface()->views().isEmpty() && dev && dev->mouseFocus() == surface()->views().first()) {
                 e = QTouchEvent(QEvent::TouchCancel, Q_NULLPTR, (Qt::KeyboardModifiers)(static_cast<WebOSInputDevice*>(dev)->id()));
                 break;
             }
         }
-        QWaylandSurfaceItem::touchEvent(&e);
+        QWaylandQuickItem::touchEvent(&e);
     }
 #else
-    QWaylandSurfaceItem::mouseUngrabEvent();
+    QWaylandQuickItem::mouseUngrabEvent();
 #endif
 }
 
@@ -430,19 +433,19 @@ void WebOSSurfaceItem::processKeyEvent(QKeyEvent *event)
     if (!surface())
         return;
 
-    QWaylandInputDevice *inputDevice = getInputDevice(event);
+    QWaylandSeat *inputDevice = getInputDevice(event);
     if (!inputDevice) {
         qWarning() << "no input device for this event";
         return;
     }
 
-    QtWayland::Keyboard *keyboard = inputDevice->handle()->keyboardDevice();
+    auto keyboard = static_cast<WebOSKeyboard*>(inputDevice->keyboard());
 
     // General case
     if (!(isPartOfGroup() || isSurfaceGroupRoot()) ||
         // If keyboard is grabbed, do not propagate key events between
         // window-group to avoid unintended keyboard focus change.
-        keyboard->currentGrab() != keyboard) {
+        keyboard->currentGrab()) {
 
         if (hasFocus()) {
             qInfo() << "Focused none-group nor grabbed item: " << this << event->key();
@@ -500,22 +503,22 @@ void WebOSSurfaceItem::focusOutEvent(QFocusEvent *event)
 {
 #ifdef MULTIINPUT_SUPPORT
     //Reset Keybaord/Pointer focus
-    foreach (QWaylandInputDevice *dev, m_compositor->inputDevices()) {
+    foreach (QWaylandSeat *dev, m_compositor->inputDevices()) {
         if (dev) {
             if (dev->keyboardFocus() == surface())
                 dev->setKeyboardFocus(0);
             if (surface() && !surface()->views().isEmpty()
                 && dev->mouseFocus() == surface()->views().first())
-                dev->setMouseFocus(0, QPointF(), QPointF());
+                dev->setMouseFocus(nullptr);
         }
     }
 #else
-    QWaylandInputDevice *keyboardDevice = getInputDevice();
-    QWaylandInputDevice *mouseDevice = m_compositor->defaultInputDevice();
-    if (keyboardDevice && keyboardDevice->keyboardFocus() == surface())
+    QWaylandSeat *keyboardDevice = getInputDevice();
+    QWaylandSeat *mouseDevice = m_compositor->defaultSeat();
+    if (keyboardDevice->keyboardFocus() == surface())
         keyboardDevice->setKeyboardFocus(0);
-    if (mouseDevice && mouseDevice->mouseFocus() == this)
-        mouseDevice->setMouseFocus(0, QPointF(), QPointF());
+    if (surface() && mouseDevice->mouseFocus() == surface()->views().first())
+        mouseDevice->setMouseFocus(nullptr);
 #endif
 
     m_compositor->setMouseEventEnabled(true);
@@ -533,7 +536,12 @@ QVariantMap WebOSSurfaceItem::windowProperties()
         qWarning("null surface(), returning empty property map");
         return QVariantMap();
     }
-    return surface()->windowProperties();
+
+    QVariantMap res;
+    for (auto name: surface()->dynamicPropertyNames())
+        res[name] = surface()->property(name.constData());
+
+    return res;
 }
 
 void WebOSSurfaceItem::setWindowProperty(const QString& key, const QVariant& value)
@@ -546,7 +554,7 @@ void WebOSSurfaceItem::setWindowProperty(const QString& key, const QVariant& val
             qWarning("null surface(), setting property is NOOP");
             return;
         }
-        surface()->setWindowProperty(key, value);
+        surface()->setProperty(key.toLatin1().constData(), value);
     }
 }
 
@@ -678,10 +686,9 @@ void WebOSSurfaceItem::setGroupedWindowModel(WebOSGroupedWindowModel* model)
 
 bool WebOSSurfaceItem::isTransient() const
 {
-    if( !isSurfaced() )
-        return false;
+    if (shellSurface() == NULL) return false;
 
-    return surface()->transientParent() != NULL;
+    return shellSurface()->isTransient();
 }
 
 WebOSSurfaceItem* WebOSSurfaceItem::transientParent()
@@ -689,9 +696,13 @@ WebOSSurfaceItem* WebOSSurfaceItem::transientParent()
     if( !isSurfaced() )
         return NULL;
 
-    QWaylandQuickSurface* parent = qobject_cast<QWaylandQuickSurface *>(surface()->transientParent());
+    QWaylandQuickSurface* parent = qobject_cast<QWaylandQuickSurface *>(surface()->parent());
     if (parent) {
-        return static_cast<WebOSSurfaceItem*>(parent->surfaceItem());
+         WebOSSurfaceItem *parent_item = static_cast<WebOSSurfaceItem*>(parent->surfaceItem());
+         WebOSShellSurface *parent_shell = parent_item->shellSurface();
+         if (parent_shell == NULL) return NULL;
+         if (!parent_shell->isTransient ()) return NULL;
+         return parent_item;
     }
     return NULL;
 }
@@ -877,16 +888,16 @@ void WebOSSurfaceItem::onSurfaceDamaged(const QRegion &region)
        of the surface. Otherwise, the surface will be stuck to wait for
        available buffer. */
     if (!window() && surface())
-       m_compositor->sendFrameCallbacks(QList<QWaylandSurface *>() << surface());
+        surface()->sendFrameCallbacks();
 }
 
 void WebOSSurfaceItem::resizeClientTo(int width, int height)
 {
-    if (!isSurfaced()) {
+    if (!isSurfaced() || m_shellSurface == nullptr) {
         qWarning("failed, null surface()");
         return;
     }
-    return surface()->requestSize(QSize(width, height));
+    return m_shellSurface->requestSize(QSize(width, height));
 }
 
 void WebOSSurfaceItem::setNotifyPositionToClient(bool notify)
@@ -1157,102 +1168,9 @@ WebOSSurfaceItem::KeyMasks WebOSSurfaceItem::keyMaskFromQt(int key) const
     return retKeyMask;
 }
 
-/* This BufferAttacher is from qwindow compositor example in QtWayland */
-class BufferAttacher : public QWaylandBufferAttacher
-{
-public:
-    BufferAttacher()
-        : QWaylandBufferAttacher()
-          , shmTex(0)
-          , bufferRef(QWaylandBufferRef())
-    {
-    }
-
-    ~BufferAttacher()
-    {
-        delete shmTex;
-    }
-
-    BufferAttacher(const BufferAttacher&) = delete;
-    BufferAttacher &operator=(const BufferAttacher&) = delete;
-
-    void attach(const QWaylandBufferRef &ref) Q_DECL_OVERRIDE
-    {
-        if (bufferRef) {
-            if (bufferRef.isShm()) {
-                delete shmTex;
-                shmTex = 0;
-            } else {
-                bufferRef.destroyTexture();
-            }
-        }
-
-        bufferRef = ref;
-
-        if (bufferRef) {
-            if (bufferRef.isShm()) {
-                shmTex = new QOpenGLTexture(bufferRef.image(), QOpenGLTexture::DontGenerateMipMaps);
-                texture = shmTex->textureId();
-            } else {
-                texture = bufferRef.createTexture();
-            }
-        }
-    }
-
-    void unmap()
-    {
-        if (bufferRef) {
-            if (bufferRef.isShm()) {
-                delete shmTex;
-                shmTex = NULL;
-            } else {
-                bufferRef.destroyTexture();
-            }
-        }
-        bufferRef = QWaylandBufferRef();
-    }
-
-    QImage image() const
-    {
-        if (!bufferRef || !bufferRef.isShm())
-            return QImage();
-        return bufferRef.image();
-    }
-
-    QOpenGLTexture *shmTex;
-    QWaylandBufferRef bufferRef;
-    GLuint texture;
-};
-
-bool WebOSSurfaceItem::getCursorFromSurface(QWaylandSurface *surface, int hotSpotX, int hotSpotY, QCursor& cursor)
-{
-    if (surface && surface->bufferAttacher()) {
-        QImage image = static_cast<BufferAttacher *>(surface->bufferAttacher())->image();
-        if (!image.isNull()) {
-            if (hotSpotX >= 0 && hotSpotX <= image.size().width() &&
-                hotSpotY >= 0 && hotSpotY <= image.size().height()) {
-                cursor = QCursor(QPixmap::fromImage(image), hotSpotX, hotSpotY);
-                if (cursor.shape() == Qt::BitmapCursor) {
-                    return true;
-                } else {
-                    qWarning() << "Cursor: unable to convert surface into a bitmap cursor";
-                    return false;
-                }
-            } else {
-                qWarning() << "Cursor: hotspot" << hotSpotX <<  hotSpotY << "is out of" << image.size();
-                return false;
-            }
-        }
-    }
-
-    qWarning() << "Cursor: surface has no content";
-
-    return false;
-}
-
 void WebOSSurfaceItem::setCursorSurface(QWaylandSurface *surface, int hotSpotX, int hotSpotY)
 {
-    if (m_cursorSurface == surface && m_cursorHotSpotX == hotSpotX && m_cursorHotSpotY == hotSpotY) {
+    if (m_cursorView.surface() == surface && m_cursorHotSpotX == hotSpotX && m_cursorHotSpotY == hotSpotY) {
         qWarning() << "Cursor: attempting to set the same cursor surface, ignored" << surface << hotSpotX << hotSpotY;
     } else {
         qDebug() << "Cursor: updating cursor with surface" << surface << hotSpotX << hotSpotY;
@@ -1270,49 +1188,51 @@ void WebOSSurfaceItem::setCursorSurface(QWaylandSurface *surface, int hotSpotX, 
             staticCursor = false;
         }
 
-        if (m_cursorSurface) {
-            qDebug() << "Cursor: disconnect old cursor surface" << m_cursorSurface.data() << "static:" << staticCursor;
-            QObject::disconnect(m_cursorSurface.data(), SIGNAL(redraw()), this, SLOT(updateCursor()));
-            m_cursorSurface->setBufferAttacher(0);
+        if (m_cursorView.surface()) {
+            qDebug() << "Cursor: disconnect old cursor surface" << m_cursorView.surface() << "static:" << staticCursor;
+            QObject::disconnect(m_cursorView.surface(), SIGNAL(redraw()), this, SLOT(updateCursor()));
         }
 
+        /* Original source changes m_cursorView.surface(), m_cursorHotSpotX and m_cursorHotSpotY even if getCursorFromSurface
+         * failes. This is not quite right, I'm afraid, but unless told otherwise, I will preserve current behaviour.
+         */
+        m_cursorView.setSurface(surface);
+        m_cursorHotSpotX = hotSpotX;
+        m_cursorHotSpotY = hotSpotY;
         if (staticCursor) {
             qDebug() << "Cursor: set a static cursor" << cursor;
             setCursor(cursor);
         } else if (surface) {
             qDebug() << "Cursor: set a live cursor with cursor surface" << surface << "static:" << staticCursor;
             connect(surface, SIGNAL(redraw()), this, SLOT(updateCursor()), Qt::UniqueConnection);
-            surface->setBufferAttacher(new BufferAttacher());
-            if (getCursorFromSurface(surface, hotSpotX, hotSpotY, cursor)) {
-                setCursor(cursor);
-            } else {
-                qWarning() << "Cursor: fallback to the default cursor";
-                setCursor(QCursor(Qt::ArrowCursor));
-            }
-        }
 
-        m_cursorSurface = surface;
-        m_cursorHotSpotX = hotSpotX;
-        m_cursorHotSpotY = hotSpotY;
+            if (surface->hasContent())
+                updateCursor();
+        }
     }
 }
 
 void WebOSSurfaceItem::updateCursor()
 {
-    QList<QWaylandSurface *> surfaces;
-
-    if (m_cursorSurface) {
-        QCursor c;
-        qDebug() << "Cursor: live updating cursor with surface" << m_cursorSurface.data() << m_cursorHotSpotX << m_cursorHotSpotY;
-        if (getCursorFromSurface(m_cursorSurface.data(), m_cursorHotSpotX, m_cursorHotSpotY, c))
+    m_cursorView.advance();
+    QImage image = m_cursorView.currentBuffer().image();
+    if (!image.isNull()) {
+        if (m_cursorHotSpotX >= 0 && m_cursorHotSpotX <= image.size().width() &&
+            m_cursorHotSpotY >= 0 && m_cursorHotSpotY <= image.height()) {
+            qDebug() << "Cursor: live updating cursor with surface" << m_cursorView.surface() << m_cursorHotSpotX << m_cursorHotSpotY;
+            QCursor c(QPixmap::fromImage(image), m_cursorHotSpotX, m_cursorHotSpotY);
             setCursor(c);
-        surfaces << m_cursorSurface.data();
+            return;
+        }
     }
-    m_compositor->sendFrameCallbacks(surfaces);
+    qWarning() << "Cursor: fallback to the default cursor";
+    setCursor(QCursor(Qt::ArrowCursor));
 }
 
 WebOSSurfaceItem *WebOSSurfaceItem::createMirrorItem(int target)
 {
+    qInfo() << "createMirrorItem for" << this << "to" << target;
+
     if (m_mirrorItems.contains(target))
         return nullptr;
 
@@ -1321,8 +1241,9 @@ WebOSSurfaceItem *WebOSSurfaceItem::createMirrorItem(int target)
     mirror->setEnabled(false);
     mirror->setAppId(appId());
     mirror->setType(type());
-    mirror->setResizeSurfaceToItem(false);
     mirror->setItemState(WebOSSurfaceItem::ItemStateNormal);
+
+    qInfo() << "mirror item" << mirror << "exported" << exported();
 
     if (exported())
         exported()->startImportedMirroring(mirror);

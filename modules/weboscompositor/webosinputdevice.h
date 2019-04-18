@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,10 +20,11 @@
 #include <WebOSCoreCompositor/weboscompositorexport.h>
 
 #include <QInputEvent>
-#include <QWaylandInputDevice>
+#include <QWaylandSeat>
 #include <QWaylandCompositor>
+#include "weboscorecompositor.h"
 
-class WEBOS_COMPOSITOR_EXPORT WebOSInputDevice : public QObject, public QWaylandInputDevice
+class WEBOS_COMPOSITOR_EXPORT WebOSInputDevice : public QWaylandSeat
 {
     Q_OBJECT
 public:
@@ -35,6 +36,12 @@ public:
     bool isOwner(QInputEvent *event);
     static int getDeviceId(QInputEvent *event);
     int  id() { return m_deviceId; }
+
+    void setCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY, wl_client *client) override {
+        QWaylandSeat::setCursorSurface(surface, hotspotX, hotspotY, client);
+        WebOSCoreCompositor *webos_compositor = static_cast<WebOSCoreCompositor *>(compositor());
+        webos_compositor->setCursorSurface(surface, hotspotX, hotspotY, client);
+    }
 
 signals:
     void deviceIdChanged();

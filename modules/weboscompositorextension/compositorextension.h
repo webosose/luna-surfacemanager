@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 #ifndef COMPOSITOREXTENSION_H
 #define COMPOSITOREXTENSION_H
 
-#include <QtCompositor/qwaylandcompositor.h>
-#include <QtCompositor/qwaylandsurface.h>
+#include <QtWaylandCompositor/qwaylandcompositor.h>
+#include <QtWaylandCompositor/qwaylandsurface.h>
 #include <compositorextensionglobal.h>
 
 #include "compositorxinput.h"

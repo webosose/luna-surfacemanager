@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,12 +21,12 @@
 
 #include <QObject>
 #include <QHash>
-#include <QtCompositor/qwaylandinput.h>
-#include <QtCompositor/private/qwayland-server-wayland.h>
+#include <QtWaylandCompositor/qwaylandseat.h>
+#include <QtWaylandCompositor/private/qwayland-server-wayland.h>
 #include <wayland-server.h>
 #include <WebOSCoreCompositor/private/qwayland-server-webos-input-manager.h>
 
-class QWaylandInputDevice;
+class QWaylandSeat;
 class WebOSCoreCompositor;
 class QPlatformNativeInterface;
 class WebOSCompositor;
@@ -53,7 +53,7 @@ protected:
 private:
     WebOSCoreCompositor* m_compositor;
     QPlatformNativeInterface *m_nativeInterface;
-    WebOSInputDevice* findWebOSInputDevice(QtWaylandServer::wl_seat *seat);
+    WebOSInputDevice* findWebOSInputDevice(::wl_resource *seat);
     QList<Resource *> m_cursorVisibleClient;
 };
 

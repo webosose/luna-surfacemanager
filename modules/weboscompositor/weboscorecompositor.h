@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2019 LG Electronics, Inc.
+// Copyright (c) 2014-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@
 #include <qwaylandoutput.h>
 
 #include <WebOSCoreCompositor/weboskeyfilter.h>
+#include <QtWaylandCompositor/QWaylandWlShellSurface>
 
 #include "unixsignalhandler.h"
 #include "webossurfaceitem.h"
@@ -52,9 +53,12 @@ class WebOSForeign;
  *        based on Qt Wayland.
  */
 
-class WEBOS_COMPOSITOR_EXPORT WebOSCoreCompositor : public QObject, public QWaylandQuickCompositor
+class WebOSCoreCompositorPrivate;
+
+class WEBOS_COMPOSITOR_EXPORT WebOSCoreCompositor : public QWaylandQuickCompositor
 {
     Q_OBJECT
+    Q_DECLARE_PRIVATE(WebOSCoreCompositor)
 
     Q_PROPERTY(WebOSSurfaceModel* surfaceModel READ surfaceModel NOTIFY surfaceModelChanged)
     // To retain backwards compatibility due to the setFullscreenSurface signature this
@@ -90,7 +94,8 @@ public:
     WebOSCoreCompositor(ExtensionFlags extensions = DefaultExtensions, const char *socketName = 0);
     virtual ~WebOSCoreCompositor();
 
-    virtual void registerWindow(QQuickWindow *window, QString name = QString("primary"));
+    void create() override;
+    virtual void registerWindow(QQuickWindow *window, QString name = QStringLiteral("primary"));
     void insertToWindows(WebOSCompositorWindow *);
 
     static void logger(QtMsgType type, const QMessageLogContext &context, const QString &message);
@@ -141,7 +146,7 @@ public:
     void setMouseEventEnabled(bool enable);
 
 #ifdef MULTIINPUT_SUPPORT
-    QWaylandInputDevice *queryInputDevice(QInputEvent *inputEvent);
+    QWaylandSeat *queryInputDevice(QInputEvent *inputEvent);
 #endif
 
     /*!
@@ -155,7 +160,7 @@ public:
     // See property comments
     WebOSSurfaceItem* fullscreen() const;
     void setFullscreen(WebOSSurfaceItem* item);
-    QQuickWindow* window() const { return primaryOutput() ? static_cast<QQuickWindow *>(primaryOutput()->window()) : 0; }
+    QQuickWindow* window() const { return defaultOutput() ? static_cast<QQuickWindow *>(defaultOutput()->window()) : 0; }
 
     Q_INVOKABLE void emitLsmReady();
 
@@ -165,10 +170,10 @@ public:
 
     void initTestPluginLoader();
 
-    QList<QWaylandInputDevice *> inputDevices() const;
-    QWaylandInputDevice *inputDeviceFor(QInputEvent *inputEvent) Q_DECL_OVERRIDE;
-    QWaylandInputDevice *keyboardDeviceForWindow(QQuickWindow *window);
-    QWaylandInputDevice *keyboardDeviceForDisplayId(int displayId);
+    QList<QWaylandSeat *> inputDevices() const;
+    QWaylandSeat *seatFor(QInputEvent *inputEvent) override;
+    QWaylandSeat *keyboardDeviceForWindow(QQuickWindow *window);
+    QWaylandSeat *keyboardDeviceForDisplayId(int displayId);
 
     virtual bool getCursor(QWaylandSurface *surface, int hotSpotX, int hotSpotY, QCursor& cursor);
 
@@ -188,6 +193,14 @@ public:
     WebOSCompositorWindow *window(int displayId);
 
     bool respawned() const { return m_respawned; }
+    void setCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY, wl_client *client);
+
+    void registerSeat(QWaylandSeat *seat);
+    void unregisterSeat(QWaylandSeat *seat);
+
+    // setOutputGeometry must be called before QWaylandWindow registerWindow!!!
+    QRect outputGeometry() const { return m_outputGeometry; }
+    void setOutputGeometry(QRect const &size) { m_outputGeometry = size; }
 
 public slots:
     void handleActiveFocusItemChanged();
@@ -237,6 +250,11 @@ signals:
 protected:
     virtual void surfaceCreated(QWaylandSurface *surface);
 
+    virtual QWaylandSeat *createSeat() override;
+    virtual QWaylandPointer *createPointerDevice(QWaylandSeat *seat) override;
+    virtual QWaylandKeyboard *createKeyboardDevice(QWaylandSeat *seat) override;
+    virtual QWaylandTouch *createTouchDevice(QWaylandSeat *seat) override;
+
     bool acquired() { return m_acquired; }
     QHash<QString, CompositorExtension *> extensions() { return m_extensions; }
 
@@ -258,8 +276,6 @@ private:
     // methods
     void checkDaemonFiles();
 
-    void setCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY, wl_client *client) Q_DECL_OVERRIDE;
-
     void deleteProxyFor(WebOSSurfaceItem* item);
     void initializeExtensions(WebOSCoreCompositor::ExtensionFlags extensions);
 
@@ -274,9 +290,9 @@ private slots:
      * update our internal model of mapped surface in response to wayland surfaces being mapped
      * and unmapped. WindowModels use this as their source of windows.
      */
-    void onSurfaceMapped();
-    void onSurfaceUnmapped();
-    void onSurfaceDestroyed();
+    void onSurfaceMapped(QWaylandSurface *surface, WebOSSurfaceItem *item);
+    void onSurfaceUnmapped(QWaylandSurface *surface, WebOSSurfaceItem *item);
+    void onSurfaceDestroyed(QWaylandSurface *surface, WebOSSurfaceItem *item);
     void onSurfaceSizeChanged();
 
     void frameSwappedSlot(); //FIXME what for
@@ -300,6 +316,7 @@ private:
 
     WebOSShell* m_shell;
     WebOSInputManager *m_inputManager;
+    QWaylandWlShell *m_wlShell = nullptr;
 #ifdef MULTIINPUT_SUPPORT
     WebOSInputDevice *m_inputDevicePreallocated;
     int m_lastMouseEventFrom;
@@ -324,6 +341,7 @@ private:
     EventPreprocessor* m_eventPreprocessor;
 
     bool m_respawned;
+    QRect m_outputGeometry;
 };
 
 #endif // WEBOSCORECOMPOSITOR_H

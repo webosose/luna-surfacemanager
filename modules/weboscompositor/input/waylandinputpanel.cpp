@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 #include <QGuiApplication>
 #include <qpa/qplatformnativeinterface.h>
-#include <QtCompositor/private/qwlsurface_p.h>
+#include <QtWaylandCompositor/private/qwaylandsurface_p.h>
 #include <QDebug>
 #include <QWaylandCompositor>
 
@@ -41,8 +41,8 @@ WaylandInputPanelSurface::WaylandInputPanelSurface(WebOSSurfaceItem* item, wl_cl
     m_resource->destroy = WaylandInputPanelSurface::destroyInputPanelSurface;
 
     if (m_surfaceItem->surface()) {
-        connect(m_surfaceItem->surface(), &QWaylandSurface::mapped, this, &WaylandInputPanelSurface::onSurfaceMapped);
-        connect(m_surfaceItem->surface(), &QWaylandSurface::unmapped, this, &WaylandInputPanelSurface::onSurfaceUnmapped);
+        connect(m_surfaceItem->surface(), SIGNAL(hasContentChanged()), this, SLOT(onSurfaceMapped()));
+        connect(m_surfaceItem->surface(), SIGNAL(hasContentChanged()), this, SLOT(onSurfaceUnmapped()));
         connect(m_surfaceItem->surface(), &QWaylandSurface::sizeChanged, this, &WaylandInputPanelSurface::sizeChanged);
         connect(m_surfaceItem->surface(), &QWaylandSurface::destroyed, this, &WaylandInputPanelSurface::onSurfaceDestroyed);
     }
@@ -69,6 +69,9 @@ QWaylandSurface* WaylandInputPanelSurface::surface()
 
 void WaylandInputPanelSurface::onSurfaceMapped()
 {
+    if (!m_surfaceItem->surface() || !m_surfaceItem->surface()->hasContent())
+        return;
+
     if (!m_mapped) {
         m_mapped = true;
         emit mapped();
@@ -77,6 +80,9 @@ void WaylandInputPanelSurface::onSurfaceMapped()
 
 void WaylandInputPanelSurface::onSurfaceUnmapped()
 {
+    if (!m_surfaceItem->surface() || m_surfaceItem->surface()->hasContent())
+        return;
+
     if (m_mapped) {
         m_mapped = false;
         emit unmapped();
@@ -131,8 +137,8 @@ void WaylandInputPanel::destroyInputPanel(struct wl_resource* resource)
 void WaylandInputPanel::getInputPanelSurface(struct wl_client *client, struct wl_resource *resource, uint32_t id, struct wl_resource *surface_resource)
 {
     WaylandInputPanel* that = static_cast<WaylandInputPanel*>(resource->data);
-    QtWayland::Surface* qwls = QtWayland::Surface::fromResource(surface_resource);
-    QWaylandQuickSurface *qsurface = static_cast<QWaylandQuickSurface *>(qwls->waylandSurface());
+    QWaylandSurface* qwls = QWaylandSurface::fromResource(surface_resource);
+    QWaylandQuickSurface *qsurface = static_cast<QWaylandQuickSurface *>(qwls);
     WebOSSurfaceItem* ipsi = qobject_cast<WebOSSurfaceItem*>(qsurface->surfaceItem());
 
     qDebug() << "wl_surface@" << surface_resource->object.id;

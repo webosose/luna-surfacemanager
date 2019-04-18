@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@
 #include "waylandinputpanel.h"
 
 class QWaylandCompositor;
-class QWaylandInputDevice;
+class QWaylandSeat;
 class WaylandTextModel;
 class WaylandInputMethodContext;
 class WaylandInputMethodManager;
@@ -83,7 +83,7 @@ public:
     bool hasPreferredPanelRect() const { return m_hasPreferredPanelRect; }
     int displayId() { return m_displayId; }
 
-    QWaylandInputDevice *inputDevice();
+    QWaylandSeat *inputDevice();
 
 public slots:
     void deactivate();

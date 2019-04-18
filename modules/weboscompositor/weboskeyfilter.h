@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ public:
     Q_INVOKABLE bool handleKeyEvent(int keycode, bool pressed, bool autoRepeat);
 
     Q_INVOKABLE void resetKeyFilters();
-    Q_INVOKABLE void addKeyFilter(QJSValue keyFilter, QString handlerName = QString("unknown"));
+    Q_INVOKABLE void addKeyFilter(QJSValue keyFilter, QString handlerName = QStringLiteral("unknown"));
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);

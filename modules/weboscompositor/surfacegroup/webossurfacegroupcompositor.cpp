@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 LG Electronics, Inc.
+// Copyright (c) 2014-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,15 +22,15 @@
 
 #include <QWaylandSurface>
 
-#include <QtCompositor/private/qwlcompositor_p.h>
-#include <QtCompositor/private/qwlsurface_p.h>
+#include <QtWaylandCompositor/private/qwaylandcompositor_p.h>
+#include <QtWaylandCompositor/private/qwaylandsurface_p.h>
 
 #include <QDebug>
 
 #define WEBOSSURFACEGROUPCOMPOSITOR_VERSION 1
 
 WebOSSurfaceGroupCompositor::WebOSSurfaceGroupCompositor(WebOSCoreCompositor* compositor)
-    : QtWaylandServer::wl_webos_surface_group_compositor(compositor->handle()->wl_display(), WEBOSSURFACEGROUPCOMPOSITOR_VERSION)
+    : QtWaylandServer::wl_webos_surface_group_compositor(compositor->display(), WEBOSSURFACEGROUPCOMPOSITOR_VERSION)
     , m_compositor(compositor)
 {
 }
@@ -44,9 +44,9 @@ void WebOSSurfaceGroupCompositor::webos_surface_group_compositor_create_surface_
         return;
     }
 
-    QtWayland::Surface* surface = QtWayland::Surface::fromResource(parent);
+    QWaylandSurface* surface = QWaylandSurface::fromResource(parent);
     if (surface) {
-        QWaylandQuickSurface *qsurface = qobject_cast<QWaylandQuickSurface *>(surface->waylandSurface());
+        QWaylandQuickSurface *qsurface = qobject_cast<QWaylandQuickSurface *>(surface);
         WebOSSurfaceItem* item = qobject_cast<WebOSSurfaceItem*>(qsurface->surfaceItem());
         // A group can only be created to surfaces that
         // a) do not have a group

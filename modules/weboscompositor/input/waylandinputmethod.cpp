@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 #include <QDebug>
 
-#include <QWaylandInputDevice>
+#include <QWaylandSeat>
 #include "waylandinputmethod.h"
 #include "waylandinputmethodcontext.h"
 #include "waylandinputpanel.h"
@@ -101,7 +101,7 @@ void WaylandInputMethod::setDisplayId(const uint32_t displayId)
     }
 }
 
-QWaylandInputDevice *WaylandInputMethod::inputDevice()
+QWaylandSeat *WaylandInputMethod::inputDevice()
 {
     return static_cast<WebOSCoreCompositor *>(m_compositor)->keyboardDeviceForDisplayId(displayId());
 }

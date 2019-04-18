@@ -1,4 +1,4 @@
- # Copyright (c) 2018-2019 LG Electronics, Inc.
+ # Copyright (c) 2018-2020 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 DEFINES += WEBOS_INSTALL_QML=\\\"$$WEBOS_INSTALL_QML\\\" \
 
-CONFIG += wayland-scanner compositor-private
+CONFIG += wayland-scanner waylandcompositor-private
 WAYLANDSERVERSOURCES += $$[QT_INSTALL_DATA]/wayland-webos/webos-foreign.xml
 
 SOURCES += \

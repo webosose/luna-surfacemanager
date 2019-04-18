@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,13 +23,13 @@
 
 QT_BEGIN_NAMESPACE
 
-class QWaylandSurfaceItem;
+class QWaylandQuickItem;
 
 class WEBOS_COMPOSITOR_EXT_EXPORT CompositorWindowClose : public QObject
 {
     Q_OBJECT
 public:
-    virtual void close(QWaylandSurfaceItem *item, QJsonObject payload = QJsonObject()) { Q_UNUSED(item); Q_UNUSED(payload); }
+    virtual void close(QWaylandQuickItem *item, QJsonObject payload = QJsonObject()) { Q_UNUSED(item); Q_UNUSED(payload); }
 };
 
 QT_END_NAMESPACE

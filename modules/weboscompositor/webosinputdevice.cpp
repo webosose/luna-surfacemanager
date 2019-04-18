@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,45 +15,51 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "webosinputdevice.h"
-#include <QtCompositor/private/qwlcompositor_p.h>
-#include <QtCompositor/private/qwlinputdevice_p.h>
-#include <QtCompositor/private/qwlkeyboard_p.h>
+#include "weboscorecompositor.h"
+#include "weboskeyboard.h"
+
+#include <QtWaylandCompositor/private/qwaylandcompositor_p.h>
+#include <QtWaylandCompositor/private/qwaylandseat_p.h>
+#include <QtWaylandCompositor/private/qwaylandkeyboard_p.h>
 
 WebOSInputDevice::WebOSInputDevice(QWaylandCompositor *compositor)
-    : QWaylandInputDevice(compositor)
+    : QWaylandSeat(compositor, DefaultCapabilities)
     , m_compositor(compositor)
     , m_deviceId(-1) //No device ID yet, will be set with queryInputDevice in qtwayland
 {
-    m_compositor->handle()->registerInputDevice(this);
+    WebOSCoreCompositor *wcompositor = static_cast<WebOSCoreCompositor *>(m_compositor);
+    WebOSKeyboard *wkeyboard = static_cast<WebOSKeyboard *>(wcompositor->defaultSeat()->keyboard());
+
+    wcompositor->registerSeat(this);
 
     /* To trigger keyboard_enter after requested get_keyboard by clinet */
-    setKeyboardFocus(m_compositor->defaultInputDevice()->keyboardFocus());
+    setKeyboardFocus(wcompositor->defaultSeat()->keyboardFocus());
 
     /* If the other input devices have been grabbed, grab this one too */
-    if ( m_compositor->defaultInputDevice()->handle()->keyboardDevice() !=
-         m_compositor->defaultInputDevice()->handle()->keyboardDevice()->currentGrab()) {
-        handle()->keyboardDevice()->startGrab(
-                m_compositor->defaultInputDevice()->handle()->keyboardDevice()->currentGrab());
+    if (wkeyboard->currentGrab() && wkeyboard != wkeyboard->currentGrab()->m_keyboardPublic) {
+        WebOSKeyboard *this_wkeyboard = static_cast<WebOSKeyboard *>(keyboard());
+        this_wkeyboard->startGrab(wkeyboard->currentGrab());
     }
-
     /* We use multiple keyboard device but use same modifier state */
-    updateModifierState(m_compositor->defaultInputDevice());
+    updateModifierState(wcompositor->defaultSeat());
 }
 
 // This constuctor is for window-dedicated device, not multi-input support
 WebOSInputDevice::WebOSInputDevice(QWaylandCompositor *compositor, CapabilityFlags caps)
-    : QWaylandInputDevice(compositor, caps)
+    : QWaylandSeat(compositor, caps)
     , m_compositor(compositor)
     , m_deviceId(-1) // should not be set, distinguished from multi input deivices.
 {
-    m_compositor->handle()->registerInputDevice(this);
+    WebOSCoreCompositor *wcompositor = static_cast<WebOSCoreCompositor *>(m_compositor);
+    wcompositor->registerSeat(this);
 
     // Nothing to follow up, the device is created at the initial stage.
 }
 
 WebOSInputDevice::~WebOSInputDevice()
 {
-    m_compositor->handle()->removeInputDevice(this);
+    WebOSCoreCompositor *wcompositor = static_cast<WebOSCoreCompositor *>(m_compositor);
+    wcompositor->unregisterSeat(this);
 }
 
 void WebOSInputDevice::setDeviceId(QInputEvent *event)

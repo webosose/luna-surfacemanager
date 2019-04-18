@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2019 LG Electronics, Inc.
+// Copyright (c) 2014-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
 #include <QPointer>
 
 class QWaylandOutput;
-class QWaylandInputDevice;
+class QWaylandSeat;
 class WebOSCoreCompositor;
 class WebOSSurfaceItem;
 #ifdef USE_CONFIG
@@ -106,8 +106,8 @@ public:
 
     void setOutput(QWaylandOutput *output) { m_output = output; }
     QWaylandOutput *output() { return m_output; }
-    void setInputDevice(QWaylandInputDevice *device) { m_inputDevice = device; }
-    QWaylandInputDevice *inputDevice() { return m_inputDevice; }
+    void setInputDevice(QWaylandSeat *device) { m_inputDevice = device; }
+    QWaylandSeat *inputDevice() { return m_inputDevice; }
     WebOSSurfaceItem *fullscreenItem();
     void setFullscreenItem(WebOSSurfaceItem *item);
 
@@ -193,7 +193,7 @@ private:
     QQuickItem* m_viewsRoot;
     QList<QObject *> m_foregroundItems;
     QWaylandOutput *m_output;
-    QWaylandInputDevice *m_inputDevice;
+    QWaylandSeat *m_inputDevice;
     // auto clear on destroyed
     QPointer<WebOSSurfaceItem> m_fullscreenItem;
     WebOSCompositorWindow *m_mirrorSource;

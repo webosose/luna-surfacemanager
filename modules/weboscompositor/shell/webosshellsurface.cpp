@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 #include <QDebug>
 #include <QWaylandCompositor>
 #include <QWaylandSurface>
-#include <QtCompositor/private/qwlsurface_p.h>
+#include <QtWaylandCompositor/private/qwaylandsurface_p.h>
 
 const struct wl_webos_shell_interface WebOSShell::shell_interface = {
     WebOSShell::get_system_pip,
@@ -31,7 +31,7 @@ WebOSShell::WebOSShell(WebOSCoreCompositor* compositor)
     : m_compositor(compositor)
     , m_previousFullscreenSurface(0)
 {
-    wl_display_add_global(compositor->waylandDisplay(), &wl_webos_shell_interface, this, WebOSShell::bind_func);
+    wl_display_add_global(compositor->display(), &wl_webos_shell_interface, this, WebOSShell::bind_func);
     connect(compositor, SIGNAL(fullscreenSurfaceChanged(QWaylandSurface*, QWaylandSurface*)),
             this, SLOT(registerSurfaceChange(QWaylandSurface*, QWaylandSurface*)));
 }
@@ -46,10 +46,9 @@ void WebOSShell::get_shell_surface(struct wl_client *client, struct wl_resource 
 {
     Q_UNUSED(shell_resource);
 
-    QtWayland::Surface* qwls = QtWayland::Surface::fromResource(owner);
-    QWaylandQuickSurface *surface = static_cast<QWaylandQuickSurface *>(qwls->waylandSurface());
+    QWaylandSurface* surface = QWaylandSurface::fromResource(owner);
     WebOSSurfaceItem* item = qobject_cast<WebOSSurfaceItem*>(surface->surfaceItem());
-    qDebug() << qwls << item;
+    qDebug() << surface << item;
     if (item) {
         new WebOSShellSurface(client, id, item, owner);
     } else {
@@ -86,12 +85,18 @@ WebOSShellSurface::WebOSShellSurface(struct wl_client* client, uint32_t id, WebO
     , m_preparedState(Qt::WindowNoState)
     , m_owner(owner)
     , m_surface(surface)
+    , m_transient(false)
 {
     m_shellSurface = wl_client_add_object(client, &wl_webos_shell_surface_interface, &shell_surface_interface, id, this);
     m_shellSurface->destroy = WebOSShellSurface::destroyShellSurface;
 
     surface->setShellSurface(this);
     qDebug() << this << "for wl_surface@" << m_owner->object.id << "m_shellSurface:" << m_shellSurface;
+
+    QWaylandWlShellSurface *wlShellSurface = QWaylandWlShellSurface::fromResource(owner);
+    if (wlShellSurface != nullptr) {
+        connect(wlShellSurface, &QWaylandWlShellSurface::setTransient, this, &WebOSShellSurface::handleSetTransient);
+    }
 }
 
 WebOSShellSurface::~WebOSShellSurface()
@@ -291,4 +296,17 @@ bool WebOSShellSurface::validExposeRect(const QRect& rect)
            rect.y() < 0 ||
            rect.width() < 0 ||
            rect.height() < 0);
+}
+
+void WebOSShellSurface::handleSetTransient(QWaylandSurface *parentSurface, const QPoint &relativeToParent, bool inactive)
+{
+    m_transient = true;
+}
+
+void WebOSShellSurface::requestSize(const QSize &size)
+{
+    QWaylandWlShellSurface *wlShellSurface = QWaylandWlShellSurface::fromResource(m_owner);
+    if (wlShellSurface != nullptr) {
+        wlShellSurface->sendConfigure(size, QWaylandWlShellSurface::ResizeEdge::BottomRightEdge);
+    }
 }

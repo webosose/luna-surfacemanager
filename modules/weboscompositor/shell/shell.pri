@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2018 LG Electronics, Inc.
+# Copyright (c) 2013-2020 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-CONFIG += compositor-private link_pkgconfig
+CONFIG += waylandcompositor-private link_pkgconfig
 PKGCONFIG += wayland-webos-server
 
 SOURCES += \

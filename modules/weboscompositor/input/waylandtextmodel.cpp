@@ -15,10 +15,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <QWaylandCompositor>
-#include <QWaylandInputDevice>
+#include <QWaylandSeat>
 #include <QWaylandSurface>
-#include <QWaylandSurfaceItem>
-#include <QtCompositor/private/qwlsurface_p.h>
+#include <QWaylandQuickItem>
+#include <QtWaylandCompositor/private/qwaylandsurface_p.h>
 #include <QDebug>
 #include <QRect>
 
@@ -154,7 +154,7 @@ void WaylandTextModel::setInputMethod(WaylandInputMethod *method)
 void WaylandTextModel::textModelActivate(struct wl_client *client, struct wl_resource *resource, uint32_t serial, struct wl_resource *seat, struct wl_resource *surface)
 {
     WaylandTextModel* that = static_cast<WaylandTextModel*>(resource->data);
-    QWaylandSurface *surfaceRequested = QtWayland::Surface::fromResource(surface)->waylandSurface();
+    QWaylandSurface *surfaceRequested = QWaylandSurface::fromResource(surface);
     QWaylandQuickSurface *qs = static_cast<QWaylandQuickSurface *>(surfaceRequested);
     WebOSSurfaceItem* wsi = qobject_cast<WebOSSurfaceItem *>(qs->surfaceItem());
 
@@ -194,7 +194,8 @@ void WaylandTextModel::textModelActivate(struct wl_client *client, struct wl_res
         that->m_surface = surface;
         that->m_active = true;
 
-        QWaylandSurfaceItem *item = static_cast<QWaylandSurfaceItem *>(surfaceRequested->views().first());
+        // We are interested in when the surface gets unfocused
+        QWaylandQuickItem *item = static_cast<QWaylandQuickItem *>(surfaceRequested->views().first()->renderObject());
         connect(item, &QQuickItem::activeFocusChanged, that, &WaylandTextModel::handleActiveFocusChanged, Qt::UniqueConnection);
 
         emit that->activated();
@@ -312,7 +313,7 @@ void WaylandTextModel::destroyTextModel(struct wl_resource *resource)
 
 void WaylandTextModel::handleActiveFocusChanged()
 {
-    QWaylandSurfaceItem *item = qobject_cast<QWaylandSurfaceItem *>(sender());
+    QWaylandQuickItem *item = qobject_cast<QWaylandQuickItem *>(sender());
 
     if (item && !item->hasActiveFocus() && m_active && m_inputMethod->isActiveModel(this)) {
         qWarning() << "deactivate the current context as the surface item initiated it gets unfocused" << item;

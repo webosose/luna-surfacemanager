@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019 LG Electronics, Inc.
+// Copyright (c) 2018-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QWaylandCompositor>
-#include <QWaylandSurfaceItem>
+#include <QWaylandQuickItem>
 
 #include <qpa/qplatformnativeinterface.h>
 
@@ -89,9 +89,13 @@ private:
 };
 
 
-class ImportedMirrorItem : public QWaylandSurfaceItem, public MirrorItemHandler {
+class ImportedMirrorItem : public QWaylandQuickItem, public MirrorItemHandler {
 public:
-    ImportedMirrorItem(QWaylandQuickSurface *surface) : QWaylandSurfaceItem(surface) {}
+    ImportedMirrorItem(QWaylandQuickSurface *surface)
+        : QWaylandQuickItem()
+    {
+        setSurface(surface);
+    }
 };
 
 class PunchThroughMirrorItem : public PunchThroughItem, public MirrorItemHandler {
@@ -100,7 +104,7 @@ class PunchThroughMirrorItem : public PunchThroughItem, public MirrorItemHandler
 
 
 WebOSForeign::WebOSForeign(WebOSCoreCompositor* compositor)
-    : QtWaylandServer::wl_webos_foreign(compositor->waylandDisplay(), WEBOSFOREIGN_VERSION)
+    : QtWaylandServer::wl_webos_foreign(compositor->display(), WEBOSFOREIGN_VERSION)
     , m_compositor(compositor)
 {
 }
@@ -143,9 +147,9 @@ void WebOSForeign::webos_foreign_export_element(Resource *resource,
                                                 struct ::wl_resource *surface,
                                                 uint32_t exported_type)
 {
-    QtWayland::Surface* qwls = QtWayland::Surface::fromResource(surface);
+    QWaylandSurface* qwls = QWaylandSurface::fromResource(surface);
     QWaylandQuickSurface* quickSurface =
-        static_cast<QWaylandQuickSurface*>(qwls->waylandSurface());
+        static_cast<QWaylandQuickSurface*>(qwls);
     WebOSExported *pWebOSExported =
         new WebOSExported(this, resource->client(), id,
                           quickSurface->surfaceItem(),
@@ -180,7 +184,7 @@ WebOSExported::WebOSExported(
         WebOSForeign* foreign,
         struct wl_client* client,
         uint32_t id,
-        QWaylandSurfaceItem* surfaceItem,
+        QWaylandQuickItem* surfaceItem,
         WebOSForeign::WebOSExportedType exportedType)
     : QtWaylandServer::wl_webos_exported(client, id, WEBOSEXPORTED_VERSION)
     , m_foreign(foreign)
@@ -199,9 +203,9 @@ WebOSExported::WebOSExported(
 
     connect(m_exportedItem, &QQuickItem::visibleChanged, this, &WebOSExported::updateVisible);
     connect(item, &WebOSSurfaceItem::stateChanged, this, &WebOSExported::updateWindowState);
-    connect(m_qwlsurfaceItem, &QWaylandSurfaceItem::widthChanged, this, &WebOSExported::calculateExportedItemRatio);
-    connect(m_qwlsurfaceItem, &QWaylandSurfaceItem::widthChanged, this, &WebOSExported::calculateVideoDispRatio);
-    connect(m_qwlsurfaceItem, &QWaylandSurfaceItem::surfaceDestroyed, this, &WebOSExported::onSurfaceDestroyed);
+    connect(m_qwlsurfaceItem, &QWaylandQuickItem::widthChanged, this, &WebOSExported::calculateExportedItemRatio);
+    connect(m_qwlsurfaceItem, &QWaylandQuickItem::widthChanged, this, &WebOSExported::calculateVideoDispRatio);
+    connect(m_qwlsurfaceItem, &QWaylandQuickItem::surfaceDestroyed, this, &WebOSExported::onSurfaceDestroyed);
     connect(item, &WebOSSurfaceItem::surfaceAboutToBeDestroyed, this, &WebOSExported::onSurfaceDestroyed);
 
     calculateVideoDispRatio();
@@ -248,7 +252,7 @@ void WebOSExported::calculateVideoDispRatio()
 {
     qInfo() << "WebOSExported::calculateVideoDispRatio is called on " << m_windowId;
     if (!m_qwlsurfaceItem) {
-        qWarning() << "QWaylandSurfaceItem  for " << m_windowId << " is already destroyed";
+        qWarning() << "QWaylandQuickItem for " << m_windowId << " is already destroyed";
         return;
     }
 
@@ -271,7 +275,7 @@ void WebOSExported::calculateExportedItemRatio()
 {
     qInfo() << "WebOSExported::calculateExportedItemRatio is called on " << m_windowId;
     if (!m_qwlsurfaceItem) {
-        qWarning() << "QWaylandSurfaceItem  for " << m_windowId << " is  already destroyed";
+        qWarning() << "QWaylandQuickItem for " << m_windowId << " is  already destroyed";
         return;
     }
 
@@ -293,7 +297,7 @@ void WebOSExported::calculateExportedItemRatio()
 void WebOSExported::updateWindowState()
 {
     if (!m_qwlsurfaceItem) {
-        qWarning() << "QWaylandSurfaceItem for " << m_windowId << " is already destroyed";
+        qWarning() << "QWaylandQuickItem for " << m_windowId << " is already destroyed";
         return;
     }
     WebOSSurfaceItem *item = qobject_cast<WebOSSurfaceItem*>(m_qwlsurfaceItem);
@@ -308,7 +312,7 @@ void WebOSExported::updateWindowState()
 void WebOSExported::updateVisible()
 {
     if (!m_exportedItem) {
-        qWarning() << "QWaylandSurfaceItem  for " << m_windowId << " is  already destroyed ";
+        qWarning() << "QWaylandQuickItem for " << m_windowId << " is  already destroyed ";
     }
     if (!m_contextId.isNull()) {
         if (m_exportedItem->isVisible()) {
@@ -352,7 +356,7 @@ void WebOSExported::updateVideoWindowList(QString contextId, QRect videoDisplayR
 void WebOSExported::updateExportedItemSize()
 {
     if (!m_exportedItem) {
-        qWarning() << "QWaylandSurfaceItem  for " << m_windowId << " is  already destroyed ";
+        qWarning() << "QWaylandQuickItem for " << m_windowId << " is  already destroyed ";
     }
 
     m_exportedItem->setX(m_destinationRect.x());
@@ -564,7 +568,7 @@ void WebOSExported::assigneWindowId(QString windowId)
     send_window_id_assigned(m_windowId, m_exportedType);
 }
 
-QWaylandSurfaceItem *WebOSExported::getImportedItem()
+QWaylandQuickItem *WebOSExported::getImportedItem()
 {
     if (!m_exportedItem || m_exportedItem->childItems().isEmpty())
         return nullptr;
@@ -617,12 +621,15 @@ void WebOSExported::webos_exported_destroy_resource(Resource *r)
     delete this;
 }
 
-void WebOSExported::startImportedMirroring(QWaylandSurfaceItem *parent)
+void WebOSExported::startImportedMirroring(QWaylandQuickItem *parent)
 {
     if (!parent)
         return;
 
     QQuickItem *source = getImportedItem();
+
+    qInfo() << "startImportedMirroring for source" << source;
+
     // Nothing imported to the exported item
     if (!source)
         return;
@@ -632,10 +639,12 @@ void WebOSExported::startImportedMirroring(QWaylandSurfaceItem *parent)
         mirror->initialize(mirror, m_exportedItem, parent);
         mirror->setHandler(mirror, m_exportedItem, source);
     } else {
-        QWaylandSurfaceItem *qsi = static_cast<QWaylandSurfaceItem *>(source);
+        QWaylandQuickItem *qsi = static_cast<QWaylandQuickItem *>(source);
         ImportedMirrorItem *mirror = new ImportedMirrorItem(static_cast<QWaylandQuickSurface *>(qsi->surface()));
         mirror->initialize(mirror, m_exportedItem, parent);
         mirror->setHandler(mirror, m_exportedItem, source);
+
+        qInfo() << "source" << qsi << "mirror" << mirror;
     }
 }
 
@@ -717,7 +726,7 @@ void WebOSImported::detach()
        // exported for texture surface is destroyed
         if (m_childSurfaceItem) {
             qInfo() << "request to detach surface";
-            webos_imported_detach_surface(nullptr, m_childSurfaceItem->surface()->handle()->resource()->handle);
+            webos_imported_detach_surface(nullptr, m_childSurfaceItem->surface()->resource());
         }
     }
 }
@@ -826,12 +835,9 @@ void WebOSImported::webos_imported_attach_surface(
         qWarning() << "Exported (" << m_exported << " ) is already destroyed or surface (" << surface << ") is null";
         return;
     }
-    QtWayland::Surface* qwlSurface =
-        QtWayland::Surface::fromResource(surface);
-    QWaylandQuickSurface *quickSurface =
-        qobject_cast<QWaylandQuickSurface *>(qwlSurface->waylandSurface());
+    auto qwlSurface = QWaylandSurface::fromResource(surface);
 
-    m_childSurfaceItem = quickSurface->surfaceItem();
+    m_childSurfaceItem = qobject_cast<QWaylandQuickItem*>(qwlSurface->surfaceItem());
     connect(m_childSurfaceItem->surface(), &QWaylandSurface::surfaceDestroyed, this, &WebOSImported::childSurfaceDestroyed);
     m_exported->setParentOf(m_childSurfaceItem);
     m_childSurfaceItem->setZ(m_exported->m_exportedItem->z()+m_z_index);
@@ -846,14 +852,14 @@ void WebOSImported::webos_imported_detach_surface(
 {
     qInfo() <<"detach_surface is called : " << surface << " on " << this ;
 
-    if (!m_childSurfaceItem || m_childSurfaceItem->surface()->handle()->resource()->handle != surface) {
+    if (!m_childSurfaceItem || m_childSurfaceItem->surface()->resource() != surface) {
         qWarning() << "surface is not the attached surface";
         return;
     }
 
     disconnect(m_childSurfaceItem->surface(), &QWaylandSurface::surfaceDestroyed, this, &WebOSImported::childSurfaceDestroyed);
     m_childSurfaceItem->setParentItem(nullptr);
-    send_surface_detached(m_childSurfaceItem->surface()->handle()->resource()->handle);
+    send_surface_detached(m_childSurfaceItem->surface()->resource());
     childSurfaceDestroyed();
 }
 

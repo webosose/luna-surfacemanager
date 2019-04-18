@@ -19,18 +19,18 @@
 
 #include <QObject>
 #include <QQuickItem>
-#include <QtCompositor/private/qwayland-server-wayland.h>
+#include <QtWaylandCompositor/private/qwayland-server-wayland.h>
 #include <WebOSCoreCompositor/private/qwayland-server-webos-foreign.h>
 #include <WebOSCoreCompositor/weboscompositorexport.h>
-#include <QtCompositor/private/qwlsurface_p.h>
-#include <QtCompositor/private/qwlregion_p.h>
+#include <QtWaylandCompositor/private/qwaylandsurface_p.h>
+#include <QtWaylandCompositor/private/qwlregion_p.h>
 #include <QPointer>
 
 #define WEBOSFOREIGN_VERSION 1
 #define WEBOSEXPORTED_VERSION 2
 #define WEBOSIMPORTED_VERSION 2
 
-class QWaylandSurfaceItem;
+class QWaylandQuickItem;
 class WebOSCoreCompositor;
 class WebOSCompositor;
 class WebOSSurfaceItem;
@@ -82,7 +82,7 @@ public:
     Q_DECLARE_FLAGS(ExportStates, ExportState)
 
     WebOSExported(WebOSForeign* foreign, struct wl_client* client,
-                  uint32_t id, QWaylandSurfaceItem* surfaceItem,
+                  uint32_t id, QWaylandQuickItem* surfaceItem,
                   WebOSForeign::WebOSExportedType exportedType);
     ~WebOSExported();
     void setDestinationRegion(struct::wl_resource *destination_region);
@@ -98,8 +98,8 @@ public:
     void updateExportedItemSize();
     void setVideoDisplayWindow();
     void onSurfaceDestroyed();
-    QWaylandSurfaceItem *getImportedItem();
-    void startImportedMirroring(QWaylandSurfaceItem *parent);
+    QWaylandQuickItem *getImportedItem();
+    void startImportedMirroring(QWaylandQuickItem *parent);
 
 signals:
     void geometryChanged();
@@ -173,7 +173,7 @@ protected:
 private:
     WebOSImported(WebOSExported* exported, struct wl_client* client, uint32_t id);
     WebOSExported* m_exported = nullptr;
-    QWaylandSurfaceItem* m_childSurfaceItem = nullptr;
+    QWaylandQuickItem* m_childSurfaceItem = nullptr;
     enum surface_alignment m_textureAlign = surface_alignment::surface_alignment_stretch;
     int32_t m_z_index = 0;
     bool m_punchThroughAttached = false;

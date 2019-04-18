@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,8 +24,9 @@
 #include <wayland-server.h>
 #include <wayland-input-method-server-protocol.h>
 #include <wayland-text-server-protocol.h>
-#include <QtCompositor/private/qwlkeyboard_p.h>
+#include <QtWaylandCompositor/private/qwaylandkeyboard_p.h>
 #include "waylandinputpanel.h"
+#include "weboskeyboard.h"
 
 class WaylandInputMethod;
 class WaylandTextModel;
@@ -33,7 +34,8 @@ class WaylandTextModel;
 /*!
  * Implements the compositor side protocol for the input method
  */
-class WaylandInputMethodContext : public QObject, public QtWayland::KeyboardGrabber {
+class WaylandInputMethodContext : public QObject, public KeyboardGrabber
+{
 
     Q_OBJECT
 
@@ -83,9 +85,10 @@ public slots:
     void showInputPanel();
     void hideInputPanel();
 
-    void focused(QtWayland::Surface* surface) Q_DECL_OVERRIDE;
+    void focused(QWaylandSurface* surface) Q_DECL_OVERRIDE;
     void key(uint32_t serial, uint32_t time, uint32_t key, uint32_t state) Q_DECL_OVERRIDE;
     void modifiers(uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group) Q_DECL_OVERRIDE;
+    void updateModifiers() override;
 
     void updatePanelState(const WaylandInputPanel::InputPanelState state) const;
     void updatePanelRect(const QRect& rect) const;
@@ -107,7 +110,7 @@ private:
     QPointer<WaylandInputMethod> m_inputMethod;
     WaylandTextModel* m_textModel;
     wl_resource* m_resource;
-    QtWayland::Keyboard::Resource* m_grabResource;
+    QtWaylandServer::wl_keyboard::Resource* m_grabResource;
     bool m_activated;
     uint32_t m_resourceCount;
     bool m_grabbed;

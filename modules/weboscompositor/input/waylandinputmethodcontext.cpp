@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,10 +22,9 @@
 
 #include <QWaylandCompositor>
 #include <QWaylandSurface>
-#include <QWaylandSurfaceItem>
-#include <QWaylandInputDevice>
-#include <QtCompositor/private/qwlinputdevice_p.h>
-#include <QtCompositor/private/qwlsurface_p.h>
+#include <QWaylandQuickItem>
+#include <QWaylandSeat>
+#include <QtWaylandCompositor/private/qwaylandsurface_p.h>
 #include "waylandinputmethodcontext.h"
 #include "waylandinputmethod.h"
 #include "waylandinputpanel.h"
@@ -192,19 +191,20 @@ void WaylandInputMethodContext::grabKeyboard(struct wl_client *client, struct wl
         return;
     }
 
-    QtWayland::InputDevice* p_default_device = that->m_inputMethod->inputDevice()->handle();
+    auto keyboardDevice = QWaylandKeyboardPrivate::get(that->m_inputMethod->inputDevice()->keyboard());
 
     // NOTE: Currenlty, version number is hardcoded as '1'; if any better idea for the value, please replace it.
-    that->m_grabResource = p_default_device->keyboardDevice()->add(client, id, 1);
+    that->m_grabResource = keyboardDevice->add(client, id, 1);
 
     that->grabKeyboardImpl();
 }
 
-void WaylandInputMethodContext::focused(QtWayland::Surface* surface)
+void WaylandInputMethodContext::focused(QWaylandSurface* surface)
 {
+    Q_UNUSED(surface);
     Q_ASSERT(m_keyboard);
     if (m_grabResource)
-        m_keyboard->sendKeyModifiers(m_grabResource, 1);
+        updateModifiers();
 }
 
 void WaylandInputMethodContext::key(uint32_t serial, uint32_t time, uint32_t key, uint32_t state)
@@ -219,6 +219,23 @@ void WaylandInputMethodContext::modifiers(uint32_t serial, uint32_t mods_depress
     Q_ASSERT(m_keyboard);
     if (m_grabResource)
         m_keyboard->send_modifiers(m_grabResource->handle, serial, mods_depressed, mods_latched, mods_locked, group);
+}
+
+void WaylandInputMethodContext::updateModifiers()
+{
+    Q_ASSERT(m_keyboard);
+    if (m_grabResource) {
+#if QT_CONFIG(xkbcommon)
+        auto xkb_state = m_keyboard->xkbState();
+        auto modsDepressed = xkb_state_serialize_mods(xkb_state, (xkb_state_component)XKB_STATE_MODS_DEPRESSED);
+        auto modsLatched   = xkb_state_serialize_mods(xkb_state, (xkb_state_component)XKB_STATE_MODS_LATCHED);
+        auto modsLocked    = xkb_state_serialize_mods(xkb_state, (xkb_state_component)XKB_STATE_MODS_LOCKED);
+        auto group         = xkb_state_serialize_group(xkb_state, (xkb_state_component)XKB_STATE_EFFECTIVE);
+
+        xkb_state_update_mask(xkb_state, modsDepressed, modsLatched, modsLocked, 0, 0, group);
+        modifiers(m_inputMethod->compositor()->nextSerial(), modsDepressed, modsLatched, modsLocked, group);
+#endif
+    }
 }
 
 void WaylandInputMethodContext::key(struct wl_client *client, struct wl_resource *resource, uint32_t serial, uint32_t time, uint32_t key, uint32_t state)
@@ -453,9 +470,9 @@ void WaylandInputMethodContext::grabKeyboardImpl()
 
 #ifdef MULTIINPUT_SUPPORT
     WebOSCoreCompositor *compositor = static_cast<WebOSCoreCompositor*>(m_inputMethod->compositor());
-    QList<QWaylandInputDevice *> devices = compositor->inputDevices();
-    foreach (QWaylandInputDevice *device, devices) {
-        QtWayland::Keyboard* p_keyboard = device->handle()->keyboardDevice();
+    QList<QWaylandSeat *> devices = compositor->inputDevices();
+    foreach (QWaylandSeat *device, devices) {
+        auto p_keyboard = static_cast<WebOSKeyboard*>(device->keyboard());
         if (p_keyboard) {
             p_keyboard->startGrab(this);
 
@@ -468,8 +485,8 @@ void WaylandInputMethodContext::grabKeyboardImpl()
         qWarning() << "No input device for input method" << m_inputMethod;
         return;
     }
-    QtWayland::InputDevice* p_device = m_inputMethod->inputDevice()->handle();
-    QtWayland::Keyboard* p_keyboard = p_device->keyboardDevice();
+    auto p_device = m_inputMethod->inputDevice();
+    auto p_keyboard = static_cast<WebOSKeyboard*>(p_device->keyboard());
     p_keyboard->startGrab(this);
 #endif
 
@@ -483,9 +500,9 @@ void WaylandInputMethodContext::releaseGrabImpl()
 
 #ifdef MULTIINPUT_SUPPORT
     WebOSCoreCompositor *compositor = static_cast<WebOSCoreCompositor*>(m_inputMethod->compositor());
-    QList<QWaylandInputDevice *> devices = compositor->inputDevices();
-    foreach (QWaylandInputDevice *device, devices) {
-        QtWayland::Keyboard* p_keyboard = device->handle()->keyboardDevice();
+    QList<QWaylandSeat *> devices = compositor->inputDevices();
+    foreach (QWaylandSeat *device, devices) {
+        auto p_keyboard = static_cast<WebOSKeyboard*>(device->keyboard());
         if (p_keyboard) {
             p_keyboard->endGrab();
 
@@ -498,8 +515,8 @@ void WaylandInputMethodContext::releaseGrabImpl()
         qWarning() << "No input device for input method" << m_inputMethod;
         return;
     }
-    QtWayland::InputDevice* p_device = m_inputMethod->inputDevice()->handle();
-    QtWayland::Keyboard* p_keyboard = p_device->keyboardDevice();
+    auto p_device = m_inputMethod->inputDevice();
+    auto p_keyboard = static_cast<WebOSKeyboard*>(p_device->keyboard());
     p_keyboard->endGrab();
 #endif
 

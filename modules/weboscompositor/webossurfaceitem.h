@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,10 +22,11 @@
 #include <QObject>
 #include <QPointer>
 #include <QFlags>
-#include <QtCompositor/qwaylandinput.h>
+#include <QtWaylandCompositor/qwaylandseat.h>
 
-#include <qwaylandsurfaceitem.h>
+#include <qwaylandquickitem.h>
 #include <qwaylandsurface.h>
+#include <qwaylandsurfacegrabber.h>
 #include <qwaylandclient.h>
 #include <wayland-server.h>
 
@@ -46,7 +47,7 @@ class WebOSSurfaceGroup;
  * Provides convenient access to the compositor. Currently only
  * fullscreen requests can be made.
  */
-class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandSurfaceItem
+class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandQuickItem
 {
     Q_OBJECT
     Q_FLAGS(WindowClass)
@@ -192,7 +193,7 @@ public:
 
     /*!
      * Override the hover event to dispatch all mouse move events to the surface
-     * not just when a mouse button is pressed. The QWaylandSurfaceItem does not
+     * not just when a mouse button is pressed. The QWaylandQuickItem does not
      * handle the hover events at all.
      */
     void hoverMoveEvent(QHoverEvent *event);
@@ -215,6 +216,7 @@ public:
 
     QVariantMap windowProperties();
 
+    // Does not exist anymore since 5.7
     void setWindowProperty(const QString& key, const QVariant& value);
 
     /*!
@@ -339,7 +341,7 @@ public:
             wl_client_get_credentials(client, &pid, 0,0);
         else
             pid = getpid();
-        m_processId = QString("%1").arg(pid);
+        m_processId = QStringLiteral("%1").arg(pid);
         return m_processId;
     }
 
@@ -400,7 +402,7 @@ public:
 
 
     void setShellSurface(WebOSShellSurface* shell);
-    WebOSShellSurface* shellSurface() { return m_shellSurface; }
+    WebOSShellSurface* shellSurface() const { return m_shellSurface; }
 
     /*!
      * Function to notify that state is about to be changed.
@@ -540,8 +542,8 @@ protected:
 
     void takeWlKeyboardFocus() const;
 
-    QWaylandInputDevice* getInputDevice(QInputEvent *event = nullptr) const;
-    void takeFocus(QWaylandInputDevice *device = nullptr) override;
+    QWaylandSeat* getInputDevice(QInputEvent *event = nullptr) const;
+    void takeFocus(QWaylandSeat *device = nullptr) override;
 
 private:
     // methods
@@ -591,12 +593,12 @@ private:
 
     QVariantMap m_closePolicy;
 
-    QPointer<QWaylandSurface> m_cursorSurface;
     int m_cursorHotSpotX = -1;
     int m_cursorHotSpotY = -1;
 
     QMap<int, WebOSSurfaceItem *> m_mirrorItems;
     WebOSExported *m_exported = nullptr;
+    QWaylandView m_cursorView;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(WebOSSurfaceItem::WindowClass)

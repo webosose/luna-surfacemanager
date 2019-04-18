@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ const struct text_model_factory_interface WaylandTextModelFactory::textModelFact
 WaylandTextModelFactory::WaylandTextModelFactory(QWaylandCompositor* compositor, WaylandPrimaryInputMethod* inputMethod)
     : m_inputMethod(inputMethod)
 {
-    wl_display_add_global(compositor->waylandDisplay(), &text_model_factory_interface, this, WaylandTextModelFactory::wlBindFactory);
+    wl_display_add_global(compositor->display(), &text_model_factory_interface, this, WaylandTextModelFactory::wlBindFactory);
 }
 
 void WaylandTextModelFactory::wlBindFactory(struct wl_client *client, void *data, uint32_t version, uint32_t id)

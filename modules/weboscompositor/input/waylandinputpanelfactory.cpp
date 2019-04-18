@@ -1,4 +1,4 @@
-// Copyright (c) 2019 LG Electronics, Inc.
+// Copyright (c) 2019-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ WaylandInputPanelFactory::WaylandInputPanelFactory(QWaylandCompositor* composito
     : m_compositor(compositor)
     , m_inputMethod(inputMethod)
 {
-    wl_display_add_global(compositor->waylandDisplay(), &input_panel_interface, this, WaylandInputPanelFactory::bind);
+    wl_display_add_global(compositor->display(), &input_panel_interface, this, WaylandInputPanelFactory::bind);
 }
 
 WaylandInputPanelFactory::~WaylandInputPanelFactory()
