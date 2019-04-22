@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2018 LG Electronics, Inc.
+// Copyright (c) 2012-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@
 #include <QObject>
 #include <WebOSCoreCompositor/weboscompositorexport.h>
 
-#include "waylandinputmethod.h"
+#include "waylandprimaryinputmethod.h"
 
-class WEBOS_COMPOSITOR_EXPORT WebOSInputMethod : public WaylandInputMethod
+class WEBOS_COMPOSITOR_EXPORT WebOSInputMethod : public WaylandPrimaryInputMethod
 {
     Q_OBJECT
 

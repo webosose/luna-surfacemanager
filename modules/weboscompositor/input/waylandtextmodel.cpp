@@ -14,8 +14,6 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include "waylandtextmodel.h"
-#include "waylandtextmodelfactory.h"
 #include <QWaylandCompositor>
 #include <QWaylandInputDevice>
 #include <QWaylandSurface>
@@ -23,6 +21,12 @@
 #include <QtCompositor/private/qwlsurface_p.h>
 #include <QDebug>
 #include <QRect>
+
+#include "waylandtextmodel.h"
+#include "waylandtextmodelfactory.h"
+#include "waylandinputmethodcontext.h"
+
+#include "webossurfaceitem.h"
 
 const struct text_model_interface WaylandTextModel::textModelImplementation = {
     WaylandTextModel::textModelSetSurroundingText,
@@ -42,11 +46,12 @@ const struct text_model_interface WaylandTextModel::textModelImplementation = {
     WaylandTextModel::textModelResetInputPanelRect,
 };
 
-WaylandTextModel::WaylandTextModel(WaylandInputMethod* inputMethod, struct wl_client *client, struct wl_resource *resource, uint32_t id)
-    : m_inputMethod(inputMethod)
+WaylandTextModel::WaylandTextModel(WaylandTextModelFactory *factory, struct wl_client *client, struct wl_resource *resource, uint32_t id)
+    : m_inputMethod(nullptr)
     , m_context(0)
     , m_surface(0)
     , m_active(false)
+    , m_factory(factory)
 {
     qDebug() << this << client << resource;
     m_resource = wl_client_add_object(client, &text_model_interface, &textModelImplementation, id, this);
@@ -131,19 +136,50 @@ void WaylandTextModel::textModelSetSurroundingText(struct wl_client *client, str
 
 }
 
+void WaylandTextModel::setInputMethod(WaylandInputMethod *method)
+{
+    Q_ASSERT(method);
+
+    // NOTE: m_inputMethod goes to NULL as a QPointer, when only IME Server is down.
+    // In that case, context is also destroyed. So we can create new context without worrying memory leak.
+    if (!m_inputMethod)
+        new WaylandInputMethodContext(method, this); // context has a lifecycle which is bound to wayland resource
+
+    m_inputMethod = method;
+
+    // m_preferredPanelRect can be set before m_inputMethod
+    m_inputMethod->setPreferredPanelRect(m_preferredPanelRect);
+}
+
 void WaylandTextModel::textModelActivate(struct wl_client *client, struct wl_resource *resource, uint32_t serial, struct wl_resource *seat, struct wl_resource *surface)
 {
     WaylandTextModel* that = static_cast<WaylandTextModel*>(resource->data);
     QWaylandSurface *surfaceRequested = QtWayland::Surface::fromResource(surface)->waylandSurface();
+    QWaylandQuickSurface *qs = static_cast<QWaylandQuickSurface *>(surfaceRequested);
+    WebOSSurfaceItem* wsi = qobject_cast<WebOSSurfaceItem *>(qs->surfaceItem());
 
-    qDebug() << "activation request for" << surfaceRequested;
+    if (!wsi) {
+        qWarning() << "Unexpected:" << that << surfaceRequested << "has no WebOSSurfaceItem";
+        return;
+    }
+
+    qDebug() << "activation request for" << surfaceRequested << wsi;
+
+    WaylandInputMethod *method = that->factory()->findInputMethod(wsi->displayId());
+    if (!method) {
+        qWarning() << "No input method found for display" << wsi->displayId();
+        return;
+    }
+
+    // Whenever activating text model, update input method
+    that->setInputMethod(method);
 
     if (!that->isAllowed()) {
         qWarning() << "activation declined as IME is not allowed at the moment";
         return;
     }
 
-    QWaylandSurface *surfaceFocused = that->m_inputMethod->compositor()->defaultInputDevice()->keyboardFocus();
+    QWaylandSurface *surfaceFocused = that->m_inputMethod->inputDevice()->keyboardFocus();
     if (surfaceFocused != surfaceRequested) {
         qWarning() << "activation declined for non-focused surface:" << surfaceRequested << "focused:" << surfaceFocused;
         return;
@@ -153,13 +189,12 @@ void WaylandTextModel::textModelActivate(struct wl_client *client, struct wl_res
         that->m_surface = surface;
         that->m_active = true;
 
-        // We are interested in when the surface gets unfocused
         QWaylandSurfaceItem *item = static_cast<QWaylandSurfaceItem *>(surfaceRequested->views().first());
         connect(item, &QQuickItem::activeFocusChanged, that, &WaylandTextModel::handleActiveFocusChanged, Qt::UniqueConnection);
 
         emit that->activated();
     } else {
-        qDebug() << "already active for" << surfaceRequested;
+        qDebug() << that << "already active for" << surfaceRequested;
     }
 }
 
@@ -246,21 +281,25 @@ void WaylandTextModel::textModelHideInputPanel(struct wl_client *client, struct 
 void WaylandTextModel::textModelSetInputPanelRect(struct wl_client *client, struct wl_resource *resource, int32_t x, int32_t y, uint32_t width, uint32_t height)
 {
     WaylandTextModel* that = static_cast<WaylandTextModel*>(resource->data);
-    QRect requestedGeometry(x, y, width, height);
-    that->m_inputMethod->setPreferredPanelRect(requestedGeometry);
-    qDebug() << "Client request InputPanelRect:" << requestedGeometry;
+    that->m_preferredPanelRect = QRect(x, y, width, height);
+    if (that->m_inputMethod)
+        that->m_inputMethod->setPreferredPanelRect(that->m_preferredPanelRect);
+    qDebug() << "Client request InputPanelRect:" << that->m_preferredPanelRect;
 }
 
 void WaylandTextModel::textModelResetInputPanelRect(struct wl_client *client, struct wl_resource *resource)
 {
     WaylandTextModel* that = static_cast<WaylandTextModel*>(resource->data);
-    that->m_inputMethod->resetPreferredPanelRect();
+    that->m_preferredPanelRect = QRect();
+    if (that->m_inputMethod)
+        that->m_inputMethod->resetPreferredPanelRect();
 }
 
 void WaylandTextModel::destroyTextModel(struct wl_resource *resource)
 {
     WaylandTextModel* that = static_cast<WaylandTextModel*>(resource->data);
-    that->m_inputMethod->resetPreferredPanelRect();
+    if (that->m_inputMethod)
+        that->m_inputMethod->resetPreferredPanelRect();
     that->m_active = false;
     emit that->destroyed();
     delete that;

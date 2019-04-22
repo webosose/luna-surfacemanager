@@ -19,15 +19,18 @@
 
 #include <QObject>
 #include <QRect>
+#include <QVector>
+#include <QPointer>
 
 #include <wayland-server.h>
 #include <wayland-input-method-server-protocol.h>
 
+#include "waylandinputpanel.h"
+
 class QWaylandCompositor;
-class WaylandTextModelFactory;
+class QWaylandInputDevice;
 class WaylandTextModel;
 class WaylandInputMethodContext;
-class WaylandInputPanel;
 class WaylandInputMethodManager;
 /*!
  * Talks with the input method sitting in the VKB
@@ -46,15 +49,23 @@ class WaylandInputMethod : public QObject {
     Q_PROPERTY(bool hasPreferredPanelRect READ hasPreferredPanelRect NOTIFY hasPreferredPanelRectChanged)
 
 public:
+    WaylandInputMethod();
     WaylandInputMethod(QWaylandCompositor* compositor);
     ~WaylandInputMethod();
 
-    static void bind(struct wl_client *client, void *data, uint32_t version, uint32_t id);
     static void destroyInputMethod(struct wl_resource* resource);
+    static void setDisplayId(struct wl_client *client, struct wl_resource *resource, uint32_t id);
 
+    void binding(struct wl_client *client, uint32_t id, wl_resource_destroy_func_t destroy = destroyInputMethod);
+    void unbinding();
+    virtual void handleDestroy();
     wl_resource* handle() const { return m_resource; }
+    void setHandle(wl_resource*handle) { m_resource = handle; }
+    wl_client* client() const { return m_client; }
+    void setClient(wl_client *client) { m_client = client; }
     QWaylandCompositor* compositor() const { return m_compositor; }
-    WaylandInputPanel* inputPanel() { return m_inputPanel; }
+    WaylandInputPanel* inputPanel() const { return m_inputPanel; }
+    void setInputPanel(WaylandInputPanel *panel);
     WaylandInputMethodManager* inputMethodManager() const { return m_inputMethodManager; }
     Q_INVOKABLE bool active() const { return m_activeContext != NULL; }
     bool isActiveModel(WaylandTextModel *model) const;
@@ -70,37 +81,43 @@ public:
     void setPreferredPanelRect(const QRect& rect);
     void resetPreferredPanelRect();
     bool hasPreferredPanelRect() const { return m_hasPreferredPanelRect; }
+    int displayId() { return m_displayId; }
+
+    QWaylandInputDevice *inputDevice();
 
 public slots:
     void deactivate();
-
     void contextActivated();
     void contextDeactivated();
 
 signals:
     void inputMethodBound(bool);
-
     void activeChanged();
     void allowedChanged();
-
     void panelRectChanged();
     void panelSurfaceSizeChanged();
     void preferredPanelRectChanged();
     void hasPreferredPanelRectChanged();
+    void displayIdChanged();
+
+protected:
+    static const struct input_method_interface inputMethodImplementation;
 
 private:
     void setHasPreferredPanelRect(const bool flag);
+    void setDisplayId(const uint32_t displayId);
 
     QWaylandCompositor* m_compositor;
-    WaylandTextModelFactory* m_factory;
     struct wl_resource* m_resource;
+    struct wl_client* m_client;
 
     WaylandInputMethodContext* m_activeContext;
-    WaylandInputPanel* m_inputPanel;
+    QPointer<WaylandInputPanel> m_inputPanel;
     QRect m_preferredPanelRect;
     bool m_hasPreferredPanelRect;
     WaylandInputMethodManager* m_inputMethodManager;
     bool m_allowed;
+    int m_displayId;
 };
 
 #endif //WAYLANDINPUTMETHOD_H

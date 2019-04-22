@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,36 +17,29 @@
 #ifndef WAYLANDTEXTMODELFACTORY_H
 #define WAYLANDTEXTMODELFACTORY_H
 
-#include <QObject>
-
 #include <wayland-server.h>
 #include <wayland-text-server-protocol.h>
 
-class QWaylandCompositor;
-class WaylandTextModel;
 class WaylandInputMethod;
+class WaylandPrimaryInputMethod;
 
-class WaylandTextModelFactory : public QObject {
-
-    Q_OBJECT
+class WaylandTextModelFactory {
 
 public:
-    WaylandTextModelFactory(QWaylandCompositor* compositor, WaylandInputMethod* inputMethod);
+    WaylandTextModelFactory(QWaylandCompositor* compositor, WaylandPrimaryInputMethod* inputMethod);
     ~WaylandTextModelFactory();
 
-    static const struct text_model_factory_interface textModelFactoryInterface;
+    WaylandInputMethod *findInputMethod(int displayId);
 
 private:
-
+    static const struct text_model_factory_interface textModelFactoryInterface;
     static void wlBindFactory(struct wl_client *client, void *data, uint32_t version, uint32_t id);
 
     static void createTextModel(struct wl_client *client,
                                 struct wl_resource *resource,
                                 uint32_t id);
-
-    QWaylandCompositor* m_compositor;
-    WaylandInputMethod* m_inputMethod;
-    WaylandTextModel* m_textModel;
+private:
+    WaylandPrimaryInputMethod *m_inputMethod;
 };
 
 #endif //WAYLANDTEXTMODELFACTORY_H

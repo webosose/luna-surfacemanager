@@ -209,7 +209,7 @@ void WebOSSurfaceItem::takeWlKeyboardFocus() const
         dev->setKeyboardFocus(surface());
 #else
     /* set keyboard focus for this item */
-    QWaylandInputDevice *dev = m_compositor->inputDeviceForWindow(window());
+    QWaylandInputDevice *dev = m_compositor->keyboardDeviceForWindow(window());
     dev->setKeyboardFocus(surface());
 #endif
 }
@@ -325,7 +325,7 @@ QWaylandInputDevice* WebOSSurfaceItem::getInputDevice(QInputEvent *event) const
     return m_compositor->inputDeviceFor(event);
 #else
     if (!event || event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease)
-        return m_compositor->inputDeviceForWindow(window());
+        return m_compositor->keyboardDeviceForWindow(window());
 
     return m_compositor->defaultInputDevice();
 #endif

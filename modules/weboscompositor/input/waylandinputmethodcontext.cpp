@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -85,6 +85,11 @@ WaylandInputMethodContext::WaylandInputMethodContext(WaylandInputMethod* inputMe
             this, &WaylandInputMethodContext::updatePanelState);
     connect(m_inputMethod->inputPanel(), &WaylandInputPanel::reportPanelRect,
             this, &WaylandInputMethodContext::updatePanelRect);
+
+    // Forward the signals so that we can show and hide the input panel
+    connect(this, SIGNAL(activated()), m_inputMethod, SLOT(contextActivated()));
+    connect(this, SIGNAL(deactivated()), m_inputMethod, SLOT(contextDeactivated()));
+    connect(this, SIGNAL(destroyed()), m_inputMethod, SLOT(contextDeactivated()));
 }
 
 void WaylandInputMethodContext::destroyInputMethodContext(struct wl_resource* resource)
@@ -181,10 +186,7 @@ void WaylandInputMethodContext::keySym(struct wl_client *client, struct wl_resou
 void WaylandInputMethodContext::grabKeyboard(struct wl_client *client, struct wl_resource *resource, uint32_t id)
 {
     WaylandInputMethodContext* that = static_cast<WaylandInputMethodContext*>(resource->data);
-
-    // NOTE: We assign the resource of the default input device for the grab resource of input method context.
-    //       The input method context will communicate with the client through the default input device.
-    QtWayland::InputDevice* p_default_device = that->m_inputMethod->compositor()->defaultInputDevice()->handle();
+    QtWayland::InputDevice* p_default_device = that->m_inputMethod->inputDevice()->handle();
 
     // NOTE: Currenlty, version number is hardcoded as '1'; if any better idea for the value, please replace it.
     that->m_grabResource = p_default_device->keyboardDevice()->add(client, id, 1);
@@ -280,7 +282,12 @@ void WaylandInputMethodContext::updatePanelRect(const QRect& rect) const
 
 void WaylandInputMethodContext::activateTextModel()
 {
-    qDebug() << "model" << m_textModel;
+    if (!m_inputMethod) {
+        qWarning() << "No input method available";
+        return;
+    }
+
+    qDebug() << "model" << m_textModel << m_inputMethod << m_inputMethod->handle();
 
     if (!m_inputMethod->inputMethodManager()->requestInputMethod()) {
         connect(m_inputMethod->inputMethodManager(), SIGNAL(inputMethodAvaliable()),
@@ -292,7 +299,7 @@ void WaylandInputMethodContext::activateTextModel()
     }
 
     if (!m_inputMethod->handle()) {
-        qWarning() << "No input panel available, try to start MaliitServer";
+        qWarning() << "No input method handle available";
         return;
     }
 
@@ -405,6 +412,9 @@ void WaylandInputMethodContext::platformDataModel(const QString& text)
 
 void WaylandInputMethodContext::cleanup()
 {
+    if (!m_inputMethod)
+        return;
+
     disconnect(m_inputMethod->inputMethodManager(), SIGNAL(inputMethodAvaliable()),
         this, SLOT(continueTextModelActivation()));
 
@@ -449,7 +459,7 @@ void WaylandInputMethodContext::grabKeyboardImpl()
         }
     }
 #else
-    QtWayland::InputDevice* p_device = inputMethod->compositor()->defaultInputDevice()->handle();
+    QtWayland::InputDevice* p_device = m_inputMethod->inputDevice()->handle();
     QtWayland::Keyboard* p_keyboard = p_device->keyboardDevice();
     p_keyboard->startGrab(this);
 #endif
@@ -475,7 +485,7 @@ void WaylandInputMethodContext::releaseGrabImpl()
         }
     }
 #else
-    QtWayland::InputDevice* p_device = m_inputMethod->compositor()->defaultInputDevice()->handle();
+    QtWayland::InputDevice* p_device = m_inputMethod->inputDevice()->handle();
     QtWayland::Keyboard* p_keyboard = p_device->keyboardDevice();
     p_keyboard->endGrab();
 #endif

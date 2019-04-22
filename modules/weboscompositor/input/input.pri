@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2018 LG Electronics, Inc.
+# Copyright (c) 2013-2019 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,14 +23,17 @@ SOURCES += \
     $$PWD/waylandtextmodel.cpp \
     $$PWD/waylandinputmethodcontext.cpp \
     $$PWD/waylandinputmethod.cpp \
+    $$PWD/waylandprimaryinputmethod.cpp \
+    $$PWD/waylandinputpanelfactory.cpp \
     $$PWD/waylandinputpanel.cpp \
     $$PWD/waylandinputmethodmanager.cpp
-
 
 HEADERS += \
     $$PWD/waylandtextmodelfactory.h \
     $$PWD/waylandtextmodel.h \
     $$PWD/waylandinputmethodcontext.h \
     $$PWD/waylandinputmethod.h \
+    $$PWD/waylandprimaryinputmethod.h \
+    $$PWD/waylandinputpanelfactory.h \
     $$PWD/waylandinputpanel.h \
     $$PWD/waylandinputmethodmanager.h

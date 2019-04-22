@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -107,39 +107,25 @@ const struct input_panel_interface WaylandInputPanel::inputPanelImplementation =
     WaylandInputPanel::getInputPanelSurface
 };
 
-WaylandInputPanel::WaylandInputPanel(QWaylandCompositor* compositor)
-    : m_compositor(compositor)
-    , m_resource(0)
+WaylandInputPanel::WaylandInputPanel(struct wl_client *client, uint32_t id)
+    : m_resource(0)
+    , m_client(client)
     , m_activeSurface(0)
     , m_state(InputPanelHidden)
 {
-    wl_display_add_global(compositor->waylandDisplay(), &input_panel_interface, this, WaylandInputPanel::bind);
+    m_resource = wl_client_add_object(client, &input_panel_interface, &inputPanelImplementation, id, this);
+    m_resource->destroy = WaylandInputPanel::destroyInputPanel;
 }
 
 WaylandInputPanel::~WaylandInputPanel()
 {
 }
 
-void WaylandInputPanel::bind(struct wl_client *client, void *data, uint32_t version, uint32_t id)
-{
-    Q_UNUSED(version);
-    WaylandInputPanel* that = static_cast<WaylandInputPanel*>(data);
-
-    wl_resource* resource = wl_client_add_object(client, &input_panel_interface, &inputPanelImplementation, id, that);
-    if (!that->m_resource) {
-        that->m_resource = resource;
-        resource->destroy = WaylandInputPanel::destroyInputPanel;
-    } else {
-        qWarning() << "trying to bind more than once -> posting error to client";
-        wl_resource_post_error(resource, WL_DISPLAY_ERROR_INVALID_OBJECT, "interface object already bound");
-        wl_resource_destroy(resource);
-    }
-}
-
 void WaylandInputPanel::destroyInputPanel(struct wl_resource* resource)
 {
     WaylandInputPanel* that = static_cast<WaylandInputPanel*>(resource->data);
     that->m_resource = NULL;
+    delete that;
 }
 
 void WaylandInputPanel::getInputPanelSurface(struct wl_client *client, struct wl_resource *resource, uint32_t id, struct wl_resource *surface_resource)

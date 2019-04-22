@@ -49,6 +49,7 @@
 // Needed extra for type registration
 #include "weboskeyfilter.h"
 #include "webosinputmethod.h"
+#include "waylandinputmethod.h"
 
 #include "weboscompositortracer.h"
 
@@ -246,6 +247,7 @@ void WebOSCoreCompositor::registerTypes()
     qmlRegisterUncreatableType<WebOSSurfaceItem>("WebOSCoreCompositor", 1, 0, "SurfaceItem", QLatin1String("Not allowed to create SurfaceItem"));
     qmlRegisterType<WebOSKeyFilter>("WebOSCoreCompositor", 1, 0, "KeyFilter");
     qmlRegisterType<WebOSInputMethod>("WebOSCoreCompositor", 1, 0, "InputMethod");
+    qmlRegisterType<WaylandInputMethod>("WebOSCoreCompositor", 1, 0, "WaylandInputMethod");
     qmlRegisterType<WebOSSurfaceGroup>("WebOSCoreCompositor", 1, 0, "SurfaceItemGroup");
     qmlRegisterType<WebOSScreenShot>("WebOSCoreCompositor", 1, 0, "ScreenShot");
     qmlRegisterUncreatableType<WebOSKeyPolicy>("WebOSCoreCompositor", 1, 0, "KeyPolicy", QLatin1String("Not allowed to create KeyPolicy instance"));
@@ -1078,12 +1080,27 @@ QWaylandInputDevice *WebOSCoreCompositor::inputDeviceFor(QInputEvent *inputEvent
 #endif
 }
 
-QWaylandInputDevice *WebOSCoreCompositor::inputDeviceForWindow(QQuickWindow *window)
+QWaylandInputDevice *WebOSCoreCompositor::keyboardDeviceForWindow(QQuickWindow *window)
 {
     if (!window)
         return defaultInputDevice();
 
     return m_inputDevices[window];
+}
+
+QWaylandInputDevice *WebOSCoreCompositor::keyboardDeviceForDisplayId(int displayId)
+{
+    QMapIterator<QQuickWindow *, QWaylandInputDevice *> i(m_inputDevices);
+
+    while (i.hasNext()) {
+        i.next();
+        WebOSCompositorWindow *window = static_cast<WebOSCompositorWindow *>(i.key());
+
+        if (window->displayId() == displayId)
+            return i.value();
+    }
+
+    return defaultInputDevice();
 }
 
 WebOSCoreCompositor::EventPreprocessor::EventPreprocessor(WebOSCoreCompositor* compositor)

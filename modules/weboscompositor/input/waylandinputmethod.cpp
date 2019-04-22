@@ -14,66 +14,96 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include <QGuiApplication>
-#include <qpa/qplatformnativeinterface.h>
-#include <QWaylandCompositor>
 #include <QDebug>
 
+#include <QWaylandInputDevice>
 #include "waylandinputmethod.h"
 #include "waylandinputmethodcontext.h"
-#include "waylandtextmodelfactory.h"
-#include "waylandtextmodel.h"
 #include "waylandinputpanel.h"
 #include "waylandinputmethodmanager.h"
 
+#include "weboscorecompositor.h"
+
+const struct input_method_interface WaylandInputMethod::inputMethodImplementation = {
+    WaylandInputMethod::setDisplayId
+};
+
+WaylandInputMethod::WaylandInputMethod()
+{
+    qFatal("Constructor only for the purpose of registering the QML type");
+}
+
 WaylandInputMethod::WaylandInputMethod(QWaylandCompositor* compositor)
     : m_compositor(compositor)
-    , m_factory(0)
     , m_resource(0)
+    , m_client(nullptr)
     , m_activeContext(0)
     , m_inputPanel(0)
     , m_hasPreferredPanelRect(false)
     , m_inputMethodManager(0)
     , m_allowed(true)
+    , m_displayId(-1)
 {
-    m_factory = new WaylandTextModelFactory(compositor, this);
-    wl_display_add_global(compositor->waylandDisplay(), &input_method_interface, this, WaylandInputMethod::bind);
-
-    m_inputPanel = new WaylandInputPanel(compositor);
     m_inputMethodManager = new WaylandInputMethodManager(this);
-
-    connect(m_inputPanel, &WaylandInputPanel::inputPanelRectChanged, this, &WaylandInputMethod::panelRectChanged);
-    connect(m_inputPanel, &WaylandInputPanel::inputPanelSurfaceSizeChanged, this, &WaylandInputMethod::panelSurfaceSizeChanged);
     connect(this, &WaylandInputMethod::inputMethodBound, m_inputMethodManager, &WaylandInputMethodManager::onInputMethodAvaliable, Qt::QueuedConnection);
 }
 
 WaylandInputMethod::~WaylandInputMethod()
 {
+    delete m_inputMethodManager;
 }
 
-void WaylandInputMethod::bind(struct wl_client *client, void *data, uint32_t version, uint32_t id)
+void WaylandInputMethod::binding(struct wl_client *client, uint32_t id, wl_resource_destroy_func_t destroy)
 {
-    Q_UNUSED(version);
-    WaylandInputMethod* that = static_cast<WaylandInputMethod*>(data);
+    wl_resource* resource = wl_client_add_object(client, &input_method_interface, &inputMethodImplementation, id, this);
+    resource->destroy = destroy;
+    setHandle(resource);
+    setClient(client);
+    emit inputMethodBound(true);
+}
 
-    wl_resource* resource = wl_client_add_object(client, &input_method_interface, NULL, id, that);
-    if (!that->m_resource) {
-        that->m_resource = resource;
-        resource->destroy = WaylandInputMethod::destroyInputMethod;
-        emit that->inputMethodBound(true);
-    } else {
-        qWarning() << "trying to bind more than once";
-        wl_resource_post_error(resource, WL_DISPLAY_ERROR_INVALID_OBJECT, "interface object already bound");
-        wl_resource_destroy(resource);
-    }
+void WaylandInputMethod::unbinding()
+{
+    setDisplayId(-1);
+    setHandle(nullptr);
+    setClient(nullptr);
+    deactivate();
+    emit inputMethodBound(false);
+}
+
+void WaylandInputMethod::handleDestroy()
+{
+    qInfo() << "WaylandInputMethod::handleDestroy" << this << displayId();
+    unbinding();
+    // Delete gracefully after some queued signals are processed
+    deleteLater();
 }
 
 void WaylandInputMethod::destroyInputMethod(struct wl_resource* resource)
 {
     WaylandInputMethod* that = static_cast<WaylandInputMethod*>(resource->data);
-    that->m_resource = NULL;
-    that->deactivate();
-    emit that->inputMethodBound(false);
+    that->handleDestroy();
+}
+
+void WaylandInputMethod::setDisplayId(struct wl_client *client, struct wl_resource *resource, uint32_t id)
+{
+    WaylandInputMethod* that = static_cast<WaylandInputMethod*>(resource->data);
+    qInfo() << "setDisplayId" << id << "for" << that;
+    that->setDisplayId(id);
+}
+
+void WaylandInputMethod::setDisplayId(const uint32_t displayId)
+{
+    if (m_displayId != displayId) {
+        qInfo() << this << "set to displayId" << displayId;
+        m_displayId = displayId;
+        emit displayIdChanged();
+    }
+}
+
+QWaylandInputDevice *WaylandInputMethod::inputDevice()
+{
+  return static_cast<WebOSCoreCompositor *>(m_compositor)->keyboardDeviceForDisplayId(displayId());
 }
 
 void WaylandInputMethod::contextActivated()
@@ -168,4 +198,13 @@ void WaylandInputMethod::setHasPreferredPanelRect(const bool flag)
         m_hasPreferredPanelRect = flag;
         emit hasPreferredPanelRectChanged();
     }
+}
+
+void WaylandInputMethod::setInputPanel(WaylandInputPanel *panel)
+{
+    qInfo() << "panel" << panel << "set to method" << this;
+    m_inputPanel = panel;
+
+    connect(m_inputPanel, &WaylandInputPanel::inputPanelRectChanged, this, &WaylandInputMethod::panelRectChanged);
+    connect(m_inputPanel, &WaylandInputPanel::inputPanelSurfaceSizeChanged, this, &WaylandInputMethod::panelSurfaceSizeChanged);
 }

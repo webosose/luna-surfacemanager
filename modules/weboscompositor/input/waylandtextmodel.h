@@ -18,6 +18,7 @@
 #define WAYLANDTEXTMODEL_H
 
 #include <QObject>
+#include <QPointer>
 
 #include <wayland-server.h>
 #include <wayland-text-server-protocol.h>
@@ -25,13 +26,14 @@
 #include "waylandinputpanel.h"
 
 class WaylandInputMethodContext;
+class WaylandTextModelFactory;
 
 class WaylandTextModel : public QObject {
 
     Q_OBJECT
 
 public:
-    WaylandTextModel(WaylandInputMethod* inputMethod, struct wl_client *client, struct wl_resource *resource, uint32_t id);
+    WaylandTextModel(WaylandTextModelFactory *, struct wl_client *client, struct wl_resource *resource, uint32_t id);
     ~WaylandTextModel();
 
     void commitString(uint32_t serial, const char *text);
@@ -68,7 +70,10 @@ public:
 
     bool isActive() const { return m_active; }
 
-    bool isAllowed() const { return m_inputMethod->allowed(); }
+    bool isAllowed() const { return m_inputMethod && m_inputMethod->allowed(); }
+    WaylandInputMethod *inputMethod() const { return m_inputMethod; }
+    void setInputMethod(WaylandInputMethod *method);
+    WaylandTextModelFactory *factory() const { return m_factory; }
 
 public slots:
     void sendInputPanelState(const WaylandInputPanel::InputPanelState state) const;
@@ -93,10 +98,12 @@ signals:
 private:
     static const struct text_model_interface textModelImplementation;
 
-    WaylandInputMethod* m_inputMethod;
+    QPointer<WaylandInputMethod> m_inputMethod;
     WaylandInputMethodContext* m_context;
     struct ::wl_resource* m_resource;
     struct ::wl_resource* m_surface;
     bool m_active;
+    WaylandTextModelFactory *m_factory;
+    QRect m_preferredPanelRect;
 };
 #endif

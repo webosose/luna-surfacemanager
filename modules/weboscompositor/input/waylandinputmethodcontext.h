@@ -19,6 +19,7 @@
 
 #include <QObject>
 #include <QRect>
+#include <QPointer>
 
 #include <wayland-server.h>
 #include <wayland-input-method-server-protocol.h>
@@ -103,7 +104,7 @@ private:
     void grabKeyboardImpl();
     void releaseGrabImpl();
 
-    WaylandInputMethod* m_inputMethod;
+    QPointer<WaylandInputMethod> m_inputMethod;
     WaylandTextModel* m_textModel;
     wl_resource* m_resource;
     QtWayland::Keyboard::Resource* m_grabResource;

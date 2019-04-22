@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2018 LG Electronics, Inc.
+// Copyright (c) 2012-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@
 #include "webosinputmethod.h"
 
 WebOSInputMethod::WebOSInputMethod()
-    : WaylandInputMethod(0)
+    : WaylandPrimaryInputMethod(0)
 {
     qFatal("Constructor only for the purpose of registering the QML type");
 }
 
 WebOSInputMethod::WebOSInputMethod(QWaylandCompositor* compositor)
-    : WaylandInputMethod(compositor)
+    : WaylandPrimaryInputMethod(compositor)
 {
 }

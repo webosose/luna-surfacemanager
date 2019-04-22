@@ -73,7 +73,7 @@ public:
     };
     Q_ENUM(InputPanelState)
 
-    WaylandInputPanel(QWaylandCompositor* compositor);
+    WaylandInputPanel(struct wl_client *client, uint32_t id);
     ~WaylandInputPanel();
 
     static void bind(struct wl_client *client, void *data, uint32_t version, uint32_t id);
@@ -81,6 +81,7 @@ public:
 
     static void getInputPanelSurface(struct wl_client *client, struct wl_resource *resource, uint32_t id, struct wl_resource *surface_resource);
 
+    struct wl_client * client() const { return m_client; }
     QRect inputPanelRect() const { return m_rect; }
     void setInputPanelRect(const QRect& rect);
     QSize inputPanelSurfaceSize() const;
@@ -107,8 +108,9 @@ private:
     static const struct input_panel_interface inputPanelImplementation;
     QWaylandCompositor* m_compositor;
     wl_resource* m_resource;
+    wl_client *m_client;
     QList<WaylandInputPanelSurface*> m_surfaces;
-    WaylandInputPanelSurface* m_activeSurface;
+    WaylandInputPanelSurface *m_activeSurface;
 
     InputPanelState m_state;
     QRect m_rect;

@@ -162,7 +162,8 @@ public:
 
     QList<QWaylandInputDevice *> inputDevices() const;
     QWaylandInputDevice *inputDeviceFor(QInputEvent *inputEvent) Q_DECL_OVERRIDE;
-    QWaylandInputDevice *inputDeviceForWindow(QQuickWindow *window);
+    QWaylandInputDevice *keyboardDeviceForWindow(QQuickWindow *window);
+    QWaylandInputDevice *keyboardDeviceForDisplayId(int displayId);
 
     virtual bool getCursor(QWaylandSurface *surface, int hotSpotX, int hotSpotY, QCursor& cursor);
 
