@@ -135,6 +135,8 @@ protected:
                                                struct ::wl_resource *surface) override;
     virtual void webos_imported_detach_surface(Resource * resource,
                                                 struct ::  wl_resource *surface) override;
+    virtual void webos_imported_set_z_index(Resource *surface,
+                                                 int32_t z_index) override;
 
 private:
     WebOSImported(WebOSExported* exported, struct wl_client* client, uint32_t id);
@@ -143,6 +145,7 @@ private:
     bool m_punched = false;
     bool m_surfaceAttached = false;
     enum surface_alignment m_textureAlign = surface_alignment::surface_alignment_stretch;
+    int32_t m_z_index = 0;
 
     friend class WebOSForeign;
 };

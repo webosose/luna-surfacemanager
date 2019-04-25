@@ -264,6 +264,7 @@ void WebOSExported::setPunchTrough()
         PunchThroughItem* punchThroughNativeItem =
             new PunchThroughItem();
         m_punchThroughItem = punchThroughNativeItem;
+        punchThroughNativeItem->setZ(m_exportedItem->z()-1);
         punchThroughNativeItem->setWidth(m_destinationRect.width());
         punchThroughNativeItem->setHeight(m_destinationRect.height());
         setParentOf(punchThroughNativeItem);
@@ -501,6 +502,7 @@ void WebOSImported::webos_imported_attach_surface(
         // on the parent's destruction. That might cause a double free.
         // Refer to ~QQuickItem() and QObjectPrivate::deleteChildren().
         m_exported->setParentOf(m_childSurface);
+        m_childSurface->setZ(m_exported->m_exportedItem->z()+m_z_index);
         updateGeometry();  //Resize texture if needed.
     }
     m_surfaceAttached = true;
@@ -518,4 +520,14 @@ void WebOSImported::webos_imported_detach_surface(
 
     m_surfaceAttached = false;
     send_surface_detached(surface);
+}
+
+void WebOSImported::webos_imported_set_z_index(
+        Resource * resource,
+        int32_t z_index)
+{
+    if (m_z_index != z_index) {
+        m_z_index = z_index;
+        qDebug() << "z_index of WebOSImported (" << this << " ) is changed to " << z_index;
+    }
 }
