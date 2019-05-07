@@ -147,8 +147,7 @@ void WebOSForeign::webos_foreign_import_element(Resource *resource,
                                                 uint32_t exported_type)
 {
     foreach(WebOSExported* exported, m_exportedList) {
-        if (exported->m_windowId == window_id &&
-            exported->m_exportedType == exported_type) {
+        if (exported->m_windowId == window_id) {
             exported->m_importList.append(
                 new WebOSImported(exported, resource->client(), id));
             return;
@@ -159,7 +158,7 @@ void WebOSForeign::webos_foreign_import_element(Resource *resource,
                            "No matching WebOSExported.");
     wl_resource_destroy(resource->handle);
     qWarning() << "No matching WebOSExported with "
-               << window_id << ", " << exported_type;
+               << window_id;
 }
 
 WebOSExported::WebOSExported(
@@ -443,10 +442,11 @@ void WebOSImported::webos_imported_attach_punchthrough(Resource* r, const QStrin
     if (!contextId.isNull())
         m_exported->m_contextId = contextId;
 
-    if (!m_punched) {
+    if (!m_punched && m_exported->m_exportedType != WebOSForeign::TransparentObject) {
         m_exported->setPunchTrough();
-        m_punched = true;
     }
+
+    m_punched = true;
     send_punchthrough_attached(contextId);
 }
 
