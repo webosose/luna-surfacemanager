@@ -28,9 +28,11 @@ public:
     static VideoOutputdCommunicator* instance();
 
     void setDisplayWindow(QRect sourceRectangle, QRect destinationRectangle, QString contextId);
+    void setCropRegion(QRect originalRectangle, QRect sourceRectangle, QRect destinationRectangle, QString contextId);
 
 signals:
     void setVideoDisplayWindowRequested(const QRect sourceRectangle, const QRect destinationRectangle, const QString contextId);
+    void setVideoCropRegionRequested(const QRect originalRectangle, const QRect sourceRectangle, const QRect destinationRectangle, const QString contextId);
 
 protected:
     VideoOutputdCommunicator(QObject *parent = Q_NULLPTR);

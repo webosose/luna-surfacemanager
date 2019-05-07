@@ -37,3 +37,8 @@ void VideoOutputdCommunicator::setDisplayWindow(QRect sourceRectangle, QRect des
 {
     emit setVideoDisplayWindowRequested(sourceRectangle, destinationRectangle, contextId);
 }
+
+void VideoOutputdCommunicator::setCropRegion(QRect originalRectangle, QRect sourceRectangle, QRect destinationRectangle, QString contextId)
+{
+    emit setVideoCropRegionRequested(originalRectangle, sourceRectangle, destinationRectangle, contextId);
+}

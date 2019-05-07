@@ -83,7 +83,8 @@ public:
                   uint32_t id, QWaylandSurfaceItem* surfaceItem,
                   WebOSForeign::WebOSExportedType exportedType);
     ~WebOSExported();
-    void setPunchTrough();
+    void setDestinationRegion();
+    void setPunchThrough();
     void detachImportedItem();
     void assigneWindowId(QString windowId);
     void setParentOf(QQuickItem *surfaceItem);
@@ -101,6 +102,10 @@ protected:
     virtual void webos_exported_set_exported_window(Resource *resource,
                                   struct ::wl_resource *source_region,
                                   struct ::wl_resource *destination_region) override;
+    virtual void webos_exported_set_crop_region(Resource *resource,
+                                  struct ::wl_resource *original_input,
+                                  struct ::wl_resource *source_region,
+                                  struct ::wl_resource *destination_region) override;
 
 private:
     WebOSForeign* m_foreign = nullptr;
@@ -109,6 +114,7 @@ private:
     QPointer<QQuickItem> m_punchThroughItem;
     QList<WebOSImported*> m_importList;
     WebOSForeign::WebOSExportedType m_exportedType = WebOSForeign::VideoObject;
+    QRect m_originalInputRect;
     QRect m_sourceRect;
     QRect m_destinationRect;
     QString m_windowId;
