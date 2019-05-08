@@ -21,11 +21,13 @@ WAYLANDSERVERSOURCES += $$[QT_INSTALL_DATA]/wayland-webos/webos-foreign.xml
 
 SOURCES += \
     $$PWD/webosforeign.cpp \
-    $$PWD/videooutputd_communicator.cpp
+    $$PWD/videooutputd_communicator.cpp \
+    $$PWD/videowindow_informer.cpp
 
 HEADERS += \
     $$PWD/webosforeign.h \
     $$PWD/punchthroughelement.h \
-    $$PWD/videooutputd_communicator.h
+    $$PWD/videooutputd_communicator.h \
+    $$PWD/videowindow_informer.h
 
 INCLUDEPATH += $$PWD/../

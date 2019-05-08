@@ -20,7 +20,7 @@
 #include "weboscompositorwindow.h"
 #include "webosforeign.h"
 #include "webossurfaceitem.h"
-#include "webosforeign.h"
+#include "videowindow_informer.h"
 
 #include <QDebug>
 #include <QGuiApplication>
@@ -119,6 +119,18 @@ void WebOSForeign::registeredWindow()
         } else {
             qFatal("Failed to get VideoOutputdCommunicator instance");
         }
+
+        VideoWindowInformer *pVideoWindowInformer = VideoWindowInformer::instance();
+        if (pVideoWindowInformer) {
+            WebOSCompositorWindow *pWebOSCompositorWindow = qobject_cast<WebOSCompositorWindow *>(m_compositor->window());
+            if (pWebOSCompositorWindow)
+                pWebOSCompositorWindow->rootContext()->setContextProperty(QLatin1String("videowindowInformer"), pVideoWindowInformer);
+            else
+                qFatal("Failed to get the window instance");
+        } else {
+            qFatal("Failed to get VideoOutputdCommunicator instance");
+        }
+
     } else {
         qFatal("Cannot constructed without a compositor instance");
     }
@@ -176,6 +188,9 @@ WebOSExported::WebOSExported(
     m_exportedItem->setClip(true);
     m_exportedItem->setZ(-1);
     m_qwlsurfaceItem->setExported(this);
+
+    connect(m_exportedItem, &QQuickItem::visibleChanged, this, &WebOSExported::updateVisible);
+
 #if 0 // DEBUG
     QUrl debugUIQml = QUrl(QString("file://") +
                            QString(WEBOS_INSTALL_QML) +
@@ -204,6 +219,28 @@ WebOSExported::~WebOSExported()
     // Usually it is deleted by QObjectPrivate::deleteChildren with its parent surfaceItem.
     if (m_exportedItem)
         delete m_exportedItem;
+}
+
+void WebOSExported::updateVisible()
+{
+    if (!m_contextId.isNull()) {
+        if (m_exportedItem->isVisible()) {
+            updateVideoWindowList(m_contextId, m_destinationRect, false);
+        } else {
+            updateVideoWindowList(m_contextId, QRect(0, 0, 0, 0), true);
+        }
+    }
+}
+
+void WebOSExported::updateVideoWindowList(QString contextId, QRect destinationRect, bool needRemove)
+{
+    if (needRemove) {
+        VideoWindowInformer::instance()->removeVideoWindowList(contextId);
+    } else {
+         if(!m_contextId.isNull() && m_exportedItem->isVisible()) {
+            VideoWindowInformer::instance()->insertVideoWindowList(contextId, destinationRect);
+         }
+    }
 }
 
 void WebOSExported::webos_exported_set_exported_window(
@@ -255,6 +292,7 @@ void WebOSExported::webos_exported_set_exported_window(
     }
 
     emit geometryChanged();
+    updateVideoWindowList(m_contextId, m_destinationRect, false);
 }
 
 void WebOSExported::setPunchTrough()
@@ -322,6 +360,9 @@ void WebOSExported::setParentOf(QQuickItem *item)
 void WebOSExported::webos_exported_destroy_resource(Resource *r)
 {
     qWarning() << "webos_exported_destroy_resource is called" << this;
+
+    if (!m_contextId.isNull())
+         updateVideoWindowList(m_contextId, QRect(0, 0, 0, 0), true);
 
     detachImportedItem();
 
@@ -448,6 +489,7 @@ void WebOSImported::webos_imported_attach_punchthrough(Resource* r, const QStrin
 
     m_punched = true;
     send_punchthrough_attached(contextId);
+    m_exported->updateVideoWindowList(contextId, m_exported->m_destinationRect, false);
 }
 
 void WebOSImported::webos_imported_detach_punchthrough(Resource* r)
@@ -465,6 +507,7 @@ void WebOSImported::webos_imported_detach_punchthrough(Resource* r)
     }
 
     send_punchthrough_detached(contextId);
+    m_exported->updateVideoWindowList(contextId, QRect(0, 0, 0, 0), true);
 }
 
 void WebOSImported::webos_imported_destroy_resource(Resource* r)

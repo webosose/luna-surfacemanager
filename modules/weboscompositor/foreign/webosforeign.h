@@ -87,6 +87,8 @@ public:
     void detachImportedItem();
     void assigneWindowId(QString windowId);
     void setParentOf(QQuickItem *surfaceItem);
+    void updateVisible();
+    void updateVideoWindowList(QString contextId, QRect destinationRectangle, bool needRemove);
     QWaylandSurfaceItem *getImportedItem();
     void startImportedMirroring(QWaylandSurfaceItem *parent);
 
