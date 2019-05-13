@@ -119,24 +119,6 @@ Item {
             if (event === "splash") {
                 if (appId != null && (showSplash || showSpinner))
                     views.spinner.start(appId);
-            } else if (event === "launch") {
-                // FIXME: Remove once "splash" event works.
-                if (views.spinner && !views.spinner.isOpen && appId != null) {
-                    var needSpinner = false;
-                    if (!LS.applicationManager.appInfoList[appId].noSplashOnLaunch ||
-                        LS.applicationManager.appInfoList[appId].spinnerOnLaunch) {
-                        needSpinner = true;
-                        var foregroundItems = Utils.foregroundList(root.views.children);
-                        for (var i = 0; i < foregroundItems.length; i++) {
-                            if (foregroundItems[i].appId == appId) {
-                                needSpinner = false;
-                                break;
-                            }
-                        }
-                    }
-                    if (needSpinner)
-                        views.spinner.start(appId);
-                }
             } else if (event === "stop") {
                 if (views.spinner && appId == views.spinner.appId)
                     views.spinner.closeView();
