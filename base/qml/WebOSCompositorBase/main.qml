@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 LG Electronics, Inc.
+// Copyright (c) 2017-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 import QtQuick 2.4
 import WebOSCompositorBase 1.0
 
+import "."
 import "qrc:/WebOSCompositor"
 import "file:///usr/lib/qml/WebOSCompositor"
 
