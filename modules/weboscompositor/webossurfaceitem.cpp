@@ -317,6 +317,9 @@ void WebOSSurfaceItem::wheelEvent(QWheelEvent *event)
     WebOSWheelEvent e(mapToTarget(event->pos()), event->globalPos(), event->pixelDelta(),
                   event->angleDelta(), event->delta(), event->orientation(),
                   event->buttons(), event->modifiers(), event->phase(), window());
+
+    m_compositor->setMouseFocus(surface());
+
     QWaylandSurfaceItem::wheelEvent(&e);
 }
 
