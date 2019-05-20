@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 LG Electronics, Inc.
+// Copyright (c) 2017-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -220,10 +220,13 @@ SettingsService {
                     console.log("Value updated(raw mode): " + item.key + "=" + __subscribedKeyValueMap[item.key].value);
                 } else {
                     if (response.returnValue !== undefined && response.returnValue) {
-                        if (__subscribedKeyValueMap[item.key].value = item.handler(response))
+                        var handler_return = item.handler(response);
+                        if (handler_return != undefined) {
+                            __subscribedKeyValueMap[item.key].value = handler_return;
                             console.log("Value updated: " + item.key + "=" + __subscribedKeyValueMap[item.key].value);
-                        else
+                        } else {
                             console.warn("Unhandled response for", item.service, payload);
+                        }
                     } else {
                         console.warn("Error response from", item.service, payload);
                     }
