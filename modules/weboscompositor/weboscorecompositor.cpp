@@ -715,6 +715,15 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfac
                     item->setItemState(WebOSSurfaceItem::ItemStateProxy, item->itemStateReason());
                     emit surfaceDestroyed(item);
 
+                    // Extra clean-up for surface group items
+                    if (item->isSurfaceGroupRoot()) {
+                        qInfo() << "closing surface group member items for" << this;
+                        item->sendCloseToGroupItems();
+                    } else if (item->isPartOfGroup()) {
+                        qInfo() << "closing a surface group member item:" << item;
+                        item->setItemState(WebOSSurfaceItem::ItemStateClosing, item->itemStateReason());
+                    }
+
                     /* This means items will not use any graphic resource from related surface.
                     / If there are more use case, the API should be moved to proper place.
                     / ex)If there are some dying animation for the item, this should be called at the end of the animation. */
