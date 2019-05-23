@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include "webosgroupedwindowmodel.h"
 #include "webossurfacemodel.h"
 #include "weboscorecompositor.h"
+#include "weboscompositorwindow.h"
 #include "weboscompositortracer.h"
 #include "webosshellsurface.h"
 #include "webosinputmethod.h"
@@ -53,6 +54,8 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
         , m_shellSurface(0)
         , m_itemState(ItemStateNormal)
         , m_notifyPositionToClient(true)
+        , m_displayId(-1)
+        , m_displayAffinity(0)
         , m_appId("")
         , m_type("_WEBOS_WINDOW_TYPE_CARD")
         , m_windowClass(WindowClass_Normal)
@@ -86,6 +89,8 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
         setTouchEventsEnabled(false);
     else
         setTouchEventsEnabled(true);
+
+    connect(this, &QQuickItem::windowChanged, this, &WebOSSurfaceItem::handleWindowChanged);
 }
 
 WebOSSurfaceItem::~WebOSSurfaceItem()
@@ -98,6 +103,30 @@ WebOSSurfaceItem::~WebOSSurfaceItem()
     m_surfaceGroup = NULL;
     deleteSnapShot();
     delete m_shellSurface;
+}
+
+void WebOSSurfaceItem::setDisplayId(int id)
+{
+    if (m_displayId != id) {
+        m_displayId = id;
+        emit displayIdChanged();
+    }
+}
+
+void WebOSSurfaceItem::setDisplayAffinity(int affinity)
+{
+    if (m_displayAffinity != affinity) {
+        qInfo() << "setting display affinity" << affinity << "for" << this;
+        m_displayAffinity = affinity;
+        emit displayAffinityChanged();
+        emit dataChanged();
+    }
+}
+
+void WebOSSurfaceItem::handleWindowChanged()
+{
+    qInfo() << this << "moved to window" << window();
+    setDisplayId(window() ? static_cast<WebOSCompositorWindow *>(window())->displayId() : -1);
 }
 
 void WebOSSurfaceItem::requestMinimize()
@@ -458,6 +487,8 @@ void WebOSSurfaceItem::updateProperties(const QVariantMap &properties, const QSt
         setParams(value.toString());
     } else if (name == QLatin1String("_WEBOS_LAUNCH_PREV_APP_AFTER_CLOSING")) {
         setLaunchLastApp(value.toBool());
+    } else if (name == QLatin1String("displayAffinity")) {
+        setDisplayAffinity(value.toInt());
     }
 
     emit windowPropertiesChanged(properties);

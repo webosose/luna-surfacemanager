@@ -34,6 +34,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCompositorWindow : public QQuickView {
 
     Q_OBJECT
 
+    Q_PROPERTY(int displayId READ displayId CONSTANT)
     Q_PROPERTY(QRect outputGeometry READ outputGeometry NOTIFY outputGeometryChanged)
     Q_PROPERTY(int outputRotation READ outputRotation NOTIFY outputRotationChanged)
     Q_PROPERTY(bool outputClip READ outputClip NOTIFY outputClipChanged)
@@ -52,6 +53,8 @@ public:
     bool setCompositorMain(const QUrl& main);
 
     Q_INVOKABLE void showWindow();
+
+    int displayId() const { return m_displayId; } ;
 
     QRect outputGeometry() const;
     int outputRotation() const;
@@ -110,6 +113,8 @@ private:
 #ifdef USE_CONFIG
     WebOSCompositorConfig* m_config;
 #endif
+
+    int m_displayId;
 
     QUrl m_main;
 

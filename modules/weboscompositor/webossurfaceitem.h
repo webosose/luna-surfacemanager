@@ -53,6 +53,8 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandSurfaceItem
     Q_FLAGS(LocationHints)
     Q_FLAGS(KeyMasks)
 
+    Q_PROPERTY(int displayId READ displayId NOTIFY displayIdChanged)
+    Q_PROPERTY(int displayAffinity READ displayAffinity NOTIFY displayAffinityChanged)
     Q_PROPERTY(bool fullscreen READ fullscreen WRITE setFullscreen NOTIFY fullscreenChanged)
     Q_PROPERTY(QVariantMap windowProperties READ windowProperties NOTIFY windowPropertiesChanged)
     Q_PROPERTY(QString appId READ appId NOTIFY appIdChanged)
@@ -150,6 +152,9 @@ public:
     WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuickSurface* surface);
     ~WebOSSurfaceItem();
 
+    int displayId() const { return m_displayId; }
+    int displayAffinity() const { return m_displayAffinity; }
+
     /*!
      * Requests that this surface is minimized.
      * The action is not guaranteed.
@@ -200,6 +205,8 @@ public:
         return 0;
     }
     QSize textureSize() const { return surface()->size(); }
+
+    void setDisplayAffinity(int affinity);
 
     void setFullscreen(bool enabled);
 
@@ -446,6 +453,9 @@ public slots:
     void updateCursor();
 
 signals:
+    void displayIdChanged();
+    void displayAffinityChanged();
+
     /*!
      * \brief This signal is emitted when the surface enters or exits fullscreen mode
      */
@@ -522,9 +532,11 @@ protected:
 
 private:
     // methods
+    void setDisplayId(int id);
     bool getCursorFromSurface(QWaylandSurface *surface, int hotSpotX, int hotSpotY, QCursor& cursor);
 
 private slots:
+    void handleWindowChanged();
     void requestStateChange(Qt::WindowState s);
     void onSurfaceDamaged(const QRegion &region);
 
@@ -544,6 +556,9 @@ private:
     QString m_itemStateReason;
 
     bool m_notifyPositionToClient;
+
+    int m_displayId;
+    int m_displayAffinity;
 
     QString m_appId;
     QString m_type;

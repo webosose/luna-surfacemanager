@@ -34,9 +34,12 @@
 
 #include <qpa/qplatformscreen.h>
 
+static int s_displays = 0;
+
 WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometryString, QSurfaceFormat *surfaceFormat)
     : QQuickView()
     , m_compositor(0)
+    , m_displayId(0)
     , m_baseGeometry(QRect(0, 0, 1920, 1080))
     , m_outputGeometry(QRect())
     , m_outputRotation(0)
@@ -51,20 +54,23 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
 {
     if (screenName.isEmpty()) {
         setScreen(QGuiApplication::primaryScreen());
-        qInfo() << "Using the primary screen" << screen() << "for this window" << this;
+        m_displayId = s_displays++;
+        qInfo() << "Using displayId:" << m_displayId << "screen:" << screen() << "for this window" << this;
     } else {
         QList<QScreen *> screens = QGuiApplication::screens();
         qInfo() << "Screens:" << screens;
         for (int i = 0; i < screens.count(); i++) {
             if (screenName == screens.at(i)->handle()->name()) {
                 setScreen(screens.at(i));
-                qInfo() << "Setting a screen" << screen() << "for this window" << this;
+                m_displayId = s_displays++;
+                qInfo() << "Setting displayId:" << m_displayId << "screen:" << screen() << "for this window" << this;
                 break;
             }
         }
         if (!screen()) {
             setScreen(QGuiApplication::primaryScreen());
-            qWarning() << "No screen named as" << screenName << ", trying to use the primary screen" << screen() << "for this window" << this;
+            m_displayId = s_displays++;
+            qWarning() << "No screen named as" << screenName << ", trying to use the primary screen" << screen() << "with displayId" << m_displayId << "for this window" << this;
         }
     }
 
