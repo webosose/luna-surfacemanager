@@ -24,6 +24,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QDebug>
+#include <QStringList>
 
 #include "weboscompositorwindow.h"
 #include "weboscorecompositor.h"
@@ -132,6 +133,8 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
 
     m_outputGeometryPendingTimer.setSingleShot(true);
     connect(&m_outputGeometryPendingTimer, &QTimer::timeout, this, &WebOSCompositorWindow::onOutputGeometryPendingExpired);
+    if (qgetenv("WEBOS_COMPOSITOR_EXIT_ON_QMLWARN").toInt() == 1)
+        connect(engine(), &QQmlEngine::warnings, this, &WebOSCompositorWindow::onQmlError);
 }
 
 WebOSCompositorWindow::~WebOSCompositorWindow()
@@ -502,5 +505,24 @@ void WebOSCompositorWindow::updateCursorFocus(Qt::KeyboardModifiers modifiers)
     } else {
         qDebug() << "Cursor: let cursor be updated by upcoming event(invisible case)";
         invalidateCursor();
+    }
+}
+
+void WebOSCompositorWindow::onQmlError(const QList<QQmlError> &errors)
+{
+    // ignore debug level message (QQmlEngine emits warning level only as of 5.9)
+    int count = 0;
+    QStringList errorList;
+    for (auto it = errors.cbegin(), end = errors.cend(); it != end; ++it) {
+        if (it->messageType() > QtDebugMsg)
+            count++;
+        errorList << it->toString();
+    }
+    if (count > 0) {
+        qWarning("==== Exiting because of QML warnings ====");
+        for (auto it = errorList.constBegin(), end = errorList.constEnd(); it != end; ++it)
+            qWarning() << *it;
+        qWarning("=========================================");
+        QCoreApplication::exit(1);
     }
 }
