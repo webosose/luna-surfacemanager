@@ -479,12 +479,23 @@ void WebOSImported::destroyResource()
     }
 }
 
+void WebOSImported::setSurfaceItemSize()
+{
+    if (m_surfaceAttached) {
+        qInfo() << "set surface item's width : " << m_exported->m_exportedItem->width();
+        qInfo() << "set surface item's height : " << m_exported->m_exportedItem->height();
+
+        m_childSurface->setWidth(m_exported->m_exportedItem->width());
+        m_childSurface->setHeight(m_exported->m_exportedItem->height());
+    }
+}
+
 void WebOSImported::updateGeometry()
 {
     if (m_childSurface) {
         switch (m_textureAlign) {
         case WebOSImported::surface_alignment::surface_alignment_stretch:
-            disconnect(m_childSurface->surface(), &QWaylandSurface::sizeChanged, 0, 0);
+            connect(m_childSurface->surface(), &QWaylandSurface::sizeChanged, this, &WebOSImported::setSurfaceItemSize);
             if (m_exported && m_exported->m_exportedItem) {
                 m_childSurface->setWidth(m_exported->m_exportedItem->width());
                 m_childSurface->setHeight(m_exported->m_exportedItem->height());

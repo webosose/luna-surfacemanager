@@ -134,6 +134,7 @@ public:
     void destroyResource();
     void updateGeometry();
     void detached();
+    void setSurfaceItemSize();
 
 protected:
     virtual void webos_imported_attach_punchthrough(Resource *,
