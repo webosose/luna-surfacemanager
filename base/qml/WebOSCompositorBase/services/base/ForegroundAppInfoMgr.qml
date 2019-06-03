@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 LG Electronics, Inc.
+// Copyright (c) 2017-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -80,26 +80,19 @@ QtObject {
             }
         } else jsonParams = {};
 
-        if (item.isSurfaceGroupRoot() || item.isPartOfGroup()) {
-            param = {
-                appId: item.appId,
-                windowId: "",
-                processId: item.processId,
-                windowType: item.type,
-                windowGroup: true,
-                windowGroupOwner: item.isSurfaceGroupRoot(),
-                windowGroupOwnerId: (item.isPartOfGroup()) ? item.surfaceGroup.rootItem.appId : "",
-                params: jsonParams
-            };
-        } else {
-            param = {
+        param = {
                 appId: item.appId,
                 windowId: "",
                 processId: item.processId,
                 windowType: item.type,
                 windowGroup: false,
                 params: jsonParams
-            };
+        };
+
+        if (item.isSurfaceGroupRoot() || item.isPartOfGroup()) {
+            param['windowGroup'] = true;
+            param['windowGroupOwner'] = item.isSurfaceGroupRoot();
+            param['windowGroupOwnerId'] = (item.isPartOfGroup()) ? item.surfaceGroup.rootItem.appId : "";
         }
 
         return param;
