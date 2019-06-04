@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,14 +37,17 @@ public:
     WebOSShell(WebOSCoreCompositor* compositor);
     static void bind_func(struct wl_client *client, void *data, uint32_t version, uint32_t id);
 
+private:
+    // methods
+    static void get_shell_surface(struct wl_client *client, struct wl_resource *resource, uint32_t id, struct wl_resource *surface);
+    static void get_system_pip(struct wl_client *client, struct wl_resource *resource);
+
 private slots:
     void registerSurfaceChange(QWaylandSurface* prev, QWaylandSurface* current);
 
 private:
-    static void get_shell_surface(struct wl_client *client, struct wl_resource *resource, uint32_t id, struct wl_resource *surface);
-    static void get_system_pip(struct wl_client *client, struct wl_resource *resource);
+    // variables
     static const struct wl_webos_shell_interface shell_interface;
-
     WebOSCoreCompositor* m_compositor;
     QWaylandSurface* m_previousFullscreenSurface;
 };
@@ -71,8 +74,6 @@ public:
     QVariant property(const QString &propertyName) const;
     void setProperty(const QString &name, const QVariant &value, bool notify = true);
 
-    static const struct wl_webos_shell_surface_interface shell_surface_interface;
-
 public slots:
     void exposed(const QRegion& region);
 
@@ -83,16 +84,7 @@ signals:
     void propertiesChanged(const QVariantMap &properties, const QString &name, const QVariant &value);
 
 private:
-    wl_resource* m_shellSurface;
-    WebOSSurfaceItem::LocationHints m_locationHint;
-    WebOSSurfaceItem::KeyMasks m_keyMask;
-    Qt::WindowState m_state;
-    Qt::WindowState m_preparedState;
-    wl_resource* m_owner;
-    QVariantMap m_properties;
-    QRegion m_exposed;
-    WebOSSurfaceItem* m_surface;
-
+    // methods
     static void destroyShellSurface(struct wl_resource* resource);
     static void set_location_hint(struct wl_client *client, struct wl_resource *resource, uint32_t hint);
     static void set_state(struct wl_client *client, struct wl_resource *resource, uint32_t state);
@@ -108,6 +100,17 @@ private:
      * access property signal for certain window properties.
      */
     void emitSurfaceConvenienceSignal(const QString& property);
-};
 
+    // variables
+    static const struct wl_webos_shell_surface_interface shell_surface_interface;
+    wl_resource* m_shellSurface;
+    WebOSSurfaceItem::LocationHints m_locationHint;
+    WebOSSurfaceItem::KeyMasks m_keyMask;
+    Qt::WindowState m_state;
+    Qt::WindowState m_preparedState;
+    wl_resource* m_owner;
+    QVariantMap m_properties;
+    QRegion m_exposed;
+    WebOSSurfaceItem* m_surface;
+};
 #endif

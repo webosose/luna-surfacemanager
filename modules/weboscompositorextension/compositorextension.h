@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,11 +47,7 @@ public:
     virtual void handleHomeExposed() { }
     virtual void handleHomeUnexposed() { }
 
-private Q_SLOTS:
-    void handleItemExposed(QString &);
-    void handleItemUnexposed(QString &);
-
-Q_SIGNALS:
+signals:
     void fullscreenSurfaceChanged(QWaylandSurface* oldSurface, QWaylandSurface* newSurface);
     void homeScreenExposed();
     void inputPanelRequested();
@@ -59,6 +55,10 @@ Q_SIGNALS:
 
 protected:
     QWaylandCompositor *m_compositor;
+
+private slots:
+    void handleItemExposed(QString &);
+    void handleItemUnexposed(QString &);
 };
 
 QT_END_NAMESPACE

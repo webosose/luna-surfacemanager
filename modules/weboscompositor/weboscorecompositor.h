@@ -166,8 +166,13 @@ public:
     void setKeyFilter(WebOSKeyFilter *filter);
     WebOSSurfaceItem* activeSurface();
 
-public slots:
     void handleActiveFocusItemChanged();
+
+    bool setFullscreenSurface(QWaylandSurface *surface);
+
+    void closeWindow(QVariant window, QJSValue payload = QJSValue());
+    void closeWindowKeepItem(QVariant window);
+    void destroyClientForWindow(QVariant window);
 
 signals:
     // This signal is deprecated and will be refactored away.
@@ -213,6 +218,48 @@ protected:
     QHash<QString, CompositorExtension *> extensions() { return m_extensions; }
 
 private:
+    // classes
+    class EventPreprocessor : public QObject
+    {
+    public:
+        EventPreprocessor(WebOSCoreCompositor*);
+
+    protected:
+        bool eventFilter(QObject *obj, QEvent *event);
+
+    private:
+        WebOSCoreCompositor* m_compositor;
+    };
+    friend EventPreprocessor;
+
+    // methods
+    void checkWaylandSocket() const;
+
+    void setCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY, wl_client *client) Q_DECL_OVERRIDE;
+
+    void deleteProxyFor(WebOSSurfaceItem* item);
+    void initializeExtensions(WebOSCoreCompositor::ExtensionFlags extensions);
+
+    void setInputMethod(WebOSInputMethod* inputMethod);
+
+    bool checkSurfaceItemClosePolicy(const QString &reason, WebOSSurfaceItem *item);
+    void processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfaceItem::ItemState stateToBe);
+    WebOSSurfaceItem* getSurfaceItemByAppId(const QString& appId);
+
+private slots:
+    /*
+     * update our internal model of mapped surface in response to wayland surfaces being mapped
+     * and unmapped. WindowModels use this as their source of windows.
+     */
+    void onSurfaceMapped();
+    void onSurfaceUnmapped();
+    void onSurfaceDestroyed();
+    void onSurfaceSizeChanged();
+
+    void frameSwappedSlot(); //FIXME what for
+
+private:
+    // variables
     // This is kept here for backwards compatibility.. see the deprecated signal
     QWaylandQuickSurface * m_previousFullscreenSurface;
     QWaylandQuickSurface * m_fullscreenSurface;
@@ -232,25 +279,13 @@ private:
     WebOSInputManager *m_inputManager;
 #ifdef MULTIINPUT_SUPPORT
     WebOSInputDevice *m_inputDevicePreallocated;
+    int m_lastMouseEventFrom;
 #endif
     bool m_acquired;
     bool m_directRendering;
 
     QList<WebOSSurfaceItem*> m_surfacesOnUpdate;
     QMap<QQuickWindow *, QWaylandOutput *> m_outputs;
-
-    void checkWaylandSocket() const;
-
-    void setCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY, wl_client *client) Q_DECL_OVERRIDE;
-
-    void deleteProxyFor(WebOSSurfaceItem* item);
-    void initializeExtensions(WebOSCoreCompositor::ExtensionFlags extensions);
-
-    void setInputMethod(WebOSInputMethod* inputMethod);
-
-    bool checkSurfaceItemClosePolicy(const QString &reason, WebOSSurfaceItem *item);
-    void processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfaceItem::ItemState stateToBe);
-    WebOSSurfaceItem* getSurfaceItemByAppId(const QString& appId);
 
     //Global tick counter to get absolute time stamp for recent window model and LRU surface
     quint32 m_fullscreenTick;
@@ -263,42 +298,7 @@ private:
 
     CompositorExtension *webOSWindowExtension();
 
-    class EventPreprocessor : public QObject
-    {
-    public:
-        EventPreprocessor(WebOSCoreCompositor*);
-
-    protected:
-        bool eventFilter(QObject *obj, QEvent *event);
-
-    private:
-        WebOSCoreCompositor* m_compositor;
-    };
-
-    friend EventPreprocessor;
     EventPreprocessor* m_eventPreprocessor;
-#ifdef MULTIINPUT_SUPPORT
-    int m_lastMouseEventFrom;
-#endif
-
-private slots:
-    /*
-     * update our internal model of mapped surface in response to wayland surfaces being mapped
-     * and unmapped. WindowModels use this as their source of windows.
-     */
-    void onSurfaceMapped();
-    void onSurfaceUnmapped();
-    void onSurfaceDestroyed();
-    void onSurfaceSizeChanged();
-
-    void frameSwappedSlot(); //FIXME what for
-
-public slots:
-    bool setFullscreenSurface(QWaylandSurface *surface);
-
-    void closeWindow(QVariant window, QJSValue payload = QJSValue());
-    void closeWindowKeepItem(QVariant window);
-    void destroyClientForWindow(QVariant window);
 };
 
 #endif // WEBOSCORECOMPOSITOR_H

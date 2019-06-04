@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 LG Electronics, Inc.
+// Copyright (c) 2014-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,15 +48,14 @@ public:
     WebOSSurfaceItem* attachedSurface() const { return m_attached; }
     void attach(WebOSSurfaceItem* item);
 
-signals:
-    void layerDestroyed(const QString& name);
-
 public slots:
     void detachSurface();
 
+signals:
+    void layerDestroyed(const QString& name);
+
 protected:
     virtual void webos_surface_group_layer_set_z_index(Resource *resource, int32_t z_index);
-
     virtual void webos_surface_group_layer_destroy_resource(Resource *resource);
     virtual void webos_surface_group_layer_destroy(Resource *resource);
 

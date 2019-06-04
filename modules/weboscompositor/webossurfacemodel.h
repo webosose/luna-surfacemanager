@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -58,11 +58,12 @@ public slots:
     void surfaceUnmapped(WebOSSurfaceItem* surface);
     void surfaceDestroyed(WebOSSurfaceItem* surface);
 
+signals:
+    void deferDataChanged();
+
 private slots:
     void handleItemChange();
     void handleDeferDataChanged();
-signals:
-    void deferDataChanged();
 
 private:
     bool m_dataDirty;

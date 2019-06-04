@@ -194,27 +194,6 @@ public:
 
     void mouseUngrabEvent() Q_DECL_OVERRIDE;
 
-protected:
-    virtual void keyPressEvent(QKeyEvent *event);
-    virtual void keyReleaseEvent(QKeyEvent *event);
-    virtual void focusInEvent(QFocusEvent *event);
-    virtual void focusOutEvent(QFocusEvent *event);
-
-    virtual void mouseMoveEvent(QMouseEvent *event);
-    virtual void mousePressEvent(QMouseEvent *event);
-    virtual void mouseReleaseEvent(QMouseEvent *event);
-    virtual void wheelEvent(QWheelEvent *event);
-    virtual void touchEvent(QTouchEvent *event);
-
-    virtual bool contains(const QPointF & point) const;
-
-    QPointF mapToTarget(const QPointF& point) const;
-    QList<QTouchEvent::TouchPoint> mapToTarget(const QList<QTouchEvent::TouchPoint>& points) const;
-
-    void takeWlKeyboardFocus() const;
-    bool isWlKeyboardFocusTaken() const;
-
-public:
     int texture() const {
         if (textureProvider()->texture())
             return textureProvider()->texture()->textureId();
@@ -520,14 +499,38 @@ signals:
     void customImageFilePathChanged();
     void backgroundImageFilePathChanged();
 
+protected:
+    virtual void keyPressEvent(QKeyEvent *event);
+    virtual void keyReleaseEvent(QKeyEvent *event);
+    virtual void focusInEvent(QFocusEvent *event);
+    virtual void focusOutEvent(QFocusEvent *event);
+
+    virtual void mouseMoveEvent(QMouseEvent *event);
+    virtual void mousePressEvent(QMouseEvent *event);
+    virtual void mouseReleaseEvent(QMouseEvent *event);
+    virtual void wheelEvent(QWheelEvent *event);
+    virtual void touchEvent(QTouchEvent *event);
+
+    virtual bool contains(const QPointF & point) const;
+
+    QPointF mapToTarget(const QPointF& point) const;
+    QList<QTouchEvent::TouchPoint> mapToTarget(const QList<QTouchEvent::TouchPoint>& points) const;
+
+    void takeWlKeyboardFocus() const;
+    bool isWlKeyboardFocusTaken() const;
+
+    QWaylandInputDevice* getInputDevice(QInputEvent *event) const;
+
+private:
+    // methods
+    bool getCursorFromSurface(QWaylandSurface *surface, int hotSpotX, int hotSpotY, QCursor& cursor);
+
 private slots:
     void requestStateChange(Qt::WindowState s);
     void onSurfaceDamaged(const QRegion &region);
 
-protected:
-    QWaylandInputDevice* getInputDevice(QInputEvent *event) const;
-
 private:
+    // variables
     WebOSCoreCompositor* m_compositor;
     bool m_fullscreen;
     qint32 m_lastFullscreenTick;
@@ -560,8 +563,6 @@ private:
     WebOSSurfaceGroup* m_surfaceGroup;
 
     QVariantMap m_closePolicy;
-
-    bool getCursorFromSurface(QWaylandSurface *surface, int hotSpotX, int hotSpotY, QCursor& cursor);
 
     QPointer<QWaylandSurface> m_cursorSurface;
     int m_cursorHotSpotX = -1;

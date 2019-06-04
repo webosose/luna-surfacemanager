@@ -82,6 +82,30 @@ signals:
     void cursorVisibleChanged();
 
 private:
+    // classes
+    class RotationJob : public QRunnable
+    {
+    public:
+        RotationJob(WebOSCompositorWindow* window) { m_window = window; }
+        void run() Q_DECL_OVERRIDE { m_window->sendOutputGeometry(); }
+    private:
+        WebOSCompositorWindow* m_window;
+    };
+
+    friend RotationJob;
+
+    // methods
+    void setNewOutputGeometry(QRect& outputGeometry, int outputRotation);
+    void sendOutputGeometry() const;
+    void applyOutputGeometry();
+
+private slots:
+    void onOutputGeometryDone();
+    void onOutputGeometryPendingExpired();
+    void onQmlError(const QList<QQmlError> &errors);
+
+private:
+    // variables
     WebOSCoreCompositor* m_compositor;
 #ifdef USE_CONFIG
     WebOSCompositorConfig* m_config;
@@ -104,26 +128,5 @@ private:
     int m_outputGeometryPendingInterval;
 
     bool m_cursorVisible;
-
-    void setNewOutputGeometry(QRect& outputGeometry, int outputRotation);
-    void sendOutputGeometry() const;
-    void applyOutputGeometry();
-
-    class RotationJob : public QRunnable
-    {
-    public:
-        RotationJob(WebOSCompositorWindow* window) { m_window = window; }
-        void run() Q_DECL_OVERRIDE { m_window->sendOutputGeometry(); }
-    private:
-        WebOSCompositorWindow* m_window;
-    };
-
-    friend RotationJob;
-
-private slots:
-    void onOutputGeometryDone();
-    void onOutputGeometryPendingExpired();
-    void onQmlError(const QList<QQmlError> &errors);
 };
-
 #endif // WEBOSCOMPOSITORWINDOW_H

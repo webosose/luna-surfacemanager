@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 LG Electronics, Inc.
+// Copyright (c) 2014-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -96,12 +96,20 @@ protected:
 protected slots:
     void sortZOrderedSurfaceLayoutInfoList();
 
+private:
+    // methods
+    bool assertOwner(Resource* resource);
+    WebOSSurfaceItem* itemFromResource(struct ::wl_resource* surface);
+    void removeFromGroup(WebOSSurfaceItem* item);
+    void closeInvalidSurface(WebOSSurfaceItem* item);
+
 private slots:
     void removeSurfaceItem();
     void removeLayer(const QString& name);
     void closeDeferredInvalidSurface();
 
 private:
+    // variables
     bool m_allowAnonymous;
     QString m_name;
     Resource* m_owner;
@@ -113,10 +121,5 @@ private:
     int time;
 
     QList< QPair<WebOSSurfaceItem *, QSharedPointer<QObject> > > m_zOrderedSurfaceLayoutInfoList;
-
-    bool assertOwner(Resource* resource);
-    WebOSSurfaceItem* itemFromResource(struct ::wl_resource* surface);
-    void removeFromGroup(WebOSSurfaceItem* item);
-    void closeInvalidSurface(WebOSSurfaceItem* item);
 };
 #endif

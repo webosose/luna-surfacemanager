@@ -90,7 +90,7 @@ public slots:
     void updatePanelRect(const QRect& rect) const;
     void continueTextModelActivation();
 
-Q_SIGNALS:
+signals:
     void contextDestroyed();
     void activated();
     void deactivated();

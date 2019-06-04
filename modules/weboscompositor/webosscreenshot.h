@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 LG Electronics, Inc.
+// Copyright (c) 2014-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -57,17 +57,15 @@ public:
     QString format() const {return m_format; }
     void setFormat(const QString& format);
 
+public slots:
+    virtual ScreenShotErrors take();
+
 signals:
     void screenShotSaved(const QString& path);
     void screenShotError(ScreenShotErrors error);
     void targetChanged();
     void pathChanged();
     void formatChanged();
-
-public slots:
-    virtual ScreenShotErrors take();
-private slots:
-    void unsetTarget();
 
 protected:
     WebOSSurfaceItem* m_target;
@@ -78,6 +76,8 @@ protected:
 private:
     bool isWritablePath(const QString path);
 
+private slots:
+    void unsetTarget();
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(WebOSScreenShot::ScreenShotErrors)

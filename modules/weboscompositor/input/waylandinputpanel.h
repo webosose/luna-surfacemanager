@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -81,8 +81,6 @@ public:
 
     static void getInputPanelSurface(struct wl_client *client, struct wl_resource *resource, uint32_t id, struct wl_resource *surface_resource);
 
-    static const struct input_panel_interface inputPanelImplementation;
-
     QRect inputPanelRect() const { return m_rect; }
     void setInputPanelRect(const QRect& rect);
     QSize inputPanelSurfaceSize() const;
@@ -93,6 +91,11 @@ signals:
     void inputPanelRectChanged(const QRect& rect);
     void inputPanelSurfaceSizeChanged(const QSize& size);
 
+private:
+    // methods
+    void updateActiveInputPanelSurface(WaylandInputPanelSurface *surface = 0);
+    void setInputPanelSurfaceSize(const QSize& size);
+
 private slots:
     void onInputPanelSurfaceMapped();
     void onInputPanelSurfaceUnmapped();
@@ -100,9 +103,8 @@ private slots:
     void updateInputPanelState();
 
 private:
-    void updateActiveInputPanelSurface(WaylandInputPanelSurface *surface = 0);
-    void setInputPanelSurfaceSize(const QSize& size);
-
+    // variables
+    static const struct input_panel_interface inputPanelImplementation;
     QWaylandCompositor* m_compositor;
     wl_resource* m_resource;
     QList<WaylandInputPanelSurface*> m_surfaces;

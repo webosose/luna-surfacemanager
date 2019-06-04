@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,15 +32,15 @@ public:
     static QHash<QString, CompositorExtension *> create(WebOSCoreCompositor *);
     static void watchTestPluginDir();
 
+public slots:
+    static void handleDirectoryChanged(const QString & path);
+
 private:
+    static void initializeExtension(CompositorExtension* extension);
+
     static QFileSystemWatcher m_fileWatcher;
     static WebOSCoreCompositor *m_webosCompositor;
     const static char *pluginDir;
-
-    static void initializeExtension(CompositorExtension* extension);
-
-public slots:
-    static void handleDirectoryChanged(const QString & path);
 };
 
 QT_END_NAMESPACE

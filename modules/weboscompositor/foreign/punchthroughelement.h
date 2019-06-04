@@ -84,6 +84,7 @@ public:
         setFlag(OwnsMaterial);
     }
 
+private:
     QSGGeometry m_geometry;
 };
 

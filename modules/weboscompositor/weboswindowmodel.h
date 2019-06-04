@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -64,21 +64,22 @@ public:
 
     bool locked();
     void setLocked(bool);
+
 signals:
-     void windowTypeChanged();
-     void surfaceSourceChanged();
-     void sortFunctionChanged();
-     void acceptFunctionChanged();
-     void surfaceAdded(WebOSSurfaceItem* item);
-     void surfaceRemoved(WebOSSurfaceItem* item);
-     void countChanged();
-     void lockedChanged();
-     void deferredInvalidate();
-     void invalidated();
+    void windowTypeChanged();
+    void surfaceSourceChanged();
+    void sortFunctionChanged();
+    void acceptFunctionChanged();
+    void surfaceAdded(WebOSSurfaceItem* item);
+    void surfaceRemoved(WebOSSurfaceItem* item);
+    void countChanged();
+    void lockedChanged();
+    void deferredInvalidate();
+    void invalidated();
 
 protected:
-     virtual bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
-     bool lessThan(const QModelIndex &left, const QModelIndex &right) const;
+    virtual bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
+    bool lessThan(const QModelIndex &left, const QModelIndex &right) const;
 
 protected slots:
     void emitSurfacesRemoved(const QModelIndex & parent, int start, int end);
@@ -90,10 +91,10 @@ protected:
     bool m_filterDirty;
 
 private:
-     QString m_type;
-     QString m_sortFunc;
-     QString m_acceptFunc;
-     bool m_locked;
+    QString m_type;
+    QString m_sortFunc;
+    QString m_acceptFunc;
+    bool m_locked;
 };
 
 #endif

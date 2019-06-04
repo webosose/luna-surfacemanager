@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -86,13 +86,15 @@ public:
     }
 
 private:
-    char* scopeLabel;
-
+    // methods
     // Prevent heap allocation
     void operator delete(void*);
     void* operator new(size_t);
     PmTraceScope(const PmTraceScope&);
     PmTraceScope& operator=(const PmTraceScope&);
+
+    // variables
+    char* scopeLabel;
 };
 
 class PmTraceFunction {
@@ -109,13 +111,15 @@ public:
     }
 
 private:
-    char* fnLabel;
-
+    // methods
     // Prevent heap allocation
     void operator delete(void*);
     void* operator new(size_t);
     PmTraceFunction(const PmTraceFunction&);
     PmTraceFunction& operator=(const PmTraceFunction&);
+
+    // variables
+    char* fnLabel;
 };
 
 #else // HAS_LTNG

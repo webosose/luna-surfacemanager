@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -44,17 +44,17 @@ public:
 public slots:
     void advertiseCursorVisibility();
 
-private:
-    WebOSCoreCompositor* m_compositor;
-    QPlatformNativeInterface *m_nativeInterface;
-    WebOSInputDevice* findWebOSInputDevice(QtWaylandServer::wl_seat *seat);
-    QList<Resource *> m_cursorVisibleClient;
-
 protected:
     void webos_input_manager_set_cursor_visibility(Resource *resource, uint32_t visibility);
     void webos_input_manager_get_webos_seat(Resource *resource, uint32_t id, struct ::wl_resource *seat);
     void webos_input_manager_bind_resource(Resource *resource);
     void webos_input_manager_destroy_resource(Resource *resource);
+
+private:
+    WebOSCoreCompositor* m_compositor;
+    QPlatformNativeInterface *m_nativeInterface;
+    WebOSInputDevice* findWebOSInputDevice(QtWaylandServer::wl_seat *seat);
+    QList<Resource *> m_cursorVisibleClient;
 };
 
 class WebOSSeat : public QObject, public QtWaylandServer::wl_webos_seat {

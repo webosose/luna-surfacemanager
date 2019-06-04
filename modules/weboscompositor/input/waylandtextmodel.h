@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -70,11 +70,12 @@ public:
 
     bool isAllowed() const { return m_inputMethod->allowed(); }
 
-public Q_SLOTS:
+public slots:
     void sendInputPanelState(const WaylandInputPanel::InputPanelState state) const;
     void sendInputPanelRect(const QRect& geometry) const;
+    void handleActiveFocusChanged();
 
-Q_SIGNALS:
+signals:
     void activated();
     void deactivated();
     void destroyed();
@@ -89,11 +90,7 @@ Q_SIGNALS:
     void maxTextLengthChanged(uint32_t length);
     void platformDataChanged(const QString& text);
 
-public Q_SLOTS:
-    void handleActiveFocusChanged();
-
 private:
-
     static const struct text_model_interface textModelImplementation;
 
     WaylandInputMethod* m_inputMethod;
@@ -102,5 +99,4 @@ private:
     struct ::wl_resource* m_surface;
     bool m_active;
 };
-
 #endif
