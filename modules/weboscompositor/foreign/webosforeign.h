@@ -106,6 +106,9 @@ protected:
                                   struct ::wl_resource *original_input,
                                   struct ::wl_resource *source_region,
                                   struct ::wl_resource *destination_region) override;
+    virtual void webos_exported_set_property(Resource *resource,
+                                  const QString &name,
+                                  const QString &value) override;
 
 private:
     WebOSForeign* m_foreign = nullptr;
@@ -119,6 +122,7 @@ private:
     QRect m_destinationRect;
     QString m_windowId;
     QString m_contextId;
+   QMap<QString, QString> m_properties;
 
     friend class WebOSForeign;
     friend class WebOSImported;

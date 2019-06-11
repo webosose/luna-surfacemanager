@@ -284,7 +284,7 @@ void WebOSExported::webos_exported_set_exported_window(
     if (m_foreign->m_compositor->window() && !m_contextId.isNull()) {
         VideoOutputdCommunicator::instance()->setDisplayWindow(m_sourceRect, m_destinationRect, m_contextId);
     } else {
-        qDebug() << "Do not call setDisplayWindow. Punch through is not working";
+        qInfo() << "Do not call setDisplayWindow. Punch through is not working";
     }
 
     setDestinationRegion();
@@ -340,10 +340,29 @@ void WebOSExported::webos_exported_set_crop_region(
     if (m_foreign->m_compositor->window() && !m_contextId.isNull()) {
         VideoOutputdCommunicator::instance()->setCropRegion(m_originalInputRect, m_sourceRect, m_destinationRect, m_contextId);
     } else {
-        qDebug() << "Do not call setDisplayWindow. Punch through is not working";
+        qInfo() << "Do not call setDisplayWindow. Punch through is not working";
     }
 
     setDestinationRegion();
+}
+
+void WebOSExported::webos_exported_set_property(
+        Resource *resource,
+        const QString &name,
+        const QString &value)
+{
+    qInfo() << "set_property name : " << name << " value : " << value;
+
+    if (m_foreign->m_compositor->window() && !m_contextId.isNull()) {
+        VideoOutputdCommunicator::instance()->setProperty(name, value, m_contextId);
+    } else {
+        qInfo() << "Do not call setProperty. Punch through is not working";
+    }
+
+    if (value.isNull())
+        m_properties.remove(name);
+    else
+        m_properties.insert(name, value);
 }
 
 void WebOSExported::setPunchThrough()
@@ -513,7 +532,7 @@ void WebOSImported::updateGeometry()
 
 void WebOSImported::detached()
 {
-    qWarning() << "WebOSImported::detached is called " << this;
+    qInfo() << "WebOSImported::detached is called " << this;
 
     // exported for punch through is destroyed
     if (m_punched) {
@@ -542,9 +561,18 @@ void WebOSImported::webos_imported_attach_punchthrough(Resource* r, const QStrin
     if (!contextId.isNull()) {
         if (m_exported->m_originalInputRect.isValid() && m_exported->m_sourceRect.isValid()) {
             VideoOutputdCommunicator::instance()->setCropRegion(m_exported->m_originalInputRect, m_exported->m_sourceRect, m_exported->m_destinationRect, contextId);
-        } else if (m_exported->m_destinationRect.isValid())
+        } else if (m_exported->m_destinationRect.isValid()) {
             VideoOutputdCommunicator::instance()->setDisplayWindow(m_exported->m_sourceRect, m_exported->m_destinationRect, contextId);
-    }
+        } 
+        if (!(m_exported->m_properties).isEmpty()) {
+            QMap<QString, QString>::const_iterator i = m_exported->m_properties.constBegin();
+            while (i != m_exported->m_properties.constEnd()) {
+                qInfo() << "m_properties key : " << i.key() << " value :  " << i.value();
+                VideoOutputdCommunicator::instance()->setProperty(i.key(), i.value(), contextId);
+                ++i;
+            }
+        }
+     }
 
     if (!contextId.isNull())
         m_exported->m_contextId = contextId;

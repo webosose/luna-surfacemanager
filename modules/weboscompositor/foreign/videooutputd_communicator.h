@@ -29,10 +29,12 @@ public:
 
     void setDisplayWindow(QRect sourceRectangle, QRect destinationRectangle, QString contextId);
     void setCropRegion(QRect originalRectangle, QRect sourceRectangle, QRect destinationRectangle, QString contextId);
+    void setProperty(QString name, QString value, QString contextId);
 
 signals:
     void setVideoDisplayWindowRequested(const QRect sourceRectangle, const QRect destinationRectangle, const QString contextId);
     void setVideoCropRegionRequested(const QRect originalRectangle, const QRect sourceRectangle, const QRect destinationRectangle, const QString contextId);
+    void setVideoPropertyRequested(const QString name, const QString value, const QString contextId);
 
 protected:
     VideoOutputdCommunicator(QObject *parent = Q_NULLPTR);

@@ -42,3 +42,8 @@ void VideoOutputdCommunicator::setCropRegion(QRect originalRectangle, QRect sour
 {
     emit setVideoCropRegionRequested(originalRectangle, sourceRectangle, destinationRectangle, contextId);
 }
+
+void VideoOutputdCommunicator::setProperty(QString name, QString value, QString contextId)
+{
+    emit setVideoPropertyRequested(name, value, contextId);
+}
