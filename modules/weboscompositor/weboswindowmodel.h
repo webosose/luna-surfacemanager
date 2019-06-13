@@ -80,12 +80,12 @@ signals:
 protected:
     virtual bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
     bool lessThan(const QModelIndex &left, const QModelIndex &right) const;
+    void deferInvalidate();
 
 protected slots:
     void emitSurfacesRemoved(const QModelIndex & parent, int start, int end);
     void emitSurfacesAdded(const QModelIndex & parent, int start, int end);
     virtual void handleInvalidate();
-    void deferInvalidate();
 
 protected:
     bool m_filterDirty;

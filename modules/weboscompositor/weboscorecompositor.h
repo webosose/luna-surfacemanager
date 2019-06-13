@@ -166,13 +166,15 @@ public:
     void setKeyFilter(WebOSKeyFilter *filter);
     WebOSSurfaceItem* activeSurface();
 
-    void handleActiveFocusItemChanged();
-
     bool setFullscreenSurface(QWaylandSurface *surface);
 
-    void closeWindow(QVariant window, QJSValue payload = QJSValue());
-    void closeWindowKeepItem(QVariant window);
+    Q_INVOKABLE void closeWindow(QVariant window, QJSValue payload = QJSValue());
+    Q_INVOKABLE void closeWindowKeepItem(QVariant window);
+
     void destroyClientForWindow(QVariant window);
+
+public slots:
+    void handleActiveFocusItemChanged();
 
 signals:
     // This signal is deprecated and will be refactored away.

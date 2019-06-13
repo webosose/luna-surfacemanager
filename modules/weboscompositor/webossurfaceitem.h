@@ -436,14 +436,13 @@ public:
 
     void setCursorSurface(QWaylandSurface *surface, int hotSpotX, int hotSpotY);
 
-public slots:
     void setNotifyPositionToClient(bool notify);
-    void updateScreenPosition();
 
     void setExposed(bool exposed);
 
+public slots:
+    void updateScreenPosition();
     void updateProperties(const QVariantMap &properties, const QString &name, const QVariant &value);
-
     void updateCursor();
 
 signals:
