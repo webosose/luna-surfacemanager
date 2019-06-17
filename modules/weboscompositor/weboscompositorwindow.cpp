@@ -510,19 +510,9 @@ void WebOSCompositorWindow::updateCursorFocus(Qt::KeyboardModifiers modifiers)
 
 void WebOSCompositorWindow::onQmlError(const QList<QQmlError> &errors)
 {
-    // ignore debug level message (QQmlEngine emits warning level only as of 5.9)
-    int count = 0;
-    QStringList errorList;
-    for (auto it = errors.cbegin(), end = errors.cend(); it != end; ++it) {
-        if (it->messageType() > QtDebugMsg)
-            count++;
-        errorList << it->toString();
-    }
-    if (count > 0) {
-        qWarning("==== Exiting because of QML warnings ====");
-        for (auto it = errorList.constBegin(), end = errorList.constEnd(); it != end; ++it)
-            qWarning() << *it;
-        qWarning("=========================================");
-        QCoreApplication::exit(1);
-    }
+    qWarning("==== Exiting because of QML warnings ====");
+    for (auto it = errors.constBegin(), end = errors.constEnd(); it != end; ++it)
+        qWarning() << *it;
+    qWarning("=========================================");
+    QCoreApplication::exit(1);
 }
