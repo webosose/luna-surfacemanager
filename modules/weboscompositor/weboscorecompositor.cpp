@@ -436,7 +436,14 @@ void WebOSCoreCompositor::onSurfaceUnmapped() {
     qInfo() << surface << item << item->appId() << item->itemState();
 
     if (webOSWindowExtension()) {
-        processSurfaceItem(item, WebOSSurfaceItem::ItemStateHidden);
+
+        if (item->appId().isEmpty() || !item->isMapped()) {
+            m_surfaceModel->surfaceUnmapped(item);
+            emit surfaceUnmapped(item);
+            m_surfaces.removeOne(item);
+        } else {
+            processSurfaceItem(item, WebOSSurfaceItem::ItemStateHidden);
+        }
     } else {
         if (item->itemState() != WebOSSurfaceItem::ItemStateProxy) {
             m_surfaceModel->surfaceUnmapped(item);
@@ -462,7 +469,11 @@ void WebOSCoreCompositor::onSurfaceDestroyed() {
     qInfo() << surface << item << item->appId() << item->itemState() << item->itemStateReason();
 
     if (webOSWindowExtension()) {
-        processSurfaceItem(item, WebOSSurfaceItem::ItemStateProxy);
+        if (item->appId().isEmpty() || !item->isMapped()) {
+            removeSurfaceItem(item, true);
+        } else {
+            processSurfaceItem(item, WebOSSurfaceItem::ItemStateProxy);
+        }
     } else {
         if (item->itemState() != WebOSSurfaceItem::ItemStateProxy) {
             m_surfacesOnUpdate.removeOne(item);
