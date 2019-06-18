@@ -63,6 +63,7 @@ protected:
 private:
     WebOSCoreCompositor* m_compositor = nullptr;
     QList<WebOSExported*> m_exportedList;
+    QRect m_outputGeometry;
 
     friend class WebOSExported;
     friend class WebOSImported;
@@ -83,13 +84,14 @@ public:
                   uint32_t id, QWaylandSurfaceItem* surfaceItem,
                   WebOSForeign::WebOSExportedType exportedType);
     ~WebOSExported();
-    void setDestinationRegion();
+    void setDestinationRegion(struct::wl_resource *destination_region);
     void setPunchThrough();
     void detachImportedItem();
     void assigneWindowId(QString windowId);
     void setParentOf(QQuickItem *surfaceItem);
     void updateVisible();
-    void updateVideoWindowList(QString contextId, QRect destinationRectangle, bool needRemove);
+    void updateVideoWindowList(QString contextId, QRect videoDisplayRect, bool needRemove);
+    void updateFullscreen(bool fullscreen);
     QWaylandSurfaceItem *getImportedItem();
     void startImportedMirroring(QWaylandSurfaceItem *parent);
 
@@ -120,9 +122,12 @@ private:
     QRect m_originalInputRect;
     QRect m_sourceRect;
     QRect m_destinationRect;
+    QRect m_videoDisplayRect;
     QString m_windowId;
     QString m_contextId;
-   QMap<QString, QString> m_properties;
+    QMap<QString, QString> m_properties;
+    bool m_isSurfaceItemFullscreen;
+    double m_outputRatio = 1.0;
 
     friend class WebOSForeign;
     friend class WebOSImported;

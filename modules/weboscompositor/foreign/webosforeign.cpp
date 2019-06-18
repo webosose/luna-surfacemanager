@@ -112,10 +112,12 @@ void WebOSForeign::registeredWindow()
         VideoOutputdCommunicator *pVideoOutputdCommunicator = VideoOutputdCommunicator::instance();
         if (pVideoOutputdCommunicator) {
             WebOSCompositorWindow *pWebOSCompositorWindow = qobject_cast<WebOSCompositorWindow *>(m_compositor->window());
-            if (pWebOSCompositorWindow)
+            if (pWebOSCompositorWindow) {
                 pWebOSCompositorWindow->rootContext()->setContextProperty(QLatin1String("videooutputdCommunicator"), pVideoOutputdCommunicator);
-            else
+                m_outputGeometry = pWebOSCompositorWindow->outputGeometry();
+            } else {
                 qFatal("Failed to get the window instance");
+            }
         } else {
             qFatal("Failed to get VideoOutputdCommunicator instance");
         }
@@ -202,6 +204,16 @@ WebOSExported::WebOSExported(
     object->setParentItem(m_exportedItem);
     engine->setObjectOwnership(object, QQmlEngine::CppOwnership);
 #endif
+
+    WebOSSurfaceItem *item = qobject_cast<WebOSSurfaceItem*>(surfaceItem);
+    qDebug() <<"Fullscreen status of surface item (" << item << ") for exporter : " <<item->fullscreen();
+    m_isSurfaceItemFullscreen = item->fullscreen();
+    connect(item, &WebOSSurfaceItem::fullscreenChanged, this,  &WebOSExported::updateFullscreen);
+
+    if (item->fullscreen() && m_foreign->m_outputGeometry.isValid()) {
+        m_outputRatio = (double) m_foreign->m_outputGeometry.width() / m_qwlsurfaceItem->width();
+        qDebug() << "outputRatio : " << m_outputRatio;
+    }
 }
 
 WebOSExported::~WebOSExported()
@@ -221,51 +233,42 @@ WebOSExported::~WebOSExported()
         delete m_exportedItem;
 }
 
+void WebOSExported::updateFullscreen(bool fullscreen)
+{
+    if (m_isSurfaceItemFullscreen !=fullscreen) {
+        m_isSurfaceItemFullscreen = fullscreen;
+        if (m_foreign->m_outputGeometry.isValid()) {
+            m_outputRatio = m_foreign->m_outputGeometry.width() / m_qwlsurfaceItem->width();
+            qDebug() <<"Fullscreen status of surface item for exporter is updated : " <<m_isSurfaceItemFullscreen;
+            qDebug() << "m_outputRatio for exporter : " << m_outputRatio;
+        }
+    }
+}
+
 void WebOSExported::updateVisible()
 {
     if (!m_contextId.isNull()) {
         if (m_exportedItem->isVisible()) {
-            updateVideoWindowList(m_contextId, m_destinationRect, false);
+            updateVideoWindowList(m_contextId, m_videoDisplayRect, false);
         } else {
             updateVideoWindowList(m_contextId, QRect(0, 0, 0, 0), true);
         }
     }
 }
 
-void WebOSExported::updateVideoWindowList(QString contextId, QRect destinationRect, bool needRemove)
+void WebOSExported::updateVideoWindowList(QString contextId, QRect videoDisplayRect, bool needRemove)
 {
     if (needRemove) {
         VideoWindowInformer::instance()->removeVideoWindowList(contextId);
     } else {
          if(!m_contextId.isNull() && m_exportedItem->isVisible()) {
-            VideoWindowInformer::instance()->insertVideoWindowList(contextId, destinationRect);
+            VideoWindowInformer::instance()->insertVideoWindowList(contextId, videoDisplayRect);
          }
     }
 }
 
-void WebOSExported::setDestinationRegion()
+void WebOSExported::setDestinationRegion(struct::wl_resource *destination_region)
 {
-    m_exportedItem->setX(m_destinationRect.x());
-    m_exportedItem->setY(m_destinationRect.y());
-    m_exportedItem->setWidth(m_destinationRect.width());
-    m_exportedItem->setHeight(m_destinationRect.height());
-
-    if (m_punchThroughItem) {
-        m_punchThroughItem->setWidth(m_exportedItem->width());
-        m_punchThroughItem->setHeight(m_exportedItem->height());
-    }
-
-    emit geometryChanged();
-    updateVideoWindowList(m_contextId, m_destinationRect, false);
-}
-
-void WebOSExported::webos_exported_set_exported_window(
-        Resource *resource,
-        struct ::wl_resource *source_region,
-        struct ::wl_resource *destination_region)
-{
-    Q_UNUSED(source_region);
-
     if (destination_region) {
         const QRegion qwlDestinationRegion =
             QtWayland::Region::fromResource(
@@ -277,17 +280,49 @@ void WebOSExported::webos_exported_set_exported_window(
                 qwlDestinationRegion.boundingRect().width(),
                 qwlDestinationRegion.boundingRect().height());
 
+            m_videoDisplayRect = QRect(
+                (int) (qwlDestinationRegion.boundingRect().x()*m_outputRatio),
+                (int) (qwlDestinationRegion.boundingRect().y()*m_outputRatio),
+                (int) (qwlDestinationRegion.boundingRect().width()*m_outputRatio),
+                (int) (qwlDestinationRegion.boundingRect().height())*m_outputRatio);
+
             qDebug() << "exported_window destination region : " << m_destinationRect;
+            qDebug() << "video display output region : " <<m_videoDisplayRect;
         }
     }
 
     if (m_foreign->m_compositor->window() && !m_contextId.isNull()) {
-        VideoOutputdCommunicator::instance()->setDisplayWindow(m_sourceRect, m_destinationRect, m_contextId);
+        if (m_originalInputRect.isValid() &&m_sourceRect.isValid()) {
+           VideoOutputdCommunicator::instance()->setCropRegion(m_originalInputRect, m_sourceRect, m_videoDisplayRect, m_contextId);
+        } else {
+           VideoOutputdCommunicator::instance()->setDisplayWindow(m_sourceRect, m_videoDisplayRect, m_contextId);
+        }
     } else {
         qInfo() << "Do not call setDisplayWindow. Punch through is not working";
     }
 
-    setDestinationRegion();
+    m_exportedItem->setX(m_destinationRect.x());
+    m_exportedItem->setY(m_destinationRect.y());
+    m_exportedItem->setWidth(m_destinationRect.width());
+    m_exportedItem->setHeight(m_destinationRect.height());
+
+    if (m_punchThroughItem) {
+        m_punchThroughItem->setWidth(m_exportedItem->width());
+        m_punchThroughItem->setHeight(m_exportedItem->height());
+    }
+
+    emit geometryChanged();
+    updateVideoWindowList(m_contextId, m_videoDisplayRect, false);
+}
+
+
+void WebOSExported::webos_exported_set_exported_window(
+        Resource *resource,
+        struct ::wl_resource *source_region,
+        struct ::wl_resource *destination_region)
+{
+    Q_UNUSED(source_region);
+    setDestinationRegion(destination_region);
 }
 
 void WebOSExported::webos_exported_set_crop_region(
@@ -322,28 +357,7 @@ void WebOSExported::webos_exported_set_crop_region(
         }
     }
 
-    if (destination_region) {
-        const QRegion qwlDestinationRegion =
-            QtWayland::Region::fromResource(
-                destination_region)->region();
-        if (qwlDestinationRegion.boundingRect().isValid()) {
-            m_destinationRect = QRect(
-                qwlDestinationRegion.boundingRect().x(),
-                qwlDestinationRegion.boundingRect().y(),
-                qwlDestinationRegion.boundingRect().width(),
-                qwlDestinationRegion.boundingRect().height());
-
-            qDebug() << "exported_window destination region : " << m_destinationRect;
-        }
-    }
-
-    if (m_foreign->m_compositor->window() && !m_contextId.isNull()) {
-        VideoOutputdCommunicator::instance()->setCropRegion(m_originalInputRect, m_sourceRect, m_destinationRect, m_contextId);
-    } else {
-        qInfo() << "Do not call setDisplayWindow. Punch through is not working";
-    }
-
-    setDestinationRegion();
+    setDestinationRegion(destination_region);
 }
 
 void WebOSExported::webos_exported_set_property(
@@ -560,10 +574,10 @@ void WebOSImported::webos_imported_attach_punchthrough(Resource* r, const QStrin
 
     if (!contextId.isNull()) {
         if (m_exported->m_originalInputRect.isValid() && m_exported->m_sourceRect.isValid()) {
-            VideoOutputdCommunicator::instance()->setCropRegion(m_exported->m_originalInputRect, m_exported->m_sourceRect, m_exported->m_destinationRect, contextId);
-        } else if (m_exported->m_destinationRect.isValid()) {
-            VideoOutputdCommunicator::instance()->setDisplayWindow(m_exported->m_sourceRect, m_exported->m_destinationRect, contextId);
-        } 
+            VideoOutputdCommunicator::instance()->setCropRegion(m_exported->m_originalInputRect, m_exported->m_sourceRect, m_exported->m_videoDisplayRect, contextId);
+        } else if (m_exported->m_videoDisplayRect.isValid()) {
+            VideoOutputdCommunicator::instance()->setDisplayWindow(m_exported->m_sourceRect, m_exported->m_videoDisplayRect, contextId);
+        }
         if (!(m_exported->m_properties).isEmpty()) {
             QMap<QString, QString>::const_iterator i = m_exported->m_properties.constBegin();
             while (i != m_exported->m_properties.constEnd()) {
@@ -583,7 +597,7 @@ void WebOSImported::webos_imported_attach_punchthrough(Resource* r, const QStrin
 
     m_punched = true;
     send_punchthrough_attached(contextId);
-    m_exported->updateVideoWindowList(contextId, m_exported->m_destinationRect, false);
+    m_exported->updateVideoWindowList(contextId, m_exported->m_videoDisplayRect, false);
 }
 
 void WebOSImported::webos_imported_detach_punchthrough(Resource* r)
