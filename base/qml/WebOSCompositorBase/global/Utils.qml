@@ -68,12 +68,12 @@ Item {
             if (viewList[i].hasForegroundItem == true) {
                 if (viewList[i].grouped == true && viewList[i].groupedItems) {
                     for (var j = 0; j < viewList[i].groupedItems.length; j++) {
-                        if (viewList[i].groupedItems[j]) {
+                        if (viewList[i].groupedItems[j] && viewList[i].groupedItems[j].displayId >= 0) {
                             ret.push(viewList[i].groupedItems[j]);
                             console.log("Foreground item(in group) " + viewList[i].groupedItems[j].appId + " in " + viewList[i]);
                         }
                     }
-                } else if (viewList[i].currentItem) {
+                } else if (viewList[i].currentItem && viewList[i].currentItem.displayId >= 0) {
                     ret.push(viewList[i].currentItem);
                     console.log("Foreground item " + viewList[i].currentItem.appId + " in " + viewList[i]);
                 }

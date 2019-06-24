@@ -24,17 +24,18 @@ QtObject {
     property var foregroundItems: []
 
     property bool __init: false
-    property var __foregroundItemsNotified: []
+    property var __foregroundItemsToCheck: []
 
     signal foregroundAppInfoChanged
 
     function checkAndNotify() {
         var diff = false;
-        if (foregroundItems.length != __foregroundItemsNotified.length) {
+        if (foregroundItems.length != __foregroundItemsToCheck.length) {
             diff = true;
         } else {
             for (var i = 0; i < foregroundItems.length; i++) {
-                if (foregroundItems[i] != __foregroundItemsNotified[i]) {
+                if (foregroundItems[i].appId !== __foregroundItemsToCheck[i].appId ||
+                    foregroundItems[i].displayId != __foregroundItemsToCheck[i].displayId) {
                     diff = true;
                     break;
                 }
@@ -47,10 +48,15 @@ QtObject {
             else
                 console.warning("Foreground app info changed but skipped notifying it");
 
-            // Update the notified list
-            __foregroundItemsNotified = [];
-            for (var i = 0; i < foregroundItems.length; i++)
-                __foregroundItemsNotified.push(foregroundItems[i]);
+            // Update the item list to check difference
+            __foregroundItemsToCheck = [];
+            for (var i = 0; i < foregroundItems.length; i++) {
+                var ii = {
+                    "appId":      foregroundItems[i].appId,
+                    "displayId":  foregroundItems[i].displayId
+                }
+                __foregroundItemsToCheck.push(ii);
+            }
         } else {
             console.log("Skipped notifying as the foreground item list is identical");
         }
@@ -82,6 +88,7 @@ QtObject {
 
         param = {
                 appId: item.appId,
+                displayId: item.displayId,
                 windowId: "",
                 processId: item.processId,
                 windowType: item.type,

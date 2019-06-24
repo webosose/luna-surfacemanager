@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 LG Electronics, Inc.
+// Copyright (c) 2017-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ Service {
     readonly property var defaultMethods: ["closeByAppId", "getForegroundAppInfo", "captureCompositorOutput"]
 
     readonly property ForegroundAppInfoMgr foregroundAppInfoMgr: ForegroundAppInfoMgr {
-        foregroundItems: Utils.foregroundList(root.views.children)
+        foregroundItems: compositor.foregroundItems
         onForegroundAppInfoChanged: {
             root.pushSubscription("getForegroundAppInfo");
         }

@@ -10,6 +10,7 @@ DefaultSettings 1.0 DefaultSettings.qml
 LocalSettingsFiles 1.0 LocalSettingsFiles.qml
 LunaServiceSubscriptions 1.0 LunaServiceSubscriptions.qml
 AccessControlPolicy 1.0 controllers/AccessControlPolicy.qml
+ForegroundItemsController 1.0 controllers/ForegroundItemsController.qml
 KeyController 1.0 controllers/KeyController.qml
 ViewStateController 1.0 controllers/ViewStateController.qml
 FullscreenWindowModel 1.0 models/FullscreenWindowModel.qml
