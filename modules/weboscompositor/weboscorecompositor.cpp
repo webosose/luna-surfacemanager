@@ -347,6 +347,19 @@ WebOSSurfaceItem* WebOSCoreCompositor::activeSurface()
     return qobject_cast<WebOSSurfaceItem*>(item);
 }
 
+QList<QObject *> WebOSCoreCompositor::foregroundItems() const
+{
+    QList<QObject *> items;
+
+    QList<QQuickWindow *> windows = m_outputs.keys();
+    for (int i = 0; i < windows.size(); ++i) {
+        WebOSCompositorWindow *window = static_cast<WebOSCompositorWindow *>(windows[i]);
+        items << window->foregroundItems();
+    }
+
+    return items;
+}
+
 void WebOSCoreCompositor::onSurfaceUnmapped() {
     PMTRACE_FUNCTION;
     QWaylandQuickSurface *surface = qobject_cast<QWaylandQuickSurface *>(sender());

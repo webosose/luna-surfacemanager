@@ -70,6 +70,9 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCoreCompositor : public QObject, public QWayl
 
     Q_PROPERTY(WebOSKeyFilter* keyFilter READ keyFilter WRITE setKeyFilter NOTIFY keyFilterChanged)
     Q_PROPERTY(WebOSSurfaceItem* activeSurface READ activeSurface NOTIFY activeSurfaceChanged)
+
+    Q_PROPERTY(QList<QObject *> foregroundItems READ foregroundItems NOTIFY foregroundItemsChanged)
+
 public:
     enum ExtensionFlag {
         NoExtensions = 0x00,
@@ -173,6 +176,8 @@ public:
 
     void destroyClientForWindow(QVariant window);
 
+    QList<QObject *> foregroundItems() const;
+
 public slots:
     void handleActiveFocusItemChanged();
 
@@ -212,6 +217,8 @@ signals:
     void activeSurfaceChanged();
 
     void outputUpdateDone();
+
+    void foregroundItemsChanged();
 
 protected:
     virtual void surfaceCreated(QWaylandSurface *surface);

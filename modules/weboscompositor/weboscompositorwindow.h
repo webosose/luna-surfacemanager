@@ -75,6 +75,9 @@ public:
     void setCursorVisible(bool visibility);
     Q_INVOKABLE void updateCursorFocus(Qt::KeyboardModifiers modifiers = Qt::NoModifier);
 
+    Q_INVOKABLE void updateForegroundItems(QList<QObject *>);
+    QList<QObject *> foregroundItems() const { return m_foregroundItems; }
+
 signals:
     void outputGeometryChanged();
     void outputRotationChanged();
@@ -133,5 +136,7 @@ private:
     int m_outputGeometryPendingInterval;
 
     bool m_cursorVisible;
+
+    QList<QObject *> m_foregroundItems;
 };
 #endif // WEBOSCOMPOSITORWINDOW_H

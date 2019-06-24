@@ -514,6 +514,18 @@ void WebOSCompositorWindow::updateCursorFocus(Qt::KeyboardModifiers modifiers)
     }
 }
 
+void WebOSCompositorWindow::updateForegroundItems(QList<QObject *> items)
+{
+    m_foregroundItems = items;
+
+    if (Q_UNLIKELY(!m_compositor)) {
+        qWarning() << this << "compositor is not set yet!";
+        return;
+    }
+
+    emit m_compositor->foregroundItemsChanged();
+}
+
 void WebOSCompositorWindow::onQmlError(const QList<QQmlError> &errors)
 {
     qWarning("==== Exiting because of QML warnings ====");
