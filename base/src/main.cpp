@@ -217,9 +217,7 @@ int main(int argc, char *argv[])
             // FIXME: Consider adding below if we need to call registerWindow
             // for an extra window
             //extraWindow->installEventFilter(new EventFilter(compositor));
-            // FIXME: Skip adding wl_output for extra window
-            // until clients are ready to handle multiple wl_output objects
-            //compositor->registerWindow(extraWindow, name);
+            compositor->registerWindow(extraWindow, name);
             extraWindow->setCompositor(compositor);
             extraWindow->showWindow();
             qInfo() << "Initialized an extra window" << extraWindow << "bound to wayland display" << name;
