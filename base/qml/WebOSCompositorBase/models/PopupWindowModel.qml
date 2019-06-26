@@ -1,4 +1,4 @@
-// Copyright (c) 2018 LG Electronics, Inc.
+// Copyright (c) 2018-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,4 +20,10 @@ import WebOSCoreCompositor 1.0
 WindowModel {
     surfaceSource: compositor.surfaceModel
     windowType: "_WEBOS_WINDOW_TYPE_POPUP"
+    acceptFunction: "filter"
+
+    function filter(surfaceItem) {
+        return surfaceItem.type === windowType &&
+               surfaceItem.displayAffinity == compositorWindow.displayId;
+    }
 }

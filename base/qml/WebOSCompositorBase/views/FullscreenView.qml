@@ -79,7 +79,8 @@ SurfaceView {
 
         function checkFullscreen(item) {
             if (!item.isProxy() && !item.isPartOfGroup() &&
-                (item.type == "_WEBOS_WINDOW_TYPE_CARD" || item.type == "_WEBOS_WINDOW_TYPE_RESTRICTED")) {
+                (item.type == "_WEBOS_WINDOW_TYPE_CARD" || item.type == "_WEBOS_WINDOW_TYPE_RESTRICTED") &&
+                item.displayAffinity == compositorWindow.displayId) {
                 console.log("item: " + item + ", currently " + currentItem);
 
                 // Fullscreen surface item transition sequence
