@@ -367,8 +367,22 @@ void WebOSExported::webos_exported_set_property(
 {
     qInfo() << "set_property name : " << name << " value : " << value;
 
+    if (name == "mute") {
+        if (m_properties.find("mute") == m_properties.end()) {
+            if (m_foreign->m_compositor->window() && !m_contextId.isNull()) {
+                VideoOutputdCommunicator::instance()->setProperty("registerMute", "on", m_contextId);
+            } else {
+                m_properties.insert("registerMute", "on");
+            }
+        }
+    }
+
     if (m_foreign->m_compositor->window() && !m_contextId.isNull()) {
         VideoOutputdCommunicator::instance()->setProperty(name, value, m_contextId);
+        if (value == "none") {
+            m_properties.remove(name);
+            return;
+        }
     } else {
         qInfo() << "Do not call setProperty. Punch through is not working";
     }
@@ -435,6 +449,20 @@ void WebOSExported::setParentOf(QQuickItem *item)
     // mirrored items
     foreach(WebOSSurfaceItem *parent, m_qwlsurfaceItem->mirrorItems())
         startImportedMirroring(parent);
+}
+
+void WebOSExported::unregisterMuteOwner()
+{
+    if (!m_contextId.isNull()) {
+         updateVideoWindowList(m_contextId, QRect(0, 0, 0, 0), true);
+        QMap<QString, QString>::const_iterator it = m_properties.find("mute");
+        if (it!= m_properties.end()) {
+            if (it.value() == "on")
+                VideoOutputdCommunicator::instance()->setProperty(it.key(), "off", m_contextId);
+            m_properties.remove(it.key());
+        }
+        VideoOutputdCommunicator::instance()->setProperty("registerMute", "off", m_contextId);
+    }
 }
 
 void WebOSExported::webos_exported_destroy_resource(Resource *r)
@@ -582,6 +610,11 @@ void WebOSImported::webos_imported_attach_punchthrough(Resource* r, const QStrin
     } else if (m_exported->m_videoDisplayRect.isValid()) {
         VideoOutputdCommunicator::instance()->setDisplayWindow(m_exported->m_sourceRect, m_exported->m_videoDisplayRect, contextId);
     }
+    QMap<QString, QString>::const_iterator it = (m_exported->m_properties).find("registerMute");
+    if (it!= (m_exported->m_properties).end()) {
+        VideoOutputdCommunicator::instance()->setProperty(it.key(), it.value(), contextId);
+        m_exported->m_properties.remove(it.key());
+    }
     if (!(m_exported->m_properties).isEmpty()) {
         QMap<QString, QString>::const_iterator i = m_exported->m_properties.constBegin();
         while (i != m_exported->m_properties.constEnd()) {
@@ -609,6 +642,7 @@ void WebOSImported::webos_imported_detach_punchthrough(Resource* r)
         return;
     }
 
+    m_exported->unregisterMuteOwner();
     m_exported->setPunchThrough(false);
     send_punchthrough_detached(m_exported->m_contextId);
     m_exported->updateVideoWindowList(m_exported->m_contextId, QRect(0, 0, 0, 0), true);

@@ -91,6 +91,7 @@ public:
     void updateVisible();
     void updateVideoWindowList(QString contextId, QRect videoDisplayRect, bool needRemove);
     void updateFullscreen(bool fullscreen);
+    void unregisterMuteOwner();
     QWaylandSurfaceItem *getImportedItem();
     void startImportedMirroring(QWaylandSurfaceItem *parent);
 
