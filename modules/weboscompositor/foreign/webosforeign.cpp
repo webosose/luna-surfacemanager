@@ -206,13 +206,13 @@ WebOSExported::WebOSExported(
 #endif
 
     WebOSSurfaceItem *item = qobject_cast<WebOSSurfaceItem*>(surfaceItem);
-    qDebug() <<"Fullscreen status of surface item (" << item << ") for exporter : " <<item->fullscreen();
+    qInfo() <<"Fullscreen status of surface item (" << item << ") for exporter : " <<item->fullscreen();
     m_isSurfaceItemFullscreen = item->fullscreen();
     connect(item, &WebOSSurfaceItem::fullscreenChanged, this,  &WebOSExported::updateFullscreen);
 
     if (item->fullscreen() && m_foreign->m_outputGeometry.isValid()) {
         m_outputRatio = (double) m_foreign->m_outputGeometry.width() / m_qwlsurfaceItem->width();
-        qDebug() << "outputRatio : " << m_outputRatio;
+        qInfo() << "outputRatio : " << m_outputRatio;
     }
 }
 
@@ -225,7 +225,7 @@ WebOSExported::~WebOSExported()
         m_importList.takeFirst()->destroyResource();
 
     // delete m_punchThroughItem in detach
-    detachImportedItem();
+    setPunchThrough(false);
     m_foreign->m_exportedList.removeAll(this);
 
     // Usually it is deleted by QObjectPrivate::deleteChildren with its parent surfaceItem.
@@ -239,8 +239,8 @@ void WebOSExported::updateFullscreen(bool fullscreen)
         m_isSurfaceItemFullscreen = fullscreen;
         if (m_foreign->m_outputGeometry.isValid()) {
             m_outputRatio = m_foreign->m_outputGeometry.width() / m_qwlsurfaceItem->width();
-            qDebug() <<"Fullscreen status of surface item for exporter is updated : " <<m_isSurfaceItemFullscreen;
-            qDebug() << "m_outputRatio for exporter : " << m_outputRatio;
+            qInfo() <<"Fullscreen status of surface item for exporter is updated : " <<m_isSurfaceItemFullscreen;
+            qInfo() << "m_outputRatio for exporter : " << m_outputRatio;
         }
     }
 }
@@ -286,8 +286,8 @@ void WebOSExported::setDestinationRegion(struct::wl_resource *destination_region
                 (int) (qwlDestinationRegion.boundingRect().width()*m_outputRatio),
                 (int) (qwlDestinationRegion.boundingRect().height())*m_outputRatio);
 
-            qDebug() << "exported_window destination region : " << m_destinationRect;
-            qDebug() << "video display output region : " <<m_videoDisplayRect;
+            qInfo() << "exported_window destination region : " << m_destinationRect;
+            qInfo() << "video display output region : " <<m_videoDisplayRect;
         }
     }
 
@@ -379,33 +379,29 @@ void WebOSExported::webos_exported_set_property(
         m_properties.insert(name, value);
 }
 
-void WebOSExported::setPunchThrough()
+void WebOSExported::setPunchThrough(bool needPunch)
 {
-    if (!m_punchThroughItem) {
-        PunchThroughItem* punchThroughNativeItem =
-            new PunchThroughItem();
-        m_punchThroughItem = punchThroughNativeItem;
-        punchThroughNativeItem->setZ(m_exportedItem->z()-1);
-        punchThroughNativeItem->setWidth(m_destinationRect.width());
-        punchThroughNativeItem->setHeight(m_destinationRect.height());
-        setParentOf(punchThroughNativeItem);
+    if (needPunch) {
+        if (!m_punchThroughItem && m_exportedType != WebOSForeign::TransparentObject) {
+            PunchThroughItem* punchThroughNativeItem =
+                new PunchThroughItem();
+            punchThroughNativeItem->setParentItem(m_exportedItem);
+            punchThroughNativeItem->setZ(m_exportedItem->z()-1);
+            punchThroughNativeItem->setWidth(m_destinationRect.width());
+            punchThroughNativeItem->setHeight(m_destinationRect.height());
+            m_punchThroughItem = punchThroughNativeItem;
+        }
+    } else {
+        if (m_punchThroughItem) {
+            m_punchThroughItem->setX(0);
+            m_punchThroughItem->setY(0);
+            m_punchThroughItem->setWidth(0);
+            m_punchThroughItem->setHeight(0);
+            m_punchThroughItem->setVisible(false);
+            delete m_punchThroughItem;
+            m_punchThroughItem = nullptr;
+        }
     }
-}
-
-void WebOSExported::detachImportedItem()
-{
-    qDebug() << "WebOSExported::detachImportedItem" << this;
-
-    if (m_punchThroughItem) {
-        m_punchThroughItem->setX(0);
-        m_punchThroughItem->setY(0);
-        m_punchThroughItem->setWidth(0);
-        m_punchThroughItem->setHeight(0);
-        m_punchThroughItem->setVisible(false);
-        delete m_punchThroughItem;
-        m_punchThroughItem = nullptr;
-    }
-    emit detach();
 }
 
 void WebOSExported::assigneWindowId(QString windowId)
@@ -445,10 +441,9 @@ void WebOSExported::webos_exported_destroy_resource(Resource *r)
 {
     qWarning() << "webos_exported_destroy_resource is called" << this;
 
-    if (!m_contextId.isNull())
-         updateVideoWindowList(m_contextId, QRect(0, 0, 0, 0), true);
-
-    detachImportedItem();
+    foreach(WebOSImported* imported, m_importList) {
+        imported->updateExported(nullptr);
+    }
 
     m_foreign->m_exportedList.removeAll(this);
 
@@ -486,8 +481,6 @@ WebOSImported::WebOSImported(WebOSExported* exported,
 {
     connect(exported, &WebOSExported::geometryChanged,
             this, &WebOSImported::updateGeometry);
-    connect(exported, &WebOSExported::detach,
-            this, &WebOSImported::detached);
     if (exported && exported->m_destinationRect.isValid())
         send_destination_region_changed(exported->m_destinationRect.width(),
                                         exported->m_destinationRect.height());
@@ -500,8 +493,7 @@ WebOSImported::~WebOSImported()
     else
         m_exported->m_importList.removeAll(this);
 
-    if (m_punched && m_exported)
-        m_exported->detachImportedItem();
+    detach();
 }
 
 void WebOSImported::destroyResource()
@@ -514,24 +506,24 @@ void WebOSImported::destroyResource()
 
 void WebOSImported::setSurfaceItemSize()
 {
-    if (m_surfaceAttached) {
+    if (m_childSurfaceItem && m_exported && m_exported->m_exportedItem) {
         qInfo() << "set surface item's width : " << m_exported->m_exportedItem->width();
         qInfo() << "set surface item's height : " << m_exported->m_exportedItem->height();
 
-        m_childSurface->setWidth(m_exported->m_exportedItem->width());
-        m_childSurface->setHeight(m_exported->m_exportedItem->height());
+        m_childSurfaceItem->setWidth(m_exported->m_exportedItem->width());
+        m_childSurfaceItem->setHeight(m_exported->m_exportedItem->height());
     }
 }
 
 void WebOSImported::updateGeometry()
 {
-    if (m_childSurface) {
+    if (m_childSurfaceItem) {
         switch (m_textureAlign) {
         case WebOSImported::surface_alignment::surface_alignment_stretch:
-            connect(m_childSurface->surface(), &QWaylandSurface::sizeChanged, this, &WebOSImported::setSurfaceItemSize);
+            connect(m_childSurfaceItem->surface(), &QWaylandSurface::sizeChanged, this, &WebOSImported::setSurfaceItemSize);
             if (m_exported && m_exported->m_exportedItem) {
-                m_childSurface->setWidth(m_exported->m_exportedItem->width());
-                m_childSurface->setHeight(m_exported->m_exportedItem->height());
+                m_childSurfaceItem->setWidth(m_exported->m_exportedItem->width());
+                m_childSurfaceItem->setHeight(m_exported->m_exportedItem->height());
             }
             break;
         }
@@ -544,58 +536,64 @@ void WebOSImported::updateGeometry()
     }
 }
 
-void WebOSImported::detached()
+void WebOSImported::detach()
 {
-    qInfo() << "WebOSImported::detached is called " << this;
+    if (m_exported) {
+        // exported for punch through is destroyed
+        if (!(m_exported->m_contextId.isNull())) {
+            webos_imported_detach_punchthrough(nullptr);
+        }
 
-    // exported for punch through is destroyed
-    if (m_punched) {
-        m_exported = nullptr;
-        webos_imported_detach_punchthrough(nullptr);
+       // exported for texture surface is destroyed
+        if (m_childSurfaceItem) {
+            webos_imported_detach_surface(nullptr, m_childSurfaceItem->surface()->handle()->resource()->handle);
+        }
     }
+}
 
-   // exported for texture surface is destroyed
-    if (m_surfaceAttached) {
-        m_exported = nullptr;
-        webos_imported_detach_surface(nullptr, nullptr);
-    }
+void WebOSImported::updateExported(WebOSExported * exported)
+{
+    qInfo() << "WebOSImported::detach is called " << this;
+
+    if (m_exported == exported)
+        return;
+    
+    if (exported == nullptr)
+        detach();
+
+     m_exported = exported;
 }
 
 void WebOSImported::webos_imported_attach_punchthrough(Resource* r, const QString& contextId)
 {
     Q_UNUSED(r);
 
-    qDebug() << "attach_punchthrough is called with contextId " << contextId;
+    qInfo() << "attach_punchthrough is called with contextId " << contextId;
 
-    if (!m_exported) {
-        send_punchthrough_attached(nullptr);
+    if (!m_exported || contextId.isNull()) {
+        qWarning() << " m_exported (" << m_exported << ") or contextId (" << contextId << " ) is null";
         return;
     }
+    if (!(m_exported->m_contextId.isNull()))
+        qWarning() << "m_exported has m_contextId " << m_exported->m_contextId;
 
-    if (!contextId.isNull()) {
-        if (m_exported->m_originalInputRect.isValid() && m_exported->m_sourceRect.isValid()) {
-            VideoOutputdCommunicator::instance()->setCropRegion(m_exported->m_originalInputRect, m_exported->m_sourceRect, m_exported->m_videoDisplayRect, contextId);
-        } else if (m_exported->m_videoDisplayRect.isValid()) {
-            VideoOutputdCommunicator::instance()->setDisplayWindow(m_exported->m_sourceRect, m_exported->m_videoDisplayRect, contextId);
+    if (m_exported->m_originalInputRect.isValid() && m_exported->m_sourceRect.isValid()) {
+        VideoOutputdCommunicator::instance()->setCropRegion(m_exported->m_originalInputRect, m_exported->m_sourceRect, m_exported->m_videoDisplayRect, contextId);
+    } else if (m_exported->m_videoDisplayRect.isValid()) {
+        VideoOutputdCommunicator::instance()->setDisplayWindow(m_exported->m_sourceRect, m_exported->m_videoDisplayRect, contextId);
+    }
+    if (!(m_exported->m_properties).isEmpty()) {
+        QMap<QString, QString>::const_iterator i = m_exported->m_properties.constBegin();
+        while (i != m_exported->m_properties.constEnd()) {
+            qInfo() << "m_properties key : " << i.key() << " value :  " << i.value();
+            VideoOutputdCommunicator::instance()->setProperty(i.key(), i.value(), contextId);
+            ++i;
         }
-        if (!(m_exported->m_properties).isEmpty()) {
-            QMap<QString, QString>::const_iterator i = m_exported->m_properties.constBegin();
-            while (i != m_exported->m_properties.constEnd()) {
-                qInfo() << "m_properties key : " << i.key() << " value :  " << i.value();
-                VideoOutputdCommunicator::instance()->setProperty(i.key(), i.value(), contextId);
-                ++i;
-            }
-        }
-     }
-
-    if (!contextId.isNull())
-        m_exported->m_contextId = contextId;
-
-    if (!m_punched && m_exported->m_exportedType != WebOSForeign::TransparentObject) {
-        m_exported->setPunchThrough();
     }
 
-    m_punched = true;
+    m_exported->m_contextId = contextId;
+    m_exported->setPunchThrough(true);
+
     send_punchthrough_attached(contextId);
     m_exported->updateVideoWindowList(contextId, m_exported->m_videoDisplayRect, false);
 }
@@ -603,19 +601,18 @@ void WebOSImported::webos_imported_attach_punchthrough(Resource* r, const QStrin
 void WebOSImported::webos_imported_detach_punchthrough(Resource* r)
 {
     Q_UNUSED(r);
-    QString contextId = nullptr;
 
-    qDebug() << "detach_punchthrough is called";
+    qInfo() << "detach_punchthrough is called";
 
-    if (m_exported && m_punched) {
-        contextId = m_exported->m_contextId;
-        m_exported->m_contextId = nullptr;
-        m_punched = false;
-        m_exported->detachImportedItem();
+    if (!m_exported || m_exported->m_contextId.isNull()) {
+        qWarning() << "m_exported or m_contextId is null";
+        return;
     }
 
-    send_punchthrough_detached(contextId);
-    m_exported->updateVideoWindowList(contextId, QRect(0, 0, 0, 0), true);
+    m_exported->setPunchThrough(false);
+    send_punchthrough_detached(m_exported->m_contextId);
+    m_exported->updateVideoWindowList(m_exported->m_contextId, QRect(0, 0, 0, 0), true);
+    m_exported->m_contextId = QString::null;
 }
 
 void WebOSImported::webos_imported_destroy_resource(Resource* r)
@@ -627,36 +624,34 @@ void WebOSImported::webos_imported_destroy_resource(Resource* r)
         delete this;
 }
 
+void WebOSImported::childSurfaceDestroyed()
+{
+    qInfo() << "childSurfaceDestroyed is called";
+    if (m_childSurfaceItem)
+        m_childSurfaceItem = nullptr;
+}
+
 void WebOSImported::webos_imported_attach_surface(
         Resource* resource,
         struct ::wl_resource* surface)
 {
-    qDebug() << "attach_surface is called";
+    qInfo() << "attach_surface is called : " << surface;
 
-    if (m_punched || !m_exported) {
-        qWarning() << "Imported can only have one state, punch-trough or texture";
-        send_surface_attached(nullptr);
+    if (!m_exported || !surface) {
+        qWarning() << "Exported (" << m_exported << " ) is already destroyed or surface (" << surface << ") is null";
         return;
     }
+    QtWayland::Surface* qwlSurface =
+        QtWayland::Surface::fromResource(surface);
+    QWaylandQuickSurface *quickSurface =
+        qobject_cast<QWaylandQuickSurface *>(qwlSurface->waylandSurface());
 
-    if (surface) {
-        //TODO: Need method to adjust Z order.
-        QtWayland::Surface* qwlSurface =
-            QtWayland::Surface::fromResource(surface);
-        QWaylandQuickSurface *quickSurface =
-            qobject_cast<QWaylandQuickSurface *>(qwlSurface->waylandSurface());
+    m_childSurfaceItem = quickSurface->surfaceItem();
+    connect(m_childSurfaceItem->surface(), &QWaylandSurface::surfaceDestroyed, this, &WebOSImported::childSurfaceDestroyed);
+    m_exported->setParentOf(m_childSurfaceItem);
+    m_childSurfaceItem->setZ(m_exported->m_exportedItem->z()+m_z_index);
+    updateGeometry();  //Resize texture if needed.
 
-        m_childSurface = quickSurface->surfaceItem();
-        // NOTE: Keep m_childSurface visible, which makes that m_childSurface
-        // is de-parented from m_exportedItem on destroying m_exportedItem.
-        // If m_childSurface is not visible, the parent, m_exportedItem deletes m_childSurface
-        // on the parent's destruction. That might cause a double free.
-        // Refer to ~QQuickItem() and QObjectPrivate::deleteChildren().
-        m_exported->setParentOf(m_childSurface);
-        m_childSurface->setZ(m_exported->m_exportedItem->z()+m_z_index);
-        updateGeometry();  //Resize texture if needed.
-    }
-    m_surfaceAttached = true;
     send_surface_attached(surface);
 }
 
@@ -664,13 +659,17 @@ void WebOSImported::webos_imported_detach_surface(
         Resource * resource,
         struct ::  wl_resource *surface)
 {
-    qDebug() <<"detach_surface is called";
+    qInfo() <<"detach_surface is called : " << surface;
 
-    if (m_childSurface)
-        m_childSurface->setParentItem(nullptr);
+    if (!m_childSurfaceItem || m_childSurfaceItem->surface()->handle()->resource()->handle != surface) {
+        qWarning() << "surface is not the attached surface";
+        return;
+    }
 
-    m_surfaceAttached = false;
-    send_surface_detached(surface);
+    disconnect(m_childSurfaceItem->surface(), &QWaylandSurface::surfaceDestroyed, this, &WebOSImported::childSurfaceDestroyed);
+    m_childSurfaceItem->setParentItem(nullptr);
+    send_surface_detached(m_childSurfaceItem->surface()->handle()->resource()->handle);
+    childSurfaceDestroyed();
 }
 
 void WebOSImported::webos_imported_set_z_index(
@@ -679,6 +678,6 @@ void WebOSImported::webos_imported_set_z_index(
 {
     if (m_z_index != z_index) {
         m_z_index = z_index;
-        qDebug() << "z_index of WebOSImported (" << this << " ) is changed to " << z_index;
+        qInfo() << "z_index of WebOSImported (" << this << " ) is changed to " << z_index;
     }
 }

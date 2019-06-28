@@ -85,8 +85,7 @@ public:
                   WebOSForeign::WebOSExportedType exportedType);
     ~WebOSExported();
     void setDestinationRegion(struct::wl_resource *destination_region);
-    void setPunchThrough();
-    void detachImportedItem();
+    void setPunchThrough(bool needPunch);
     void assigneWindowId(QString windowId);
     void setParentOf(QQuickItem *surfaceItem);
     void updateVisible();
@@ -97,7 +96,6 @@ public:
 
 signals:
     void geometryChanged();
-    void detach();
 
 protected:
     virtual void webos_exported_destroy_resource(Resource *) override;
@@ -142,8 +140,10 @@ public:
     ~WebOSImported();
     void destroyResource();
     void updateGeometry();
-    void detached();
+    void detach();
     void setSurfaceItemSize();
+    void updateExported(WebOSExported * exported);
+    void childSurfaceDestroyed();
 
 protected:
     virtual void webos_imported_attach_punchthrough(Resource *,
@@ -159,10 +159,8 @@ protected:
 
 private:
     WebOSImported(WebOSExported* exported, struct wl_client* client, uint32_t id);
-    QPointer<WebOSExported> m_exported;
-    QWaylandSurfaceItem* m_childSurface = nullptr;
-    bool m_punched = false;
-    bool m_surfaceAttached = false;
+    WebOSExported* m_exported = nullptr;
+    QWaylandSurfaceItem* m_childSurfaceItem = nullptr;
     enum surface_alignment m_textureAlign = surface_alignment::surface_alignment_stretch;
     int32_t m_z_index = 0;
 
