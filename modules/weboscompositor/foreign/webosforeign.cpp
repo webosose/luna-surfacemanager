@@ -113,6 +113,7 @@ WebOSExported::WebOSExported(
     , m_exportedType(exportedType)
 {
     m_exportedItem->setClip(true);
+    m_exportedItem->setZ(-1);
 #if 0 // DEBUG
     QUrl debugUIQml = QUrl(QString("file://") +
                            QString(WEBOS_INSTALL_QML) +
