@@ -28,27 +28,30 @@ BaseView {
     property Item currentItem: null
     property bool allowed: root.access
     property bool reopen: false
+    property InputMethod primaryInputMethod: compositor.inputMethod
+    property WaylandInputMethod inputMethod: primaryInputMethod.methods[compositorWindow.displayId]
+    // compositor.inputMethod can be used alone for single-display device.
 
-    x: compositor.inputMethod.panelRect.x
-    y: compositor.inputMethod.panelRect.y
-    width: compositor.inputMethod.panelRect.width
-    height: compositor.inputMethod.panelRect.height
+    x: inputMethod.panelRect.x
+    y: inputMethod.panelRect.y
+    width: inputMethod.panelRect.width
+    height: inputMethod.panelRect.height
     clip: true
 
     Binding {
-        target: compositor.inputMethod
+        target: inputMethod
         property: "panelRect"
-        when: compositor.inputMethod.active
-        value: if (compositor.inputMethod.hasPreferredPanelRect) {
+        when: inputMethod.active
+        value: if (inputMethod.hasPreferredPanelRect) {
             // Floating
-            compositor.inputMethod.preferredPanelRect
-        } else if (compositor.inputMethod.panelSurfaceSize.height > 0) {
+            inputMethod.preferredPanelRect
+        } else if (inputMethod.panelSurfaceSize.height > 0) {
             // Anchored at bottom, depending on panel surface size
             Qt.rect(
                 0,
-                root.parent.height - compositor.inputMethod.panelSurfaceSize.height,
+                root.parent.height - inputMethod.panelSurfaceSize.height,
                 root.parent.width,
-                compositor.inputMethod.panelSurfaceSize.height
+                inputMethod.panelSurfaceSize.height
             )
         } else {
             // Default
@@ -62,9 +65,9 @@ BaseView {
     }
 
     Connections {
-        target: compositor.inputMethod
+        target: inputMethod
         onPanelRectChanged: {
-            if (compositor.inputMethod.active && !compositor.inputMethod.hasPreferredPanelRect)
+            if (inputMethod.active && !inputMethod.hasPreferredPanelRect)
                 root.reopenView();
         }
         onHasPreferredPanelRectChanged: {
@@ -101,7 +104,7 @@ BaseView {
     }
 
     Binding {
-        target: compositor.inputMethod
+        target: inputMethod
         property: "allowed"
         value: root.allowed
     }
@@ -110,7 +113,7 @@ BaseView {
         target: root.model
 
         onSurfaceAdded: {
-            console.log("Adding item " + item + " to " + root);
+            console.log("Adding item " + item + " to " + keyboardArea + " of " + root);
             if (root.access) {
                 item.parent = keyboardArea;
                 // Scale while preserving aspect ratio
@@ -125,7 +128,7 @@ BaseView {
                 console.log("Item added in " + root + ", currentItem: " + currentItem);
             } else {
                 item.close();
-                compositor.inputMethod.deactivate();
+                inputMethod.deactivate();
                 console.warn("AccessControl: KeyboardView is restricted by the access control policy.");
             }
         }
@@ -187,7 +190,7 @@ BaseView {
         keyboardBacked.release();
         if (root.reopen) {
             root.reopen = false;
-            if (compositor.inputMethod.active)
+            if (inputMethod.active)
                 root.openView();
             else
                 console.warn("Abort re-opening as the input method appears to be inactive.")
@@ -196,7 +199,7 @@ BaseView {
         if (!root.isOpen && root.model.count > 0) {
             // Deactivate the input method context as it must be the case
             // that someone else wants to close this view.
-            compositor.inputMethod.deactivate();
+            inputMethod.deactivate();
         }
     }
 
