@@ -90,8 +90,12 @@ public:
     void setParentOf(QQuickItem *surfaceItem);
     void updateVisible();
     void updateVideoWindowList(QString contextId, QRect videoDisplayRect, bool needRemove);
-    void updateFullscreen(bool fullscreen);
+    void updateWindowState();
     void unregisterMuteOwner();
+    void calculateVideoDispRatio();
+    void calculateExportedItemRatio();
+    void updateExportedItemSize();
+    void setVideoDisplayWindow();
     QWaylandSurfaceItem *getImportedItem();
     void startImportedMirroring(QWaylandSurfaceItem *parent);
 
@@ -121,12 +125,14 @@ private:
     QRect m_originalInputRect;
     QRect m_sourceRect;
     QRect m_destinationRect;
+    QRect m_requestedRegion;
     QRect m_videoDisplayRect;
     QString m_windowId;
     QString m_contextId;
     QMap<QString, QString> m_properties;
     bool m_isSurfaceItemFullscreen;
-    double m_outputRatio = 1.0;
+    double m_videoDispRatio = 1.0;
+    double m_exportedWindowRatio = 1.0;
 
     friend class WebOSForeign;
     friend class WebOSImported;
