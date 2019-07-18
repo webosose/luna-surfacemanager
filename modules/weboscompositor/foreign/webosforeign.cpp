@@ -255,7 +255,7 @@ void WebOSExported::calculateExportedItemRatio() {
         qInfo() << "surface geometry : " << m_qwlsurfaceItem->surface()->size().width() << "x" << m_qwlsurfaceItem->surface()->size().height();
         qInfo() << "surface item geometry : " << m_qwlsurfaceItem->width() << "x" << m_qwlsurfaceItem->height();
         qInfo() <<"m_exportedWindowRatio : " <<m_exportedWindowRatio;
-        if (m_requestedRegion.isValid() && m_destinationRect.isValid()) {
+        if (m_requestedRegion.isValid()) {
             m_destinationRect.setX((int)(m_requestedRegion.x()*m_exportedWindowRatio));
             m_destinationRect.setY((int)(m_requestedRegion.y()*m_exportedWindowRatio));
             m_destinationRect.setWidth((int)(m_requestedRegion.width()*m_exportedWindowRatio));
@@ -313,7 +313,7 @@ void WebOSExported::updateExportedItemSize() {
 
 void WebOSExported::setVideoDisplayWindow() {
     if (m_foreign->m_compositor->window() && !m_contextId.isNull()) {
-        if (m_originalInputRect.isValid() &&m_sourceRect.isValid()) {
+        if (m_originalInputRect.isValid()) {
            VideoOutputdCommunicator::instance()->setCropRegion(m_originalInputRect, m_sourceRect, m_videoDisplayRect, m_contextId);
         } else {
            VideoOutputdCommunicator::instance()->setDisplayWindow(m_sourceRect, m_videoDisplayRect, m_contextId);
@@ -338,22 +338,24 @@ void WebOSExported::setDestinationRegion(struct::wl_resource *destination_region
                 qwlDestinationRegion.boundingRect().y(),
                 qwlDestinationRegion.boundingRect().width(),
                 qwlDestinationRegion.boundingRect().height());
+        } else {
+            m_requestedRegion = QRect(0, 0, 0, 0);
+        }
 
-            m_destinationRect = QRect(
-                (int) (qwlDestinationRegion.boundingRect().x()*m_exportedWindowRatio),
-                (int) (qwlDestinationRegion.boundingRect().y()*m_exportedWindowRatio),
-                (int) (qwlDestinationRegion.boundingRect().width()*m_exportedWindowRatio),
-                (int) (qwlDestinationRegion.boundingRect().height()*m_exportedWindowRatio));
+        m_destinationRect = QRect(
+            (int) (m_requestedRegion.x()*m_exportedWindowRatio),
+            (int) (m_requestedRegion.y()*m_exportedWindowRatio),
+            (int) (m_requestedRegion.width()*m_exportedWindowRatio),
+            (int) (m_requestedRegion.height()*m_exportedWindowRatio));
 
-            m_videoDisplayRect = QRect(
-                (int) (qwlDestinationRegion.boundingRect().x()*m_videoDispRatio),
-                (int) (qwlDestinationRegion.boundingRect().y()*m_videoDispRatio),
-                (int) (qwlDestinationRegion.boundingRect().width()*m_videoDispRatio),
-                (int) (qwlDestinationRegion.boundingRect().height()*m_videoDispRatio));
+        m_videoDisplayRect = QRect(
+            (int) (m_requestedRegion.x()*m_videoDispRatio),
+            (int) (m_requestedRegion.y()*m_videoDispRatio),
+            (int) (m_requestedRegion.width()*m_videoDispRatio),
+            (int) (m_requestedRegion.height()*m_videoDispRatio));
 
             qInfo() << "exported_window destination region : " << m_destinationRect;
             qInfo() << "video display output region : " <<m_videoDisplayRect;
-        }
     }
 
     setVideoDisplayWindow();
@@ -399,6 +401,8 @@ void WebOSExported::webos_exported_set_crop_region(
                 qwlSourceRegion.boundingRect().y(),
                 qwlSourceRegion.boundingRect().width(),
                 qwlSourceRegion.boundingRect().height());
+        } else {
+            m_sourceRect = QRect(0, 0, 0, 0);
         }
     }
 
@@ -554,7 +558,7 @@ WebOSImported::WebOSImported(WebOSExported* exported,
 {
     connect(exported, &WebOSExported::geometryChanged,
             this, &WebOSImported::updateGeometry);
-    if (exported && exported->m_destinationRect.isValid())
+    if (exported)
         send_destination_region_changed(exported->m_destinationRect.width(),
                                         exported->m_destinationRect.height());
 }
