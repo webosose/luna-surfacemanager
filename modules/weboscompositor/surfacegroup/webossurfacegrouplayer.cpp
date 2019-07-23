@@ -55,6 +55,7 @@ void WebOSSurfaceGroupLayer::webos_surface_group_layer_set_key_index(Resource *r
 {
     Q_UNUSED(resource);
     setKeyIndex(key_index);
+    qInfo() << "layer(" << m_name << ") key index :" << m_keyIndex << "at z(" << z() << ")";
     emit layerKeyIndexChanged(m_name);
 }
 

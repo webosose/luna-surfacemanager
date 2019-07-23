@@ -997,6 +997,18 @@ WebOSSurfaceItem::KeyMasks WebOSSurfaceItem::keyMaskFromQt(int key) const
     case Qt::Key_7:
     case Qt::Key_8:
     case Qt::Key_9:
+    case Qt::Key_webOS_BS_11:
+    case Qt::Key_webOS_BS_12:
+    case Qt::Key_webOS_CS1_11:
+    case Qt::Key_webOS_CS1_12:
+    case Qt::Key_webOS_CS2_11:
+    case Qt::Key_webOS_CS2_12:
+    case Qt::Key_webOS_TER_11:
+    case Qt::Key_webOS_TER_12:
+    case Qt::Key_webOS_4K_BS_11:
+    case Qt::Key_webOS_4K_BS_12:
+    case Qt::Key_webOS_4K_CS_11:
+    case Qt::Key_webOS_4K_CS_12:
         retKeyMask = KeyMaskNumeric;
     break;
     case Qt::Key_Red:
@@ -1077,6 +1089,9 @@ WebOSSurfaceItem::KeyMasks WebOSSurfaceItem::keyMaskFromQt(int key) const
     case Qt::Key_webOS_MultiPip:
         retKeyMask = KeyMaskTeletextActiveGroup;
     break;
+    case Qt::Key_webOS_BMLData:
+        retKeyMask = KeyMaskData;
+    break;
     default:
         /* If a client want to receive some special keys and the other keys have to be delivered to the parent,
              there are two approaches according to kinds of special keys.
@@ -1109,7 +1124,8 @@ WebOSSurfaceItem::KeyMasks WebOSSurfaceItem::keyMaskFromQt(int key) const
                      ^ KeyMaskRemoteMagnifierGroup
                      ^ KeyMaskMinimalPlaybackGroup
                      ^ KeyMaskGuide
-                     ^ KeyMaskTeletextActiveGroup;
+                     ^ KeyMaskTeletextActiveGroup
+                     ^ KeyMaskData;
     break;
     }
 

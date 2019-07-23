@@ -328,6 +328,7 @@ void WebOSSurfaceGroup::webos_surface_group_focus_owner(Resource *resource)
 {
     Q_UNUSED(resource);
     if (m_root) {
+        qInfo() << "surface group(" << m_name << ")";
         m_keyboardFocusedSurface = m_root;
         emit keyboardFocusedSurfaceChanged();
     }
@@ -341,6 +342,7 @@ void WebOSSurfaceGroup::webos_surface_group_focus_layer(Resource *resource, cons
         if (surfaceGroupLayer) {
             WebOSSurfaceItem* surfaceItem = surfaceGroupLayer->attachedSurface();
             if (surfaceItem) {
+                qInfo() << "surface group(" << m_name << ") layer:" << layer;
                 m_keyboardFocusedSurface = surfaceItem;
                 emit keyboardFocusedSurfaceChanged();
             }
@@ -352,6 +354,7 @@ void WebOSSurfaceGroup::webos_surface_group_focus_layer(Resource *resource, cons
 void WebOSSurfaceGroup::webos_surface_group_commit_key_index(Resource *resource, uint32_t commit)
 {
     Q_UNUSED(resource);
+    qInfo() << "surface group(" << m_name << ") commit:" << commit;
 
     if (commit)
         makeKeyOrderedItems();
