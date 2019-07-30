@@ -297,7 +297,7 @@ void WebOSExported::updateVideoWindowList(QString contextId, QRect videoDisplayR
         VideoWindowInformer::instance()->removeVideoWindowList(contextId);
     } else {
          if(!m_contextId.isNull() && m_exportedItem->isVisible()) {
-            VideoWindowInformer::instance()->insertVideoWindowList(contextId, videoDisplayRect);
+            VideoWindowInformer::instance()->insertVideoWindowList(contextId, videoDisplayRect, m_windowId);
          }
     }
 }

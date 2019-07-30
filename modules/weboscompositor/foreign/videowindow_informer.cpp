@@ -34,13 +34,13 @@ VideoWindowInformer* VideoWindowInformer::instance()
     return m_instance;
 }
 
-void VideoWindowInformer::insertVideoWindowList(const QString contextId, const QRect destinationRectangle)
+void VideoWindowInformer::insertVideoWindowList(const QString contextId, const QRect destinationRectangle, const QString windowId)
 {
-    qWarning() << "insertVideoWindowList() with contextId : " << contextId << " , destinationRectangle : " << destinationRectangle;
-    emit insertVideoWindowInfo(contextId, destinationRectangle);
+    qDebug() << "insertVideoWindowList() with contextId : " << contextId << " , destinationRectangle : " << destinationRectangle << " , windowId " << windowId;
+    emit insertVideoWindowInfo(contextId, destinationRectangle, windowId);
 }
 void VideoWindowInformer::removeVideoWindowList(const QString contextId)
 {
-     qWarning() << "removeVideoWindowList() with contextId : " << contextId;
+     qDebug() << "removeVideoWindowList() with contextId : " << contextId;
      emit removeVideoWindowInfo(contextId);
 }

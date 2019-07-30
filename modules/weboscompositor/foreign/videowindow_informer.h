@@ -27,11 +27,11 @@ class VideoWindowInformer : public QObject
 public:
     static VideoWindowInformer* instance();
 
-    void insertVideoWindowList(const QString contextId, const QRect destinationRectangle);
+    void insertVideoWindowList(const QString contextId, const QRect destinationRectangle, const QString windowId);
     void removeVideoWindowList(const QString contextId);
 
 signals:
-    void insertVideoWindowInfo(const QString contextId, const QRect destinationRectangle);
+    void insertVideoWindowInfo(const QString contextId, const QRect destinationRectangle, const QString windowId);
     void removeVideoWindowInfo(const QString contextId);
 
 protected:
