@@ -775,7 +775,6 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfac
                 // Fall through
             case WebOSSurfaceItem::ItemStateClosing:
                 qInfo() << "handling surfaceUnmapped for " << item << item->itemState() << item->itemStateReason();
-                m_surfaceModel->surfaceUnmapped(item);
                 emit surfaceUnmapped(item);
                 break;
             default:
