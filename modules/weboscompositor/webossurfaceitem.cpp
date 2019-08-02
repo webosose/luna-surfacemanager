@@ -318,7 +318,15 @@ void WebOSSurfaceItem::wheelEvent(QWheelEvent *event)
                   event->angleDelta(), event->delta(), event->orientation(),
                   event->buttons(), event->modifiers(), event->phase(), window());
 
+#ifdef MULTIINPUT_SUPPORT
+    QWaylandInputDevice *inputDevice = getInputDevice(&e);
+    QPointF curPosition = static_cast<QPointF>(QCursor::pos());
+    if (inputDevice->mouseFocus() != this) {
+        m_compositor->inputDeviceFor(event)->handle()->setMouseFocus(this, curPosition, curPosition);
+    }
+#else
     m_compositor->setMouseFocus(surface());
+#endif
 
     QWaylandSurfaceItem::wheelEvent(&e);
 }
