@@ -96,6 +96,7 @@ public:
     void calculateExportedItemRatio();
     void updateExportedItemSize();
     void setVideoDisplayWindow();
+    void onSurfaceDestroyed();
     QWaylandSurfaceItem *getImportedItem();
     void startImportedMirroring(QWaylandSurfaceItem *parent);
 

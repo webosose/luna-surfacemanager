@@ -200,6 +200,7 @@ WebOSExported::WebOSExported(
     connect(m_exportedItem, &QQuickItem::visibleChanged, this, &WebOSExported::updateVisible);
     connect(item, &WebOSSurfaceItem::stateChanged, this, &WebOSExported::updateWindowState);
     connect(m_qwlsurfaceItem, &QWaylandSurfaceItem::widthChanged, this, &WebOSExported::calculateExportedItemRatio);
+    connect(m_qwlsurfaceItem, &QWaylandSurfaceItem::surfaceDestroyed, this, &WebOSExported::onSurfaceDestroyed);
 
     calculateVideoDispRatio();
     calculateExportedItemRatio();
@@ -234,8 +235,14 @@ WebOSExported::~WebOSExported()
         delete m_exportedItem;
 }
 
-void WebOSExported::calculateVideoDispRatio() {
+void WebOSExported::calculateVideoDispRatio()
+{
     qInfo() << "WebOSExported::calculateVideoDispRatio is called on " << m_windowId;
+    if (!m_qwlsurfaceItem) {
+        qWarning() << "QWaylandSurfaceItem  for " << m_windowId << " is already destroyed";
+        return;
+    }
+
     if (m_isSurfaceItemFullscreen && m_foreign->m_outputGeometry.isValid() && m_qwlsurfaceItem->surface()) {
         m_videoDispRatio = (double) m_foreign->m_outputGeometry.width() / m_qwlsurfaceItem->surface()->size().width();
         qInfo() << "surface geometry : " << m_qwlsurfaceItem->surface()->size().width() << "x" << m_qwlsurfaceItem->surface()->size().height();
@@ -251,8 +258,14 @@ void WebOSExported::calculateVideoDispRatio() {
     }
 }
 
-void WebOSExported::calculateExportedItemRatio() {
+void WebOSExported::calculateExportedItemRatio()
+{
     qInfo() << "WebOSExported::calculateExportedItemRatio is called on " << m_windowId;
+    if (!m_qwlsurfaceItem) {
+        qWarning() << "QWaylandSurfaceItem  for " << m_windowId << " is  already destroyed";
+        return;
+    }
+
     if (m_isSurfaceItemFullscreen && m_foreign->m_outputGeometry.isValid()) {
         m_exportedWindowRatio = (double) m_qwlsurfaceItem->width() / m_qwlsurfaceItem->surface()->size().width();
         qInfo() << "surface geometry : " << m_qwlsurfaceItem->surface()->size().width() << "x" << m_qwlsurfaceItem->surface()->size().height();
@@ -268,7 +281,12 @@ void WebOSExported::calculateExportedItemRatio() {
     }
 }
 
-void WebOSExported::updateWindowState() {
+void WebOSExported::updateWindowState()
+{
+    if (!m_qwlsurfaceItem) {
+        qWarning() << "QWaylandSurfaceItem for " << m_windowId << " is already destroyed";
+        return;
+    }
     WebOSSurfaceItem *item = qobject_cast<WebOSSurfaceItem*>(m_qwlsurfaceItem);
     qInfo() << "update window state : " << item->state() << "for WebOSExported ( " << m_windowId << " ) ";
     m_isSurfaceItemFullscreen = item->state() == Qt::WindowFullScreen;
@@ -280,6 +298,9 @@ void WebOSExported::updateWindowState() {
 
 void WebOSExported::updateVisible()
 {
+    if (!m_exportedItem) {
+        qWarning() << "QWaylandSurfaceItem  for " << m_windowId << " is  already destroyed ";
+    }
     if (!m_contextId.isNull()) {
         if (m_exportedItem->isVisible()) {
             qInfo() << "exported item's visible is changed to true on " << m_windowId;
@@ -291,9 +312,21 @@ void WebOSExported::updateVisible()
     }
 }
 
+void WebOSExported::onSurfaceDestroyed()
+{
+    qInfo() << "Surface item for (" << m_windowId << ") is destroyed";
+
+    m_qwlsurfaceItem = nullptr;
+
+    if (m_exportedItem) {
+        delete m_exportedItem;
+        m_exportedItem = nullptr;
+    }
+}
+
 void WebOSExported::updateVideoWindowList(QString contextId, QRect videoDisplayRect, bool needRemove)
 {
-    if (needRemove) {
+    if (needRemove || !m_exportedItem) {
         VideoWindowInformer::instance()->removeVideoWindowList(contextId);
     } else {
          if(!m_contextId.isNull() && m_exportedItem->isVisible()) {
@@ -302,7 +335,12 @@ void WebOSExported::updateVideoWindowList(QString contextId, QRect videoDisplayR
     }
 }
 
-void WebOSExported::updateExportedItemSize() {
+void WebOSExported::updateExportedItemSize()
+{
+    if (!m_exportedItem) {
+        qWarning() << "QWaylandSurfaceItem  for " << m_windowId << " is  already destroyed ";
+    }
+
     m_exportedItem->setX(m_destinationRect.x());
     m_exportedItem->setY(m_destinationRect.y());
     m_exportedItem->setWidth(m_destinationRect.width());
@@ -316,7 +354,8 @@ void WebOSExported::updateExportedItemSize() {
     emit geometryChanged();
 }
 
-void WebOSExported::setVideoDisplayWindow() {
+void WebOSExported::setVideoDisplayWindow()
+{
     if (m_foreign->m_compositor->window() && !m_contextId.isNull()) {
         if (m_originalInputRect.isValid()) {
            VideoOutputdCommunicator::instance()->setCropRegion(m_originalInputRect, m_sourceRect, m_videoDisplayRect, m_contextId);
@@ -453,7 +492,7 @@ void WebOSExported::webos_exported_set_property(
 
 void WebOSExported::setPunchThrough(bool needPunch)
 {
-    if (needPunch) {
+    if (needPunch && m_exportedItem) {
         if (!m_punchThroughItem && m_exportedType != WebOSForeign::TransparentObject) {
             PunchThroughItem* punchThroughNativeItem =
                 new PunchThroughItem();
@@ -502,7 +541,6 @@ void WebOSExported::setParentOf(QQuickItem *item)
         return;
     }
 
-    //TODO: Need location settings? and Z order manage
     item->setParentItem(m_exportedItem);
 
     // mirrored items
@@ -661,8 +699,8 @@ void WebOSImported::webos_imported_attach_punchthrough(Resource* r, const QStrin
 
     qInfo() << "attach_punchthrough is called with contextId " << contextId << " on " << this;
 
-    if (!m_exported || contextId.isNull()) {
-        qWarning() << " m_exported (" << m_exported << ") or contextId (" << contextId << " ) is null";
+    if (!m_exported || !(m_exported->m_exportedItem) || contextId.isNull()) {
+        qWarning() << " m_exported : " << m_exported << " contextId : " << contextId;
         return;
     }
     if (!(m_exported->m_contextId.isNull()))
@@ -730,7 +768,7 @@ void WebOSImported::webos_imported_attach_surface(
 {
     qInfo() << "attach_surface is called : " << surface << "on " << this;
 
-    if (!m_exported || !surface) {
+    if (!m_exported || !(m_exported->m_exportedItem) || !surface) {
         qWarning() << "Exported (" << m_exported << " ) is already destroyed or surface (" << surface << ") is null";
         return;
     }
