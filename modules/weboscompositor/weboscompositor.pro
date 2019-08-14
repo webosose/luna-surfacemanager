@@ -51,6 +51,7 @@ HEADERS += \
     webossurfaceitem.h \
     webosscreenshot.h \
     weboskeyfilter.h \
+    webosinputdevice.h \
     compositorextensionfactory.h \
     unixsignalhandler.h
 
@@ -65,6 +66,7 @@ SOURCES += \
     webossurfaceitem.cpp \
     webosscreenshot.cpp \
     weboskeyfilter.cpp \
+    webosinputdevice.cpp \
     compositorextensionfactory.cpp \
     unixsignalhandler.cpp
 
@@ -78,8 +80,6 @@ use_config {
 !no_multi_input {
     # Multiple input support
     MODULE_DEFINES += MULTIINPUT_SUPPORT
-    HEADERS += webosinputdevice.h
-    SOURCES += webosinputdevice.cpp
 }
 
 !no_upstart {

@@ -509,6 +509,7 @@ signals:
     void backgroundImageFilePathChanged();
 
 protected:
+    void processKeyEvent(QKeyEvent *event);
     virtual void keyPressEvent(QKeyEvent *event);
     virtual void keyReleaseEvent(QKeyEvent *event);
     virtual void focusInEvent(QFocusEvent *event);
@@ -526,9 +527,9 @@ protected:
     QList<QTouchEvent::TouchPoint> mapToTarget(const QList<QTouchEvent::TouchPoint>& points) const;
 
     void takeWlKeyboardFocus() const;
-    bool isWlKeyboardFocusTaken() const;
 
-    QWaylandInputDevice* getInputDevice(QInputEvent *event) const;
+    QWaylandInputDevice* getInputDevice(QInputEvent *event = nullptr) const;
+    void takeFocus(QWaylandInputDevice *device = nullptr) override;
 
 private:
     // methods

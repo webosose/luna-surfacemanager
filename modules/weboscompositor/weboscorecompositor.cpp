@@ -37,9 +37,7 @@
 #include "webossurfaceitem.h"
 #include "webossurfacegroup.h"
 #include "webosshellsurface.h"
-#ifdef MULTIINPUT_SUPPORT
 #include "webosinputdevice.h"
-#endif
 #include "webosseat.h"
 #include "webosinputmethod.h"
 #include "compositorextension.h"
@@ -169,7 +167,7 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
     m_outputs.insert(window, output);
 
     connect(window, SIGNAL(frameSwapped()), this, SLOT(frameSwappedSlot()));
-    //TODO: check is it ok just to use primary window to handle activeFocusItem
+    // TODO: check is it ok just to use primary window to handle activeFocusItem
     connect(window, SIGNAL(activeFocusItemChanged()), this, SLOT(handleActiveFocusItemChanged()));
 
     if (firstRegister) {
@@ -186,6 +184,7 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
 
         connect(m_unixSignalHandler, &UnixSignalHandler::sighup, this, &WebOSCoreCompositor::reloadConfig);
 
+        // TODO: support multiple keyboard focus
         connect(defaultInputDevice()->handle()->keyboardDevice(), &QtWayland::Keyboard::focusChanged, this, &WebOSCoreCompositor::activeSurfaceChanged);
 
         QCoreApplication::instance()->installEventFilter(m_eventPreprocessor);
@@ -205,6 +204,13 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
 
         emit surfaceModelChanged();
         emit windowChanged();
+
+        // Use defaultInputDevice for primary window
+        m_inputDevices[window] = defaultInputDevice();
+    } else {
+        // Create dedicated InputDevice for secondary windows
+        QWaylandInputDevice *device = new WebOSInputDevice(this, QWaylandInputDevice::Keyboard);
+        m_inputDevices[window] = device;
     }
 }
 
@@ -1072,6 +1078,14 @@ QWaylandInputDevice *WebOSCoreCompositor::inputDeviceFor(QInputEvent *inputEvent
 #endif
 }
 
+QWaylandInputDevice *WebOSCoreCompositor::inputDeviceForWindow(QQuickWindow *window)
+{
+    if (!window)
+        return defaultInputDevice();
+
+    return m_inputDevices[window];
+}
+
 WebOSCoreCompositor::EventPreprocessor::EventPreprocessor(WebOSCoreCompositor* compositor)
     : QObject()
     , m_compositor(compositor)
@@ -1096,6 +1110,8 @@ bool WebOSCoreCompositor::EventPreprocessor::eventFilter(QObject *obj, QEvent *e
             dev->updateModifierState(ke);
         }
 #else
+        // TODO: update modifier for dedicated keyboards
+        // Why should it be done in event filter, not the handler of the event?
         m_compositor->defaultInputDevice()->updateModifierState(ke);
 #endif
     }

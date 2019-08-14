@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,6 +38,17 @@ WebOSInputDevice::WebOSInputDevice(QWaylandCompositor *compositor)
 
     /* We use multiple keyboard device but use same modifier state */
     updateModifierState(m_compositor->defaultInputDevice());
+}
+
+// This constuctor is for window-dedicated device, not multi-input support
+WebOSInputDevice::WebOSInputDevice(QWaylandCompositor *compositor, CapabilityFlags caps)
+    : QWaylandInputDevice(compositor, caps)
+    , m_compositor(compositor)
+    , m_deviceId(-1) // should not be set, distinguished from multi input deivices.
+{
+    m_compositor->handle()->registerInputDevice(this);
+
+    // Nothing to follow up, the device is created at the initial stage.
 }
 
 WebOSInputDevice::~WebOSInputDevice()

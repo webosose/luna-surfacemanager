@@ -162,6 +162,7 @@ public:
 
     QList<QWaylandInputDevice *> inputDevices() const;
     QWaylandInputDevice *inputDeviceFor(QInputEvent *inputEvent) Q_DECL_OVERRIDE;
+    QWaylandInputDevice *inputDeviceForWindow(QQuickWindow *window);
 
     virtual bool getCursor(QWaylandSurface *surface, int hotSpotX, int hotSpotY, QCursor& cursor);
 
@@ -295,6 +296,7 @@ private:
 
     QList<WebOSSurfaceItem*> m_surfacesOnUpdate;
     QMap<QQuickWindow *, QWaylandOutput *> m_outputs;
+    QMap<QQuickWindow *, QWaylandInputDevice *> m_inputDevices;
 
     //Global tick counter to get absolute time stamp for recent window model and LRU surface
     quint32 m_fullscreenTick;

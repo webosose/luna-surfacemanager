@@ -203,18 +203,15 @@ void WebOSSurfaceItem::takeWlKeyboardFocus() const
         qWarning("null surface(), not setting focus");
         return;
     }
+#ifdef MULTIINPUT_SUPPORT
     /* set keyboard focus for all devices */
     foreach (QWaylandInputDevice *dev, m_compositor->inputDevices())
         dev->setKeyboardFocus(surface());
-}
-
-bool WebOSSurfaceItem::isWlKeyboardFocusTaken() const
-{
-    bool bIsWlKeyboardFocusTaken = true;
-    foreach (QWaylandInputDevice *dev, m_compositor->inputDevices()) {
-        bIsWlKeyboardFocusTaken = bIsWlKeyboardFocusTaken && (surface() == dev->keyboardFocus());
-    }
-    return bIsWlKeyboardFocusTaken;
+#else
+    /* set keyboard focus for this item */
+    QWaylandInputDevice *dev = m_compositor->inputDeviceForWindow(window());
+    dev->setKeyboardFocus(surface());
+#endif
 }
 
 bool WebOSSurfaceItem::contains(const QPointF& point) const
@@ -249,12 +246,17 @@ void WebOSSurfaceItem::mousePressEvent(QMouseEvent *event)
 
     if (surface()) {
         QWaylandInputDevice *inputDevice = getInputDevice(&e);
+#ifdef MULTIINPUT_SUPPORT
+        QWaylandInputDevice *keyboardDevice = inputDevice;
+#else
+        QWaylandInputDevice *keyboardDevice = getInputDevice();
+#endif
 
         if (inputDevice->mouseFocus() != this)
             inputDevice->setMouseFocus(this, e.localPos(), e.windowPos());
 
         if (inputDevice->mouseFocus()
-                && inputDevice->mouseFocus()->surface() != inputDevice->keyboardFocus()
+                && inputDevice->mouseFocus()->surface() != keyboardDevice->keyboardFocus()
                 && m_grabKeyboardFocusOnClick) {
             takeWlKeyboardFocus();
             m_hasKeyboardFocus = true;
@@ -317,15 +319,21 @@ void WebOSSurfaceItem::hoverLeaveEvent(QHoverEvent *event)
 QWaylandInputDevice* WebOSSurfaceItem::getInputDevice(QInputEvent *event) const
 {
 #ifdef MULTIINPUT_SUPPORT
+    if (!event)
+        return nullptr;
+
     return m_compositor->inputDeviceFor(event);
 #else
-    Q_UNUSED(event);
-    if (!isSurfaced()) {
-        qWarning("no surface, returning compositor->defaultInputDevice.");
-        return m_compositor->defaultInputDevice();
-    }
-    return surface()->compositor()->defaultInputDevice();
+    if (!event || event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease)
+        return m_compositor->inputDeviceForWindow(window());
+
+    return m_compositor->defaultInputDevice();
 #endif
+}
+
+void WebOSSurfaceItem::takeFocus(QWaylandInputDevice *device)
+{
+    QWaylandSurfaceItem::takeFocus(device ? device : getInputDevice());
 }
 
 void WebOSSurfaceItem::mouseUngrabEvent()
@@ -347,66 +355,47 @@ void WebOSSurfaceItem::mouseUngrabEvent()
 #endif
 }
 
+void WebOSSurfaceItem::processKeyEvent(QKeyEvent *event)
+{
+    if (!surface())
+        return;
+
+    QWaylandInputDevice *inputDevice = getInputDevice(event);
+    QtWayland::Keyboard *keyboard = inputDevice->handle()->keyboardDevice();
+
+    // General case
+    if (!(isPartOfGroup() || isSurfaceGroupRoot()) ||
+        // If keyboard is grabbed, do not propagate key events between
+        // window-group to avoid unintended keyboard focus change.
+        keyboard->currentGrab() != keyboard) {
+
+        if (hasFocus())
+            inputDevice->sendFullKeyEvent(event);
+        return;
+    }
+
+    // Surface group
+    if (acceptsKeyEvent(event)) {
+        inputDevice->setKeyboardFocus(surface());
+        inputDevice->sendFullKeyEvent(event);
+    } else if (m_surfaceGroup) {
+        WebOSSurfaceItem *nextItem = m_surfaceGroup->nextZOrderedSurfaceGroupItem(this);
+        if (nextItem) {
+            nextItem->processKeyEvent(event);
+        }
+    }
+}
+
 void WebOSSurfaceItem::keyPressEvent(QKeyEvent *event)
 {
     PMTRACE_FUNCTION;
-    if (surface()) {
-        if ((isPartOfGroup() || isSurfaceGroupRoot()) &&
-            //If keyboard is grabbed, do not propagate key events between
-            //window-group to avoid unintended keyboard focus change.
-            getInputDevice(event)->handle()->keyboardDevice()->currentGrab() ==
-            getInputDevice(event)->handle()->keyboardDevice()) {
-            if (acceptsKeyEvent(event)) {
-                QWaylandInputDevice *inputDevice = getInputDevice(event);
-                if (!isWlKeyboardFocusTaken()) {
-                    takeWlKeyboardFocus();
-                }
-                inputDevice->sendFullKeyEvent(event);
-            } else {
-                if (m_surfaceGroup) {
-                    WebOSSurfaceItem *nextItem = m_surfaceGroup->nextZOrderedSurfaceGroupItem(this);
-                    if (nextItem) {
-                        nextItem->keyPressEvent(event);
-                    }
-                }
-            }
-        } else {
-            if (hasFocus()) {
-                getInputDevice(event)->sendFullKeyEvent(event);
-            }
-        }
-    }
+    processKeyEvent(event);
 }
 
 void WebOSSurfaceItem::keyReleaseEvent(QKeyEvent *event)
 {
     PMTRACE_FUNCTION;
-    if (surface()) {
-        if ((isPartOfGroup() || isSurfaceGroupRoot()) &&
-            //If keyboard is grabbed, do not propagate key events between
-            //window-group to avoid unintended keyboard focus change.
-            getInputDevice(event)->handle()->keyboardDevice()->currentGrab() ==
-            getInputDevice(event)->handle()->keyboardDevice()) {
-            if (acceptsKeyEvent(event)) {
-                QWaylandInputDevice *inputDevice = getInputDevice(event);
-                if (!isWlKeyboardFocusTaken()) {
-                    takeWlKeyboardFocus();
-                }
-                inputDevice->sendFullKeyEvent(event);
-            } else {
-                if (m_surfaceGroup) {
-                    WebOSSurfaceItem *nextItem = m_surfaceGroup->nextZOrderedSurfaceGroupItem(this);
-                    if (nextItem) {
-                        nextItem->keyReleaseEvent(event);
-                    }
-                }
-            }
-        } else {
-            if (hasFocus()) {
-                getInputDevice(event)->sendFullKeyEvent(event);
-            }
-        }
-    }
+    processKeyEvent(event);
 }
 
 void WebOSSurfaceItem::focusInEvent(QFocusEvent *event)
@@ -427,11 +416,12 @@ void WebOSSurfaceItem::focusOutEvent(QFocusEvent *event)
             dev->setMouseFocus(0, QPointF(), QPointF());
     }
 #else
-    QWaylandInputDevice *inputDevice = m_compositor->defaultInputDevice();
-    if (inputDevice->keyboardFocus() == surface())
-        inputDevice->setKeyboardFocus(0);
-    if (inputDevice->mouseFocus() == this)
-        inputDevice->setMouseFocus(0, QPointF(), QPointF());
+    QWaylandInputDevice *keyboardDevice = getInputDevice();
+    QWaylandInputDevice *mouseDevice = m_compositor->defaultInputDevice();
+    if (keyboardDevice->keyboardFocus() == surface())
+        keyboardDevice->setKeyboardFocus(0);
+    if (mouseDevice->mouseFocus() == this)
+        mouseDevice->setMouseFocus(0, QPointF(), QPointF());
 #endif
 
     m_compositor->setMouseEventEnabled(true);
