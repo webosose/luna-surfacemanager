@@ -61,15 +61,14 @@ public:
     /*! Ment to be called from QML, do not share the raw pointer else where */
     Q_INVOKABLE QObject* layoutInfo(WebOSSurfaceItem* item) const;
 
+    Q_INVOKABLE int keyIndex(WebOSSurfaceItem* item) const;
+
     void closeAttachedSurfaces();
 
     WebOSSurfaceItem* nextZOrderedSurfaceGroupItem(WebOSSurfaceItem* currentItem);
 
-    bool allowLayerKeyOrder();
+    Q_INVOKABLE bool allowLayerKeyOrder() const;
     void makeKeyOrderedItems();
-    void removeSurfaceFromKeyOrdredItems(WebOSSurfaceItem* item);
-    void removeLayerFromKeyOrdredItems(int keyIndex);
-    void updateKeyOrdredSurface(int keyIndex, WebOSSurfaceItem* item);
     WebOSSurfaceItem* nextKeyOrderedSurfaceGroupItem(WebOSSurfaceItem* currentItem);
 
 signals:
@@ -77,6 +76,7 @@ signals:
     void itemsChanged();
     void rootItemChanged();
     void keyboardFocusedSurfaceChanged();
+    void keyOrderChanged();
 
 protected:
     virtual void webos_surface_group_bind_resource(Resource *resource);

@@ -34,7 +34,7 @@ WebOSSurfaceGroupLayer::WebOSSurfaceGroupLayer(WebOSSurfaceGroup* group, struct 
 
 WebOSSurfaceGroupLayer::~WebOSSurfaceGroupLayer()
 {
-    qDebug("Deleting layer '%s'", qPrintable(m_name));
+    qInfo("Deleting layer '%s'", qPrintable(m_name));
 }
 
 QSharedPointer<QObject> WebOSSurfaceGroupLayer::layoutInfo()
@@ -46,6 +46,7 @@ void WebOSSurfaceGroupLayer::webos_surface_group_layer_set_z_index(Resource *res
 {
     Q_UNUSED(resource);
     setZ(z_index);
+    qInfo() << "layer(" << m_name << ") z index :" << z() << "and key index(" << m_keyIndex << ")";
     if (m_attached) {
         emit m_attached->zOrderChanged(z());
     }
@@ -76,6 +77,7 @@ void WebOSSurfaceGroupLayer::detachSurface()
 {
     send_surface_detached();
     m_attached = NULL;
+    qInfo() << "at layer " << m_name;
 }
 
 void WebOSSurfaceGroupLayer::attach(WebOSSurfaceItem* item)
@@ -83,5 +85,6 @@ void WebOSSurfaceGroupLayer::attach(WebOSSurfaceItem* item)
     if (item) {
         m_attached = item;
         send_surface_attached();
+        qInfo() << item << " attached at layer " << m_name;
     }
 }

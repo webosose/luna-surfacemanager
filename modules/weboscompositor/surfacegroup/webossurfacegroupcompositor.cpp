@@ -55,7 +55,7 @@ void WebOSSurfaceGroupCompositor::webos_surface_group_compositor_create_surface_
             if (item->appId() != name) {
                 qWarning("group name '%s' does not match the root surface appId '%s'", qPrintable(name), qPrintable(item->appId()));
             }
-            qDebug("Creating surface group '%s' for wl_surface@%d", qPrintable(name), parent->object.id);
+            qInfo("Creating surface group '%s' for wl_surface@%d", qPrintable(name), parent->object.id);
             WebOSSurfaceGroup* group = new WebOSSurfaceGroup;
             group->add(resource->client(), id, WEBOSSURFACEGROUP_VERSION);
             group->setName(name);
@@ -73,7 +73,7 @@ void WebOSSurfaceGroupCompositor::webos_surface_group_compositor_create_surface_
 void WebOSSurfaceGroupCompositor::webos_surface_group_compositor_get_surface_group(Resource *resource, uint32_t id, const QString &name)
 {
     if (m_groups.contains(name)) {
-        qDebug("group '%s' found", qPrintable(name));
+        qInfo("group '%s' found", qPrintable(name));
         WebOSSurfaceGroup* group = m_groups[name];
         group->add(resource->client(), id, WEBOSSURFACEGROUP_VERSION);
     } else {
@@ -89,6 +89,6 @@ void WebOSSurfaceGroupCompositor::webos_surface_group_compositor_get_surface_gro
 void WebOSSurfaceGroupCompositor::removeGroup(WebOSSurfaceGroup* group)
 {
     QString name = group->name();
-    qDebug("Removing group '%s'", qPrintable(name));
+    qInfo("Removing group '%s'", qPrintable(name));
     m_groups.remove(name);
 }

@@ -40,7 +40,7 @@ WebOSSurfaceGroup::WebOSSurfaceGroup()
 
 WebOSSurfaceGroup::~WebOSSurfaceGroup()
 {
-    qDebug("deleting group '%s'", qPrintable(m_name));
+    qInfo("deleting group '%s'", qPrintable(m_name));
     m_layers.clear();
     m_zOrderedSurfaceLayoutInfoList.clear();
     m_keyOrderedItems.clear();
@@ -58,7 +58,7 @@ void WebOSSurfaceGroup::webos_surface_group_bind_resource(Resource *resource)
 void WebOSSurfaceGroup::webos_surface_group_destroy_resource(Resource *resource)
 {
     if (resource == m_owner) {
-        qDebug("Group '%s' owner destroyed", qPrintable(m_name));
+        qInfo("Group '%s' owner destroyed", qPrintable(m_name));
         if (m_groupCompositor)
             m_groupCompositor->removeGroup(this);
         if (m_root)
@@ -77,7 +77,7 @@ void WebOSSurfaceGroup::webos_surface_group_destroy_resource(Resource *resource)
     } else if (!m_owner) {
         qWarning("Group '%s' owner destroyed, has attached clients", qPrintable(m_name));
         foreach (Resource* r, m_resources) {
-            qDebug("Informing group '%s' wl_resource@%d", qPrintable(m_name), r->handle->object.id);
+            qInfo("Informing group '%s' wl_resource@%d", qPrintable(m_name), r->handle->object.id);
             send_owner_destroyed(r->handle);
         }
     }
@@ -107,7 +107,7 @@ void WebOSSurfaceGroup::webos_surface_group_attach_anonymous(Resource *resource,
         WebOSSurfaceItem* item = itemFromResource(surface);
         if (item) {
             static_cast<QWaylandQuickSurface *>(item->surface())->setUseTextureAlpha(true);
-            qDebug("Attaching anonymous wl_surface@%d, to group '%s'", surface->object.id, qPrintable(m_name));
+            qInfo("Attaching anonymous wl_surface@%d, to group '%s'", surface->object.id, qPrintable(m_name));
             connect(item, SIGNAL(surfaceAboutToBeDestroyed()), this, SLOT(removeSurfaceItem()));
             QSharedPointer<QObject> li = QSharedPointer<QObject>(new QObject);
             li->setProperty("z", z_hint);
@@ -127,7 +127,7 @@ void WebOSSurfaceGroup::webos_surface_group_attach_anonymous(Resource *resource,
 void WebOSSurfaceGroup::webos_surface_group_detach(Resource *resource, struct ::wl_resource *surface)
 {
     if (m_owner != resource) {
-        qDebug("wl_surface@%d detaching from group '%s'", surface->object.id, qPrintable(m_name));
+        qInfo("wl_surface@%d detaching from group '%s'", surface->object.id, qPrintable(m_name));
         removeFromGroup(itemFromResource(surface));
     } else {
         qWarning("Detaching of root wl_surface@%d from group '%s' not allowed", surface->object.id, qPrintable(m_name));
@@ -152,7 +152,7 @@ void WebOSSurfaceGroup::webos_surface_group_create_layer(Resource *resource, uin
         }
     }
 
-    qDebug("Creating layer '%s':%d to group '%s'", qPrintable(name), z_index, qPrintable(m_name));
+    qInfo("Creating layer '%s':%d to group '%s'", qPrintable(name), z_index, qPrintable(m_name));
     WebOSSurfaceGroupLayer* newLayer = new WebOSSurfaceGroupLayer(this, resource->client(), id);
     newLayer->setName(name);
     newLayer->setZ(z_index);
@@ -177,12 +177,12 @@ void WebOSSurfaceGroup::webos_surface_group_attach(Resource *resource, struct ::
             wl_resource_destroy(resource->handle);
         } else {
             static_cast<QWaylandQuickSurface *>(item->surface())->setUseTextureAlpha(true);
-            qDebug("Attaching wl_surface@%d to %s:%s", surface->object.id, qPrintable(m_name), qPrintable(layer_name));
+            qInfo("Attaching wl_surface@%d to %s:%s", surface->object.id, qPrintable(m_name), qPrintable(layer_name));
             connect(item, SIGNAL(surfaceAboutToBeDestroyed()), this, SLOT(removeSurfaceItem()));
             addZOrderedSurfaceLayoutInfoList(item, l->layoutInfo());
             l->attach(item);
             item->setSurfaceGroup(this);
-            updateKeyOrdredSurface(l->keyIndex(), item);
+            makeKeyOrderedItems();
         }
     } else {
         qWarning("Layer '%s' does not exist in group '%s'", qPrintable(layer_name), qPrintable(m_name));
@@ -201,6 +201,16 @@ QObject* WebOSSurfaceGroup::layoutInfo(WebOSSurfaceItem* item) const
         map->insert(QLatin1String("time"), p->property("time"));
     }
     return map;
+}
+
+int WebOSSurfaceGroup::keyIndex(WebOSSurfaceItem* item) const
+{
+    foreach(WebOSSurfaceGroupLayer* l, m_layers.values()) {
+        if (l->attachedSurface() == item) {
+            return l->keyIndex();
+        }
+    }
+    return 0;
 }
 
 bool WebOSSurfaceGroup::assertOwner(Resource* r)
@@ -226,7 +236,7 @@ WebOSSurfaceItem* WebOSSurfaceGroup::itemFromResource(struct ::wl_resource* surf
 
 void WebOSSurfaceGroup::removeFromGroup(WebOSSurfaceItem* item)
 {
-    qDebug() << "Removed " << item << "from group ", qPrintable(m_name);
+    qInfo() << "Removed " << item << "from group ", qPrintable(m_name);
     if (!item) {
         return;
     }
@@ -234,8 +244,6 @@ void WebOSSurfaceGroup::removeFromGroup(WebOSSurfaceItem* item)
     item->disconnect(this);
     QSharedPointer<QObject> li = takeLayoutInfoFor(item);
     li.clear();
-
-    removeSurfaceFromKeyOrdredItems(item);
 
     // Remove the surface from a layer
     foreach(WebOSSurfaceGroupLayer* l, m_layers.values()) {
@@ -256,6 +264,8 @@ void WebOSSurfaceGroup::removeFromGroup(WebOSSurfaceItem* item)
     // This will trigger the re-evaluation of the windowmodel
     item->setSurfaceGroup(NULL);
 
+    makeKeyOrderedItems();
+
     if (m_keyboardFocusedSurface == item) {
         if (m_root) {
             m_keyboardFocusedSurface = m_root;
@@ -272,7 +282,7 @@ void WebOSSurfaceGroup::closeInvalidSurface(WebOSSurfaceItem* item)
     }
 
     if (item->appId().isEmpty()) {
-        qDebug() << item <<  "is empty, we are waiting for appId";
+        qInfo() << item <<  "is empty, we are waiting for appId";
         connect(item, SIGNAL(appIdChanged()), this, SLOT(closeDeferredInvalidSurface()));
         return;
     }
@@ -288,7 +298,7 @@ void WebOSSurfaceGroup::closeDeferredInvalidSurface()
     WebOSSurfaceItem* item = qobject_cast<WebOSSurfaceItem *>(sender());
 
     if (item->appId().isEmpty()) {
-        qDebug() << item <<  "is empty, we are waiting for appId";
+        qInfo() << item <<  "is empty, we are waiting for appId";
         return;
     }
 
@@ -308,9 +318,9 @@ void WebOSSurfaceGroup::removeSurfaceItem()
 
 void WebOSSurfaceGroup::removeLayer(const QString& name)
 {
-    qDebug("Removing layer '%s' for group '%s'", qPrintable(name), qPrintable(m_name));
-    removeLayerFromKeyOrdredItems(m_layers[name]->keyIndex());
+    qInfo("Removing layer '%s' for group '%s'", qPrintable(name), qPrintable(m_name));
     m_layers.take(name);
+    makeKeyOrderedItems();
 }
 
 void WebOSSurfaceGroup::closeAttachedSurfaces()
@@ -360,18 +370,21 @@ void WebOSSurfaceGroup::webos_surface_group_commit_key_index(Resource *resource,
         makeKeyOrderedItems();
 
     m_useKeyIndex = commit;
+    emit keyOrderChanged();
 }
 
 void WebOSSurfaceGroup::setRootItem(WebOSSurfaceItem* item)
 {
+    qInfo() << "surface group(" << m_name << ") set root:" << item;
     if (m_root != item) {
         m_root = item;
         if (m_root) {
             QSharedPointer<QObject> li = QSharedPointer<QObject>(new QObject);
             addZOrderedSurfaceLayoutInfoList(m_root, li);
-            updateKeyOrdredSurface(0, m_root);
+            makeKeyOrderedItems();
         } else {
             m_zOrderedSurfaceLayoutInfoList.clear();
+            m_keyOrderedItems.clear();
         }
     }
 }
@@ -475,7 +488,7 @@ void WebOSSurfaceGroup::sortZOrderedSurfaceLayoutInfoList()
     }
 }
 
-bool WebOSSurfaceGroup::allowLayerKeyOrder()
+bool WebOSSurfaceGroup::allowLayerKeyOrder() const
 {
     if (m_allowAnonymous || !m_useKeyIndex || m_keyOrderedItems.isEmpty())
         return false;
@@ -493,46 +506,11 @@ void WebOSSurfaceGroup::makeKeyOrderedItems()
 
     m_keyOrderedItems.append(qMakePair(m_root, 0));
     foreach (WebOSSurfaceGroupLayer* l, m_layers.values()) {
-        if (l->keyIndex())
+        if (l->keyIndex() && l->attachedSurface())
             m_keyOrderedItems.append(qMakePair(l->attachedSurface(), l->keyIndex()));
     }
     if (!m_keyOrderedItems.isEmpty()) {
         std::sort(m_keyOrderedItems.begin(), m_keyOrderedItems.end(), keyOrderedLessThan);
-    }
-}
-
-void WebOSSurfaceGroup::removeSurfaceFromKeyOrdredItems(WebOSSurfaceItem* item)
-{
-    if (item && !m_keyOrderedItems.isEmpty()) {
-        for (int i = (m_keyOrderedItems.size() - 1) ; i >= 0 ; --i) {
-            if (m_keyOrderedItems[i].first == item) {
-                m_keyOrderedItems[i].first = NULL;
-            }
-        }
-    }
-}
-
-void WebOSSurfaceGroup::removeLayerFromKeyOrdredItems(int keyIndex)
-{
-    if (!m_keyOrderedItems.isEmpty()) {
-        for (int i = (m_keyOrderedItems.size() - 1) ; i >= 0 ; --i) {
-            if (m_keyOrderedItems[i].second == keyIndex) {
-                m_keyOrderedItems.removeAt(i);
-                break;
-            }
-        }
-    }
-}
-
-void WebOSSurfaceGroup::updateKeyOrdredSurface(int keyIndex, WebOSSurfaceItem* item)
-{
-    if (!m_keyOrderedItems.isEmpty()) {
-        for (int i = (m_keyOrderedItems.size() - 1) ; i >= 0 ; --i) {
-            if (m_keyOrderedItems[i].second == keyIndex) {
-                m_keyOrderedItems[i].first = item;
-                break;
-            }
-        }
     }
 }
 

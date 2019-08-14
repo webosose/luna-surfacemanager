@@ -444,8 +444,13 @@ void WebOSSurfaceItem::processKeyEvent(QKeyEvent *event)
         // window-group to avoid unintended keyboard focus change.
         keyboard->currentGrab() != keyboard) {
 
-        if (hasFocus())
+        if (hasFocus()) {
+            qInfo() << "Focused none-group nor grabbed item: " << this << event->key();
             inputDevice->sendFullKeyEvent(event);
+        }
+	else {
+            qInfo() << "Not focused none-group nor grabbed item: " << this << event->key();
+        }
         return;
     }
 
@@ -455,13 +460,22 @@ void WebOSSurfaceItem::processKeyEvent(QKeyEvent *event)
         inputDevice->sendFullKeyEvent(event);
     } else if (m_surfaceGroup) {
         WebOSSurfaceItem *nextItem = NULL;
-        if (m_surfaceGroup->allowLayerKeyOrder())
+        if (m_surfaceGroup->allowLayerKeyOrder()) {
             nextItem = m_surfaceGroup->nextKeyOrderedSurfaceGroupItem(this);
-        else
+            qInfo() << this << "investigates next key ordered item: " << nextItem << event->key();
+        }
+        else {
             nextItem = m_surfaceGroup->nextZOrderedSurfaceGroupItem(this);
+            qInfo() << this << "investigates next z ordered item: " << nextItem << event->key();
+        }
         if (nextItem) {
             nextItem->processKeyEvent(event);
         }
+        else {
+            qInfo() << this << "got no next ordered item: " << event->key() << m_surfaceGroup->allowLayerKeyOrder();
+        }
+    } else {
+        qInfo() << "Not surfaced: " << this << event->key();
     }
 }
 
