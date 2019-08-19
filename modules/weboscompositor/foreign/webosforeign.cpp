@@ -374,6 +374,10 @@ void WebOSExported::webos_exported_set_exported_window(
         struct ::wl_resource *destination_region)
 {
     Q_UNUSED(source_region);
+
+    m_originalInputRect = QRect(0, 0, 0, 0);
+    m_sourceRect = QRect(0, 0, 0, 0);
+
     setDestinationRegion(destination_region);
 }
 
