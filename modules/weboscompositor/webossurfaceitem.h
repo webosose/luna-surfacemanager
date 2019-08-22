@@ -139,6 +139,7 @@ public:
         KeyMaskGuide                = 1 << 23,
         KeyMaskTeletextActiveGroup  = 1 << 24,
         KeyMaskData                 = 1 << 25,
+        KeyMaskInfo                 = 1 << 26,
         KeyMaskDefault = 0xFFFFFFF8
     };
     Q_DECLARE_FLAGS(KeyMasks, KeyMask)

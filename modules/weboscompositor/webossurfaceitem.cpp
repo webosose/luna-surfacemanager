@@ -1090,7 +1090,6 @@ WebOSSurfaceItem::KeyMasks WebOSSurfaceItem::keyMaskFromQt(int key) const
         retKeyMask = KeyMaskRemoteTeletextGroup;
     break;
     case Qt::Key_webOS_ProgramList:
-    case Qt::Key_webOS_Info:
     case Qt::Key_webOS_MagnifierZoom:
     case Qt::Key_webOS_LiveZoom:
         retKeyMask = KeyMaskRemoteMagnifierGroup;
@@ -1113,6 +1112,9 @@ WebOSSurfaceItem::KeyMasks WebOSSurfaceItem::keyMaskFromQt(int key) const
     break;
     case Qt::Key_webOS_BMLData:
         retKeyMask = KeyMaskData;
+    break;
+    case Qt::Key_webOS_Info:
+        retKeyMask = KeyMaskRemoteMagnifierGroup | KeyMaskInfo;
     break;
     default:
         /* If a client want to receive some special keys and the other keys have to be delivered to the parent,
@@ -1147,7 +1149,8 @@ WebOSSurfaceItem::KeyMasks WebOSSurfaceItem::keyMaskFromQt(int key) const
                      ^ KeyMaskMinimalPlaybackGroup
                      ^ KeyMaskGuide
                      ^ KeyMaskTeletextActiveGroup
-                     ^ KeyMaskData;
+                     ^ KeyMaskData
+                     ^ KeyMaskInfo;
     break;
     }
 
