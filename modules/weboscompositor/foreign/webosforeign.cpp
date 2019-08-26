@@ -721,7 +721,9 @@ void WebOSImported::webos_imported_attach_punchthrough(Resource* r, const QStrin
     }
     m_exported->m_contextId = contextId;
     m_punchThroughAttached = true;
-    m_exported->setVideoDisplayWindow();
+
+    if (m_exported->m_requestedRegion.isValid())
+        m_exported->setVideoDisplayWindow();
 
     m_exported->setPunchThrough(true);
     send_punchthrough_attached(contextId);
