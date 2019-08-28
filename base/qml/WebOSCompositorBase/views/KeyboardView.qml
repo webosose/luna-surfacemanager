@@ -29,7 +29,7 @@ BaseView {
     property bool allowed: root.access
     property bool reopen: false
     property InputMethod primaryInputMethod: compositor.inputMethod
-    property WaylandInputMethod inputMethod: primaryInputMethod.methods[compositorWindow.displayId]
+    property WaylandInputMethod inputMethod: primaryInputMethod.methods[compositorWindow.displayId] || compositor.inputMethod
     // compositor.inputMethod can be used alone for single-display device.
 
     x: inputMethod.panelRect.x
