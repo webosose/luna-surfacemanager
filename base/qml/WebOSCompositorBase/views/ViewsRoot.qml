@@ -31,6 +31,7 @@ FocusScope {
     property alias notification: notificationViewId
     property alias keyboard: keyboardViewId
     property alias spinner: spinnerId
+    property alias systemUi: systemUiViewId
 
     FullscreenView {
         id: fullscreenViewId
@@ -74,5 +75,11 @@ FocusScope {
         id: spinnerId
         objectName: "spinner"
         anchors.fill: parent
+    }
+
+    SystemUIView {
+        id: systemUiViewId
+        objectName: "systemUiView"
+        model: SystemUIWindowModel {}
     }
 }

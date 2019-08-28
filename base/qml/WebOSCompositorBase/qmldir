@@ -17,6 +17,7 @@ FullscreenWindowModel 1.0 models/FullscreenWindowModel.qml
 KeyboardWindowModel 1.0 models/KeyboardWindowModel.qml
 OverlayWindowModel 1.0 models/OverlayWindowModel.qml
 PopupWindowModel 1.0 models/PopupWindowModel.qml
+SystemUIWindowModel 1.0 models/SystemUIWindowModel.qml
 BaseLunaServiceAPI 1.0 services/BaseLunaServiceAPI.qml
 ExtendedLunaServiceAPI 1.0 services/ExtendedLunaServiceAPI.qml
 FullscreenView 1.0 views/FullscreenView.qml
@@ -26,6 +27,7 @@ NotificationView 1.0 views/NotificationView.qml
 OverlayView 1.0 views/OverlayView.qml
 PopupView 1.0 views/PopupView.qml
 Spinner 1.0 views/Spinner.qml
+SystemUIView 1.0 views/SystemUIView.qml
 ViewsRoot 1.0 views/ViewsRoot.qml
 BaseView 1.0 views/base/BaseView.qml
 FocusableView 1.0 views/base/FocusableView.qml
