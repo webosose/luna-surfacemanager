@@ -158,6 +158,7 @@ int main(int argc, char *argv[])
     // We want the main compositor window to be able to be transparent
     QQuickWindow::setDefaultAlphaBuffer(true);
 
+    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts, true);
     QGuiApplication app(argc, argv);
 
     WebOSCompositorWindow *compositorWindow = NULL;
