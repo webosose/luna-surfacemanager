@@ -46,8 +46,8 @@ public:
     WebOSCompositorWindow(QString screenName = QString(), QString geometryString = QString(), QSurfaceFormat *surfaceFormat = 0);
     ~WebOSCompositorWindow();
 
-    static QList<WebOSCompositorWindow *> initializeExtraWindows(int count);
-    static bool parseGeometryString(QString string, QRect &geometry, int &rotation, double &ratio);
+    static QList<WebOSCompositorWindow *> initializeExtraWindows(const QString primaryScreen, const int count);
+    static bool parseGeometryString(const QString string, QRect &geometry, int &rotation, double &ratio);
 
     void setCompositor(WebOSCoreCompositor* compositor);
     bool setCompositorMain(const QUrl& main);
