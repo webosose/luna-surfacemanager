@@ -144,6 +144,7 @@ int main(int argc, char *argv[])
     WebOSCompositorWindow *compositorWindow = NULL;
     WebOSCoreCompositor *compositor = NULL;
     WebOSCompositorPluginLoader *compositorPluginLoader = NULL;
+    int windowCount = 0;
 
     QString compositorPluginName = QString::fromLocal8Bit(qgetenv("WEBOS_COMPOSITOR_PLUGIN"));
     if (!compositorPluginName.isEmpty()) {
@@ -201,16 +202,13 @@ int main(int argc, char *argv[])
     compositorWindow->setCompositorMain(QUrl("file://" WEBOS_INSTALL_QML "/WebOSCompositorBase/main.qml"));
 #endif
 
-#ifdef UPSTART_SIGNALING
-    compositor->emitLsmReady();
-#endif
-
+    windowCount++;
     compositorWindow->showWindow();
 
     // Extra windows
     if (displays > 1) {
         qInfo() << "Initializing extra windows, expected" << displays - 1;
-        QList<WebOSCompositorWindow *> extraWindows = WebOSCompositorWindow::initializeExtraWindows(displays - 1);
+        QList<WebOSCompositorWindow *> extraWindows = WebOSCompositorWindow::initializeExtraWindows(primaryScreen, displays - 1);
         for (int i = 0; i < extraWindows.size(); i++) {
             WebOSCompositorWindow *extraWindow = extraWindows.at(i);
             QString name = QString("window-%1").arg(i + 1);
@@ -219,12 +217,28 @@ int main(int argc, char *argv[])
             //extraWindow->installEventFilter(new EventFilter(compositor));
             compositor->registerWindow(extraWindow, name);
             extraWindow->setCompositor(compositor);
+            windowCount++;
             extraWindow->showWindow();
             qInfo() << "Initialized an extra window" << extraWindow << "bound to wayland display" << name;
         }
 
         // Focus the main window
         compositorWindow->requestActivate();
+    }
+
+    // Create $XDG_RUNTIME_DIR/surface-manager
+#ifdef UPSTART_SIGNALING
+    compositor->emitLsmReady();
+#endif
+
+    QFile info(QString("%1/surface-manager.windowcount").arg(qgetenv("XDG_RUNTIME_DIR").constData()));
+    qInfo() << "Writing window count" << windowCount << "to" << info.fileName();
+    if (info.open(QFile::WriteOnly | QFile::Truncate)) {
+        QTextStream out(&info);
+        out << windowCount << '\n';
+        info.close();
+    } else {
+        qWarning() << "Could not write window count:" << info.errorString();
     }
 
     g_timeout_add(10000, (GSourceFunc)deferredDeleter, NULL);

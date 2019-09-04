@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2018 LG Electronics, Inc.
+# Copyright (c) 2018-2019 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,7 +29,11 @@ export QT_IM_MODULE=none
 export WEBOS_COMPOSITOR_PLATFORM=eglfs
 export WEBOS_COMPOSITOR_DISPLAYS=1
 export WEBOS_COMPOSITOR_PRIMARY_SCREEN=""
+export WEBOS_COMPOSITOR_DISPLAY_CONFIG=""
 export WEBOS_CURSOR_TIMEOUT=0
+
+# Compositor geometry
+export WEBOS_COMPOSITOR_GEOMETRY=$(luna-send -n 1 -a com.webos.surfacemanager luna://com.webos.service.config/getConfigs '{"configNames":["com.webos.surfacemanager.compositorGeometry"]}' | grep -oE "[0-9]+x[0-9]+[\+\-][0-9]+[\+\-][0-9]+r[0-9]+s[0-9]+\.?[0-9]*" || echo "1920x1080+0+0r0s1")
 
 # Import product specific environment variables
 PRODUCT_ENVIRONMENT=@WEBOS_INSTALL_SYSCONFDIR@/surface-manager.d/product.env
@@ -38,12 +42,6 @@ if [ -f ${PRODUCT_ENVIRONMENT} ]; then
     source ${PRODUCT_ENVIRONMENT}
 else
     pmlog warning "Missing ${PRODUCT_ENVIRONMENT}. Use default values."
-fi
-
-# Compositor geometry
-export WEBOS_COMPOSITOR_GEOMETRY=$(luna-send -n 1 -a com.webos.surfacemanager luna://com.webos.service.config/getConfigs '{"configNames":["com.webos.surfacemanager.compositorGeometry"]}' | grep -oE "[0-9]+x[0-9]+[\+\-][0-9]+[\+\-][0-9]+r[0-9]+s[0-9]+\.?[0-9]*" || echo "1920x1080+0+0r0s1")
-if [ $WEBOS_COMPOSITOR_DISPLAYS -gt 1 ]; then
-    export WEBOS_COMPOSITOR_EXTRA_WINDOWS=$(luna-send -n 1 -a com.webos.surfacemanager luna://com.webos.service.config/getConfigs '{"configNames":["com.webos.surfacemanager.compositorExtraWindows"]}' | grep -oE "\[\{.*\}\]" || echo "[]")
 fi
 
 pmlog info "Starting @WEBOS_INSTALL_BINS@/surface-manager with flags -platform ${WEBOS_COMPOSITOR_PLATFORM} ..."
