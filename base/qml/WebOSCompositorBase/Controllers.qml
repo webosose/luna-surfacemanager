@@ -50,4 +50,8 @@ Item {
         id: foregroundItemsControllerId
         views: root.views
     }
+
+    VideoController {
+        id: videoControllerId
+    }
 }

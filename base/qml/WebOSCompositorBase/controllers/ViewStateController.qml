@@ -116,6 +116,10 @@ Item {
         target: LS.applicationManager
         onAppLifeEventsChanged: {
             console.info(event, appId);
+            // TODO: PLAT-85443
+            // Use spinner only for the primary window for now.
+            if (compositorWindow.displayId > 0)
+                return;
             if (event === "splash") {
                 if (appId != null && (showSplash || showSpinner))
                     views.spinner.start(appId);
@@ -165,38 +169,6 @@ Item {
                 compositorWindow.updateOutputGeometry(180);
             else if (Settings.system.screenRotation == "270")
                 compositorWindow.updateOutputGeometry(270);
-        }
-    }
-
-    Connections {
-        target: avoutputdCommunicator
-        onSetVideoDisplayWindowRequested: {
-            // luna-send -n 1 -f luna://com.webos.service.avoutput/video/display/setDisplayWindow '{ \
-            //     "sourceInput":{"width":640,"height":360,"x":0,"y":0}, \
-            //     "displayOutput":{"width":960,"height":540,"x":160,"y":0}, \
-            //     "sink":"MAIN", \
-            //     "fullScreen":false \
-            // }'
-
-            var params = JSON.stringify({
-                                        "sourceInput": {
-                                            "x": sourceRectangle.x,
-                                            "y": sourceRectangle.y,
-                                            "width": sourceRectangle.width,
-                                            "height": sourceRectangle.height
-                                        },
-                                        "displayOutput": {
-                                            "x": destinationRectangle.x,
-                                            "y": destinationRectangle.y,
-                                            "width": destinationRectangle.width,
-                                            "height": destinationRectangle.height
-                                        },
-                                        "sink": sink,
-                                        "fullScreen": false
-                                    });
-
-            console.warn("Calling setVideoDisplayWindow:", params);
-            LS.adhoc.call("luna://com.webos.service.avoutput", "/video/display/setDisplayWindow", params);
         }
     }
 }

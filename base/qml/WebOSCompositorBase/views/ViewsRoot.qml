@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 LG Electronics, Inc.
+// Copyright (c) 2017-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,53 +33,57 @@ FocusScope {
     property alias spinner: spinnerId
     property alias systemUi: systemUiViewId
 
+    // No suffix for objects for the display 0
+    // not to break the existing TAS scripts
+    readonly property string suffix: compositorWindow.displayId > 0 ? compositorWindow.displayId : ""
+
     FullscreenView {
         id: fullscreenViewId
-        objectName: "fullscreenView"
+        objectName: "fullscreenView" + suffix
         anchors.fill: parent
         model: FullscreenWindowModel {}
     }
 
     OverlayView {
         id: overlayViewId
-        objectName: "overlayView"
+        objectName: "overlayView" + suffix
         anchors.fill: parent
         model: OverlayWindowModel {}
     }
 
     Launcher {
         id: launcherId
-        objectName: "launcher"
+        objectName: "launcher" + suffix
         anchors.fill: parent
     }
 
     PopupView {
         id: popupViewId
-        objectName: "popupView"
+        objectName: "popupView" + suffix
         model: PopupWindowModel {}
     }
 
     NotificationView {
         id: notificationViewId
-        objectName: "notificationView"
+        objectName: "notificationView" + suffix
         anchors.fill: parent
     }
 
     KeyboardView {
         id: keyboardViewId
-        objectName: "keyboardView"
+        objectName: "keyboardView" + suffix
         model: KeyboardWindowModel {}
     }
 
     Spinner {
         id: spinnerId
-        objectName: "spinner"
+        objectName: "spinner" + suffix
         anchors.fill: parent
     }
 
     SystemUIView {
         id: systemUiViewId
-        objectName: "systemUiView"
+        objectName: "systemUiView" + suffix
         model: SystemUIWindowModel {}
     }
 }

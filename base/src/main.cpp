@@ -217,6 +217,11 @@ int main(int argc, char *argv[])
             //extraWindow->installEventFilter(new EventFilter(compositor));
             compositor->registerWindow(extraWindow, name);
             extraWindow->setCompositor(compositor);
+#ifdef USE_QRESOURCES
+            extraWindow->setCompositorMain(QUrl("qrc:/WebOSCompositorBase/main2.qml"));
+#else
+            extraWindow->setCompositorMain(QUrl("file://" WEBOS_INSTALL_QML "/WebOSCompositorBase/main2.qml"));
+#endif
             windowCount++;
             extraWindow->showWindow();
             qInfo() << "Initialized an extra window" << extraWindow << "bound to wayland display" << name;
@@ -226,11 +231,11 @@ int main(int argc, char *argv[])
         compositorWindow->requestActivate();
     }
 
-    // Create $XDG_RUNTIME_DIR/surface-manager
 #ifdef UPSTART_SIGNALING
     compositor->emitLsmReady();
 #endif
 
+    // Create $XDG_RUNTIME_DIR/surface-manager.windowcount
     QFile info(QString("%1/surface-manager.windowcount").arg(qgetenv("XDG_RUNTIME_DIR").constData()));
     qInfo() << "Writing window count" << windowCount << "to" << info.fileName();
     if (info.open(QFile::WriteOnly | QFile::Truncate)) {
