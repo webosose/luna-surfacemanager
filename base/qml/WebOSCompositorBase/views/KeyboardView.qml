@@ -71,7 +71,7 @@ BaseView {
                 root.reopenView();
         }
         onHasPreferredPanelRectChanged: {
-            if (compositor.inputMethod.active)
+            if (inputMethod.active)
                 root.reopenView();
         }
     }
