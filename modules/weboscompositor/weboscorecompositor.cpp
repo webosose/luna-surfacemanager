@@ -774,6 +774,11 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfac
                 item->setItemState(WebOSSurfaceItem::ItemStateHidden, item->itemStateReason());
                 // Fall through
             case WebOSSurfaceItem::ItemStateClosing:
+            case WebOSSurfaceItem::ItemStateHidden:
+                if(item->itemStateReason().isEmpty()) {
+                    qInfo() << "unhandled case of surfaceUnmapped for " << item << item->itemState() << item->itemStateReason();
+                    break;
+                }
                 qInfo() << "handling surfaceUnmapped for " << item << item->itemState() << item->itemStateReason();
                 emit surfaceUnmapped(item);
                 break;
