@@ -25,10 +25,13 @@
 #include <QRunnable>
 #include <QTimer>
 #include <QUrl>
+#include <QQuickItem>
+#include <QPointer>
 
 class QWaylandOutput;
 class QWaylandInputDevice;
 class WebOSCoreCompositor;
+class WebOSSurfaceItem;
 #ifdef USE_CONFIG
 class WebOSCompositorConfig;
 #endif
@@ -44,6 +47,8 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCompositorWindow : public QQuickView {
     Q_PROPERTY(bool outputGeometryPending READ outputGeometryPending WRITE setOutputGeometryPending NOTIFY outputGeometryPendingChanged)
     Q_PROPERTY(int outputGeometryPendingInterval READ outputGeometryPendingInterval WRITE setOutputGeometryPendingInterval NOTIFY outputGeometryPendingIntervalChanged)
     Q_PROPERTY(bool cursorVisible READ cursorVisible NOTIFY cursorVisibleChanged)
+    // Fullscreen item of each window
+    Q_PROPERTY(WebOSSurfaceItem *fullscreenItem READ fullscreenItem WRITE setFullscreenItem NOTIFY fullscreenItemChanged)
 
     Q_PROPERTY(QQuickItem *viewsRoot READ viewsRoot WRITE setViewsRoot NOTIFY viewsRootChanged)
 
@@ -90,6 +95,8 @@ public:
     QWaylandOutput *output() { return m_output; }
     void setInputDevice(QWaylandInputDevice *device) { m_inputDevice = device; }
     QWaylandInputDevice *inputDevice() { return m_inputDevice; }
+    WebOSSurfaceItem *fullscreenItem();
+    void setFullscreenItem(WebOSSurfaceItem *item);
 
 signals:
     void outputGeometryChanged();
@@ -100,6 +107,7 @@ signals:
 
     void cursorVisibleChanged();
     void viewsRootChanged();
+    void fullscreenItemChanged(WebOSSurfaceItem *);
 
 private:
     // classes
@@ -155,5 +163,7 @@ private:
     QList<QObject *> m_foregroundItems;
     QWaylandOutput *m_output;
     QWaylandInputDevice *m_inputDevice;
+    // auto clear on destroyed
+    QPointer<WebOSSurfaceItem> m_fullscreenItem;
 };
 #endif // WEBOSCOMPOSITORWINDOW_H

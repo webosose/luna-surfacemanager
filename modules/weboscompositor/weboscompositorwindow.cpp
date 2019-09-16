@@ -26,20 +26,22 @@
 #include <QDebug>
 #include <QStringList>
 
+#include <qpa/qplatformscreen.h>
+
 #include "weboscompositorwindow.h"
 #include "weboscorecompositor.h"
+#include "webossurfaceitem.h"
 #ifdef USE_CONFIG
 #include "weboscompositorconfig.h"
 #endif
 
-#include <qpa/qplatformscreen.h>
 
 static int s_displays = 0;
 
 WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometryString, QSurfaceFormat *surfaceFormat)
     : QQuickView()
     , m_compositor(0)
-    , m_displayId(0)
+    , m_displayId(s_displays++)
     , m_baseGeometry(QRect(0, 0, 1920, 1080))
     , m_outputGeometry(QRect())
     , m_outputRotation(0)
@@ -56,7 +58,6 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
 {
     if (screenName.isEmpty()) {
         setScreen(QGuiApplication::primaryScreen());
-        m_displayId = s_displays++;
         qInfo() << "Using displayId:" << m_displayId << "screen:" << screen() << "for this window" << this;
     } else {
         QList<QScreen *> screens = QGuiApplication::screens();
@@ -64,14 +65,12 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
         for (int i = 0; i < screens.count(); i++) {
             if (screenName == screens.at(i)->handle()->name()) {
                 setScreen(screens.at(i));
-                m_displayId = s_displays++;
                 qInfo() << "Setting displayId:" << m_displayId << "screen:" << screen() << "for this window" << this;
                 break;
             }
         }
         if (!screen()) {
             setScreen(QGuiApplication::primaryScreen());
-            m_displayId = s_displays++;
             qWarning() << "No screen named as" << screenName << ", trying to use the primary screen" << screen() << "with displayId" << m_displayId << "for this window" << this;
         }
     }
@@ -541,6 +540,22 @@ void WebOSCompositorWindow::setViewsRoot(QQuickItem *viewsRoot) {
         m_viewsRoot = viewsRoot;
         emit viewsRootChanged();
     }
+}
+
+WebOSSurfaceItem *WebOSCompositorWindow::fullscreenItem()
+{
+    return m_fullscreenItem;
+}
+
+void WebOSCompositorWindow::setFullscreenItem(WebOSSurfaceItem *item)
+{
+    if (m_fullscreenItem == item)
+        return;
+
+    WebOSSurfaceItem *oldItem = m_fullscreenItem;
+    m_fullscreenItem = item;
+    qInfo() << "Fullscreen item changed to:" << m_fullscreenItem << "for" << this << displayId();
+    emit fullscreenItemChanged(oldItem);
 }
 
 void WebOSCompositorWindow::updateForegroundItems(QList<QObject *> items)
