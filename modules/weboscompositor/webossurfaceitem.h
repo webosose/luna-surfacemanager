@@ -447,6 +447,11 @@ public:
 
     void setExposed(bool exposed);
 
+    WebOSSurfaceItem *createMirrorItem(int target);
+    WebOSSurfaceItem *takeMirrorItem(int target) { return m_mirrorItems.take(target); }
+    WebOSSurfaceItem *mirrorItem(int target) { return m_mirrorItems.value(target); }
+    QList<int> mirrorTargetIds() { return  m_mirrorItems.keys(); }
+
 public slots:
     void updateScreenPosition();
     void updateProperties(const QVariantMap &properties, const QString &name, const QVariant &value);
@@ -582,6 +587,8 @@ private:
     QPointer<QWaylandSurface> m_cursorSurface;
     int m_cursorHotSpotX = -1;
     int m_cursorHotSpotY = -1;
+
+    QMap<int, WebOSSurfaceItem *> m_mirrorItems;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(WebOSSurfaceItem::WindowClass)

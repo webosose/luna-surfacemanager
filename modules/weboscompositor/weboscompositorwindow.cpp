@@ -55,6 +55,7 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
     , m_cursorVisible(false)
     , m_output(nullptr)
     , m_inputDevice(nullptr)
+    , m_mirrorSource(nullptr)
 {
     if (screenName.isEmpty()) {
         setScreen(QGuiApplication::primaryScreen());
@@ -145,6 +146,8 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
 
     // Start with cursor invisible
     invalidateCursor();
+
+    connect(this, &WebOSCompositorWindow::fullscreenItemChanged, &WebOSCompositorWindow::onFullscreenItemChanged);
 }
 
 WebOSCompositorWindow::~WebOSCompositorWindow()
@@ -568,6 +571,138 @@ void WebOSCompositorWindow::updateForegroundItems(QList<QObject *> items)
     }
 
     emit m_compositor->foregroundItemsChanged();
+}
+
+void WebOSCompositorWindow::onFullscreenItemChanged(WebOSSurfaceItem *oldItem)
+{
+    if (stopMirroringFromTarget() == 0)
+        return;
+
+    stopMirroringToAll(oldItem);
+}
+
+QVector<bool> WebOSCompositorWindow::isMirroringTo()
+{
+    QVector<bool> isMirroring(m_compositor->windows().size(), false);
+
+    if (fullscreenItem()) {
+        QList<int> targets = fullscreenItem()->mirrorTargetIds();
+        for (int i = 0; i < targets.size(); i++)
+            isMirroring[targets[i]] = true;
+    }
+
+    return isMirroring;
+}
+
+bool WebOSCompositorWindow::hasMirrorSource() const
+{
+    return m_mirrorSource != nullptr;
+}
+
+void WebOSCompositorWindow::setMirrorSource(WebOSCompositorWindow *window)
+{
+    Q_ASSERT(!m_mirrorSource || !window);
+
+    m_mirrorSource = window;
+
+    if (m_mirrorSource)
+        setMirroringState(MirroringStateReceiver);
+    else
+        setMirroringState(MirroringStateInactive);
+}
+
+void WebOSCompositorWindow::setMirroringState(MirroringState state)
+{
+    if (m_mirrorState != state) {
+        m_mirrorState = state;
+        emit mirroringStateChanged();
+    }
+}
+
+// TODO: Error codes should be specified
+int WebOSCompositorWindow::startMirroring(int target)
+{
+    WebOSCompositorWindow *tWindow = m_compositor->window(target);
+    // No target Window or already mirrored
+    if (!tWindow || tWindow->hasMirrorSource() || hasMirrorSource())
+        return -1;
+
+    WebOSSurfaceItem *sItem = fullscreenItem();
+    // No fullscreenItem
+    if (!sItem)
+        return -1;
+
+    WebOSSurfaceItem *mirror = sItem->createMirrorItem(target);
+    if (!mirror) {
+        qWarning("Creating mirror item failed, should not happen");
+        return -1;
+    }
+
+    m_compositor->addSurfaceItem(mirror);
+    // This should be after mapItem considering fullscreenItemChanged
+    tWindow->setMirrorSource(this);
+    setMirroringState(MirroringStateSender);
+    emit isMirroringToChanged();
+
+    return 0;
+}
+
+int WebOSCompositorWindow::stopMirroringFromTarget()
+{
+    if (!hasMirrorSource())
+        return -1;
+
+    return  mirrorSource()->stopMirroring(displayId());
+}
+
+// TODO: Error codes should be specified for belows
+int WebOSCompositorWindow::stopMirroringInternal(WebOSSurfaceItem *sItem, int targetId)
+{
+    Q_ASSERT(sItem);
+
+    WebOSSurfaceItem *mirror = sItem->takeMirrorItem(targetId);
+    WebOSCompositorWindow *tWindow = m_compositor->window(targetId);
+    if (!mirror) {
+        qWarning("No mirror item, should not happen");
+        return -1;
+    }
+
+    if (!tWindow || !tWindow->hasMirrorSource()) {
+        qWarning("No window or not mirrored, should not happen");
+        return -1;
+    }
+
+    if (sItem->mirrorTargetIds().size() == 0)
+        setMirroringState(MirroringStateInactive);
+    tWindow->setMirrorSource(nullptr);
+    m_compositor->removeSurfaceItem(mirror, true);
+    emit isMirroringToChanged();
+
+    return 0;
+}
+
+int WebOSCompositorWindow::stopMirroring(int targetId)
+{
+    WebOSSurfaceItem *sItem = fullscreenItem();
+    if (!sItem)
+        return -1;
+
+    return stopMirroringInternal(sItem, targetId);
+}
+
+int WebOSCompositorWindow::stopMirroringToAll(WebOSSurfaceItem *source)
+{
+    WebOSSurfaceItem *sItem = source ? source : fullscreenItem();
+    if (!sItem)
+        return -1;
+
+    QList<int> targetIds = sItem->mirrorTargetIds();
+    for (int i = 0; i < targetIds.size(); i++) {
+        // TODO: Need to check return value
+        stopMirroringInternal(sItem, targetIds[i]);
+    }
+
+    return 0;
 }
 
 void WebOSCompositorWindow::onQmlError(const QList<QQmlError> &errors)

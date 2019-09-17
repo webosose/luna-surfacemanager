@@ -103,6 +103,9 @@ WebOSSurfaceItem::~WebOSSurfaceItem()
     m_surfaceGroup = NULL;
     deleteSnapShot();
     delete m_shellSurface;
+
+    if (m_mirrorItems.size() > 0)
+        qCritical() << "Zombie mirror items, should not happen";
 }
 
 void WebOSSurfaceItem::setDisplayId(int id)
@@ -1186,4 +1189,21 @@ void WebOSSurfaceItem::updateCursor()
         surfaces << m_cursorSurface.data();
     }
     m_compositor->sendFrameCallbacks(surfaces);
+}
+
+WebOSSurfaceItem *WebOSSurfaceItem::createMirrorItem(int target)
+{
+    if (m_mirrorItems.contains(target))
+        return nullptr;
+
+    WebOSSurfaceItem *mirror = new WebOSSurfaceItem(m_compositor, static_cast<QWaylandQuickSurface *>(surface()));
+    mirror->setDisplayAffinity(target);
+    mirror->setEnabled(false);
+    mirror->setAppId(appId());
+    mirror->setType(type());
+    mirror->setResizeSurfaceToItem(false);
+    mirror->setItemState(WebOSSurfaceItem::ItemStateNormal);
+
+    m_mirrorItems[target] = mirror;
+    return mirror;
 }

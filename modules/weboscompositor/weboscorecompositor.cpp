@@ -273,6 +273,7 @@ void WebOSCoreCompositor::registerTypes()
     qmlRegisterType<WebOSSurfaceGroup>("WebOSCoreCompositor", 1, 0, "SurfaceItemGroup");
     qmlRegisterType<WebOSScreenShot>("WebOSCoreCompositor", 1, 0, "ScreenShot");
     qmlRegisterUncreatableType<WebOSKeyPolicy>("WebOSCoreCompositor", 1, 0, "KeyPolicy", QLatin1String("Not allowed to create KeyPolicy instance"));
+    qmlRegisterUncreatableType<WebOSCompositorWindow>("WebOSCoreCompositor", 1, 0, "CompositorWindow", QLatin1String("Not allowed to create CompositorWindow"));
 }
 
 QWaylandQuickSurface* WebOSCoreCompositor::fullscreenSurface() const
@@ -397,6 +398,14 @@ QList<QObject *> WebOSCoreCompositor::windows() const
     return windowObjects;
 }
 
+WebOSCompositorWindow *WebOSCoreCompositor::window(int displayId)
+{
+    if (m_windows.size() <= displayId)
+        return nullptr;
+
+    return m_windows[displayId];
+}
+
 void WebOSCoreCompositor::onSurfaceUnmapped() {
     PMTRACE_FUNCTION;
     QWaylandQuickSurface *surface = qobject_cast<QWaylandQuickSurface *>(sender());
@@ -448,9 +457,6 @@ void WebOSCoreCompositor::onSurfaceDestroyed() {
             // If there are more use case, the API should be moved to proper place.
             // ex)If there are some dying animation for the item, this should be called at the end of the animation.
             item->releaseSurface();
-            // Clear old texture
-            item->updateTexture();
-            item->update();
         }
 
         if (surface == m_fullscreenSurface)
@@ -537,6 +543,13 @@ void WebOSCoreCompositor::deleteProxyFor(WebOSSurfaceItem* newItem)
             delete item;
         }
     }
+}
+
+void WebOSCoreCompositor::addSurfaceItem(WebOSSurfaceItem *item)
+{
+    m_surfaceModel->surfaceMapped(item);
+    m_surfaces << item;
+    emit surfaceMapped(item);
 }
 
 void WebOSCoreCompositor::removeSurfaceItem(WebOSSurfaceItem* item, bool emitSurfaceDestroyed)
@@ -834,11 +847,6 @@ bool WebOSCoreCompositor::getCursor(QWaylandSurface *surface, int hotSpotX, int 
 void WebOSCoreCompositor::setCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY, wl_client *client)
 {
     PMTRACE_FUNCTION;
-    if (surface) {
-        QWaylandQuickSurface *qs = static_cast<QWaylandQuickSurface *>(surface);
-        disconnect(static_cast<QQuickWindow*>(qs->mainOutput()->window()), &QQuickWindow::beforeSynchronizing, qs, &QWaylandQuickSurface::updateTexture);
-        disconnect(static_cast<QQuickWindow*>(qs->mainOutput()->window()), &QQuickWindow::sceneGraphInvalidated, qs, &QWaylandQuickSurface::invalidateTexture);
-    }
 
     foreach(WebOSSurfaceItem *item, m_surfaces) {
         if (item->surface() && !item->surface()->handle()->isCursorSurface() &&

@@ -49,10 +49,19 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCompositorWindow : public QQuickView {
     Q_PROPERTY(bool cursorVisible READ cursorVisible NOTIFY cursorVisibleChanged)
     // Fullscreen item of each window
     Q_PROPERTY(WebOSSurfaceItem *fullscreenItem READ fullscreenItem WRITE setFullscreenItem NOTIFY fullscreenItemChanged)
-
     Q_PROPERTY(QQuickItem *viewsRoot READ viewsRoot WRITE setViewsRoot NOTIFY viewsRootChanged)
+    Q_PROPERTY(QVector<bool> isMirroringTo READ isMirroringTo NOTIFY isMirroringToChanged)
+    Q_PROPERTY(MirroringState mirroringState READ mirroringState NOTIFY mirroringStateChanged)
 
 public:
+    enum MirroringState {
+        MirroringStateInactive = 1,
+        MirroringStateSender,
+        MirroringStateReceiver,
+        MirroringStateDisabled,
+    };
+    Q_ENUM(MirroringState);
+
     WebOSCompositorWindow(QString screenName = QString(), QString geometryString = QString(), QSurfaceFormat *surfaceFormat = 0);
     ~WebOSCompositorWindow();
 
@@ -98,6 +107,18 @@ public:
     WebOSSurfaceItem *fullscreenItem();
     void setFullscreenItem(WebOSSurfaceItem *item);
 
+    Q_INVOKABLE int startMirroring(int target);
+    Q_INVOKABLE int stopMirroring(int target);
+    Q_INVOKABLE int stopMirroringToAll(WebOSSurfaceItem *source = nullptr);
+    Q_INVOKABLE int stopMirroringFromTarget();
+    int stopMirroringInternal(WebOSSurfaceItem *sItem, int targetId);
+    QVector<bool> isMirroringTo();
+    bool hasMirrorSource() const;
+    WebOSCompositorWindow *mirrorSource() const { return m_mirrorSource; }
+    void setMirrorSource(WebOSCompositorWindow *window);
+    MirroringState mirroringState() const { return m_mirrorState; }
+    void setMirroringState(MirroringState state);
+
 signals:
     void outputGeometryChanged();
     void outputRotationChanged();
@@ -108,6 +129,8 @@ signals:
     void cursorVisibleChanged();
     void viewsRootChanged();
     void fullscreenItemChanged(WebOSSurfaceItem *);
+    void isMirroringToChanged();
+    void mirroringStateChanged();
 
 private:
     // classes
@@ -130,6 +153,7 @@ private:
 private slots:
     void onOutputGeometryDone();
     void onOutputGeometryPendingExpired();
+    void onFullscreenItemChanged(WebOSSurfaceItem *oldItem);
     void onQmlError(const QList<QQmlError> &errors);
 
 private:
@@ -165,5 +189,7 @@ private:
     QWaylandInputDevice *m_inputDevice;
     // auto clear on destroyed
     QPointer<WebOSSurfaceItem> m_fullscreenItem;
+    WebOSCompositorWindow *m_mirrorSource;
+    MirroringState m_mirrorState = MirroringStateInactive;
 };
 #endif // WEBOSCOMPOSITORWINDOW_H

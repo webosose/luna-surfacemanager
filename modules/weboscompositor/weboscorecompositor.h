@@ -128,6 +128,7 @@ public:
     QVariantMap surfaceItemClosePolicy() { return m_surfaceItemClosePolicy; }
     void setSurfaceItemClosePolicy(QVariantMap &surfaceItemClosePolicy);
 
+    void addSurfaceItem(WebOSSurfaceItem *item);
     void removeSurfaceItem(WebOSSurfaceItem* item, bool emitSurfaceDestroyed);
 
     //Notify which surface has pointer
@@ -182,6 +183,7 @@ public:
 
     QList<QObject *> foregroundItems() const;
     QList<QObject *> windows() const;
+    WebOSCompositorWindow *window(int displayId);
 
 public slots:
     void handleActiveFocusItemChanged();
