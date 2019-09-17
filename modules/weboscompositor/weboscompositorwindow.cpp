@@ -51,6 +51,8 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
     , m_outputGeometryPending(false)
     , m_outputGeometryPendingInterval(0)
     , m_cursorVisible(false)
+    , m_output(nullptr)
+    , m_inputDevice(nullptr)
 {
     if (screenName.isEmpty()) {
         setScreen(QGuiApplication::primaryScreen());

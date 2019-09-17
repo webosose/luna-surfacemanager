@@ -25,6 +25,8 @@
 #include <QTimer>
 #include <QUrl>
 
+class QWaylandOutput;
+class QWaylandInputDevice;
 class WebOSCoreCompositor;
 #ifdef USE_CONFIG
 class WebOSCompositorConfig;
@@ -77,6 +79,11 @@ public:
 
     Q_INVOKABLE void updateForegroundItems(QList<QObject *>);
     QList<QObject *> foregroundItems() const { return m_foregroundItems; }
+
+    void setOutput(QWaylandOutput *output) { m_output = output; }
+    QWaylandOutput *output() { return m_output; }
+    void setInputDevice(QWaylandInputDevice *device) { m_inputDevice = device; }
+    QWaylandInputDevice *inputDevice() { return m_inputDevice; }
 
 signals:
     void outputGeometryChanged();
@@ -138,5 +145,7 @@ private:
     bool m_cursorVisible;
 
     QList<QObject *> m_foregroundItems;
+    QWaylandOutput *m_output;
+    QWaylandInputDevice *m_inputDevice;
 };
 #endif // WEBOSCOMPOSITORWINDOW_H

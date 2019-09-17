@@ -153,6 +153,19 @@ WebOSCoreCompositor::~WebOSCoreCompositor()
 {
 }
 
+void WebOSCoreCompositor::insertToWindows(WebOSCompositorWindow *window)
+{
+    int displayId = window->displayId();
+    int sizeNeeded = displayId + 1;
+
+    // The order of the insertion is not a concern,
+    // but all slots should be inserted after all.
+    if (m_windows.size() < sizeNeeded)
+        m_windows.resize(sizeNeeded);
+
+    m_windows[displayId] = window;
+    emit windowsChanged();
+}
 
 void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
 {
@@ -165,7 +178,9 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
         return;
     }
 
-    m_outputs.insert(window, output);
+    WebOSCompositorWindow *webosWindow = static_cast<WebOSCompositorWindow *>(window);
+    insertToWindows(webosWindow);
+    webosWindow->setOutput(output);
 
     connect(window, SIGNAL(frameSwapped()), this, SLOT(frameSwappedSlot()));
     // TODO: check is it ok just to use primary window to handle activeFocusItem
@@ -207,11 +222,11 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
         emit windowChanged();
 
         // Use defaultInputDevice for primary window
-        m_inputDevices[window] = defaultInputDevice();
+        webosWindow->setInputDevice(defaultInputDevice());
     } else {
         // Create dedicated InputDevice for secondary windows
         QWaylandInputDevice *device = new WebOSInputDevice(this, QWaylandInputDevice::Keyboard);
-        m_inputDevices[window] = device;
+        webosWindow->setInputDevice(device);
     }
 }
 
@@ -359,13 +374,20 @@ QList<QObject *> WebOSCoreCompositor::foregroundItems() const
 {
     QList<QObject *> items;
 
-    QList<QQuickWindow *> windows = m_outputs.keys();
-    for (int i = 0; i < windows.size(); ++i) {
-        WebOSCompositorWindow *window = static_cast<WebOSCompositorWindow *>(windows[i]);
-        items << window->foregroundItems();
-    }
+    for (int i = 0; i < m_windows.size(); ++i)
+        items << m_windows[i]->foregroundItems();
 
     return items;
+}
+
+QList<QObject *> WebOSCoreCompositor::windows() const
+{
+    QList<QObject *> windowObjects;
+
+    for (int i = 0; i < m_windows.size(); ++i)
+        windowObjects << m_windows[i];
+
+    return windowObjects;
 }
 
 void WebOSCoreCompositor::onSurfaceUnmapped() {
@@ -988,7 +1010,8 @@ void WebOSCoreCompositor::commitOutputUpdate(QQuickWindow *window, QRect geometr
 {
     qInfo() << "OutputGeometry: sending output update to clients:" << window << geometry << rotation << ratio;
 
-    QWaylandOutput *output = m_outputs.value(window);
+    WebOSCompositorWindow *webosWindow = static_cast<WebOSCompositorWindow *>(window);
+    QWaylandOutput *output = webosWindow->output();
 
     if (!output) {
         qWarning() << "Could not update output as no output found for given window" << window;
@@ -1085,22 +1108,14 @@ QWaylandInputDevice *WebOSCoreCompositor::keyboardDeviceForWindow(QQuickWindow *
     if (!window)
         return defaultInputDevice();
 
-    return m_inputDevices[window];
+    return static_cast<WebOSCompositorWindow *>(window)->inputDevice();
 }
 
 QWaylandInputDevice *WebOSCoreCompositor::keyboardDeviceForDisplayId(int displayId)
 {
-    QMapIterator<QQuickWindow *, QWaylandInputDevice *> i(m_inputDevices);
+    Q_ASSERT(m_windows.size() > displayId);
 
-    while (i.hasNext()) {
-        i.next();
-        WebOSCompositorWindow *window = static_cast<WebOSCompositorWindow *>(i.key());
-
-        if (window->displayId() == displayId)
-            return i.value();
-    }
-
-    return defaultInputDevice();
+    return m_windows[displayId]->inputDevice();
 }
 
 WebOSCoreCompositor::EventPreprocessor::EventPreprocessor(WebOSCoreCompositor* compositor)

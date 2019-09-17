@@ -39,7 +39,7 @@ class WebOSSurfaceModel;
 class CompositorExtension;
 class WebOSShell;
 class WebOSSurfaceGroupCompositor;
-
+class WebOSCompositorWindow;
 class WebOSInputManager;
 #ifdef MULTIINPUT_SUPPORT
 class WebOSInputDevice;
@@ -72,6 +72,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCoreCompositor : public QObject, public QWayl
     Q_PROPERTY(WebOSSurfaceItem* activeSurface READ activeSurface NOTIFY activeSurfaceChanged)
 
     Q_PROPERTY(QList<QObject *> foregroundItems READ foregroundItems NOTIFY foregroundItemsChanged)
+    Q_PROPERTY(QList<QObject *> windows READ windows NOTIFY windowsChanged)
 
 public:
     enum ExtensionFlag {
@@ -88,6 +89,7 @@ public:
     virtual ~WebOSCoreCompositor();
 
     virtual void registerWindow(QQuickWindow *window, QString name = QString("primary"));
+    void insertToWindows(WebOSCompositorWindow *);
 
     static void logger(QtMsgType type, const QMessageLogContext &context, const QString &message);
 
@@ -179,6 +181,7 @@ public:
     void destroyClientForWindow(QVariant window);
 
     QList<QObject *> foregroundItems() const;
+    QList<QObject *> windows() const;
 
 public slots:
     void handleActiveFocusItemChanged();
@@ -221,6 +224,7 @@ signals:
     void outputUpdateDone();
 
     void foregroundItemsChanged();
+    void windowsChanged();
 
 protected:
     virtual void surfaceCreated(QWaylandSurface *surface);
@@ -296,8 +300,7 @@ private:
     bool m_directRendering;
 
     QList<WebOSSurfaceItem*> m_surfacesOnUpdate;
-    QMap<QQuickWindow *, QWaylandOutput *> m_outputs;
-    QMap<QQuickWindow *, QWaylandInputDevice *> m_inputDevices;
+    QVector<WebOSCompositorWindow *> m_windows;
 
     //Global tick counter to get absolute time stamp for recent window model and LRU surface
     quint32 m_fullscreenTick;
