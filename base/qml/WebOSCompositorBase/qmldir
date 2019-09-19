@@ -32,6 +32,7 @@ SystemUIView 1.0 views/SystemUIView.qml
 ViewsRoot 1.0 views/ViewsRoot.qml
 BaseView 1.0 views/base/BaseView.qml
 FocusableView 1.0 views/base/FocusableView.qml
+PopupSurface 1.0 views/base/PopupSurface.qml
 SurfaceView 1.0 views/base/SurfaceView.qml
 
 # Internal types

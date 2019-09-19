@@ -31,8 +31,9 @@ SurfaceView {
     consumeMouseEvents: false
 
     property bool consumeKeyEvents: false
+    property url containerQml: "./base/PopupSurface.qml"
 
-    property Component component: Qt.createComponent("base/PopupSurface.qml", root)
+    property Component component: Qt.createComponent(root.containerQml, root)
 
     onSurfaceAdded: {
         if (root.access) {
