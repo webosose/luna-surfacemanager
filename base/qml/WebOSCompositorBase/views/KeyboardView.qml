@@ -28,15 +28,31 @@ BaseView {
     property Item currentItem: null
     property bool allowed: root.access
     property bool reopen: false
-    property InputMethod primaryInputMethod: compositor.inputMethod
-    property WaylandInputMethod inputMethod: primaryInputMethod.methods[compositorWindow.displayId] || compositor.inputMethod
-    // compositor.inputMethod can be used alone for single-display device.
+
+    property QtObject inputMethod: QtObject {
+        // Default values that deliberately prevent the view working
+        property bool active: false
+        property bool allowed: false
+        property rect panelRect: Qt.rect(0, 0, 0, 0)
+        property size panelSurfaceSize: Qt.size(0, 0)
+        property rect preferredPanelRect: Qt.rect(0, 0, 0, 0)
+        property bool hasPreferredPanelRect: false
+    }
 
     x: inputMethod.panelRect.x
     y: inputMethod.panelRect.y
     width: inputMethod.panelRect.width
     height: inputMethod.panelRect.height
     clip: true
+
+    Binding {
+        // Lazy binding that takes effect only when the actual WaylandInputMethod gets available
+        property InputMethod primaryInputMethod: compositor.inputMethod
+        target: root
+        property: "inputMethod"
+        when: primaryInputMethod.methods[compositorWindow.displayId] || false
+        value: primaryInputMethod.methods[compositorWindow.displayId]
+    }
 
     Binding {
         target: inputMethod
