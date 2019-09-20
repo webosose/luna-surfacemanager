@@ -464,6 +464,19 @@ void WebOSExported::webos_exported_set_property(
 {
     qInfo() << "set_property name : " << name << " value : " << value << "on" << m_windowId;
 
+    // Set exportedItems' z_index from z_index value
+    if (name == "z_index") {
+        bool result;
+        int z_index = value.toInt(&result, 10);
+        if (result) {
+            qInfo() << "set exportedItem's z_index to " << z_index;
+            m_exportedItem->setZ(z_index);
+        } else {
+            qInfo() << "Failed to convert value to integer";
+        }
+        return;
+    }
+
     if (name == "mute") {
         if (m_properties.find("mute") == m_properties.end()) {
             if (m_foreign->m_compositor->window() && !m_contextId.isNull()) {
