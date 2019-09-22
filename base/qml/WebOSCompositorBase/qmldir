@@ -34,6 +34,7 @@ BaseView 1.0 views/base/BaseView.qml
 FocusableView 1.0 views/base/FocusableView.qml
 PopupSurface 1.0 views/base/PopupSurface.qml
 SurfaceView 1.0 views/base/SurfaceView.qml
+TouchHotspot 1.0 views/base/TouchHotspot.qml
 
 # Internal types
 internal ScreenFreezer views/ScreenFreezer.qml

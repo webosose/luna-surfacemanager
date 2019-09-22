@@ -32,6 +32,7 @@ FocusScope {
     property alias keyboard: keyboardViewId
     property alias spinner: spinnerId
     property alias systemUi: systemUiViewId
+    property alias launcherHotspot: launcherHotspotId
 
     // No suffix for objects for the display 0
     // not to break the existing TAS scripts
@@ -85,5 +86,15 @@ FocusScope {
         id: systemUiViewId
         objectName: "systemUiView" + suffix
         model: SystemUIWindowModel {}
+    }
+
+    TouchHotspot {
+        id: launcherHotspotId
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.right: parent.right
+        width: Settings.local.launcher.hotspotThickness
+        threshold: Settings.local.launcher.hotspotThreshold
+        reverse: true
     }
 }

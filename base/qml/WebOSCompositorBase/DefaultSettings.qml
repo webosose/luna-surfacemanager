@@ -64,7 +64,9 @@ QtObject {
             "backgroundColor": "#383838",
             "defaultMargin": 20,
             "settingsIconSize": 70,
-            "slideAnimationDuration": 500
+            "slideAnimationDuration": 500,
+            "hotspotThickness": 10,
+            "hotspotThreshold": 100
         },
         "localization": {
             "imports": []

@@ -113,6 +113,14 @@ Item {
     }
 
     Connections {
+        target: views.launcherHotspot
+        onTriggered: {
+            if (views.launcher)
+                views.launcher.openView();
+        }
+    }
+
+    Connections {
         target: LS.applicationManager
         onAppLifeEventsChanged: {
             console.info(event, appId);
