@@ -25,6 +25,7 @@ QtObject {
         "debug": {
             "enable": false,
             "focusHighlight": false,
+            "surfaceHighlight": false,
             "fpsGraphOverlay": false,
             "spinnerRepaint": false,
             "touchOverlay": false,
