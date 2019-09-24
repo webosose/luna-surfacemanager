@@ -24,6 +24,7 @@
 #include <WebOSCoreCompositor/weboscompositorexport.h>
 #include <QtCompositor/private/qwlsurface_p.h>
 #include <QtCompositor/private/qwlregion_p.h>
+#include <QPointer>
 
 #define WEBOSFOREIGN_VERSION 1
 #define WEBOSEXPORTED_VERSION 1
@@ -80,6 +81,7 @@ public:
     WebOSExported(WebOSForeign* foreign, struct wl_client* client,
                   uint32_t id, QWaylandSurfaceItem* surfaceItem,
                   WebOSForeign::WebOSExportedType exportedType);
+    ~WebOSExported();
     void setPunchTrough();
     void detach();
     void assigneWindowId(QString windowId);
@@ -97,8 +99,8 @@ protected:
 private:
     WebOSForeign* m_foreign = nullptr;
     QWaylandSurfaceItem* m_qwlsurfaceItem = nullptr;
-    QQuickItem* m_exportedItem = nullptr;
-    QQuickItem* m_punchThroughItem = nullptr;
+    QPointer<QQuickItem> m_exportedItem;
+    QPointer<QQuickItem> m_punchThroughItem;
     QList<WebOSImported*> m_importList;
     WebOSForeign::WebOSExportedType m_exportedType = WebOSForeign::VideoObject;
     QRect m_sourceRect;
@@ -116,6 +118,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSImported :
 public:
     WebOSImported() = delete;
     ~WebOSImported();
+    void destroyResource();
     void updateGeometry();
 
 protected:
@@ -126,7 +129,7 @@ protected:
 
 private:
     WebOSImported(WebOSExported* exported, struct wl_client* client, uint32_t id);
-    WebOSExported* m_exported = nullptr;
+    QPointer<WebOSExported> m_exported;
     QWaylandSurfaceItem* m_childSurface = nullptr;
     bool m_punched = false;
     enum surface_alignment m_textureAlign = surface_alignment::surface_alignment_stretch;

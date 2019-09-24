@@ -127,6 +127,20 @@ WebOSExported::WebOSExported(
 #endif
 }
 
+WebOSExported::~WebOSExported()
+{
+    while (!m_importList.isEmpty())
+        m_importList.takeFirst()->destroyResource();
+
+    // delete m_punchThroughItem in detach
+    detach();
+    m_foreign->m_exportedList.removeAll(this);
+
+    // Usually it is deleted by QObjectPrivate::deleteChildren with its parent surfaceItem.
+    if (m_exportedItem)
+        delete m_exportedItem;
+}
+
 void WebOSExported::webos_exported_set_exported_window(
         Resource *resource,
         struct ::wl_resource *source_region,
@@ -215,12 +229,7 @@ void WebOSExported::setParentOf(QWaylandSurfaceItem* surfaceItem)
 
 void WebOSExported::webos_exported_destroy_resource(Resource *r)
 {
-    foreach(WebOSImported* imported, m_importList) {
-        delete imported;
-    }
-
-    detach();
-    m_foreign->m_exportedList.removeAll(this);
+    Q_ASSERT(resourceMap().size() == 0);
     delete this;
 }
 
@@ -239,13 +248,19 @@ WebOSImported::WebOSImported(WebOSExported* exported,
 
 WebOSImported::~WebOSImported()
 {
+    if (!m_exported)
+        return;
+
     if (m_punched)
         m_exported->detach();
 
     m_exported->m_importList.removeAll(this);
+}
 
+void WebOSImported::destroyResource()
+{
+    // When wl_exported deleted...
     foreach(Resource* resource, resourceMap().values()) {
-        //When wl_exported deleted...
         wl_resource_destroy(resource->handle);
     }
 }
@@ -279,7 +294,9 @@ void WebOSImported::webos_imported_attach_punchthrough(Resource* r)
 void WebOSImported::webos_imported_destroy_resource(Resource* r)
 {
     Q_UNUSED(r);
-    delete this;
+
+    if (resourceMap().isEmpty())
+        delete this;
 }
 
 void WebOSImported::webos_imported_attach_surface(
@@ -299,6 +316,11 @@ void WebOSImported::webos_imported_attach_surface(
             qobject_cast<QWaylandQuickSurface *>(qwlSurface->waylandSurface());
 
         m_childSurface = quickSurface->surfaceItem();
+        // NOTE: Keep m_childSurface visible, which makes that m_childSurface
+        // is de-parented from m_exportedItem on destroying m_exportedItem.
+        // If m_childSurface is not visible, the parent, m_exportedItem deletes m_childSurface
+        // on the parent's destruction. That might cause a double free.
+        // Refer to ~QQuickItem() and QObjectPrivate::deleteChildren().
         m_exported->setParentOf(m_childSurface);
         updateGeometry();  //Resize texture if needed.
     }
