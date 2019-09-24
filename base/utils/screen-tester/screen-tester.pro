@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2018 LG Electronics, Inc.
+# Copyright (c) 2019 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-TEMPLATE = subdirs
+TEMPLATE = app
+TARGET = surface-manager-screen-tester
 
-SUBDIRS = \
-    src \
-    qml \
-    startup \
-    utils
+QT += gui quick
 
-cursor_theme {
-    SUBDIRS += cursors
-}
+SOURCES = main.cpp
+RESOURCES = main.qml
+OTHER_FILES = resources.qrc
+
+target.path = $$WEBOS_INSTALL_BINS
+INSTALLS += target
