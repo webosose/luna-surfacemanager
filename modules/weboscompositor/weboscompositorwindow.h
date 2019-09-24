@@ -21,6 +21,7 @@
 
 #include <QQmlEngine>
 #include <QQuickView>
+#include <QQuickItem>
 #include <QRunnable>
 #include <QTimer>
 #include <QUrl>
@@ -43,6 +44,8 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCompositorWindow : public QQuickView {
     Q_PROPERTY(bool outputGeometryPending READ outputGeometryPending WRITE setOutputGeometryPending NOTIFY outputGeometryPendingChanged)
     Q_PROPERTY(int outputGeometryPendingInterval READ outputGeometryPendingInterval WRITE setOutputGeometryPendingInterval NOTIFY outputGeometryPendingIntervalChanged)
     Q_PROPERTY(bool cursorVisible READ cursorVisible NOTIFY cursorVisibleChanged)
+
+    Q_PROPERTY(QQuickItem *viewsRoot READ viewsRoot WRITE setViewsRoot NOTIFY viewsRootChanged)
 
 public:
     WebOSCompositorWindow(QString screenName = QString(), QString geometryString = QString(), QSurfaceFormat *surfaceFormat = 0);
@@ -77,6 +80,9 @@ public:
     void setCursorVisible(bool visibility);
     Q_INVOKABLE void updateCursorFocus(Qt::KeyboardModifiers modifiers = Qt::NoModifier);
 
+    QQuickItem* viewsRoot() const { return m_viewsRoot; }
+    void setViewsRoot(QQuickItem *viewsRoot);
+
     Q_INVOKABLE void updateForegroundItems(QList<QObject *>);
     QList<QObject *> foregroundItems() const { return m_foregroundItems; }
 
@@ -93,6 +99,7 @@ signals:
     void outputGeometryPendingIntervalChanged();
 
     void cursorVisibleChanged();
+    void viewsRootChanged();
 
 private:
     // classes
@@ -144,6 +151,7 @@ private:
 
     bool m_cursorVisible;
 
+    QQuickItem* m_viewsRoot;
     QList<QObject *> m_foregroundItems;
     QWaylandOutput *m_output;
     QWaylandInputDevice *m_inputDevice;

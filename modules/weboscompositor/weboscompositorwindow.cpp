@@ -533,6 +533,13 @@ void WebOSCompositorWindow::updateCursorFocus(Qt::KeyboardModifiers modifiers)
     }
 }
 
+void WebOSCompositorWindow::setViewsRoot(QQuickItem *viewsRoot) {
+    if (m_viewsRoot != viewsRoot) {
+        m_viewsRoot = viewsRoot;
+        emit viewsRootChanged();
+    }
+}
+
 void WebOSCompositorWindow::updateForegroundItems(QList<QObject *> items)
 {
     m_foregroundItems = items;
