@@ -143,6 +143,9 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
     connect(&m_outputGeometryPendingTimer, &QTimer::timeout, this, &WebOSCompositorWindow::onOutputGeometryPendingExpired);
     if (qgetenv("WEBOS_COMPOSITOR_EXIT_ON_QMLWARN").toInt() == 1)
         connect(engine(), &QQmlEngine::warnings, this, &WebOSCompositorWindow::onQmlError);
+
+    // Start with cursor invisible
+    invalidateCursor();
 }
 
 WebOSCompositorWindow::~WebOSCompositorWindow()
