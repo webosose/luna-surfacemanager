@@ -36,7 +36,7 @@ class WebOSCoreCompositor;
 class WebOSWindowModel;
 class WebOSGroupedWindowModel;
 class WebOSShellSurface;
-
+class WebOSExported;
 class WebOSSurfaceItem;
 class WebOSSurfaceGroup;
 
@@ -450,7 +450,11 @@ public:
     WebOSSurfaceItem *createMirrorItem(int target);
     WebOSSurfaceItem *takeMirrorItem(int target) { return m_mirrorItems.take(target); }
     WebOSSurfaceItem *mirrorItem(int target) { return m_mirrorItems.value(target); }
+    QList<WebOSSurfaceItem *> mirrorItems() { return m_mirrorItems.values(); }
     QList<int> mirrorTargetIds() { return  m_mirrorItems.keys(); }
+
+    WebOSExported *exported() { return m_exported; }
+    void setExported(WebOSExported *exported) { m_exported = exported; }
 
 public slots:
     void updateScreenPosition();
@@ -589,6 +593,7 @@ private:
     int m_cursorHotSpotY = -1;
 
     QMap<int, WebOSSurfaceItem *> m_mirrorItems;
+    WebOSExported *m_exported = nullptr;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(WebOSSurfaceItem::WindowClass)

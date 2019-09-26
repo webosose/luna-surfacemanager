@@ -19,6 +19,8 @@
 #include "weboscorecompositor.h"
 #include "weboscompositorwindow.h"
 #include "webosforeign.h"
+#include "webossurfaceitem.h"
+#include "webosforeign.h"
 
 #include <QDebug>
 #include <QGuiApplication>
@@ -36,6 +38,44 @@ static QString generateWindowId()
     static quint32 window_count = 0;
     return QString("_Window_Id_%1").arg(++window_count);
 }
+
+class ImportedMirrorItem : public QWaylandSurfaceItem {
+
+public:
+    ImportedMirrorItem(QWaylandQuickSurface *surface) : QWaylandSurfaceItem(surface) {}
+    ~ImportedMirrorItem() { clearHandler(); }
+
+    void setHandler(QQuickItem *exportedItem, QQuickItem *source)
+    {
+        m_xConn = connect(exportedItem, &QQuickItem::xChanged, [this, exportedItem]() { setX(exportedItem->x()); });
+        m_yConn = connect(exportedItem, &QQuickItem::yChanged, [this, exportedItem]() { setY(exportedItem->y()); });
+        m_widthConn = connect(exportedItem, &QQuickItem::widthChanged, [this, exportedItem]() { setWidth(exportedItem->width()); });
+        m_heightConn = connect(exportedItem, &QQuickItem::heightChanged, [this, exportedItem]() { setHeight(exportedItem->height()); });
+        // Triggered when the parent is deleted.
+        m_parentConn = connect(this, &QQuickItem::parentChanged, [this]() { delete this; });
+        // Triggered when source imported item is deleted.
+        m_sourceConn = connect(source, &QObject::destroyed, [this]() { delete this; });
+    }
+
+    void clearHandler()
+    {
+        disconnect(m_xConn);
+        disconnect(m_yConn);
+        disconnect(m_widthConn);
+        disconnect(m_heightConn);
+        disconnect(m_parentConn);
+        disconnect(m_sourceConn);
+    }
+
+private:
+    QMetaObject::Connection m_xConn;
+    QMetaObject::Connection m_yConn;
+    QMetaObject::Connection m_widthConn;
+    QMetaObject::Connection m_heightConn;
+    QMetaObject::Connection m_parentConn;
+    QMetaObject::Connection m_sourceConn;
+};
+
 
 WebOSForeign::WebOSForeign(WebOSCoreCompositor* compositor)
     : QtWaylandServer::wl_webos_foreign(compositor->waylandDisplay(), WEBOSFOREIGN_VERSION)
@@ -108,12 +148,13 @@ WebOSExported::WebOSExported(
         WebOSForeign::WebOSExportedType exportedType)
     : QtWaylandServer::wl_webos_exported(client, id, WEBOSEXPORTED_VERSION)
     , m_foreign(foreign)
-    , m_qwlsurfaceItem(surfaceItem)
+    , m_qwlsurfaceItem(static_cast<WebOSSurfaceItem *>(surfaceItem))
     , m_exportedItem(new QQuickItem(surfaceItem))
     , m_exportedType(exportedType)
 {
     m_exportedItem->setClip(true);
     m_exportedItem->setZ(-1);
+    m_qwlsurfaceItem->setExported(this);
 #if 0 // DEBUG
     QUrl debugUIQml = QUrl(QString("file://") +
                            QString(WEBOS_INSTALL_QML) +
@@ -129,6 +170,9 @@ WebOSExported::WebOSExported(
 
 WebOSExported::~WebOSExported()
 {
+    if (m_qwlsurfaceItem)
+        m_qwlsurfaceItem->setExported(nullptr);
+
     while (!m_importList.isEmpty())
         m_importList.takeFirst()->destroyResource();
 
@@ -221,16 +265,59 @@ void WebOSExported::assigneWindowId(QString windowId)
     send_window_id_assigned(m_windowId, m_exportedType);
 }
 
+QWaylandSurfaceItem *WebOSExported::getImportedItem()
+{
+    if (!m_exportedItem || m_exportedItem->childItems().isEmpty() || m_punchThroughItem)
+        return nullptr;
+
+    if (m_exportedItem->childItems().size() > 1)
+        qWarning() << "more than one imported item for  WebOSExported" << m_qwlsurfaceItem;
+
+    // Imported surface item
+    return static_cast<WebOSSurfaceItem *>(m_exportedItem->childItems().first());
+}
+
 void WebOSExported::setParentOf(QWaylandSurfaceItem* surfaceItem)
 {
+    if (!m_qwlsurfaceItem || !m_exportedItem) {
+        qWarning() << "unexpected null reference" << m_qwlsurfaceItem << m_exportedItem;
+        return;
+    }
+
     //TODO: Need location settings? and Z order manage
     surfaceItem->setParentItem(m_exportedItem);
+
+    // mirrored items
+    foreach(WebOSSurfaceItem *parent, m_qwlsurfaceItem->mirrorItems())
+        startImportedMirroring(parent);
 }
 
 void WebOSExported::webos_exported_destroy_resource(Resource *r)
 {
     Q_ASSERT(resourceMap().size() == 0);
     delete this;
+}
+
+void WebOSExported::startImportedMirroring(QWaylandSurfaceItem *parent)
+{
+    if (!parent)
+        return;
+
+    QWaylandSurfaceItem *source = getImportedItem();
+    if (!source)
+        return;
+
+    ImportedMirrorItem *mirror = new ImportedMirrorItem(static_cast<QWaylandQuickSurface *>(source->surface()));
+
+    mirror->setClip(m_exportedItem->clip());
+    mirror->setZ(m_exportedItem->z());
+    mirror->setX(m_exportedItem->x());
+    mirror->setY(m_exportedItem->y());
+    mirror->setWidth(m_exportedItem->width());
+    mirror->setHeight(m_exportedItem->height());
+
+    mirror->setParentItem(parent);
+    mirror->setHandler(m_exportedItem, source);
 }
 
 WebOSImported::WebOSImported(WebOSExported* exported,

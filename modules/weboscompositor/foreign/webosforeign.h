@@ -33,7 +33,7 @@
 class QWaylandSurfaceItem;
 class WebOSCoreCompositor;
 class WebOSCompositor;
-
+class WebOSSurfaceItem;
 class WebOSExported;
 class WebOSImported;
 
@@ -86,6 +86,8 @@ public:
     void detach();
     void assigneWindowId(QString windowId);
     void setParentOf(QWaylandSurfaceItem* surfaceItem);
+    QWaylandSurfaceItem *getImportedItem();
+    void startImportedMirroring(QWaylandSurfaceItem *parent);
 
 signals:
     void geometryChanged();
@@ -98,7 +100,7 @@ protected:
 
 private:
     WebOSForeign* m_foreign = nullptr;
-    QWaylandSurfaceItem* m_qwlsurfaceItem = nullptr;
+    QPointer<WebOSSurfaceItem> m_qwlsurfaceItem;
     QPointer<QQuickItem> m_exportedItem;
     QPointer<QQuickItem> m_punchThroughItem;
     QList<WebOSImported*> m_importList;

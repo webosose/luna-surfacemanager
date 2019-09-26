@@ -24,6 +24,7 @@
 #include "weboscompositortracer.h"
 #include "webosshellsurface.h"
 #include "webosinputmethod.h"
+#include "webosforeign.h"
 #ifdef MULTIINPUT_SUPPORT
 #include "webosinputdevice.h"
 #endif
@@ -1203,6 +1204,9 @@ WebOSSurfaceItem *WebOSSurfaceItem::createMirrorItem(int target)
     mirror->setType(type());
     mirror->setResizeSurfaceToItem(false);
     mirror->setItemState(WebOSSurfaceItem::ItemStateNormal);
+
+    if (exported())
+        exported()->startImportedMirroring(mirror);
 
     m_mirrorItems[target] = mirror;
     return mirror;
