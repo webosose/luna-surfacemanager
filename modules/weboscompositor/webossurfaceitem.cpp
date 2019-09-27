@@ -1061,6 +1061,7 @@ WebOSSurfaceItem::KeyMasks WebOSSurfaceItem::keyMaskFromQt(int key) const
     case Qt::Key_webOS_ChannelDown:
     case Qt::Key_webOS_ChannelDash:
     case Qt::Key_webOS_ChannelBack:
+    case Qt::Key_webOS_InputTVRadio:
         retKeyMask = KeyMaskRemoteProgrammeGroup;
     break;
     case Qt::Key_MediaPlay:
