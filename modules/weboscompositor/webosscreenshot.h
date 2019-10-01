@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2019 LG Electronics, Inc.
+// Copyright (c) 2014-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <QObject>
 #include <QSize>
 #include <QRunnable>
+#include <QQuickWindow>
 
 #include <WebOSCoreCompositor/weboscompositorexport.h>
 
@@ -33,6 +34,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSScreenShot : public QObject
     Q_PROPERTY(QString path READ path WRITE setPath NOTIFY pathChanged)
     Q_PROPERTY(QString format READ format WRITE setFormat NOTIFY formatChanged)
     Q_PROPERTY(QSize size READ size)
+    Q_PROPERTY(QQuickWindow* window READ window WRITE setWindow NOTIFY windowChanged)
 
 public:
     enum ScreenShotError {
@@ -46,16 +48,19 @@ public:
 
     WebOSScreenShot();
 
-    virtual void setTarget(WebOSSurfaceItem* target);
-    virtual WebOSSurfaceItem* target() const { return m_target; }
-
-    QSize size() const { return m_size; }
+    WebOSSurfaceItem* target() const { return m_target; }
+    void setTarget(WebOSSurfaceItem* target);
 
     QString path() const { return m_path; }
     void setPath(const QString& path);
 
-    QString format() const {return m_format; }
+    QString format() const { return m_format; }
     void setFormat(const QString& format);
+
+    QSize size() const { return m_size; }
+
+    QQuickWindow* window() const { return m_window; }
+    void setWindow(QQuickWindow* window);
 
 public slots:
     virtual ScreenShotErrors take();
@@ -63,15 +68,17 @@ public slots:
 signals:
     void screenShotSaved(const QString& path);
     void screenShotError(ScreenShotErrors error);
+    void windowChanged();
     void targetChanged();
     void pathChanged();
     void formatChanged();
 
 protected:
     WebOSSurfaceItem* m_target;
-    QSize m_size;
     QString m_path;
     QString m_format;
+    QSize m_size;
+    QQuickWindow* m_window;
 
 private:
     bool isWritablePath(const QString path);

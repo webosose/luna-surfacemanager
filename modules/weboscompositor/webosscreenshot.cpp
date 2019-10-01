@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 LG Electronics, Inc.
+// Copyright (c) 2014-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,15 +33,16 @@
 #include <QQuickWindow>
 
 WebOSScreenShot::WebOSScreenShot()
-    : m_target(Q_NULLPTR)
+    : m_target(nullptr)
     , m_format("BMP")
+    , m_window(nullptr)
 {
 }
 
 WebOSScreenShot::ScreenShotErrors WebOSScreenShot::take()
 {
     PMTRACE_FUNCTION;
-    QQuickWindow* win = qobject_cast<QQuickWindow*>(QGuiApplication::focusWindow());
+    QQuickWindow* win = m_window ? m_window : qobject_cast<QQuickWindow*>(QGuiApplication::focusWindow());
     if (win == nullptr) {
         // try to take screenshot but the active window is not a quick window
         // (unlikely)
@@ -121,6 +122,14 @@ void WebOSScreenShot::setFormat(const QString& format)
     if (format != m_format) {
         m_format = format;
         emit formatChanged();
+    }
+}
+
+void WebOSScreenShot::setWindow(QQuickWindow* window)
+{
+    if (m_window != window) {
+        m_window = window;
+        emit windowChanged();
     }
 }
 
