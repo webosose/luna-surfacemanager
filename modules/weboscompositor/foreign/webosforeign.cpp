@@ -39,32 +39,44 @@ static QString generateWindowId()
     return QString("_Window_Id_%1").arg(++window_count);
 }
 
-class ImportedMirrorItem : public QWaylandSurfaceItem {
+class MirrorItemHandler {
 
 public:
-    ImportedMirrorItem(QWaylandQuickSurface *surface) : QWaylandSurfaceItem(surface) {}
-    ~ImportedMirrorItem() { clearHandler(); }
+    MirrorItemHandler() {}
+    ~MirrorItemHandler() { clearHandler(); }
 
-    void setHandler(QQuickItem *exportedItem, QQuickItem *source)
+    void initialize(QQuickItem *item, QQuickItem *exportedItem, QQuickItem *parent)
     {
-        m_xConn = connect(exportedItem, &QQuickItem::xChanged, [this, exportedItem]() { setX(exportedItem->x()); });
-        m_yConn = connect(exportedItem, &QQuickItem::yChanged, [this, exportedItem]() { setY(exportedItem->y()); });
-        m_widthConn = connect(exportedItem, &QQuickItem::widthChanged, [this, exportedItem]() { setWidth(exportedItem->width()); });
-        m_heightConn = connect(exportedItem, &QQuickItem::heightChanged, [this, exportedItem]() { setHeight(exportedItem->height()); });
+        item->setClip(exportedItem->clip());
+        item->setZ(exportedItem->z());
+        item->setX(exportedItem->x());
+        item->setY(exportedItem->y());
+        item->setWidth(exportedItem->width());
+        item->setHeight(exportedItem->height());
+        item->setParentItem(parent);
+    }
+
+    // The first parameter is to avoid multiple inheritance of QQuickItem
+    void setHandler(QQuickItem *item, QQuickItem *exportedItem, QQuickItem *source)
+    {
+        m_xConn = QObject::connect(exportedItem, &QQuickItem::xChanged, [item, exportedItem]() { item->setX(exportedItem->x()); });
+        m_yConn = QObject::connect(exportedItem, &QQuickItem::yChanged, [item, exportedItem]() { item->setY(exportedItem->y()); });
+        m_widthConn = QObject::connect(exportedItem, &QQuickItem::widthChanged, [item, exportedItem]() { item->setWidth(exportedItem->width()); });
+        m_heightConn = QObject::connect(exportedItem, &QQuickItem::heightChanged, [item, exportedItem]() { item->setHeight(exportedItem->height()); });
         // Triggered when the parent is deleted.
-        m_parentConn = connect(this, &QQuickItem::parentChanged, [this]() { delete this; });
+        m_parentConn = QObject::connect(item, &QQuickItem::parentChanged, [item]() { delete item; });
         // Triggered when source imported item is deleted.
-        m_sourceConn = connect(source, &QObject::destroyed, [this]() { delete this; });
+        m_sourceConn = QObject::connect(source, &QObject::destroyed, [item]() { delete item; });
     }
 
     void clearHandler()
     {
-        disconnect(m_xConn);
-        disconnect(m_yConn);
-        disconnect(m_widthConn);
-        disconnect(m_heightConn);
-        disconnect(m_parentConn);
-        disconnect(m_sourceConn);
+        QObject::disconnect(m_xConn);
+        QObject::disconnect(m_yConn);
+        QObject::disconnect(m_widthConn);
+        QObject::disconnect(m_heightConn);
+        QObject::disconnect(m_parentConn);
+        QObject::disconnect(m_sourceConn);
     }
 
 private:
@@ -75,6 +87,16 @@ private:
     QMetaObject::Connection m_parentConn;
     QMetaObject::Connection m_sourceConn;
 };
+
+
+class ImportedMirrorItem : public QWaylandSurfaceItem, public MirrorItemHandler {
+public:
+    ImportedMirrorItem(QWaylandQuickSurface *surface) : QWaylandSurfaceItem(surface) {}
+};
+
+class PunchThroughMirrorItem : public PunchThroughItem, public MirrorItemHandler {
+};
+
 
 
 WebOSForeign::WebOSForeign(WebOSCoreCompositor* compositor)
@@ -239,10 +261,10 @@ void WebOSExported::setPunchTrough()
     if (!m_punchThroughItem) {
         PunchThroughItem* punchThroughNativeItem =
             new PunchThroughItem();
-        punchThroughNativeItem->setParentItem(m_exportedItem);
+        m_punchThroughItem = punchThroughNativeItem;
         punchThroughNativeItem->setWidth(m_destinationRect.width());
         punchThroughNativeItem->setHeight(m_destinationRect.height());
-        m_punchThroughItem = punchThroughNativeItem;
+        setParentOf(punchThroughNativeItem);
     }
 }
 
@@ -267,7 +289,7 @@ void WebOSExported::assigneWindowId(QString windowId)
 
 QWaylandSurfaceItem *WebOSExported::getImportedItem()
 {
-    if (!m_exportedItem || m_exportedItem->childItems().isEmpty() || m_punchThroughItem)
+    if (!m_exportedItem || m_exportedItem->childItems().isEmpty())
         return nullptr;
 
     if (m_exportedItem->childItems().size() > 1)
@@ -277,7 +299,7 @@ QWaylandSurfaceItem *WebOSExported::getImportedItem()
     return static_cast<WebOSSurfaceItem *>(m_exportedItem->childItems().first());
 }
 
-void WebOSExported::setParentOf(QWaylandSurfaceItem* surfaceItem)
+void WebOSExported::setParentOf(QQuickItem *item)
 {
     if (!m_qwlsurfaceItem || !m_exportedItem) {
         qWarning() << "unexpected null reference" << m_qwlsurfaceItem << m_exportedItem;
@@ -285,7 +307,7 @@ void WebOSExported::setParentOf(QWaylandSurfaceItem* surfaceItem)
     }
 
     //TODO: Need location settings? and Z order manage
-    surfaceItem->setParentItem(m_exportedItem);
+    item->setParentItem(m_exportedItem);
 
     // mirrored items
     foreach(WebOSSurfaceItem *parent, m_qwlsurfaceItem->mirrorItems())
@@ -303,21 +325,22 @@ void WebOSExported::startImportedMirroring(QWaylandSurfaceItem *parent)
     if (!parent)
         return;
 
-    QWaylandSurfaceItem *source = getImportedItem();
+    QQuickItem *source = getImportedItem();
+    // Nothing imported to the exported item
     if (!source)
         return;
 
-    ImportedMirrorItem *mirror = new ImportedMirrorItem(static_cast<QWaylandQuickSurface *>(source->surface()));
+    if (m_punchThroughItem) {
+        PunchThroughMirrorItem *mirror = new PunchThroughMirrorItem();
+        mirror->initialize(mirror, m_exportedItem, parent);
+        mirror->setHandler(mirror, m_exportedItem, source);
+    } else {
+        QWaylandSurfaceItem *qsi = static_cast<QWaylandSurfaceItem *>(source);
+        ImportedMirrorItem *mirror = new ImportedMirrorItem(static_cast<QWaylandQuickSurface *>(qsi->surface()));
+        mirror->initialize(mirror, m_exportedItem, parent);
+        mirror->setHandler(mirror, m_exportedItem, source);
+    }
 
-    mirror->setClip(m_exportedItem->clip());
-    mirror->setZ(m_exportedItem->z());
-    mirror->setX(m_exportedItem->x());
-    mirror->setY(m_exportedItem->y());
-    mirror->setWidth(m_exportedItem->width());
-    mirror->setHeight(m_exportedItem->height());
-
-    mirror->setParentItem(parent);
-    mirror->setHandler(m_exportedItem, source);
 }
 
 WebOSImported::WebOSImported(WebOSExported* exported,

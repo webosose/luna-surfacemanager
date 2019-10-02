@@ -85,7 +85,7 @@ public:
     void setPunchTrough();
     void detach();
     void assigneWindowId(QString windowId);
-    void setParentOf(QWaylandSurfaceItem* surfaceItem);
+    void setParentOf(QQuickItem *surfaceItem);
     QWaylandSurfaceItem *getImportedItem();
     void startImportedMirroring(QWaylandSurfaceItem *parent);
 
