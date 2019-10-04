@@ -357,10 +357,13 @@ void WebOSExported::updateExportedItemSize()
 void WebOSExported::setVideoDisplayWindow()
 {
     if (m_foreign->m_compositor->window() && !m_contextId.isNull()) {
-        if (m_originalInputRect.isValid()) {
-           VideoOutputdCommunicator::instance()->setCropRegion(m_originalInputRect, m_sourceRect, m_videoDisplayRect, m_contextId);
+        if (m_directVideoScalingMode) {
+            qDebug() << "Direct video scaling mode is enabled. Do not call setDisplayWindow.";
         } else {
-           VideoOutputdCommunicator::instance()->setDisplayWindow(m_sourceRect, m_videoDisplayRect, m_contextId);
+            if (m_originalInputRect.isValid())
+               VideoOutputdCommunicator::instance()->setCropRegion(m_originalInputRect, m_sourceRect, m_videoDisplayRect, m_contextId);
+            else
+               VideoOutputdCommunicator::instance()->setDisplayWindow(m_sourceRect, m_videoDisplayRect, m_contextId);
         }
     } else {
         qInfo() << "Do not call setDisplayWindow. Punch through is not working";
@@ -474,6 +477,14 @@ void WebOSExported::webos_exported_set_property(
         } else {
             qInfo() << "Failed to convert value to integer";
         }
+        return;
+    }
+
+    if (name == "directVideoScalingMode") {
+        if (value == "on")
+            m_directVideoScalingMode = true;
+        else
+            m_directVideoScalingMode = false;
         return;
     }
 
