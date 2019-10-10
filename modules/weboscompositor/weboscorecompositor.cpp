@@ -781,6 +781,8 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfac
                 }
                 qInfo() << "handling surfaceUnmapped for " << item << item->itemState() << item->itemStateReason();
                 emit surfaceUnmapped(item);
+                // reset state reason to re-use
+                item->unsetItemStateReason();
                 break;
             default:
                 qWarning() << "unhandled case of a transition to ItemStateHidden for" << item << item->itemState() << item->itemStateReason();
@@ -789,10 +791,6 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfac
             }
         } else {
             qWarning() << "not ready to be ItemStateHidden," << item << item->itemState() << item->itemStateReason();
-        }
-        if (item->itemState() == WebOSSurfaceItem::ItemStateHidden && !item->itemStateReason().isEmpty()) {
-            // reset state reason to re-use
-            item->unsetItemStateReason();
         }
         break;
     case WebOSSurfaceItem::ItemStateProxy:
@@ -808,6 +806,8 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfac
                     qInfo() << "transitioning to ItemStateProxy for" << item << item->itemState() << item->itemStateReason();
                     item->setItemState(WebOSSurfaceItem::ItemStateProxy, item->itemStateReason());
                     emit surfaceDestroyed(item);
+                    // reset state reason to re-use
+                    item->unsetItemStateReason();
 
                     // Extra clean-up for surface group items
                     if (item->isSurfaceGroupRoot()) {
