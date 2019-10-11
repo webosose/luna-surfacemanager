@@ -201,6 +201,7 @@ WebOSExported::WebOSExported(
     connect(item, &WebOSSurfaceItem::stateChanged, this, &WebOSExported::updateWindowState);
     connect(m_qwlsurfaceItem, &QWaylandSurfaceItem::widthChanged, this, &WebOSExported::calculateExportedItemRatio);
     connect(m_qwlsurfaceItem, &QWaylandSurfaceItem::surfaceDestroyed, this, &WebOSExported::onSurfaceDestroyed);
+    connect(item, &WebOSSurfaceItem::surfaceAboutToBeDestroyed, this, &WebOSExported::onSurfaceDestroyed);
 
     calculateVideoDispRatio();
     calculateExportedItemRatio();
@@ -724,7 +725,7 @@ void WebOSImported::webos_imported_attach_punchthrough(Resource* r, const QStrin
     qInfo() << "attach_punchthrough is called with contextId " << contextId << " on " << this;
 
     if (!m_exported || !(m_exported->m_exportedItem) || contextId.isNull()) {
-        qWarning() << " m_exported : " << m_exported << " contextId : " << contextId;
+        qWarning() << " Fail to attach punch through (m_exported : " << m_exported << " contextId : " << contextId << ")";
         return;
     }
     if (!(m_exported->m_contextId.isNull()))
