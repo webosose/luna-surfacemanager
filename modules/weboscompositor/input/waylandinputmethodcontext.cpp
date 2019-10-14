@@ -186,6 +186,12 @@ void WaylandInputMethodContext::keySym(struct wl_client *client, struct wl_resou
 void WaylandInputMethodContext::grabKeyboard(struct wl_client *client, struct wl_resource *resource, uint32_t id)
 {
     WaylandInputMethodContext* that = static_cast<WaylandInputMethodContext*>(resource->data);
+
+    if (!that->m_inputMethod->inputDevice()) {
+        qWarning() << "No input device for input method" << that->m_inputMethod;
+        return;
+    }
+
     QtWayland::InputDevice* p_default_device = that->m_inputMethod->inputDevice()->handle();
 
     // NOTE: Currenlty, version number is hardcoded as '1'; if any better idea for the value, please replace it.
@@ -445,9 +451,8 @@ void WaylandInputMethodContext::grabKeyboardImpl()
     if (m_grabbed)
         return;
 
-    WaylandInputMethod *inputMethod = m_inputMethod;
 #ifdef MULTIINPUT_SUPPORT
-    WebOSCoreCompositor *compositor = static_cast<WebOSCoreCompositor*>(inputMethod->compositor());
+    WebOSCoreCompositor *compositor = static_cast<WebOSCoreCompositor*>(m_inputMethod->compositor());
     QList<QWaylandInputDevice *> devices = compositor->inputDevices();
     foreach (QWaylandInputDevice *device, devices) {
         QtWayland::Keyboard* p_keyboard = device->handle()->keyboardDevice();
@@ -459,6 +464,10 @@ void WaylandInputMethodContext::grabKeyboardImpl()
         }
     }
 #else
+    if (!m_inputMethod->inputDevice()) {
+        qWarning() << "No input device for input method" << m_inputMethod;
+        return;
+    }
     QtWayland::InputDevice* p_device = m_inputMethod->inputDevice()->handle();
     QtWayland::Keyboard* p_keyboard = p_device->keyboardDevice();
     p_keyboard->startGrab(this);
@@ -485,6 +494,10 @@ void WaylandInputMethodContext::releaseGrabImpl()
         }
     }
 #else
+    if (!m_inputMethod->inputDevice()) {
+        qWarning() << "No input device for input method" << m_inputMethod;
+        return;
+    }
     QtWayland::InputDevice* p_device = m_inputMethod->inputDevice()->handle();
     QtWayland::Keyboard* p_keyboard = p_device->keyboardDevice();
     p_keyboard->endGrab();

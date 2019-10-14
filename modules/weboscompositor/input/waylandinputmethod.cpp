@@ -103,7 +103,7 @@ void WaylandInputMethod::setDisplayId(const uint32_t displayId)
 
 QWaylandInputDevice *WaylandInputMethod::inputDevice()
 {
-  return static_cast<WebOSCoreCompositor *>(m_compositor)->keyboardDeviceForDisplayId(displayId());
+    return static_cast<WebOSCoreCompositor *>(m_compositor)->keyboardDeviceForDisplayId(displayId());
 }
 
 void WaylandInputMethod::contextActivated()

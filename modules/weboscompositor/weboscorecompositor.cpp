@@ -155,6 +155,11 @@ WebOSCoreCompositor::~WebOSCoreCompositor()
 
 void WebOSCoreCompositor::insertToWindows(WebOSCompositorWindow *window)
 {
+    if (!window || window->displayId() < 0) {
+        qWarning() << "Cannot insert window to list";
+        return;
+    }
+
     int displayId = window->displayId();
     int sizeNeeded = displayId + 1;
 
@@ -1113,7 +1118,10 @@ QWaylandInputDevice *WebOSCoreCompositor::keyboardDeviceForWindow(QQuickWindow *
 
 QWaylandInputDevice *WebOSCoreCompositor::keyboardDeviceForDisplayId(int displayId)
 {
-    Q_ASSERT(m_windows.size() > displayId);
+    if (displayId < 0 || displayId >= m_windows.size()) {
+        qWarning() << "Cannot get keyboard device for displayId" << displayId;
+        return nullptr;
+    }
 
     return m_windows[displayId]->inputDevice();
 }

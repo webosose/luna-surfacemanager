@@ -179,6 +179,11 @@ void WaylandTextModel::textModelActivate(struct wl_client *client, struct wl_res
         return;
     }
 
+    if (!that->m_inputMethod->inputDevice()) {
+        qWarning() << "No input device allocated for input method" << that->m_inputMethod;
+        return;
+    }
+
     QWaylandSurface *surfaceFocused = that->m_inputMethod->inputDevice()->keyboardFocus();
     if (surfaceFocused != surfaceRequested) {
         qWarning() << "activation declined for non-focused surface:" << surfaceRequested << "focused:" << surfaceFocused;

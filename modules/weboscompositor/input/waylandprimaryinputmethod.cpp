@@ -45,17 +45,20 @@ WaylandPrimaryInputMethod::~WaylandPrimaryInputMethod()
 void WaylandPrimaryInputMethod::insert()
 {
     WaylandInputMethod *method = qobject_cast<WaylandInputMethod *>(sender());
+
+    if (!method || method->displayId() < 0) {
+        qWarning() << "Cannot insert method with invalid sender or displayId";
+        return;
+    }
+
     int sizeNeeded = method->displayId() + 1;
     int displayId = method->displayId();
-
-    if (displayId < 0)
-        return;
 
     if (sizeNeeded > m_methods.size())
         m_methods.resize(sizeNeeded);
 
     if (m_methods[displayId]) {
-        qWarning() << "method already exist for display" << m_methods[displayId] << displayId;
+        qWarning() << "Method already exists for display" << m_methods[displayId] << displayId;
         return;
     }
 
@@ -66,36 +69,44 @@ void WaylandPrimaryInputMethod::insert()
 
 void WaylandPrimaryInputMethod::bind(struct wl_client *client, void *data, uint32_t version, uint32_t id)
 {
-    Q_ASSERT(version == 2);
-    WaylandPrimaryInputMethod* primary = static_cast<WaylandPrimaryInputMethod*>(data);
-    WaylandInputMethod *method = primary;
+    if (version >= 2) {
+        WaylandPrimaryInputMethod* primary = static_cast<WaylandPrimaryInputMethod*>(data);
+        WaylandInputMethod *method = primary;
 
-    // NOTE: The PrimaryInputMethod has the first bound input_method.
-    // But it is not guaranteed that the input_method has display ID '0'.
-    // It depends on the order of 'boot up' for the MaliitServer instances.
-    //Namely, the PrimaryInputMethod can be bound to any display ID.
-    if (primary->handle()) {
-        qDebug() << "Primary is already bound, trying to bind secondary one";
-        method = new WaylandInputMethod(primary->compositor());
+        // NOTE: The PrimaryInputMethod has the first bound input_method.
+        // But it is not guaranteed that the input_method has display ID '0'.
+        // It depends on the order of 'boot up' for the MaliitServer instances.
+        //Namely, the PrimaryInputMethod can be bound to any display ID.
+        if (primary->handle()) {
+            qDebug() << "Primary is already bound, trying to bind secondary one";
+            method = new WaylandInputMethod(primary->compositor());
+        }
+
+        method->binding(client, id);
+        connect(method, &WaylandInputMethod::displayIdChanged, primary, &WaylandPrimaryInputMethod::insert, Qt::UniqueConnection);
+    } else {
+        qWarning() << "Cannot bind due to the protocol version mismatch. It requires the version 2 or higher";
     }
-
-    method->binding(client, id);
-    connect(method, &WaylandInputMethod::displayIdChanged, primary, &WaylandPrimaryInputMethod::insert, Qt::UniqueConnection);
 }
 
 void WaylandPrimaryInputMethod::handleDestroy()
 {
     qInfo() << "WaylandPrimaryInputMethod::handleDestroy" << this << displayId() << m_methods;
+
     // Secondaries will automatically clear m_methods via QPointer.
     // But the Primary is never destroyed, so manually clear the reference of m_methods.
-    m_methods[displayId()] = nullptr;
+    if (displayId() >= 0 && displayId() < m_methods.size())
+        m_methods[displayId()] = nullptr;
+
     unbinding();
 }
 
 WaylandInputMethod *WaylandPrimaryInputMethod::getInputMethod(int displayId)
 {
-    if (displayId + 1 > m_methods.size())
+    if (displayId < 0 || displayId >= m_methods.size()) {
+        qWarning() << "Cannot get inputMethod for displayId" << displayId;
         return nullptr;
+    }
 
     return m_methods[displayId];
 }
