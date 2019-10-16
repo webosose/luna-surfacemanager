@@ -104,6 +104,7 @@ signals:
     void geometryChanged();
 
 protected:
+    virtual void webos_exported_destroy(Resource *) override;
     virtual void webos_exported_destroy_resource(Resource *) override;
     virtual void webos_exported_set_exported_window(Resource *resource,
                                   struct ::wl_resource *source_region,
@@ -158,6 +159,7 @@ protected:
     virtual void webos_imported_attach_punchthrough(Resource *,
                                                  const QString& contextId) override;
     virtual void webos_imported_detach_punchthrough(Resource *) override;
+    virtual void webos_imported_destroy(Resource*) override;
     virtual void webos_imported_destroy_resource(Resource *) override;
     virtual void webos_imported_attach_surface(Resource *resource,
                                                struct ::wl_resource *surface) override;

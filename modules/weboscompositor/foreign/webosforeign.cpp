@@ -221,14 +221,21 @@ WebOSExported::WebOSExported(
 
 WebOSExported::~WebOSExported()
 {
+    qInfo() << "WebOSExported destructor is called on " << this;
+
     if (m_qwlsurfaceItem)
         m_qwlsurfaceItem->setExported(nullptr);
+
+    foreach(WebOSImported* imported, m_importList) {
+        imported->updateExported(nullptr);
+    }
 
     while (!m_importList.isEmpty())
         m_importList.takeFirst()->destroyResource();
 
     // delete m_punchThroughItem in detach
     setPunchThrough(false);
+
     m_foreign->m_exportedList.removeAll(this);
 
     // Usually it is deleted by QObjectPrivate::deleteChildren with its parent surfaceItem.
@@ -587,17 +594,16 @@ void WebOSExported::unregisterMuteOwner()
     }
 }
 
+void WebOSExported::webos_exported_destroy(Resource *r)
+{
+    qInfo() << "webos_exported_destroy is called on " << this;
+    if (r)
+        wl_resource_destroy(r->handle);
+}
+
 void WebOSExported::webos_exported_destroy_resource(Resource *r)
 {
-    qWarning() << "webos_exported_destroy_resource is called" << this;
-
-    foreach(WebOSImported* imported, m_importList) {
-        imported->updateExported(nullptr);
-    }
-
-    m_foreign->m_exportedList.removeAll(this);
-
-    Q_ASSERT(resourceMap().size() == 0);
+    Q_UNUSED(r);
     delete this;
 }
 
@@ -639,6 +645,7 @@ WebOSImported::WebOSImported(WebOSExported* exported,
 
 WebOSImported::~WebOSImported()
 {
+    qInfo() << "WebOSImported destructor is called on " << this;
     if (!m_exported)
         return;
     else
@@ -773,13 +780,17 @@ void WebOSImported::webos_imported_detach_punchthrough(Resource* r)
     m_punchThroughAttached = false;
 }
 
+void WebOSImported::webos_imported_destroy(Resource* r)
+{
+    qInfo() << "webos_imported_destroy is called on " << this;
+    if (r)
+        wl_resource_destroy(r->handle);
+}
+
 void WebOSImported::webos_imported_destroy_resource(Resource* r)
 {
     Q_UNUSED(r);
-
-    qWarning() << "webos_imported_destroy_resource is called" << this;
-    if (resourceMap().isEmpty())
-        delete this;
+    delete this;
 }
 
 void WebOSImported::childSurfaceDestroyed()
