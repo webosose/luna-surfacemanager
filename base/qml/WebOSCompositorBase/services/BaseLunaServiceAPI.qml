@@ -32,13 +32,6 @@ Service {
 
     readonly property var defaultMethods: ["closeByAppId", "getForegroundAppInfo", "captureCompositorOutput"]
 
-    readonly property ForegroundAppInfoMgr foregroundAppInfoMgr: ForegroundAppInfoMgr {
-        foregroundItems: compositor.foregroundItems
-        onForegroundAppInfoChanged: {
-            root.pushSubscription("getForegroundAppInfo");
-        }
-    }
-
     function closeByAppId(param) {
         var ret = {};
 
@@ -63,7 +56,38 @@ Service {
         return JSON.stringify(ret);
     }
 
+    readonly property ForegroundAppInfoMgr foregroundAppInfoMgr: ForegroundAppInfoMgr {
+        foregroundItems: compositor.foregroundItems
+    }
+
     function getForegroundAppInfo(param) {
+        function __replySubscription() {
+            root.pushSubscription("getForegroundAppInfo", "", "getForegroundAppInfo_response");
+        }
+
+        function __subscribe() {
+            if (root.subscribersCount("getForegroundAppInfo") == 0) {
+                root.foregroundAppInfoMgr.foregroundAppInfoChanged.connect(__replySubscription);
+                root.subscriptionAboutToCancel.connect(__unsubscribe);
+            }
+        }
+
+        function __unsubscribe() {
+            // Count decreases after subscriptionAboutToCancel is handled.
+            // So it is the last subscription being cancelled if the count is 1.
+            if (root.subscribersCount("getForegroundAppInfo") == 1) {
+                root.foregroundAppInfoMgr.foregroundAppInfoChanged.disconnect(__replySubscription);
+                root.subscriptionAboutToCancel.disconnect(__unsubscribe);
+            }
+        }
+
+        if (param.subscribe !== undefined && typeof param.subscribe == "boolean" && param.subscribe)
+            __subscribe();
+
+        return getForegroundAppInfo_response(param);
+    }
+
+    function getForegroundAppInfo_response(param) {
         var ret = {};
 
         console.info("LS2 method handler is called with param: " + JSON.stringify(param));
