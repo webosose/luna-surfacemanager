@@ -1,14 +1,11 @@
 {
-    "launcher.control": [
+    "surfacemanager.devutility": [
+        "com.webos.surfacemanager/captureCompositorOutput"
+    ],
+    "surfacemanager.operation": [
         "com.webos.surfacemanager/closeByAppId"
     ],
-    "launcher.status": [
-        "com.webos.surfacemanager/getForegroundAppInfo"
-    ],
-    "surfaces.control": [
-        "com.webos.surfacemanager/closeByAppId"
-    ],
-    "surfaces.status": [
+    "surfacemanager.query": [
         "com.webos.surfacemanager/getForegroundAppInfo"
     ]
 }

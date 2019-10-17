@@ -1,6 +1,7 @@
 {
     \"exeName\":\"$$WEBOS_INSTALL_BINS/surface-manager\",
     \"type\": \"privileged\",
+    \"trustLevel\": [\"oem\"],
     \"allowedNames\": [
         \"com.webos.surfacemanager*\"
     ],

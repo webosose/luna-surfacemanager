@@ -1,18 +1,14 @@
 {
-    "launcher.control": {
-        "description": "take action on launcher components",
+    "surfacemanager.devutility": {
+        "description": "Provides development utilities for Surface manager",
         "public": false
     },
-    "launcher.status": {
-        "description": "get status of launcher components",
+    "surfacemanager.operation": {
+        "description": "Trigger an action on a given surface or Surface manager functionality",
         "public": false
     },
-    "surfaces.control": {
-        "description": "take action on surfaces",
-        "public": false
-    },
-    "surfaces.status": {
-        "description": "get status of surfaces",
+    "surfacemanager.query": {
+        "description": "Query status of Surface manager or a specific surface",
         "public": false
     }
 }
