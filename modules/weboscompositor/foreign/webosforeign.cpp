@@ -358,6 +358,10 @@ void WebOSExported::updateExportedItemSize()
         qInfo()<< "punch through item size changed:  " << m_exportedItem->width() << "on " << m_windowId;
         m_punchThroughItem->setWidth(m_exportedItem->width());
         m_punchThroughItem->setHeight(m_exportedItem->height());
+    } else {
+        if (m_exportedType == WebOSForeign::OpaqueObject) {
+            setPunchThrough(true);
+        }
     }
     emit geometryChanged();
 }
@@ -535,7 +539,7 @@ void WebOSExported::setPunchThrough(bool needPunch)
             m_punchThroughItem = punchThroughNativeItem;
         }
     } else {
-        if (m_punchThroughItem) {
+        if (m_punchThroughItem && m_exportedType != WebOSForeign::OpaqueObject) {
             m_punchThroughItem->setX(0);
             m_punchThroughItem->setY(0);
             m_punchThroughItem->setWidth(0);

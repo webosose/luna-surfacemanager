@@ -44,7 +44,8 @@ public:
     enum WebOSExportedType {
         VideoObject    = 0,    // Exported object is Video
         SubtitleObject = 1,     // Exported object is Subtitle
-        TransparentObject = 2    // Exported object is Transparent
+        TransparentObject = 2,    // Exported object is Transparent
+        OpaqueObject = 3           // Exported object is Opaque. It always needs punch through.
     };
 
     WebOSForeign(WebOSCoreCompositor* compositor);
