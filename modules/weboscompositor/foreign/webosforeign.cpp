@@ -200,6 +200,7 @@ WebOSExported::WebOSExported(
     connect(m_exportedItem, &QQuickItem::visibleChanged, this, &WebOSExported::updateVisible);
     connect(item, &WebOSSurfaceItem::stateChanged, this, &WebOSExported::updateWindowState);
     connect(m_qwlsurfaceItem, &QWaylandSurfaceItem::widthChanged, this, &WebOSExported::calculateExportedItemRatio);
+    connect(m_qwlsurfaceItem, &QWaylandSurfaceItem::widthChanged, this, &WebOSExported::calculateVideoDispRatio);
     connect(m_qwlsurfaceItem, &QWaylandSurfaceItem::surfaceDestroyed, this, &WebOSExported::onSurfaceDestroyed);
     connect(item, &WebOSSurfaceItem::surfaceAboutToBeDestroyed, this, &WebOSExported::onSurfaceDestroyed);
 
