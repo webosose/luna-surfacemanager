@@ -39,18 +39,27 @@ class EventFilter : public QObject {
 public:
     EventFilter(WebOSCoreCompositor *compositor)
         : m_compositor(compositor)
+        , m_useCursor(true)
         , m_cursorTimeout(0)
         , m_cursorTimer(0)
     {
-        // Set up the cursor timer if the timeout value is given
-        if (qEnvironmentVariableIsSet("WEBOS_CURSOR_TIMEOUT")) {
-            QByteArray env = qgetenv("WEBOS_CURSOR_TIMEOUT");
-            m_cursorTimeout = env.toInt();
-            if (m_cursorTimeout > 0) {
-                m_cursorTimer = new QTimer(this);
-                connect(m_cursorTimer, &QTimer::timeout, this, &EventFilter::onCursorTimerExpired);
-                qDebug("Cursor timeout is set as %d <- WEBOS_CURSOR_TIMEOUT=%s", m_cursorTimeout, env.constData());
-                m_cursorTimer->start(m_cursorTimeout);
+        // This keeps the cursor invisible but doesn't disable mount events
+        if (qEnvironmentVariableIsSet("WEBOS_CURSOR_HIDE")) {
+            if (!(m_useCursor = qgetenv("WEBOS_CURSOR_HIDE").toInt() != 1))
+                m_compositor->setCursorVisible(false);
+        }
+
+        if (m_useCursor) {
+            // Set up the cursor timer if the timeout value is given
+            if (qEnvironmentVariableIsSet("WEBOS_CURSOR_TIMEOUT")) {
+                QByteArray env = qgetenv("WEBOS_CURSOR_TIMEOUT");
+                m_cursorTimeout = env.toInt();
+                if (m_cursorTimeout > 0) {
+                    m_cursorTimer = new QTimer(this);
+                    connect(m_cursorTimer, &QTimer::timeout, this, &EventFilter::onCursorTimerExpired);
+                    qDebug("Cursor timeout is set as %d <- WEBOS_CURSOR_TIMEOUT=%s", m_cursorTimeout, env.constData());
+                    m_cursorTimer->start(m_cursorTimeout);
+                }
             }
         }
     }
@@ -62,24 +71,26 @@ public:
         // NOTE:
         // This cursor visiblity control refers to what libim has.
         // In case libim changes its behavior we have to follow it.
-        switch (event->type()) {
-        case QEvent::KeyPress:
-            switch ((static_cast<QKeyEvent *>(event))->key()) {
-            case Qt::Key_Left:
-            case Qt::Key_Up:
-            case Qt::Key_Right:
-            case Qt::Key_Down:
-                hideCursor();
+        if (m_useCursor) {
+            switch (event->type()) {
+            case QEvent::KeyPress:
+                switch ((static_cast<QKeyEvent *>(event))->key()) {
+                case Qt::Key_Left:
+                case Qt::Key_Up:
+                case Qt::Key_Right:
+                case Qt::Key_Down:
+                    hideCursor();
+                    break;
+                }
+                break;
+
+            case QEvent::MouseButtonPress:
+            case QEvent::MouseButtonRelease:
+            case QEvent::MouseMove:
+            case QEvent::Wheel:
+                showCursor();
                 break;
             }
-            break;
-
-        case QEvent::MouseButtonPress:
-        case QEvent::MouseButtonRelease:
-        case QEvent::MouseMove:
-        case QEvent::Wheel:
-            showCursor();
-            break;
         }
 
         return false;
@@ -88,6 +99,9 @@ public:
 private slots:
     void onCursorTimerExpired()
     {
+        if (!m_useCursor)
+            return;
+
         qDebug("Cursor timeout expired");
         m_compositor->setCursorVisible(false);
         hideCursor();
@@ -96,6 +110,8 @@ private slots:
 private:
     void showCursor()
     {
+        if (!m_useCursor)
+            return;
         m_compositor->setCursorVisible(true);
         if (m_cursorTimer)
             m_cursorTimer->start(m_cursorTimeout);
@@ -103,12 +119,15 @@ private:
 
     void hideCursor()
     {
+        if (!m_useCursor)
+            return;
         if (m_cursorTimer)
             m_cursorTimer->stop();
         m_compositor->setCursorVisible(false);
     }
 
     WebOSCoreCompositor *m_compositor;
+    bool m_useCursor;
     QTimer *m_cursorTimer;
     int m_cursorTimeout;
 };
