@@ -285,6 +285,14 @@ void WebOSSurfaceItem::touchEvent(QTouchEvent *event)
 {
     QTouchEvent e(event->type(), event->device(), event->modifiers(),
                   event->touchPointStates(), mapToTarget(event->touchPoints()));
+    e.setWindow(event->window());
+
+    // This may not be needed with QtWayland 5.12
+    // Currently, this is due to QWaylandSurfaceItem::mouseUngrabEvent
+    // which sends the Cancel without window().
+    if (!event->window())
+        e.setWindow(window());
+
     QWaylandSurfaceItem::touchEvent(&e);
 }
 

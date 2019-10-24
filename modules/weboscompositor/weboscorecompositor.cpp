@@ -230,7 +230,9 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
         webosWindow->setInputDevice(defaultInputDevice());
     } else {
         // Create dedicated InputDevice for secondary windows
-        QWaylandInputDevice *device = new WebOSInputDevice(this, QWaylandInputDevice::Keyboard);
+        // Pointer is for mouseFocus which is needed for touch
+        QWaylandInputDevice *device =
+            new WebOSInputDevice(this, QWaylandInputDevice::Keyboard | QWaylandInputDevice::Touch | QWaylandInputDevice::Pointer);
         webosWindow->setInputDevice(device);
     }
 }
@@ -1104,6 +1106,14 @@ QWaylandInputDevice *WebOSCoreCompositor::inputDeviceFor(QInputEvent *inputEvent
 
     return dev;
 #else
+    QEvent::Type type = inputEvent->type();
+    if (type == QEvent::TouchBegin || type == QEvent::TouchUpdate ||
+        type == QEvent::TouchEnd || type == QEvent::TouchCancel) {
+        QTouchEvent *touch = static_cast<QTouchEvent *>(inputEvent);
+        if (touch->window())
+            return static_cast<WebOSCompositorWindow *>(touch->window())->inputDevice();
+    }
+
     return QWaylandCompositor::inputDeviceFor(inputEvent);
 #endif
 }
