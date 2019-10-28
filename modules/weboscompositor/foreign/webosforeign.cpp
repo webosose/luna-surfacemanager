@@ -331,6 +331,11 @@ void WebOSExported::onSurfaceDestroyed()
         delete m_exportedItem;
         m_exportedItem = nullptr;
     }
+
+    if (m_punchThroughItem) {
+        delete m_punchThroughItem;
+        m_punchThroughItem = nullptr;
+    }
 }
 
 void WebOSExported::updateVideoWindowList(QString contextId, QRect videoDisplayRect, bool needRemove)
