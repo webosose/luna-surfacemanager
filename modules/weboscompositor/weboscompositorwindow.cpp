@@ -989,41 +989,47 @@ bool WebOSCompositorWindow::handleTabletEvent(QQuickItem* item, QTabletEvent* ev
     QPointF p = item->mapFromScene(event->posF());
 
     if (item->contains(p) && itemPrivate->acceptedMouseButtons()) {
-        QTabletEvent ev(event->type(), p, p, event->device(), event->pointerType(),
-                        event->pressure(), event->xTilt(), event->yTilt(), event->tangentialPressure(),
-                        event->rotation(), event->z(), event->modifiers(), event->uniqueId(), event->button(), event->buttons());
+        QTabletEvent ev(event->type(), p, p, event->device(),
+                        event->pointerType(), event->pressure(),
+                        event->xTilt(), event->yTilt(),
+                        event->tangentialPressure(), event->rotation(),
+                        event->z(), event->modifiers(), event->uniqueId(),
+                        event->button(), event->buttons());
         ev.accept();
-        if (QCoreApplication::sendEvent(item, &ev)) {
+        if (!mouseGrabberItem() && QCoreApplication::sendEvent(item, &ev)) {
             event->accept();
             return true;
         } else {
-            QEvent::Type eventType = QEvent::None;
-            switch (event->type()) {
-            case QEvent::TabletPress:
-                eventType = QEvent::MouseButtonPress;
-                break;
-            case QEvent::TabletRelease:
-                eventType = QEvent::MouseButtonRelease;
-                break;
-            case QEvent::TabletMove:
-                eventType = QEvent::None;
-                break;
-            default:
-                Q_UNREACHABLE();
+            if (translateTabletToMouse(event, NULL))
+            {
+                event->accept();
+                return true;
             }
-
-            if (eventType != QEvent::None) {
-                QMouseEvent mouseEvent(eventType, p, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
-                mouseEvent.accept();
-#ifdef DEBUG_WEBOS_TABLET
-                qDebug() << "Send synthetic" << &mouseEvent;
-#endif
-                QCoreApplication::sendEvent(item, &mouseEvent);
-            }
-            //MOVE event is not handled at this time. So we just ignore this event.
-            event->accept();
-            return true;
         }
     }
     return false;
+}
+
+bool WebOSCompositorWindow::translateTabletToMouse(QTabletEvent* event, QQuickItem* item)
+{
+    Q_UNUSED(item);
+    bool accepted = false;
+    if  (event->type() == QEvent::TabletPress) {
+        QMouseEvent mouseEvent(QEvent::MouseButtonPress, event->pos(),
+                               Qt::LeftButton, Qt::LeftButton, event->modifiers());
+        QQuickWindow::mousePressEvent(&mouseEvent);
+        accepted = mouseEvent.isAccepted();
+    } else if (event->type() == QEvent::TabletRelease) {
+        QMouseEvent mouseEvent(QEvent::MouseButtonRelease, event->pos(),
+                               Qt::LeftButton, Qt::NoButton, event->modifiers());
+        QQuickWindow::mouseReleaseEvent(&mouseEvent);
+        accepted = mouseEvent.isAccepted();
+    } else if (event->type() == QEvent::TabletMove) {
+        QMouseEvent mouseEvent(QEvent::MouseMove, event->pos(),
+                               Qt::LeftButton, Qt::LeftButton, event->modifiers());
+        QQuickWindow::mouseMoveEvent(&mouseEvent);
+        accepted = mouseEvent.isAccepted();
+    }
+
+    return accepted;
 }

@@ -153,6 +153,7 @@ protected:
      * WebOSCompositorWindow should deliver tablet event
      * to proper quick item(webossurfaceitem) on behalf of QQuickWindow. */
     bool handleTabletEvent(QQuickItem* item, QTabletEvent *);
+    bool translateTabletToMouse(QTabletEvent* event, QQuickItem* item);
 
 signals:
     void outputGeometryChanged();
