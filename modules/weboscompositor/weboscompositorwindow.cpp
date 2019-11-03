@@ -1027,7 +1027,9 @@ bool WebOSCompositorWindow::handleTabletEvent(QQuickItem* item, QTabletEvent* ev
                         event->button(), event->buttons());
         ev.accept();
         if (!m_mouseGrabberItem && QCoreApplication::sendEvent(item, &ev)) {
-            if (event->type() == QEvent::TabletPress) {
+            if (event->pointerType() == QTabletEvent::Pen && event->type() == QEvent::TabletRelease && event->pressure() != 0) {
+                m_tabletGrabberItem = item;
+            } else if (event->type() == QEvent::TabletPress) {
                 m_tabletGrabberItem = item;
             }
             event->accept();
