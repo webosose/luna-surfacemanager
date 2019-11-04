@@ -878,6 +878,19 @@ void WebOSSurfaceItem::setShellSurface(WebOSShellSurface* shell)
     }
 }
 
+void WebOSSurfaceItem::resetShellSurface(WebOSShellSurface *shell)
+{
+    PMTRACE_FUNCTION;
+    if (shell && m_shellSurface == shell) {
+        disconnect(m_shellSurface, SIGNAL(locationHintChanged()), this, SIGNAL(locationHintChanged()));
+        disconnect(m_shellSurface, SIGNAL(keyMaskChanged()), this, SIGNAL(keyMaskChanged()));
+        disconnect(m_shellSurface, SIGNAL(stateChangeRequested(Qt::WindowState)), this, SLOT(requestStateChange(Qt::WindowState)));
+        disconnect(m_shellSurface, SIGNAL(propertiesChanged(QVariantMap, QString, QVariant)),
+                   this, SLOT(updateProperties(QVariantMap, QString, QVariant)));
+        m_shellSurface = Q_NULLPTR;
+    }
+}
+
 WebOSSurfaceItem::LocationHints WebOSSurfaceItem::locationHint()
 {
     return m_shellSurface ? m_shellSurface->locationHint() : LocationHintNorth  | LocationHintEast;

@@ -414,6 +414,7 @@ public:
 
 
     void setShellSurface(WebOSShellSurface* shell);
+    void resetShellSurface(WebOSShellSurface *shell);
     WebOSShellSurface* shellSurface() const { return m_shellSurface; }
 
     /*!

@@ -124,6 +124,8 @@ WebOSShellSurface::WebOSShellSurface(struct wl_client* client, uint32_t id, WebO
 
 WebOSShellSurface::~WebOSShellSurface()
 {
+    m_surface->resetShellSurface(this);
+
     qDebug() << this << "for wl_surface@" << m_owner->object.id << "m_shellSurface:" << m_shellSurface;
     if (m_shellSurface)
         wl_resource_destroy(m_shellSurface);
