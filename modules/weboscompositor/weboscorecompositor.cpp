@@ -153,8 +153,8 @@ void WebOSCoreCompositor::logger(QtMsgType type, const QMessageLogContext &conte
 
 WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *socketName)
     : QWaylandQuickCompositor()
-    , m_previousFullscreenSurface(0)
-    , m_fullscreenSurface(0)
+    , m_previousFullscreenSurfaceItem(0)
+    , m_fullscreenSurfaceItem(nullptr)
     , m_keyFilter(0)
     , m_cursorVisible(false)
     , m_mouseEventEnabled(true)
@@ -337,7 +337,12 @@ void WebOSCoreCompositor::registerTypes()
 
 QWaylandQuickSurface* WebOSCoreCompositor::fullscreenSurface() const
 {
-    return m_fullscreenSurface;
+    return m_fullscreenSurfaceItem ? qobject_cast<QWaylandQuickSurface *>(m_fullscreenSurfaceItem->surface()) : nullptr;
+}
+
+WebOSSurfaceItem* WebOSCoreCompositor::fullscreenSurfaceItem() const
+{
+    return m_fullscreenSurfaceItem;
 }
 
 WebOSSurfaceModel* WebOSCoreCompositor::surfaceModel() const
@@ -518,8 +523,8 @@ void WebOSCoreCompositor::onSurfaceDestroyed(QWaylandSurface *surface, WebOSSurf
             item->view()->setSurface(nullptr);
         }
 
-        if (surface == m_fullscreenSurface)
-            setFullscreenSurface(NULL);
+        if (item == m_fullscreenSurfaceItem)
+            setFullscreen(nullptr);
     }
 }
 
@@ -627,41 +632,35 @@ void WebOSCoreCompositor::removeSurfaceItem(WebOSSurfaceItem* item, bool emitSur
 
 WebOSSurfaceItem* WebOSCoreCompositor::fullscreen() const
 {
-    return m_fullscreenSurface ? qobject_cast<WebOSSurfaceItem*>(m_fullscreenSurface->surfaceItem()) : NULL;
+    return m_fullscreenSurfaceItem;
 }
 
 void WebOSCoreCompositor::setFullscreen(WebOSSurfaceItem* item)
 {
-    setFullscreenSurface(item ? item->surface() : NULL);
-}
-
-bool WebOSCoreCompositor::setFullscreenSurface(QWaylandSurface *s) {
     PMTRACE_FUNCTION;
-    QWaylandQuickSurface* surface = qobject_cast<QWaylandQuickSurface *>(s);
+    QWaylandQuickSurface* surface = item ? qobject_cast<QWaylandQuickSurface *>(item->surface()) : nullptr;
     // NOTE: Some surface is not QWaylandQuickSurface (e.g. Cursor), we still need more attention in that case.
     // TODO Move the block to qml
     if (!surface) {
         emit homeScreenExposed();
     }
 
-    if (surface != m_fullscreenSurface) {
+    if (item != m_fullscreenSurfaceItem) {
         m_inputMethod->deactivate();
         // The notion of the fullscreen surface needs to remain here for now as
         // direct rendering support needs a handle to it
-        if (surface == NULL) {
-            m_previousFullscreenSurface = NULL;
+        if (item == NULL) {
+            m_previousFullscreenSurfaceItem = NULL;
         } else {
-            m_previousFullscreenSurface = m_fullscreenSurface;
+            m_previousFullscreenSurfaceItem = m_fullscreenSurfaceItem;
         }
-        m_fullscreenSurface = surface;
+        m_fullscreenSurfaceItem = item;
         emit fullscreenChanged();
         emit fullscreenSurfaceChanged();
         // This is here for a transitional period, see signal comments
-        emit fullscreenSurfaceChanged(m_previousFullscreenSurface, m_fullscreenSurface);
+        QWaylandSurface *previousFullscreenSurface = m_previousFullscreenSurfaceItem ? m_previousFullscreenSurfaceItem->surface() : nullptr;
+        emit fullscreenSurfaceChanged(previousFullscreenSurface, surface);
     }
-
-    // TODO: Clean up the return type
-    return true;
 }
 
 void WebOSCoreCompositor::surfaceAboutToBeDestroyed(QWaylandSurface *s)

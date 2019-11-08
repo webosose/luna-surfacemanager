@@ -100,6 +100,7 @@ public:
 
     static void logger(QtMsgType type, const QMessageLogContext &context, const QString &message);
 
+    WebOSSurfaceItem *fullscreenSurfaceItem() const;
     QWaylandQuickSurface *fullscreenSurface() const;
     WebOSSurfaceModel* surfaceModel() const;
     WebOSInputMethod* inputMethod() const;
@@ -180,8 +181,6 @@ public:
     WebOSKeyFilter *keyFilter() const;
     void setKeyFilter(WebOSKeyFilter *filter);
     WebOSSurfaceItem* activeSurface();
-
-    bool setFullscreenSurface(QWaylandSurface *surface);
 
     Q_INVOKABLE void closeWindow(QVariant window, QJSValue payload = QJSValue());
     Q_INVOKABLE void closeWindowKeepItem(QVariant window);
@@ -300,8 +299,8 @@ private slots:
 private:
     // variables
     // This is kept here for backwards compatibility.. see the deprecated signal
-    QWaylandQuickSurface * m_previousFullscreenSurface;
-    QWaylandQuickSurface * m_fullscreenSurface;
+    WebOSSurfaceItem * m_previousFullscreenSurfaceItem;
+    WebOSSurfaceItem * m_fullscreenSurfaceItem;
     WebOSSurfaceModel* m_surfaceModel;
     WebOSInputMethod* m_inputMethod;
     WebOSKeyFilter *m_keyFilter;
