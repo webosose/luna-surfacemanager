@@ -27,7 +27,8 @@ BaseView {
     property WindowModel model
     property Item currentItem: null
     property bool allowed: root.access
-    property bool reopen: false
+    property bool reopenInProgress: false
+    property bool needToReopen: false
 
     property QtObject inputMethod: QtObject {
         // Default values that deliberately prevent the view working
@@ -83,12 +84,14 @@ BaseView {
     Connections {
         target: inputMethod
         onPanelRectChanged: {
-            if (inputMethod.active && !inputMethod.hasPreferredPanelRect)
+            if (inputMethod.active && !inputMethod.hasPreferredPanelRect && root.needToReopen)
                 root.reopenView();
         }
         onHasPreferredPanelRectChanged: {
             if (inputMethod.active)
                 root.reopenView();
+            else
+                root.needToReopen = true;
         }
     }
 
@@ -116,7 +119,8 @@ BaseView {
         width: root.width
         height: root.height
         anchors.bottom: root.bottom
-        anchors.bottomMargin: -height
+        // No bottomMargin allowed when it's open
+        anchors.bottomMargin: root.isOpen ? 0 : -height
     }
 
     Binding {
@@ -135,6 +139,10 @@ BaseView {
                 // Scale while preserving aspect ratio
                 item.x = Qt.binding(function() { return Utils.center(keyboardArea.width, item.width); });
                 item.y = Qt.binding(function() { return Utils.center(keyboardArea.height, item.height); });
+                // New surface is in the front to prevent surfaces from tearing down
+                if (currentItem !== null)
+                    currentItem.z = 0;
+                item.z = 1;
                 item.scale = Qt.binding(function() { return Math.min(keyboardArea.width / item.width, keyboardArea.height / item.height); });
                 item.visible = true;
                 item.useTextureAlpha = true;
@@ -185,12 +193,12 @@ BaseView {
             property: "anchors.bottomMargin"
             from: 0
             to: -keyboardArea.height
-            duration: root.reopen ? 0 : Settings.local.keyboardView.slideAnimationDuration
+            duration: root.reopenInProgress ? 0 : Settings.local.keyboardView.slideAnimationDuration
             easing.type: Easing.InOutCubic
         }
         PauseAnimation {
             // Pause in the middle of re-opening to avoid keyboards in different sizes shown momentarily
-            duration: root.reopen ? 500 : 0
+            duration: root.reopenInProgress ? 500 : 0
         }
     }
 
@@ -204,8 +212,8 @@ BaseView {
 
     onClosed: {
         keyboardBacked.release();
-        if (root.reopen) {
-            root.reopen = false;
+        if (root.reopenInProgress) {
+            root.reopenInProgress = false;
             if (inputMethod.active)
                 root.openView();
             else
@@ -220,9 +228,10 @@ BaseView {
     }
 
     function reopenView() {
+        root.needToReopen = false;
         if (root.isOpen) {
             console.log("Re-opening view:", root);
-            root.reopen = true;
+            root.reopenInProgress = true;
             root.closeView();
         }
     }
