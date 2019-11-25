@@ -53,8 +53,10 @@ SurfaceView {
         item.parent = null;
     }
 
-    onCurrentItemChanged: {
-        compositorWindow.fullscreenItem = root.currentItem;
+    Binding {
+        target: compositorWindow
+        property: "fullscreenItem"
+        value: root.currentItem
     }
 
     Connections {
