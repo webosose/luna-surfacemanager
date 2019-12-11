@@ -312,6 +312,15 @@ void WebOSCompositorWindow::showWindow()
     show();
 }
 
+void WebOSCompositorWindow::setAccessible(bool enable)
+{
+    if (m_accessible != enable) {
+        qInfo() << "Accessible for window" << this << "enable: " << enable;
+        m_accessible = enable;
+        emit accessibleChanged(enable);
+    }
+}
+
 QRect WebOSCompositorWindow::outputGeometry() const
 {
     return m_outputGeometry.isValid() ? m_outputGeometry : m_baseGeometry;

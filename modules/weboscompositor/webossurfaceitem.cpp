@@ -35,9 +35,10 @@
 
 #include <qweboskeyextension.h>
 
+#include <QtCompositor/qwaylandbufferref.h>
 #include <QtCompositor/private/qwlinputdevice_p.h>
 #include <QtCompositor/private/qwlkeyboard_p.h>
-#include <QtCompositor/qwaylandbufferref.h>
+#include <QtCompositor/private/qwlpointer_p.h>
 
 #include "weboscompositortracer.h"
 
@@ -267,7 +268,15 @@ void WebOSSurfaceItem::mousePressEvent(QMouseEvent *event)
             emit hasKeyboardFocusChanged();
         }
 
-        inputDevice->sendMousePressEvent(e.button(), e.localPos(), e.windowPos());
+        if (!(static_cast<WebOSCompositorWindow *>(window())->accessible())) {
+            inputDevice->sendMousePressEvent(e.button(), e.localPos(), e.windowPos());
+        } else {
+            // In accessibility mode there should be no extra mouse move event sent.
+            // That is why we call another version of sendMousePressEvent here
+            // which sends a button event only.
+            inputDevice->handle()->pointerDevice()->setMouseFocus(this, e.localPos(), e.windowPos());
+            inputDevice->handle()->pointerDevice()->sendMousePressEvent(e.button());
+        }
     }
 }
 
@@ -275,7 +284,15 @@ void WebOSSurfaceItem::mouseReleaseEvent(QMouseEvent *event)
 {
     QMouseEvent e(event->type(), mapToTarget(event->localPos()).toPoint(),
                   event->button(), event->buttons(), event->modifiers());
-    QWaylandSurfaceItem::mouseReleaseEvent(&e);
+    if (!(static_cast<WebOSCompositorWindow *>(window())->accessible())) {
+        QWaylandSurfaceItem::mouseReleaseEvent(&e);
+    } else {
+        // In accessibility mode there should be no extra mouse move event sent.
+        // That is why we call another version of sendMousePressEvent here
+        // which sends a button event only.
+        getInputDevice(&e)->handle()->pointerDevice()->setMouseFocus(this, e.localPos(), e.windowPos());
+        getInputDevice(&e)->handle()->pointerDevice()->sendMouseReleaseEvent(e.button());
+    }
 }
 
 void WebOSSurfaceItem::wheelEvent(QWheelEvent *event)
@@ -302,7 +319,6 @@ void WebOSSurfaceItem::touchEvent(QTouchEvent *event)
 
 void WebOSSurfaceItem::hoverEnterEvent(QHoverEvent *event)
 {
-    Q_UNUSED(event);
     if (acceptHoverEvents() && surface()) {
 #ifdef MULTIINPUT_SUPPORT
         m_compositor->inputDeviceFor(event)->handle()->setMouseFocus(this, event->pos(), mapToGlobal(event->pos()));
@@ -311,6 +327,11 @@ void WebOSSurfaceItem::hoverEnterEvent(QHoverEvent *event)
 #endif
     }
     m_compositor->notifyPointerEnteredSurface(this->surface());
+
+    // In accessibility mode, there should be an explicit mouse move event
+    // for an item where a hover event arrives.
+    if (static_cast<WebOSCompositorWindow *>(window())->accessible())
+        m_compositor->inputDeviceFor(event)->sendMouseMoveEvent(event->pos(), mapToGlobal(event->pos()));
 }
 
 void WebOSSurfaceItem::hoverLeaveEvent(QHoverEvent *event)

@@ -41,6 +41,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCompositorWindow : public QQuickView {
     Q_OBJECT
 
     Q_PROPERTY(int displayId READ displayId CONSTANT)
+    Q_PROPERTY(bool accessible READ accessible WRITE setAccessible NOTIFY accessibleChanged)
     Q_PROPERTY(QRect outputGeometry READ outputGeometry NOTIFY outputGeometryChanged)
     Q_PROPERTY(int outputRotation READ outputRotation NOTIFY outputRotationChanged)
     Q_PROPERTY(bool outputClip READ outputClip NOTIFY outputClipChanged)
@@ -74,6 +75,9 @@ public:
     Q_INVOKABLE void showWindow();
 
     int displayId() const { return m_displayId; } ;
+
+    bool accessible() const { return m_accessible; }
+    void setAccessible(bool enable);
 
     QRect outputGeometry() const;
     int outputRotation() const;
@@ -132,6 +136,8 @@ signals:
     void isMirroringToChanged();
     void mirroringStateChanged();
 
+    void accessibleChanged(const bool enabled);
+
 private:
     // classes
     class RotationJob : public QRunnable
@@ -164,6 +170,7 @@ private:
 #endif
 
     int m_displayId;
+    bool m_accessible = false;
 
     QUrl m_main;
 
