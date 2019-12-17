@@ -72,10 +72,10 @@ Service {
             }
         }
 
-        function __unsubscribe() {
+        function __unsubscribe(method) {
             // Count decreases after subscriptionAboutToCancel is handled.
             // So it is the last subscription being cancelled if the count is 1.
-            if (root.subscribersCount("getForegroundAppInfo") == 1) {
+            if (method == "getForegroundAppInfo" && root.subscribersCount("getForegroundAppInfo") == 1) {
                 root.foregroundAppInfoMgr.foregroundAppInfoChanged.disconnect(__replySubscription);
                 root.subscriptionAboutToCancel.disconnect(__unsubscribe);
             }
