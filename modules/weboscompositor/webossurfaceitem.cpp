@@ -304,11 +304,10 @@ void WebOSSurfaceItem::hoverEnterEvent(QHoverEvent *event)
 {
     Q_UNUSED(event);
     if (acceptHoverEvents() && surface()) {
-        QPointF curPosition = static_cast<QPointF>(QCursor::pos());
 #ifdef MULTIINPUT_SUPPORT
-        m_compositor->inputDeviceFor(event)->handle()->setMouseFocus(this, curPosition, curPosition);
+        m_compositor->inputDeviceFor(event)->handle()->setMouseFocus(this, event->pos(), mapToGlobal(event->pos()));
 #else
-        m_compositor->defaultInputDevice()->handle()->setMouseFocus(this, curPosition, curPosition);
+        m_compositor->defaultInputDevice()->handle()->setMouseFocus(this, event->pos(), mapToGlobal(event->pos()));
 #endif
     }
     m_compositor->notifyPointerEnteredSurface(this->surface());
