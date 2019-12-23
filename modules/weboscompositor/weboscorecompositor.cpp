@@ -40,6 +40,7 @@
 #include "webosinputdevice.h"
 #include "webosseat.h"
 #include "webosinputmethod.h"
+#include "webosevent.h"
 #include "compositorextension.h"
 #include "compositorextensionfactory.h"
 
@@ -1120,6 +1121,16 @@ QWaylandInputDevice *WebOSCoreCompositor::inputDeviceFor(QInputEvent *inputEvent
         QTouchEvent *touch = static_cast<QTouchEvent *>(inputEvent);
         if (touch->window())
             return static_cast<WebOSCompositorWindow *>(touch->window())->inputDevice();
+    }
+
+    if (type == QEvent::MouseMove || type == QEvent::MouseButtonPress ||
+        type ==  QEvent::MouseButtonRelease) {
+        WebOSMouseEvent *wMouse = nullptr;
+        QMouseEvent *mouse = static_cast<QMouseEvent *>(inputEvent);
+        if (mouse->source() == Qt::MouseEventSource::MouseEventSynthesizedByApplication)
+            wMouse = static_cast<WebOSMouseEvent *>(mouse);
+        if (wMouse && wMouse->window())
+            return static_cast<WebOSCompositorWindow *>(wMouse->window())->inputDevice();
     }
 
     return QWaylandCompositor::inputDeviceFor(inputEvent);

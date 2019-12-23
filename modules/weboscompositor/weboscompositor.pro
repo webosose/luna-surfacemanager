@@ -52,6 +52,7 @@ HEADERS += \
     webosscreenshot.h \
     weboskeyfilter.h \
     webosinputdevice.h \
+    webosevent.h \
     compositorextensionfactory.h \
     unixsignalhandler.h
 
