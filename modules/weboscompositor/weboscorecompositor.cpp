@@ -876,17 +876,19 @@ void WebOSCoreCompositor::setCursorSurface(QWaylandSurface *surface, int hotspot
 void WebOSCoreCompositor::setMouseFocus(QWaylandSurface* surface)
 {
     PMTRACE_FUNCTION;
-    if (!surface)
+    if (!surface) {
         static_cast<WebOSCompositorWindow *>(window())->setDefaultCursor();
+        return;
+    }
 
-    QWaylandQuickSurface *qsurface = static_cast<QWaylandQuickSurface *>(surface);
 #ifdef MULTIINPUT_SUPPORT
     QPointF curPosition = static_cast<QPointF>(QCursor::pos());
     foreach (QWaylandInputDevice *dev, inputDevices()) {
-        if (surface && !surface->views().isEmpty())
+        if (!surface->views().isEmpty())
             dev->setMouseFocus(surface->views().first(), curPosition, curPosition);
     }
 #else
+    QWaylandQuickSurface *qsurface = static_cast<QWaylandQuickSurface *>(surface);
     QPointF curPosition = static_cast<QPointF>(QCursor::pos());
     defaultInputDevice()->setMouseFocus(qsurface->surfaceItem(), curPosition, curPosition);
 #endif
