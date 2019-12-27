@@ -142,10 +142,11 @@ WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *
     , m_lastMouseEventFrom(0)
     , m_inputDevicePreallocated(0)
 #endif
+    , m_respawned(false)
 {
     qInfo() << "Creating WebOSCoreCompositor with flags" << compositorFlags;
 
-    checkWaylandSocket();
+    checkDaemonFiles();
 
     initializeExtensions(extensions);
 }
@@ -238,8 +239,10 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
     }
 }
 
-void WebOSCoreCompositor::checkWaylandSocket() const
+void WebOSCoreCompositor::checkDaemonFiles()
 {
+    QByteArray xdgDir = qgetenv("XDG_RUNTIME_DIR");
+
     QByteArray name(socketName());
     // Similar logic as in wl_display_add_socket()
     if (name.isEmpty()) {
@@ -248,7 +251,7 @@ void WebOSCoreCompositor::checkWaylandSocket() const
             name = "wayland-0";
     }
 
-    QFileInfo sInfo(QString("%1/%2").arg(qgetenv("XDG_RUNTIME_DIR").constData()).arg(name.data()));
+    QFileInfo sInfo(QString("%1/%2").arg(xdgDir.constData()).arg(name.data()));
     QFileInfo dInfo(sInfo.absoluteDir().absolutePath());
     if (QFile::setPermissions(sInfo.absoluteFilePath(),
                 QFileDevice::ReadOwner | QFileDevice::WriteOwner |
@@ -259,6 +262,18 @@ void WebOSCoreCompositor::checkWaylandSocket() const
         QProcess::startDetached(cmd);
     } else {
         qCritical() << "Unable to set permission for" << sInfo.absoluteFilePath();
+    }
+
+    QFile pInfo(QString("%1/surface-manager.pid").arg(xdgDir.constData()));
+    if (pInfo.exists()) {
+        qInfo() << "surface-manager instance was respawned for some reason";
+        m_respawned = true;
+        emit respawnedChanged();
+    }
+    if (pInfo.open(QIODevice::WriteOnly | QFile::Truncate)) {
+        QTextStream out(&pInfo);
+        out << QCoreApplication::applicationPid() << '\n';
+        pInfo.close();
     }
 }
 

@@ -74,6 +74,8 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCoreCompositor : public QObject, public QWayl
     Q_PROPERTY(QList<QObject *> foregroundItems READ foregroundItems NOTIFY foregroundItemsChanged)
     Q_PROPERTY(QList<QObject *> windows READ windows NOTIFY windowsChanged)
 
+    Q_PROPERTY(bool respawned READ respawned NOTIFY respawnedChanged)
+
 public:
     enum ExtensionFlag {
         NoExtensions = 0x00,
@@ -185,6 +187,8 @@ public:
     QList<QObject *> windows() const;
     WebOSCompositorWindow *window(int displayId);
 
+    bool respawned() const { return m_respawned; }
+
 public slots:
     void handleActiveFocusItemChanged();
 
@@ -228,6 +232,8 @@ signals:
     void foregroundItemsChanged();
     void windowsChanged();
 
+    void respawnedChanged();
+
 protected:
     virtual void surfaceCreated(QWaylandSurface *surface);
 
@@ -250,7 +256,7 @@ private:
     friend EventPreprocessor;
 
     // methods
-    void checkWaylandSocket() const;
+    void checkDaemonFiles();
 
     void setCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY, wl_client *client) Q_DECL_OVERRIDE;
 
@@ -316,6 +322,8 @@ private:
     CompositorExtension *webOSWindowExtension();
 
     EventPreprocessor* m_eventPreprocessor;
+
+    bool m_respawned;
 };
 
 #endif // WEBOSCORECOMPOSITOR_H
