@@ -25,7 +25,7 @@ WebOSWindowModel::WebOSWindowModel()
 {
     PMTRACE_FUNCTION;
     setDynamicSortFilter(true);
-    sort(0);
+    QSortFilterProxyModel::sort(0);
     connect(this, SIGNAL(rowsAboutToBeRemoved(const QModelIndex&, int, int)), this, SLOT(emitSurfacesRemoved(const QModelIndex &, int, int)));
     connect(this, SIGNAL(rowsInserted(const QModelIndex&, int, int)), this, SLOT(emitSurfacesAdded(const QModelIndex&, int, int)));
 
@@ -111,7 +111,7 @@ bool WebOSWindowModel::lessThan(const QModelIndex &left,
 QVariant WebOSWindowModel::get(int row)
 {
     PMTRACE_FUNCTION;
-    QModelIndex idx = this->index(row, 0);
+    QModelIndex idx = QSortFilterProxyModel::index(row, 0);
     return idx.data();
 }
 

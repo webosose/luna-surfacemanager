@@ -80,7 +80,7 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
         qInfo () << "Using surface format given:" << *surfaceFormat;
         setFormat(*surfaceFormat);
     } else {
-        qInfo () << "Using default surface format:" << format();
+        qInfo () << "Using default surface format:" << QWindow::format();
     }
 
     setClearBeforeRendering(true);

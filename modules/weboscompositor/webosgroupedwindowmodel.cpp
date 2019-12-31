@@ -29,7 +29,7 @@ WebOSGroupedWindowModel::WebOSGroupedWindowModel()
 WebOSGroupedWindowModel::~WebOSGroupedWindowModel()
 {
     PMTRACE_FUNCTION;
-    int count = rowCount();
+    int count = QSortFilterProxyModel::rowCount();
     for (int rowNumber = 0; rowNumber < count; rowNumber++) {
         WebOSSurfaceItem* item = get(rowNumber).value<WebOSSurfaceItem*>();
         if (item) {
