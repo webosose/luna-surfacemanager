@@ -106,7 +106,6 @@ private slots:
 private:
     // variables
     static const struct input_panel_interface inputPanelImplementation;
-    QWaylandCompositor* m_compositor;
     wl_resource* m_resource;
     wl_client *m_client;
     QList<WaylandInputPanelSurface*> m_surfaces;
