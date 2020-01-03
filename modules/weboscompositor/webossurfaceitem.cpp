@@ -211,12 +211,15 @@ void WebOSSurfaceItem::takeWlKeyboardFocus() const
     }
 #ifdef MULTIINPUT_SUPPORT
     /* set keyboard focus for all devices */
-    foreach (QWaylandInputDevice *dev, m_compositor->inputDevices())
-        dev->setKeyboardFocus(surface());
+    foreach (QWaylandInputDevice *dev, m_compositor->inputDevices()) {
+        if (dev)
+            dev->setKeyboardFocus(surface());
+    }
 #else
     /* set keyboard focus for this item */
     QWaylandInputDevice *dev = m_compositor->keyboardDeviceForWindow(window());
-    dev->setKeyboardFocus(surface());
+    if (dev)
+        dev->setKeyboardFocus(surface());
 #endif
 }
 
@@ -258,26 +261,29 @@ void WebOSSurfaceItem::mousePressEvent(QMouseEvent *event)
 #else
         QWaylandInputDevice *keyboardDevice = getInputDevice();
 #endif
+        if (inputDevice && keyboardDevice) {
+            if (inputDevice->mouseFocus() != this)
+                inputDevice->setMouseFocus(this, e.localPos(), e.windowPos());
 
-        if (inputDevice->mouseFocus() != this)
-            inputDevice->setMouseFocus(this, e.localPos(), e.windowPos());
+            if (inputDevice->mouseFocus()
+                    && inputDevice->mouseFocus()->surface() != keyboardDevice->keyboardFocus()
+                    && m_grabKeyboardFocusOnClick) {
+                takeWlKeyboardFocus();
+                m_hasKeyboardFocus = true;
+                emit hasKeyboardFocusChanged();
+            }
 
-        if (inputDevice->mouseFocus()
-                && inputDevice->mouseFocus()->surface() != keyboardDevice->keyboardFocus()
-                && m_grabKeyboardFocusOnClick) {
-            takeWlKeyboardFocus();
-            m_hasKeyboardFocus = true;
-            emit hasKeyboardFocusChanged();
-        }
-
-        if (!w->accessible()) {
-            inputDevice->sendMousePressEvent(e.button(), e.localPos(), e.windowPos());
+            if (!w->accessible()) {
+                inputDevice->sendMousePressEvent(e.button(), e.localPos(), e.windowPos());
+            } else {
+                // In accessibility mode there should be no extra mouse move event sent.
+                // That is why we call another version of sendMousePressEvent here
+                // which sends a button event only.
+                inputDevice->handle()->pointerDevice()->setMouseFocus(this, e.localPos(), e.windowPos());
+                inputDevice->handle()->pointerDevice()->sendMousePressEvent(e.button());
+            }
         } else {
-            // In accessibility mode there should be no extra mouse move event sent.
-            // That is why we call another version of sendMousePressEvent here
-            // which sends a button event only.
-            inputDevice->handle()->pointerDevice()->setMouseFocus(this, e.localPos(), e.windowPos());
-            inputDevice->handle()->pointerDevice()->sendMousePressEvent(e.button());
+            qWarning() << "no input device for this event";
         }
     }
 }
@@ -288,8 +294,6 @@ void WebOSSurfaceItem::mouseReleaseEvent(QMouseEvent *event)
                   event->button(), event->buttons(), event->modifiers(), window());
 
     WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
-    QWaylandInputDevice *inputDevice = w->inputDevice();
-
 
     if (!w->accessible()) {
         QWaylandSurfaceItem::mouseReleaseEvent(&e);
@@ -297,8 +301,13 @@ void WebOSSurfaceItem::mouseReleaseEvent(QMouseEvent *event)
         // In accessibility mode there should be no extra mouse move event sent.
         // That is why we call another version of sendMousePressEvent here
         // which sends a button event only.
-        inputDevice->handle()->pointerDevice()->setMouseFocus(this, e.localPos(), e.windowPos());
-        inputDevice->handle()->pointerDevice()->sendMouseReleaseEvent(e.button());
+        QWaylandInputDevice *inputDevice = w->inputDevice();
+        if (inputDevice) {
+            inputDevice->handle()->pointerDevice()->setMouseFocus(this, e.localPos(), e.windowPos());
+            inputDevice->handle()->pointerDevice()->sendMouseReleaseEvent(e.button());
+        } else {
+            qWarning() << "no input device for this event";
+        }
     }
 }
 
@@ -326,28 +335,30 @@ void WebOSSurfaceItem::touchEvent(QTouchEvent *event)
 
 void WebOSSurfaceItem::hoverEnterEvent(QHoverEvent *event)
 {
-    QWaylandInputDevice *inputDevice;
     WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
 
     if (acceptHoverEvents() && surface()) {
 #ifdef MULTIINPUT_SUPPORT
-        inputDevice = m_compositor->inputDeviceFor(event);
+        QWaylandInputDevice *inputDevice = m_compositor->inputDeviceFor(event);
 #else
-        inputDevice = w->inputDevice();
+        QWaylandInputDevice *inputDevice = w->inputDevice();
 #endif
-        inputDevice->handle()->setMouseFocus(this, event->pos(), mapToGlobal(event->pos()));
+        if (inputDevice) {
+            inputDevice->handle()->setMouseFocus(this, event->pos(), mapToGlobal(event->pos()));
+            // In accessibility mode, there should be an explicit mouse move event
+            // for an item where a hover event arrives.
+            if (w->accessible())
+                inputDevice->sendMouseMoveEvent(event->pos(), mapToGlobal(event->pos()));
+        } else {
+            qWarning() << "no input device for this event";
+        }
     }
     m_compositor->notifyPointerEnteredSurface(this->surface());
-
-    // In accessibility mode, there should be an explicit mouse move event
-    // for an item where a hover event arrives.
-    if (w->accessible())
-        inputDevice->sendMouseMoveEvent(event->pos(), mapToGlobal(event->pos()));
 }
 
 void WebOSSurfaceItem::hoverLeaveEvent(QHoverEvent *event)
 {
-    QWaylandInputDevice *inputDevice;
+    Q_UNUSED(event);
     WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
 
     if (acceptHoverEvents() && surface()) {
@@ -355,8 +366,11 @@ void WebOSSurfaceItem::hoverLeaveEvent(QHoverEvent *event)
 #ifdef MULTIINPUT_SUPPORT
         m_compositor->resetMouseFocus(surface());
 #else
-        inputDevice = w->inputDevice();
-        inputDevice->handle()->setMouseFocus(NULL, curPosition, curPosition);
+        QWaylandInputDevice *inputDevice = w->inputDevice();
+        if (inputDevice)
+            inputDevice->handle()->setMouseFocus(NULL, curPosition, curPosition);
+        else
+            qWarning() << "no input device for this event";
 #endif
     }
     m_compositor->notifyPointerLeavedSurface(this->surface());
@@ -389,7 +403,7 @@ void WebOSSurfaceItem::mouseUngrabEvent()
         QTouchEvent e(QEvent::TouchCancel);
         for (int i = 0; i < m_compositor->inputDevices().size()-1; i++) {
             QWaylandInputDevice *dev = m_compositor->inputDevices().at(i);
-            if (!surface()->views().isEmpty() && dev->mouseFocus() == surface()->views().first()) {
+            if (!surface()->views().isEmpty() && dev && dev->mouseFocus() == surface()->views().first()) {
                 e = QTouchEvent(QEvent::TouchCancel, Q_NULLPTR, (Qt::KeyboardModifiers)(static_cast<WebOSInputDevice*>(dev)->id()));
                 break;
             }
@@ -407,6 +421,11 @@ void WebOSSurfaceItem::processKeyEvent(QKeyEvent *event)
         return;
 
     QWaylandInputDevice *inputDevice = getInputDevice(event);
+    if (!inputDevice) {
+        qWarning() << "no input device for this event";
+        return;
+    }
+
     QtWayland::Keyboard *keyboard = inputDevice->handle()->keyboardDevice();
 
     // General case
@@ -455,18 +474,20 @@ void WebOSSurfaceItem::focusOutEvent(QFocusEvent *event)
 #ifdef MULTIINPUT_SUPPORT
     //Reset Keybaord/Pointer focus
     foreach (QWaylandInputDevice *dev, m_compositor->inputDevices()) {
-        if (dev->keyboardFocus() == surface())
-            dev->setKeyboardFocus(0);
-        if (surface() && !surface()->views().isEmpty()
-            && dev->mouseFocus() == surface()->views().first())
-            dev->setMouseFocus(0, QPointF(), QPointF());
+        if (dev) {
+            if (dev->keyboardFocus() == surface())
+                dev->setKeyboardFocus(0);
+            if (surface() && !surface()->views().isEmpty()
+                && dev->mouseFocus() == surface()->views().first())
+                dev->setMouseFocus(0, QPointF(), QPointF());
+        }
     }
 #else
     QWaylandInputDevice *keyboardDevice = getInputDevice();
     QWaylandInputDevice *mouseDevice = m_compositor->defaultInputDevice();
-    if (keyboardDevice->keyboardFocus() == surface())
+    if (keyboardDevice && keyboardDevice->keyboardFocus() == surface())
         keyboardDevice->setKeyboardFocus(0);
-    if (mouseDevice->mouseFocus() == this)
+    if (mouseDevice && mouseDevice->mouseFocus() == this)
         mouseDevice->setMouseFocus(0, QPointF(), QPointF());
 #endif
 
