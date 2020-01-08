@@ -255,10 +255,11 @@ void WebOSSurfaceItem::mousePressEvent(QMouseEvent *event)
 
     if (surface()) {
         WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
-        QWaylandInputDevice *inputDevice = w->inputDevice();
 #ifdef MULTIINPUT_SUPPORT
+        QWaylandInputDevice *inputDevice = getInputDevice(&e);
         QWaylandInputDevice *keyboardDevice = inputDevice;
 #else
+        QWaylandInputDevice *inputDevice = w->inputDevice();
         QWaylandInputDevice *keyboardDevice = getInputDevice();
 #endif
         if (inputDevice && keyboardDevice) {
@@ -313,8 +314,9 @@ void WebOSSurfaceItem::mouseReleaseEvent(QMouseEvent *event)
 
 void WebOSSurfaceItem::wheelEvent(QWheelEvent *event)
 {
-    QWheelEvent e(mapToTarget(event->pos()), event->globalPos(), event->pixelDelta(),
-                  event->angleDelta(), event->delta(), Qt::Vertical, event->buttons(), event->modifiers());
+    WebOSWheelEvent e(mapToTarget(event->pos()), event->globalPos(), event->pixelDelta(),
+                  event->angleDelta(), event->delta(), event->orientation(),
+                  event->buttons(), event->modifiers(), event->phase(), window());
     QWaylandSurfaceItem::wheelEvent(&e);
 }
 
@@ -335,9 +337,8 @@ void WebOSSurfaceItem::touchEvent(QTouchEvent *event)
 
 void WebOSSurfaceItem::hoverEnterEvent(QHoverEvent *event)
 {
-    WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
-
     if (acceptHoverEvents() && surface()) {
+        WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
 #ifdef MULTIINPUT_SUPPORT
         QWaylandInputDevice *inputDevice = m_compositor->inputDeviceFor(event);
 #else
@@ -359,13 +360,12 @@ void WebOSSurfaceItem::hoverEnterEvent(QHoverEvent *event)
 void WebOSSurfaceItem::hoverLeaveEvent(QHoverEvent *event)
 {
     Q_UNUSED(event);
-    WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
 
     if (acceptHoverEvents() && surface()) {
 #ifdef MULTIINPUT_SUPPORT
         m_compositor->resetMouseFocus(surface());
 #else
-        QWaylandInputDevice *inputDevice = w->inputDevice();
+        QWaylandInputDevice *inputDevice = static_cast<WebOSCompositorWindow *>(window())->inputDevice();
         if (inputDevice)
             inputDevice->handle()->setMouseFocus(NULL, event->pos(), mapToScene(event->pos()));
         else

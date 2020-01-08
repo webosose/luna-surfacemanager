@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2019 LG Electronics, Inc.
+// Copyright (c) 2014-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1148,6 +1148,15 @@ QWaylandInputDevice *WebOSCoreCompositor::inputDeviceFor(QInputEvent *inputEvent
             wMouse = static_cast<WebOSMouseEvent *>(mouse);
         if (wMouse && wMouse->window())
             return static_cast<WebOSCompositorWindow *>(wMouse->window())->inputDevice();
+    }
+
+    if (type == QEvent::Wheel) {
+        WebOSWheelEvent *wWheel = nullptr;
+        QWheelEvent *wheel = static_cast<QWheelEvent *>(inputEvent);
+        if (wheel->source() == Qt::MouseEventSource::MouseEventSynthesizedByApplication)
+            wWheel = static_cast<WebOSWheelEvent *>(wheel);
+        if (wWheel && wWheel->window())
+            return static_cast<WebOSCompositorWindow *>(wWheel->window())->inputDevice();
     }
 
     return QWaylandCompositor::inputDeviceFor(inputEvent);
