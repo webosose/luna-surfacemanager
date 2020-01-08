@@ -344,11 +344,11 @@ void WebOSSurfaceItem::hoverEnterEvent(QHoverEvent *event)
         QWaylandInputDevice *inputDevice = w->inputDevice();
 #endif
         if (inputDevice) {
-            inputDevice->handle()->setMouseFocus(this, event->pos(), mapToGlobal(event->pos()));
+            inputDevice->handle()->setMouseFocus(this, event->pos(), mapToScene(event->pos()));
             // In accessibility mode, there should be an explicit mouse move event
             // for an item where a hover event arrives.
             if (w->accessible())
-                inputDevice->sendMouseMoveEvent(event->pos(), mapToGlobal(event->pos()));
+                inputDevice->sendMouseMoveEvent(event->pos(), mapToScene(event->pos()));
         } else {
             qWarning() << "no input device for this event";
         }
@@ -362,13 +362,12 @@ void WebOSSurfaceItem::hoverLeaveEvent(QHoverEvent *event)
     WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
 
     if (acceptHoverEvents() && surface()) {
-        QPointF curPosition = static_cast<QPointF>(QCursor::pos());
 #ifdef MULTIINPUT_SUPPORT
         m_compositor->resetMouseFocus(surface());
 #else
         QWaylandInputDevice *inputDevice = w->inputDevice();
         if (inputDevice)
-            inputDevice->handle()->setMouseFocus(NULL, curPosition, curPosition);
+            inputDevice->handle()->setMouseFocus(NULL, event->pos(), mapToScene(event->pos()));
         else
             qWarning() << "no input device for this event";
 #endif
