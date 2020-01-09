@@ -157,7 +157,8 @@ public:
     void childSurfaceDestroyed();
 
 protected:
-    virtual void webos_imported_attach_punchthrough(Resource *,
+    virtual void webos_imported_attach_punchthrough(Resource *) override;
+    virtual void webos_imported_attach_punchthrough_with_context(Resource *,
                                                  const QString& contextId) override;
     virtual void webos_imported_detach_punchthrough(Resource *) override;
     virtual void webos_imported_destroy(Resource*) override;

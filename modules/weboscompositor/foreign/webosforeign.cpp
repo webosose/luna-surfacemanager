@@ -735,11 +735,17 @@ void WebOSImported::updateExported(WebOSExported * exported)
      m_exported = exported;
 }
 
-void WebOSImported::webos_imported_attach_punchthrough(Resource* r, const QString& contextId)
+void WebOSImported::webos_imported_attach_punchthrough(Resource* r)
+{
+    qInfo() << "attach_punchthrough is called, invoke attach_punchthrough_with_context with MAIN context for backward compatibility";
+    webos_imported_attach_punchthrough_with_context(r, QString("MAIN"));
+}
+
+void WebOSImported::webos_imported_attach_punchthrough_with_context(Resource* r, const QString& contextId)
 {
     Q_UNUSED(r);
 
-    qInfo() << "attach_punchthrough is called with contextId " << contextId << " on " << this;
+    qInfo() << "attach_punchthrough_with_context is called with contextId " << contextId << " on " << this;
 
     if (!m_exported || !(m_exported->m_exportedItem) || contextId.isNull()) {
         qWarning() << " Fail to attach punch through (m_exported : " << m_exported << " contextId : " << contextId << ")";
