@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,13 +35,13 @@ const struct text_model_interface WaylandTextModel::textModelImplementation = {
     WaylandTextModel::textModelReset,
     WaylandTextModel::textModelSetCursorRectangle,
     WaylandTextModel::textModelSetContentType,
-    WaylandTextModel::textModelSetEnterKeyType,
     WaylandTextModel::textModelInvokeAction,
     WaylandTextModel::textModelCommit,
-    WaylandTextModel::textModelSetMaxTextLength,
-    WaylandTextModel::textModelSetPlatformData,
     WaylandTextModel::textModelShowInputPanel,
     WaylandTextModel::textModelHideInputPanel,
+    WaylandTextModel::textModelSetMaxTextLength,
+    WaylandTextModel::textModelSetPlatformData,
+    WaylandTextModel::textModelSetEnterKeyType,
     WaylandTextModel::textModelSetInputPanelRect,
     WaylandTextModel::textModelResetInputPanelRect,
 };
