@@ -24,7 +24,7 @@ Item {
     Connections {
         target: videooutputdCommunicator
         onSetVideoDisplayWindowRequested: {
-            // luna-send -n 1 -f luna://com.webos.service.videooutputd/video/display/setDisplayWindow '{ \
+            // luna-send -n 1 -f luna://com.webos.service.videooutput/video/display/setDisplayWindow '{ \
             //     "displayOutput":{"width":960,"height":540,"x":160,"y":0}, \
             //     "context": contextId, \
             //     "fullScreen":false \

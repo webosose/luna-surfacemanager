@@ -134,7 +134,7 @@ private:
     QString m_contextId;
     QMap<QString, QString> m_properties;
     bool m_isSurfaceItemFullscreen;
-    bool m_directVideoScalingMode = false;; // If this mode is enabled, do not call setDisplayWindow and setCropRegion of videooutputd
+    bool m_directVideoScalingMode = false; // If this mode is enabled, do not call setDisplayWindow and setCropRegion of videooutputd
     double m_videoDispRatio = 1.0;
     double m_exportedWindowRatio = 1.0;
 

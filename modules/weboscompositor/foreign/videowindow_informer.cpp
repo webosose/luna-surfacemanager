@@ -39,8 +39,9 @@ void VideoWindowInformer::insertVideoWindowList(const QString contextId, const Q
     qDebug() << "insertVideoWindowList() with contextId : " << contextId << " , destinationRectangle : " << destinationRectangle << " , windowId " << windowId;
     emit insertVideoWindowInfo(contextId, destinationRectangle, windowId);
 }
+
 void VideoWindowInformer::removeVideoWindowList(const QString contextId)
 {
-     qDebug() << "removeVideoWindowList() with contextId : " << contextId;
-     emit removeVideoWindowInfo(contextId);
+    qDebug() << "removeVideoWindowList() with contextId : " << contextId;
+    emit removeVideoWindowInfo(contextId);
 }

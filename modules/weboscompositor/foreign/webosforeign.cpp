@@ -343,7 +343,7 @@ void WebOSExported::updateVideoWindowList(QString contextId, QRect videoDisplayR
     if (needRemove || !m_exportedItem) {
         VideoWindowInformer::instance()->removeVideoWindowList(contextId);
     } else {
-         if(!m_contextId.isNull() && m_exportedItem->isVisible()) {
+         if (!m_contextId.isNull() && m_exportedItem->isVisible()) {
             VideoWindowInformer::instance()->insertVideoWindowList(contextId, videoDisplayRect, m_windowId);
          }
     }
@@ -443,7 +443,7 @@ void WebOSExported::webos_exported_set_exported_window(
 
 void WebOSExported::webos_exported_set_crop_region(
         Resource *resource,
-       struct ::wl_resource *original_input,
+        struct ::wl_resource *original_input,
         struct ::wl_resource *source_region,
         struct ::wl_resource *destination_region)
 {
@@ -593,7 +593,7 @@ void WebOSExported::setParentOf(QQuickItem *item)
 void WebOSExported::unregisterMuteOwner()
 {
     if (!m_contextId.isNull()) {
-         updateVideoWindowList(m_contextId, QRect(0, 0, 0, 0), true);
+        updateVideoWindowList(m_contextId, QRect(0, 0, 0, 0), true);
         QMap<QString, QString>::const_iterator it = m_properties.find("mute");
         if (it!= m_properties.end()) {
             if (it.value() == "on")
@@ -728,11 +728,11 @@ void WebOSImported::updateExported(WebOSExported * exported)
 
     if (m_exported == exported)
         return;
-    
+
     if (exported == nullptr)
         detach();
 
-     m_exported = exported;
+    m_exported = exported;
 }
 
 void WebOSImported::webos_imported_attach_punchthrough(Resource* r)

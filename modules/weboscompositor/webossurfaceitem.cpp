@@ -447,8 +447,7 @@ void WebOSSurfaceItem::processKeyEvent(QKeyEvent *event)
         if (hasFocus()) {
             qInfo() << "Focused none-group nor grabbed item: " << this << event->key();
             inputDevice->sendFullKeyEvent(event);
-        }
-	else {
+        } else {
             qInfo() << "Not focused none-group nor grabbed item: " << this << event->key();
         }
         return;
