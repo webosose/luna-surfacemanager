@@ -67,8 +67,9 @@ static QWaylandCompositor::ExtensionFlags compositorFlags = 0;
 
 void WebOSCoreCompositor::logger(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
-    const char* function  = context.function;
-    const char* userMessage  = message.toUtf8().constData();
+    const char* function = context.function;
+    QByteArray userMessageUtf8 = message.toUtf8();
+    const char* userMessage = userMessageUtf8.constData();
 
 #ifdef USE_PMLOGLIB
     static PmLogContext pmLogCtx;
