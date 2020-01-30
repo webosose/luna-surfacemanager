@@ -345,7 +345,29 @@ void WebOSSurfaceItem::touchEvent(QTouchEvent *event)
     if (!event->window())
         e.setWindow(window());
 
-    QWaylandQuickItem::touchEvent(&e);
+    if (surface() && inputEventsEnabled() && touchEventsEnabled()) {
+        WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
+
+#ifdef MULTIINPUT_SUPPORT
+        QWaylandSeat *seat = getInputDevice(&e);
+#else
+        QWaylandSeat *seat = w->inputDevice();
+#endif
+
+        QPoint pointPos;
+        const QList<QTouchEvent::TouchPoint> &points = e.touchPoints();
+        if (!points.isEmpty())
+            pointPos = points.at(0).pos().toPoint();
+
+        if (e.type() == QEvent::TouchBegin && !inputRegionContains(pointPos))
+            return;
+
+        if (seat->mouseFocus() != view())
+            seat->sendMouseMoveEvent(view(), pointPos, mapToScene(pointPos));
+        seat->sendFullTouchEvent(surface(), &e);
+    } else {
+        QWaylandQuickItem::touchEvent(&e);
+    }
 }
 
 void WebOSSurfaceItem::hoverEnterEvent(QHoverEvent *event)
