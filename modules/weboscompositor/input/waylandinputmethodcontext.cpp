@@ -60,6 +60,9 @@ WaylandInputMethodContext::WaylandInputMethodContext(WaylandInputMethod* inputMe
     , m_grabbed(false)
     , m_activated(false)
     , m_resourceCount(0)
+#ifdef MULTIINPUT_SUPPORT
+    , m_compositor(static_cast<WebOSCoreCompositor *>(inputMethod->compositor()))
+#endif
 {
     qDebug() << this;
 
@@ -186,7 +189,7 @@ void WaylandInputMethodContext::grabKeyboard(struct wl_client *client, struct wl
 {
     WaylandInputMethodContext* that = static_cast<WaylandInputMethodContext*>(resource->data);
 
-    if (!that->m_inputMethod->inputDevice()) {
+    if (!that->m_inputMethod || !that->m_inputMethod->inputDevice()) {
         qWarning() << "No input device for input method" << that->m_inputMethod;
         return;
     }
@@ -469,25 +472,23 @@ void WaylandInputMethodContext::grabKeyboardImpl()
         return;
 
 #ifdef MULTIINPUT_SUPPORT
-    WebOSCoreCompositor *compositor = static_cast<WebOSCoreCompositor*>(m_inputMethod->compositor());
-    QList<QWaylandSeat *> devices = compositor->inputDevices();
+    QList<QWaylandSeat *> devices = m_compositor->inputDevices();
     foreach (QWaylandSeat *device, devices) {
         auto p_keyboard = static_cast<WebOSKeyboard*>(device->keyboard());
         if (p_keyboard) {
             p_keyboard->startGrab(this);
 
             int devId = static_cast<WebOSInputDevice*>(device)->id();
-            compositor->inputManager()->setGrabStatus(devId, true);
+            m_compositor->inputManager()->setGrabStatus(devId, true);
         }
     }
 #else
-    if (!m_inputMethod->inputDevice()) {
+    if (!m_inputMethod || !m_inputMethod->inputDevice()) {
         qWarning() << "No input device for input method" << m_inputMethod;
         return;
     }
-    auto p_device = m_inputMethod->inputDevice();
-    auto p_keyboard = static_cast<WebOSKeyboard*>(p_device->keyboard());
-    p_keyboard->startGrab(this);
+    m_grabKeyboard = static_cast<WebOSKeyboard*>(m_inputMethod->inputDevice()->keyboard());
+    m_grabKeyboard->startGrab(this);
 #endif
 
     m_grabbed = true;
@@ -499,25 +500,21 @@ void WaylandInputMethodContext::releaseGrabImpl()
         return;
 
 #ifdef MULTIINPUT_SUPPORT
-    WebOSCoreCompositor *compositor = static_cast<WebOSCoreCompositor*>(m_inputMethod->compositor());
-    QList<QWaylandSeat *> devices = compositor->inputDevices();
+    QList<QWaylandSeat *> devices = m_compositor->inputDevices();
     foreach (QWaylandSeat *device, devices) {
         auto p_keyboard = static_cast<WebOSKeyboard*>(device->keyboard());
         if (p_keyboard) {
             p_keyboard->endGrab();
 
             int devId = static_cast<WebOSInputDevice*>(device)->id();
-            compositor->inputManager()->setGrabStatus(devId, false);
+            m_compositor->inputManager()->setGrabStatus(devId, false);
         }
     }
 #else
-    if (!m_inputMethod->inputDevice()) {
-        qWarning() << "No input device for input method" << m_inputMethod;
-        return;
+    if (m_grabKeyboard) {
+        m_grabKeyboard->endGrab();
+        m_grabKeyboard = nullptr;
     }
-    auto p_device = m_inputMethod->inputDevice();
-    auto p_keyboard = static_cast<WebOSKeyboard*>(p_device->keyboard());
-    p_keyboard->endGrab();
 #endif
 
     m_grabbed = false;

@@ -30,6 +30,7 @@
 
 class WaylandInputMethod;
 class WaylandTextModel;
+class WebOSCoreCompositor;
 
 /*!
  * Implements the compositor side protocol for the input method
@@ -110,10 +111,14 @@ private:
     QPointer<WaylandInputMethod> m_inputMethod;
     WaylandTextModel* m_textModel;
     wl_resource* m_resource;
-    QtWaylandServer::wl_keyboard::Resource* m_grabResource;
+    QtWaylandServer::wl_keyboard::Resource *m_grabResource;
     bool m_activated;
     uint32_t m_resourceCount;
     bool m_grabbed;
+    WebOSKeyboard *m_grabKeyboard = nullptr;
+#ifdef MULTIINPUT_SUPPORT
+    WebOSCoreCompositor *m_compositor = nullptr;
+#endif
 };
 
 #endif //WAYLANDINPUTMETHOD_H
