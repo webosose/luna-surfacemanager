@@ -88,6 +88,7 @@ public:
     void setPunchThrough(bool needPunch);
     void assignWindowId(QString windowId);
     void setParentOf(QQuickItem *surfaceItem);
+    void registerMuteOwner(const QString& contextId);
     void unregisterMuteOwner();
     void setVideoDisplayWindow();
     void startImportedMirroring(WebOSSurfaceItem *parent);
@@ -140,6 +141,7 @@ private:
     QRect m_videoDisplayRect;
     QString m_windowId;
     QString m_contextId;
+    QString m_muteRegisteredContextId;
     QMap<QString, QString> m_properties;
     bool m_isSurfaceItemFullscreen;
     bool m_directVideoScalingMode = false; // If this mode is enabled, do not call setDisplayWindow and setCropRegion of videooutputd

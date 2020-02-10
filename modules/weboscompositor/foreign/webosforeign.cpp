@@ -289,6 +289,12 @@ WebOSExported::~WebOSExported()
     // delete m_punchThroughItem in detach
     setPunchThrough(false);
 
+    if (!m_muteRegisteredContextId.isNull()) {
+        VideoOutputdCommunicator::instance()->setProperty("mute", "off", m_muteRegisteredContextId);
+        VideoOutputdCommunicator::instance()->setProperty("registerMute", "off", m_muteRegisteredContextId);
+        m_muteRegisteredContextId = QString();
+    }
+
     m_foreign->m_exportedList.removeAll(this);
 
     // Usually it is deleted by QObjectPrivate::deleteChildren with its parent surfaceItem.
@@ -588,6 +594,7 @@ void WebOSExported::webos_exported_set_property(
         if (m_properties.find("mute") == m_properties.end()) {
             if (m_foreign->m_compositor->window() && !m_contextId.isNull()) {
                 VideoOutputdCommunicator::instance()->setProperty("registerMute", "on", m_contextId);
+                m_muteRegisteredContextId = m_contextId;
             } else {
                 m_properties.insert("registerMute", "on");
             }
@@ -595,7 +602,11 @@ void WebOSExported::webos_exported_set_property(
     }
 
     if (m_foreign->m_compositor->window()) {
-        VideoOutputdCommunicator::instance()->setProperty(name, value, m_contextId);
+        if (name == "mute" && value == "windowBasedOn") {
+            VideoOutputdCommunicator::instance()->setProperty(name, "on", m_contextId);
+        } else {
+            VideoOutputdCommunicator::instance()->setProperty(name, value, m_contextId);
+        }
         if (value == "none") {
             m_properties.remove(name);
             return;
@@ -684,16 +695,43 @@ void WebOSExported::setParentOf(QQuickItem *item)
         startImportedMirroring(parent);
 }
 
+void WebOSExported::registerMuteOwner(const QString& contextId)
+{
+    qDebug() << "WebOSExported::registerMuteOwner() m_muteRegisteredContextId : " << m_muteRegisteredContextId <<  "contextId: " << contextId;
+
+    if (!m_muteRegisteredContextId.isNull()) {
+        if (m_muteRegisteredContextId == contextId) {
+            qDebug() << "ContextId is same. Do not unregister mute owner";
+        } else {
+            qDebug() << "ContextId is different from the previous one";
+            VideoOutputdCommunicator::instance()->setProperty("mute", "off", m_muteRegisteredContextId);
+            VideoOutputdCommunicator::instance()->setProperty("registerMute", "off", m_muteRegisteredContextId);
+            VideoOutputdCommunicator::instance()->setProperty("registerMute", "on", contextId);
+            m_muteRegisteredContextId = contextId;
+        }
+    } else {
+        qDebug() << "m_muteRegisteredContextId is null";
+        QMap<QString, QString>::const_iterator it = (m_properties).find("registerMute");
+        if (it!= (m_properties).end()) {
+            VideoOutputdCommunicator::instance()->setProperty(it.key(), it.value(), contextId);
+            m_properties.remove(it.key());
+            m_muteRegisteredContextId = contextId;
+        }
+    }
+}
+
 void WebOSExported::unregisterMuteOwner()
 {
     if (!m_contextId.isNull()) {
-        updateVideoWindowList(m_contextId, QRect(0, 0, 0, 0), true);
         QMap<QString, QString>::const_iterator it = m_properties.find("mute");
         if (it!= m_properties.end()) {
             if (it.value() == "on")
                 VideoOutputdCommunicator::instance()->setProperty(it.key(), "off", m_contextId);
-            m_properties.remove(it.key());
-            VideoOutputdCommunicator::instance()->setProperty("registerMute", "off", m_contextId);
+            if (it.value() != "windowBasedOn") {
+                m_properties.remove(it.key());
+                VideoOutputdCommunicator::instance()->setProperty("registerMute", "off", m_contextId);
+                m_muteRegisteredContextId = QString();
+            }
         }
     }
 }
@@ -858,16 +896,17 @@ void WebOSImported::webos_imported_attach_punchthrough_with_context(Resource* r,
     if (!(m_exported->m_contextId.isNull()))
         qWarning() << "m_exported has m_contextId " << m_exported->m_contextId;
 
-    QMap<QString, QString>::const_iterator it = (m_exported->m_properties).find("registerMute");
-    if (it!= (m_exported->m_properties).end()) {
-        VideoOutputdCommunicator::instance()->setProperty(it.key(), it.value(), contextId);
-        m_exported->m_properties.remove(it.key());
-    }
+    m_exported->registerMuteOwner(contextId);
+
+    // set_property
     if (!(m_exported->m_properties).isEmpty()) {
         QMap<QString, QString>::const_iterator i = m_exported->m_properties.constBegin();
         while (i != m_exported->m_properties.constEnd()) {
             qInfo() << "m_properties key : " << i.key() << " value :  " << i.value();
-            VideoOutputdCommunicator::instance()->setProperty(i.key(), i.value(), contextId);
+            if (i.key() == "mute" && i.value() == "windowBasedOn")
+                VideoOutputdCommunicator::instance()->setProperty(i.key(), "on", contextId);
+            else
+                VideoOutputdCommunicator::instance()->setProperty(i.key(), i.value(), contextId);
             ++i;
         }
     }
@@ -900,7 +939,7 @@ void WebOSImported::webos_imported_detach_punchthrough(Resource* r)
         m_exported->setPunchThrough(false);
         send_punchthrough_detached(m_exported->m_contextId);
         m_exported->updateVideoWindowList(m_exported->m_contextId, QRect(0, 0, 0, 0), true);
-        m_exported->m_contextId = QString::null;
+        m_exported->m_contextId = QString();
         m_punchThroughAttached = false;
     } else {
         qInfo() << "detach_punchthrough is called for contextId " << m_contextId;
