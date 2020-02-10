@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2019 LG Electronics, Inc.
+// Copyright (c) 2017-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -208,6 +208,7 @@ int main(int argc, char *argv[])
        where extended compositor installs filters. */
     compositorWindow->installEventFilter(new EventFilter(compositor));
 
+    compositor->create();
     compositor->registerWindow(compositorWindow, "window-0");
     compositor->registerTypes();
 
