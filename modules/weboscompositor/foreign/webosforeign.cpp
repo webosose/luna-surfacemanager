@@ -45,14 +45,16 @@ public:
     MirrorItemHandler() {}
     ~MirrorItemHandler() { clearHandler(); }
 
-    void initialize(QQuickItem *item, QQuickItem *exportedItem, QQuickItem *parent)
+    virtual void initialize(QQuickItem *item, QQuickItem *exportedItem, QQuickItem *source, QQuickItem *parent)
     {
+        qInfo() << "mirror" << item <<"exported" << exportedItem << "source" << source << "parent" << parent;
+
         item->setClip(exportedItem->clip());
-        item->setZ(exportedItem->z());
         item->setX(exportedItem->x());
         item->setY(exportedItem->y());
-        item->setWidth(exportedItem->width());
-        item->setHeight(exportedItem->height());
+        item->setZ(source->z());
+        item->setWidth(source->width());
+        item->setHeight(source->height());
         item->setParentItem(parent);
     }
 
@@ -61,8 +63,9 @@ public:
     {
         m_xConn = QObject::connect(exportedItem, &QQuickItem::xChanged, [item, exportedItem]() { item->setX(exportedItem->x()); });
         m_yConn = QObject::connect(exportedItem, &QQuickItem::yChanged, [item, exportedItem]() { item->setY(exportedItem->y()); });
-        m_widthConn = QObject::connect(exportedItem, &QQuickItem::widthChanged, [item, exportedItem]() { item->setWidth(exportedItem->width()); });
-        m_heightConn = QObject::connect(exportedItem, &QQuickItem::heightChanged, [item, exportedItem]() { item->setHeight(exportedItem->height()); });
+        m_zConn = QObject::connect(source, &QQuickItem::widthChanged, [item, source]() { item->setZ(source->z()); });
+        m_widthConn = QObject::connect(source, &QQuickItem::widthChanged, [item, source]() { item->setWidth(source->width()); });
+        m_heightConn = QObject::connect(source, &QQuickItem::heightChanged, [item, source]() { item->setHeight(source->height()); });
         // Triggered when the parent is deleted.
         m_parentConn = QObject::connect(item, &QQuickItem::parentChanged, [item]() { delete item; });
         // Triggered when source imported item is deleted.
@@ -73,6 +76,7 @@ public:
     {
         QObject::disconnect(m_xConn);
         QObject::disconnect(m_yConn);
+        QObject::disconnect(m_zConn);
         QObject::disconnect(m_widthConn);
         QObject::disconnect(m_heightConn);
         QObject::disconnect(m_parentConn);
@@ -82,6 +86,7 @@ public:
 private:
     QMetaObject::Connection m_xConn;
     QMetaObject::Connection m_yConn;
+    QMetaObject::Connection m_zConn;
     QMetaObject::Connection m_widthConn;
     QMetaObject::Connection m_heightConn;
     QMetaObject::Connection m_parentConn;
@@ -95,6 +100,14 @@ public:
         : QWaylandQuickItem()
     {
         setSurface(surface);
+    }
+
+    void initialize(QQuickItem *item, QQuickItem *exportedItem, QQuickItem *source, QQuickItem *parent) override
+    {
+        MirrorItemHandler::initialize(item, exportedItem, source, parent);
+        /* Keep mirrored item's size from being effected by internal reason of Qtwayland.
+           This can be removed in Qt6. */
+        static_cast<QWaylandQuickItem *>(item)->setSizeFollowsSurface(false);
     }
 };
 
@@ -197,6 +210,7 @@ WebOSExported::WebOSExported(
     m_exportedItem->setZ(-1);
     m_qwlsurfaceItem->setExported(this);
 
+    //TODO: item == m_qwlsurfaceItem? The difference is static_cast vs qobject_cast. Any reason?
     WebOSSurfaceItem *item = qobject_cast<WebOSSurfaceItem*>(surfaceItem);
     qInfo() <<"Window status of surface item (" << item << ") for exporter : " <<item->state();
     m_isSurfaceItemFullscreen = (item->state() == Qt::WindowFullScreen) ? true : false;
@@ -358,6 +372,8 @@ void WebOSExported::updateExportedItemSize()
     if (!m_exportedItem) {
         qWarning() << "QWaylandQuickItem for " << m_windowId << " is  already destroyed ";
     }
+
+    qInfo() << m_exportedItem << "fits to" << m_destinationRect;
 
     m_exportedItem->setX(m_destinationRect.x());
     m_exportedItem->setY(m_destinationRect.y());
@@ -636,12 +652,12 @@ void WebOSExported::startImportedMirroring(QWaylandQuickItem *parent)
 
     if (m_punchThroughItem) {
         PunchThroughMirrorItem *mirror = new PunchThroughMirrorItem();
-        mirror->initialize(mirror, m_exportedItem, parent);
+        mirror->initialize(mirror, m_exportedItem, source, parent);
         mirror->setHandler(mirror, m_exportedItem, source);
     } else {
         QWaylandQuickItem *qsi = static_cast<QWaylandQuickItem *>(source);
         ImportedMirrorItem *mirror = new ImportedMirrorItem(static_cast<QWaylandQuickSurface *>(qsi->surface()));
-        mirror->initialize(mirror, m_exportedItem, parent);
+        mirror->initialize(mirror, m_exportedItem, source, parent);
         mirror->setHandler(mirror, m_exportedItem, source);
 
         qInfo() << "source" << qsi << "mirror" << mirror;
@@ -699,6 +715,7 @@ void WebOSImported::updateGeometry()
         case WebOSImported::surface_alignment::surface_alignment_stretch:
             connect(m_childSurfaceItem->surface(), &QWaylandSurface::sizeChanged, this, &WebOSImported::setSurfaceItemSize);
             if (m_exported && m_exported->m_exportedItem) {
+                qInfo() << m_childSurfaceItem << "fits to" << m_exported->m_exportedItem;
                 m_childSurfaceItem->setWidth(m_exported->m_exportedItem->width());
                 m_childSurfaceItem->setHeight(m_exported->m_exportedItem->height());
             }
@@ -829,7 +846,6 @@ void WebOSImported::webos_imported_attach_surface(
         Resource* resource,
         struct ::wl_resource* surface)
 {
-    qInfo() << "attach_surface is called : " << surface << "on " << this;
 
     if (!m_exported || !(m_exported->m_exportedItem) || !surface) {
         qWarning() << "Exported (" << m_exported << " ) is already destroyed or surface (" << surface << ") is null";
@@ -837,11 +853,15 @@ void WebOSImported::webos_imported_attach_surface(
     }
     auto qwlSurface = QWaylandSurface::fromResource(surface);
 
+    qInfo() << qwlSurface << "from" << surface;
+
     m_childSurfaceItem = qobject_cast<QWaylandQuickItem*>(qwlSurface->surfaceItem());
     connect(m_childSurfaceItem->surface(), &QWaylandSurface::surfaceDestroyed, this, &WebOSImported::childSurfaceDestroyed);
     m_exported->setParentOf(m_childSurfaceItem);
     m_childSurfaceItem->setZ(m_exported->m_exportedItem->z()+m_z_index);
     updateGeometry();  //Resize texture if needed.
+
+    qInfo() << m_childSurfaceItem << "is attached to" << m_exported->m_exportedItem << "on " << this;
 
     send_surface_attached(surface);
 }
