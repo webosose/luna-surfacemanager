@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019 LG Electronics, Inc.
+// Copyright (c) 2018-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@
 #include <QPointer>
 
 #define WEBOSFOREIGN_VERSION 1
-#define WEBOSEXPORTED_VERSION 1
-#define WEBOSIMPORTED_VERSION 1
+#define WEBOSEXPORTED_VERSION 2
+#define WEBOSIMPORTED_VERSION 2
 
 class QWaylandSurfaceItem;
 class WebOSCoreCompositor;
