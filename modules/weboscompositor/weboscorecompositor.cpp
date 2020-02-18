@@ -386,7 +386,7 @@ bool WebOSCoreCompositor::isMapped(WebOSSurfaceItem *item)
 void WebOSCoreCompositor::onSurfaceMapped(QWaylandSurface *surface, WebOSSurfaceItem* item) {
     PMTRACE_FUNCTION;
 
-    if (item) {
+    if (item && !item->imported()) {
         if (item->isPartOfGroup()) {
             // The management of surface groups is left solely to the qml
             // for example the state changes etc. This is done to ensure that

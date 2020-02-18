@@ -686,6 +686,7 @@ WebOSImported::~WebOSImported()
     else
         m_exported->m_importList.removeAll(this);
 
+    setSurfaceItemImported(false);
     detach();
 }
 
@@ -759,6 +760,13 @@ void WebOSImported::updateExported(WebOSExported * exported)
         detach();
 
     m_exported = exported;
+}
+
+void WebOSImported::setSurfaceItemImported(bool attach)
+{
+    WebOSSurfaceItem *surfaceItem = qobject_cast<WebOSSurfaceItem *>(m_childSurfaceItem);
+    if (surfaceItem)
+        surfaceItem->setImported(attach ? this : nullptr);
 }
 
 void WebOSImported::webos_imported_attach_punchthrough(Resource* r)
@@ -859,6 +867,7 @@ void WebOSImported::webos_imported_attach_surface(
     connect(m_childSurfaceItem->surface(), &QWaylandSurface::surfaceDestroyed, this, &WebOSImported::childSurfaceDestroyed);
     m_exported->setParentOf(m_childSurfaceItem);
     m_childSurfaceItem->setZ(m_exported->m_exportedItem->z()+m_z_index);
+    setSurfaceItemImported(true);
     updateGeometry();  //Resize texture if needed.
 
     qInfo() << m_childSurfaceItem << "is attached to" << m_exported->m_exportedItem << "on " << this;

@@ -38,6 +38,7 @@ class WebOSWindowModel;
 class WebOSGroupedWindowModel;
 class WebOSShellSurface;
 class WebOSExported;
+class WebOSImported;
 class WebOSSurfaceItem;
 class WebOSSurfaceGroup;
 
@@ -461,6 +462,9 @@ public:
     WebOSExported *exported() { return m_exported; }
     void setExported(WebOSExported *exported) { m_exported = exported; }
 
+    WebOSImported *imported() { return m_imported; }
+    void setImported(WebOSImported *imported) { m_imported = imported; }
+
 public slots:
     void updateScreenPosition();
     void updateProperties(const QVariantMap &properties, const QString &name, const QVariant &value);
@@ -598,6 +602,7 @@ private:
 
     QMap<int, WebOSSurfaceItem *> m_mirrorItems;
     WebOSExported *m_exported = nullptr;
+    WebOSImported *m_imported = nullptr;
     QWaylandView m_cursorView;
 };
 

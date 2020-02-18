@@ -149,12 +149,13 @@ class WEBOS_COMPOSITOR_EXPORT WebOSImported :
 public:
     WebOSImported() = delete;
     ~WebOSImported();
+    void childSurfaceDestroyed();
     void destroyResource();
-    void updateGeometry();
     void detach();
+    void setSurfaceItemImported(bool attach);
     void setSurfaceItemSize();
     void updateExported(WebOSExported * exported);
-    void childSurfaceDestroyed();
+    void updateGeometry();
 
 protected:
     virtual void webos_imported_attach_punchthrough(Resource *) override;
