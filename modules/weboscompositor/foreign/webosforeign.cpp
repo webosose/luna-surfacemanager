@@ -916,6 +916,7 @@ void WebOSImported::webos_imported_attach_surface(
     m_exported->setParentOf(m_childSurfaceItem);
     m_childSurfaceItem->setZ(m_exported->m_exportedItem->z()+m_z_index);
     updateGeometry();  //Resize texture if needed.
+    VideoOutputdCommunicator::instance()->setProperty("videoTexture", "on", NULL);
 
     qInfo() << m_childSurfaceItem << "is attached to" << m_exported->m_exportedItem << "on " << this;
 
@@ -933,6 +934,7 @@ void WebOSImported::webos_imported_detach_surface(
         return;
     }
 
+    VideoOutputdCommunicator::instance()->setProperty("videoTexture", "off", NULL);
     disconnect(m_childSurfaceItem->surface(), &QWaylandSurface::surfaceDestroyed, this, &WebOSImported::childSurfaceDestroyed);
     m_childSurfaceItem->setParentItem(nullptr);
     send_surface_detached(m_childSurfaceItem->surface()->resource());
