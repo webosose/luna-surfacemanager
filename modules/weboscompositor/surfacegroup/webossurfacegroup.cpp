@@ -41,6 +41,7 @@ WebOSSurfaceGroup::WebOSSurfaceGroup()
 WebOSSurfaceGroup::~WebOSSurfaceGroup()
 {
     qInfo("deleting group '%s'", qPrintable(m_name));
+    removeAttachedItemsFromGroup();
     m_layers.clear();
     m_zOrderedSurfaceLayoutInfoList.clear();
     m_keyOrderedItems.clear();
@@ -321,6 +322,15 @@ void WebOSSurfaceGroup::removeLayer(const QString& name)
     qInfo("Removing layer '%s' for group '%s'", qPrintable(name), qPrintable(m_name));
     m_layers.take(name);
     makeKeyOrderedItems();
+}
+
+void WebOSSurfaceGroup::removeAttachedItemsFromGroup()
+{
+    QList<WebOSSurfaceItem*> attachedItems = attachedClientSurfaceItems();
+    foreach (WebOSSurfaceItem* i, attachedItems) {
+       qDebug() << "removeFromGroup on " << i;
+       removeFromGroup(i);
+    }
 }
 
 void WebOSSurfaceGroup::closeAttachedSurfaces()

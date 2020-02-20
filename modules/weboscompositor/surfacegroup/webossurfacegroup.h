@@ -111,6 +111,7 @@ private:
     WebOSSurfaceItem* itemFromResource(struct ::wl_resource* surface);
     void removeFromGroup(WebOSSurfaceItem* item);
     void closeInvalidSurface(WebOSSurfaceItem* item);
+    void removeAttachedItemsFromGroup();
 
 private slots:
     void removeSurfaceItem();
