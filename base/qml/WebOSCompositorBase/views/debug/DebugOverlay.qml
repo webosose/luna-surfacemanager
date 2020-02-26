@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 LG Electronics, Inc.
+// Copyright (c) 2014-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -122,5 +122,18 @@ Item {
             }
             return item.z;
         }
+    }
+
+    Text {
+        id: indicatorId
+        anchors.top: parent.top
+        anchors.topMargin: 30
+        anchors.horizontalCenter: parent.horizontalCenter
+        text: "LSM DEBUG MODE ENABLED"
+        opacity: 0.2
+        color: "red"
+        font.pixelSize: 64
+        style: Text.Outline
+        styleColor: "white"
     }
 }
