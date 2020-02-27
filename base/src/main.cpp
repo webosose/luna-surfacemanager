@@ -167,6 +167,7 @@ int main(int argc, char *argv[])
     int windowCount = 0;
 
     QString compositorPluginName = QString::fromLocal8Bit(qgetenv("WEBOS_COMPOSITOR_PLUGIN"));
+    bool usePlugin = false;
     if (!compositorPluginName.isEmpty()) {
         compositorPluginLoader = new WebOSCompositorPluginLoader(compositorPluginName);
         compositorWindow = compositorPluginLoader->compositorWindow();
@@ -186,6 +187,7 @@ int main(int argc, char *argv[])
 
     if (compositorWindow) {
         qInfo() << "Using the extended compositorWindow from the plugin" << compositorPluginName;
+        usePlugin = true;
     } else {
         qInfo() << "Using WebOSCompositorWindow (default compositor window)";
         compositorWindow = new WebOSCompositorWindow(primaryScreen);
@@ -229,7 +231,7 @@ int main(int argc, char *argv[])
     // Extra windows
     if (displays > 1) {
         qInfo() << "Initializing extra windows, expected" << displays - 1;
-        QList<WebOSCompositorWindow *> extraWindows = WebOSCompositorWindow::initializeExtraWindows(primaryScreen, displays - 1);
+        QList<WebOSCompositorWindow *> extraWindows = WebOSCompositorWindow::initializeExtraWindows(primaryScreen, displays - 1, usePlugin ? compositorPluginLoader : nullptr);
         for (int i = 0; i < extraWindows.size(); i++) {
             WebOSCompositorWindow *extraWindow = extraWindows.at(i);
             QString name = QString("window-%1").arg(i + 1);
