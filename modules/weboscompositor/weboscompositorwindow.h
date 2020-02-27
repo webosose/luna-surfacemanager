@@ -35,6 +35,7 @@ class WebOSSurfaceItem;
 #ifdef USE_CONFIG
 class WebOSCompositorConfig;
 #endif
+class WebOSCompositorPluginLoader;
 
 class WEBOS_COMPOSITOR_EXPORT WebOSCompositorWindow : public QQuickView {
 
@@ -66,7 +67,7 @@ public:
     WebOSCompositorWindow(QString screenName = QString(), QString geometryString = QString(), QSurfaceFormat *surfaceFormat = 0);
     virtual ~WebOSCompositorWindow();
 
-    static QList<WebOSCompositorWindow *> initializeExtraWindows(const QString primaryScreen, const int count);
+    static QList<WebOSCompositorWindow *> initializeExtraWindows(const QString primaryScreen, const int count, WebOSCompositorPluginLoader *pluginLoader = nullptr);
     static bool parseGeometryString(const QString string, QRect &geometry, int &rotation, double &ratio);
 
     void setCompositor(WebOSCoreCompositor* compositor);

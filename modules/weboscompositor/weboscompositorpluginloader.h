@@ -30,7 +30,7 @@ public:
     ~WebOSCompositorPluginLoader();
 
     WebOSCoreCompositor *compositor();
-    WebOSCompositorWindow *compositorWindow();
+    WebOSCompositorWindow *compositorWindow(QString screenName = QString(), QString geometryString = QString(), QSurfaceFormat *surfaceFormat = 0);
 
 private:
     QPluginLoader *load(const QString &pluginName);

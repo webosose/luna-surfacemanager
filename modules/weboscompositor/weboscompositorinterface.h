@@ -21,6 +21,7 @@
 
 class WebOSCompositorWindow;
 class WebOSCoreCompositor;
+class QSurfaceFormat;
 
 class WebOSCompositorInterface : public QObject
 {
@@ -31,12 +32,14 @@ public:
 
     virtual WebOSCoreCompositor *compositorExtended() { return 0; }
     virtual WebOSCompositorWindow *compositorWindowExtended() { return 0; }
+    // New version
+    virtual WebOSCompositorWindow *compositorWindowExtended(QString screenName = QString(), QString geometryString = QString(), QSurfaceFormat *surfaceFormat = 0) { return 0; }
 
 protected:
     WebOSCoreCompositor *m_compositor;
 };
 
-#define WebOSCompositorInterface_iid "org.webos.Compositor.WebOSCompositorInterface.1.0"
+#define WebOSCompositorInterface_iid "org.webos.Compositor.WebOSCompositorInterface.2.0"
 
 Q_DECLARE_INTERFACE(WebOSCompositorInterface, WebOSCompositorInterface_iid)
 

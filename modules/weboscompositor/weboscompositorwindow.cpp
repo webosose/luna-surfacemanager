@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2019 LG Electronics, Inc.
+// Copyright (c) 2014-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@
 #ifdef USE_CONFIG
 #include "weboscompositorconfig.h"
 #endif
+#include "weboscompositorpluginloader.h"
 
 
 static int s_displays = 0;
@@ -157,7 +158,7 @@ WebOSCompositorWindow::~WebOSCompositorWindow()
 #endif
 }
 
-QList<WebOSCompositorWindow *> WebOSCompositorWindow::initializeExtraWindows(const QString primaryScreen, const int count)
+QList<WebOSCompositorWindow *> WebOSCompositorWindow::initializeExtraWindows(const QString primaryScreen, const int count, WebOSCompositorPluginLoader *pluginLoader)
 {
     QList<WebOSCompositorWindow *> list;
 
@@ -196,7 +197,17 @@ QList<WebOSCompositorWindow *> WebOSCompositorWindow::initializeExtraWindows(con
                         qWarning() << "ExtraWindow: 'geometry' is missing in an element of WEBOS_COMPOSITOR_DISPLAY_CONFIG, skipped";
                         continue;
                     }
-                    WebOSCompositorWindow *extraWindow = new WebOSCompositorWindow(screenName, geometryString);
+
+                    WebOSCompositorWindow *extraWindow = nullptr;
+                    if (pluginLoader) {
+                        qInfo() << "ExtraWindow: trying the extended compositorWindow from the plugin" << screenName << geometryString;
+                        extraWindow = pluginLoader->compositorWindow(screenName, geometryString);
+                    }
+                    if (!extraWindow) {
+                        qInfo() << "ExtraWindow: using default WebOSCompositorWindow" << screenName << geometryString;
+                        extraWindow = new WebOSCompositorWindow(screenName, geometryString);
+                    }
+
                     if (extraWindow) {
                         list.append(extraWindow);
                         qInfo() << "ExtraWindow: an extra compositor window is added," << extraWindow << screenName << geometryString;
