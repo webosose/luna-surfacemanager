@@ -1,4 +1,4 @@
-// Copyright (c) 2018 LG Electronics, Inc.
+// Copyright (c) 2018-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@
 #include <QDir>
 #include <QJsonArray>
 
-WebOSCompositorPluginLoader::WebOSCompositorPluginLoader(QString pluginName)
+WebOSCompositorPluginLoader::WebOSCompositorPluginLoader(const QString &pluginName)
     : m_pluginName(pluginName)
-    , m_compositor(NULL)
-    , m_compositorWindow(NULL)
+    , m_compositor(nullptr)
+    , m_compositorPlugin(nullptr)
 {
     m_pluginLoader = load(m_pluginName);
 }
@@ -34,7 +34,7 @@ WebOSCompositorPluginLoader::~WebOSCompositorPluginLoader()
     delete m_pluginLoader;
 }
 
-QPluginLoader *WebOSCompositorPluginLoader::load(QString pluginName)
+QPluginLoader *WebOSCompositorPluginLoader::load(const QString &pluginName)
 {
     // Rules for compositor plugin
     //  - Directory path suffix: compositor
@@ -77,24 +77,18 @@ QPluginLoader *WebOSCompositorPluginLoader::load(QString pluginName)
             qInfo() << "WebOSCompositorPluginLoader: Succeeded to load the compositor plugin" << pluginFile;
 
             if (QMetaObject::invokeMethod(compositorPlugin, "init", Qt::DirectConnection)) {
-                QMetaObject::invokeMethod(compositorPlugin, "compositorWindowExtended", Qt::DirectConnection, Q_RETURN_ARG(WebOSCompositorWindow *, m_compositorWindow));
-                if (m_compositorWindow && !m_compositorWindow->inherits(WebOSCompositorWindow::staticMetaObject.className())) {
-                    qWarning() << "WebOSCompositorPluginLoader: Not a valid WebOSCompositorWindow instance.";
-                    delete m_compositorWindow;
-                    m_compositorWindow = NULL;
-                }
-
                 QMetaObject::invokeMethod(compositorPlugin, "compositorExtended", Qt::DirectConnection, Q_RETURN_ARG(WebOSCoreCompositor *, m_compositor));
                 if (m_compositor && !m_compositor->inherits(WebOSCoreCompositor::staticMetaObject.className())) {
                     qWarning() << "WebOSCompositorPluginLoader: Not a valid WebOSCoreCompositor instance.";
                     delete m_compositor;
-                    m_compositor = NULL;
+                    m_compositor = nullptr;
                 }
 
-                if (m_compositorWindow || m_compositor) {
+                if (m_compositor) {
+                    m_compositorPlugin = compositorPlugin;
                     return pluginLoader;
                 } else {
-                    qWarning() << "WebOSCompositorPluginLoader: Cannot get valid WebOSCompositorWindow and WebOSCoreCompositor instance.";
+                    qWarning() << "WebOSCompositorPluginLoader: Cannot get valid WebOSCoreCompositor instance.";
                 }
             } else {
                 qWarning() << "WebOSCompositorPluginLoader: Cannot find init function in the compositor plugin.";
@@ -133,5 +127,14 @@ WebOSCoreCompositor *WebOSCompositorPluginLoader::compositor()
 
 WebOSCompositorWindow *WebOSCompositorPluginLoader::compositorWindow()
 {
-    return m_compositorWindow;
+    WebOSCompositorWindow *compositorWindow = nullptr;
+
+    QMetaObject::invokeMethod(m_compositorPlugin, "compositorWindowExtended", Qt::DirectConnection, Q_RETURN_ARG(WebOSCompositorWindow *, compositorWindow));
+    if (compositorWindow && !compositorWindow->inherits(WebOSCompositorWindow::staticMetaObject.className())) {
+        qWarning() << "WebOSCompositorPluginLoader: Not a valid WebOSCompositorWindow instance.";
+        delete compositorWindow;
+        compositorWindow = nullptr;
+    }
+
+    return compositorWindow;
 }
