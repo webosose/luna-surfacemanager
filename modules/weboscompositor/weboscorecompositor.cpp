@@ -479,8 +479,7 @@ void WebOSCoreCompositor::onSurfaceUnmapped(QWaylandSurface *surface, WebOSSurfa
     qInfo() << surface << item << item->appId() << item->itemState();
 
     if (webOSWindowExtension()) {
-
-        if (item->appId().isEmpty() || !item->isMapped()) {
+        if (item->appId().isEmpty()) {
             m_surfaceModel->surfaceUnmapped(item);
             emit surfaceUnmapped(item);
             m_surfaces.removeOne(item);
@@ -509,7 +508,7 @@ void WebOSCoreCompositor::onSurfaceDestroyed(QWaylandSurface *surface, WebOSSurf
     qInfo() << surface << item << item->appId() << item->itemState() << item->itemStateReason();
 
     if (webOSWindowExtension()) {
-        if (item->appId().isEmpty() || !item->isMapped()) {
+        if (item->appId().isEmpty()) {
             removeSurfaceItem(item, true);
         } else {
             processSurfaceItem(item, WebOSSurfaceItem::ItemStateProxy);
