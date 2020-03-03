@@ -33,7 +33,7 @@ public:
     ~WebOSInputDevice();
 
     void setDeviceId(QInputEvent *event);
-    bool isOwner(QInputEvent *event);
+    bool isOwner(QInputEvent *event) const override;
     static int getDeviceId(QInputEvent *event);
     int  id() { return m_deviceId; }
 

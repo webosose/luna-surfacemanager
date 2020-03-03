@@ -90,8 +90,11 @@ public:
     virtual void setCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY, wl_client *client)
     {
         QWaylandSeat::setCursorSurface(surface, hotspotX, hotspotY, client);
-        WebOSCoreCompositor *webos_compositor = dynamic_cast<WebOSCoreCompositor *>(compositor());
-        webos_compositor->setCursorSurface(surface, hotspotX, hotspotY, client);
+        WebOSCoreCompositor *webos_compositor = static_cast<WebOSCoreCompositor *>(compositor());
+        if (webos_compositor)
+            webos_compositor->setCursorSurface(surface, hotspotX, hotspotY, client);
+        else
+            qWarning() << "could not call setCursorSurface() as compositor() returns null";
     }
 };
 

@@ -80,7 +80,7 @@ int WebOSInputDevice::getDeviceId(QInputEvent *event)
     return deviceId;
 }
 
-bool WebOSInputDevice::isOwner(QInputEvent *event)
+bool WebOSInputDevice::isOwner(QInputEvent *event) const
 {
     int deviceId = getDeviceId(event);
 
