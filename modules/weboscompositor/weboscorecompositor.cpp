@@ -565,7 +565,7 @@ void WebOSCoreCompositor::surfaceCreated(QWaylandSurface *surface) {
     connect(surface, &QWaylandSurface::hasContentChanged, [this, surface, item] {
         if (surface->hasContent())
             this->onSurfaceMapped(surface, item);
-        else
+        else if (item->surface()) // Avoid onSurfaceUnmapped when the surface is about to be destroyed
             this->onSurfaceUnmapped(surface, item);
     });
 
