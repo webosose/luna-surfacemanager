@@ -135,16 +135,27 @@ WebOSCompositorWindow *WebOSCompositorPluginLoader::compositorWindow(QString scr
             Q_ARG(QString, screenName),
             Q_ARG(QString, geometryString),
             Q_ARG(QSurfaceFormat *, surfaceFormat));
-    if (compositorWindow && !compositorWindow->inherits(WebOSCompositorWindow::staticMetaObject.className())) {
-        // Fallback to old version
-        compositorWindow = nullptr;
-        QMetaObject::invokeMethod(m_compositorPlugin, "compositorWindowExtended", Qt::DirectConnection, Q_RETURN_ARG(WebOSCompositorWindow *, compositorWindow));
-        if (compositorWindow && !compositorWindow->inherits(WebOSCompositorWindow::staticMetaObject.className())) {
-            qWarning() << "WebOSCompositorPluginLoader: Not a valid WebOSCompositorWindow instance.";
+    if (compositorWindow) {
+        if (compositorWindow->inherits(WebOSCompositorWindow::staticMetaObject.className())) {
+            return compositorWindow;
+        } else {
+            qWarning() << "WebOSCompositorPluginLoader: Returned an invalid WebOSCompositorWindow instance from the new interface.";
             delete compositorWindow;
-            compositorWindow = nullptr;
         }
     }
 
-    return compositorWindow;
+    // Fallback to old version
+    compositorWindow = nullptr;
+    QMetaObject::invokeMethod(m_compositorPlugin, "compositorWindowExtended", Qt::DirectConnection,
+            Q_RETURN_ARG(WebOSCompositorWindow *, compositorWindow));
+    if (compositorWindow) {
+        if (compositorWindow->inherits(WebOSCompositorWindow::staticMetaObject.className())) {
+            return compositorWindow;
+        } else {
+            qWarning() << "WebOSCompositorPluginLoader: Returned an invalid WebOSCompositorWindow instance from the old interface.";
+            delete compositorWindow;
+        }
+    }
+
+    return nullptr;
 }
