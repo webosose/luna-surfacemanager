@@ -147,8 +147,12 @@ void WaylandTextModel::setInputMethod(WaylandInputMethod *method)
 
     m_inputMethod = method;
 
-    // m_preferredPanelRect can be set before m_inputMethod
-    m_inputMethod->setPreferredPanelRect(m_preferredPanelRect);
+    // Check m_preferredPanelRect as it can be set before.
+    // Otherwise make sure preferredPanelRect reset.
+    if (m_preferredPanelRect.isNull())
+        m_inputMethod->resetPreferredPanelRect();
+    else
+        m_inputMethod->setPreferredPanelRect(m_preferredPanelRect);
 }
 
 void WaylandTextModel::textModelActivate(struct wl_client *client, struct wl_resource *resource, uint32_t serial, struct wl_resource *seat, struct wl_resource *surface)
@@ -288,7 +292,7 @@ void WaylandTextModel::textModelSetInputPanelRect(struct wl_client *client, stru
 {
     WaylandTextModel* that = static_cast<WaylandTextModel*>(resource->data);
     that->m_preferredPanelRect = QRect(x, y, width, height);
-    if (that->m_inputMethod)
+    if (that->m_inputMethod && that->m_inputMethod->isActiveModel(that))
         that->m_inputMethod->setPreferredPanelRect(that->m_preferredPanelRect);
     qDebug() << "Client request InputPanelRect:" << that->m_preferredPanelRect;
 }
@@ -297,14 +301,14 @@ void WaylandTextModel::textModelResetInputPanelRect(struct wl_client *client, st
 {
     WaylandTextModel* that = static_cast<WaylandTextModel*>(resource->data);
     that->m_preferredPanelRect = QRect();
-    if (that->m_inputMethod)
+    if (that->m_inputMethod && that->m_inputMethod->isActiveModel(that))
         that->m_inputMethod->resetPreferredPanelRect();
 }
 
 void WaylandTextModel::destroyTextModel(struct wl_resource *resource)
 {
     WaylandTextModel* that = static_cast<WaylandTextModel*>(resource->data);
-    if (that->m_inputMethod)
+    if (that->m_inputMethod && that->m_inputMethod->isActiveModel(that))
         that->m_inputMethod->resetPreferredPanelRect();
     that->m_active = false;
     emit that->destroyed();
