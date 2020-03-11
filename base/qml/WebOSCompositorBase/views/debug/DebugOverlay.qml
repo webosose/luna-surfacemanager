@@ -129,7 +129,7 @@ Item {
         anchors.top: parent.top
         anchors.topMargin: 30
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "LSM DEBUG MODE ENABLED"
+        text: "LSM DEBUG MODE - DISPLAY " + compositorWindow.displayId
         opacity: 0.2
         color: "red"
         font.pixelSize: 64
