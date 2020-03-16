@@ -178,29 +178,11 @@ void WebOSSurfaceItem::setFullscreen(bool enabled)
     }
 }
 
-QPointF WebOSSurfaceItem::mapToTarget(const QPointF& point) const
-{
-    if (!surface()) {
-        // In the case we do not have a surface, i.e. mem manager has asked us to
-        // kill it and pointer events end up here when in recents...
-        return point;
-    }
-    qreal iWidth = width();
-    qreal iHeight = height();
-    int sWidth = surface()->size().width();
-    int sHeight = surface()->size().height();
-
-    if ((int)iWidth == sWidth && (int)iHeight == sHeight) {
-        return point;
-    }
-    return QPointF((sWidth / iWidth) * point.x(), (sHeight / iHeight) * point.y());
-}
-
 QList<QTouchEvent::TouchPoint> WebOSSurfaceItem::mapToTarget(const QList<QTouchEvent::TouchPoint>& points) const
 {
     QList<QTouchEvent::TouchPoint> result;
     foreach (QTouchEvent::TouchPoint point, points) {
-        point.setPos(mapToTarget(point.pos()));
+        point.setPos(mapToSurface(point.pos()));
         result.append(point);
     }
     return result;
@@ -227,7 +209,7 @@ void WebOSSurfaceItem::takeWlKeyboardFocus() const
 
 bool WebOSSurfaceItem::contains(const QPointF& point) const
 {
-    return surface() && surface()->inputRegionContains(mapToTarget(point).toPoint());
+    return inputRegionContains(point);
 }
 
 bool WebOSSurfaceItem::isMapped()
@@ -245,14 +227,14 @@ void WebOSSurfaceItem::hoverMoveEvent(QHoverEvent *event)
 
 void WebOSSurfaceItem::mouseMoveEvent(QMouseEvent * event)
 {
-    WebOSMouseEvent e(event->type(), mapToTarget(QPointF(event->pos())).toPoint(),
+    WebOSMouseEvent e(event->type(), event->pos(),
                   event->button(), event->buttons(), event->modifiers(), window());
     QWaylandQuickItem::mouseMoveEvent(&e);
 }
 
 void WebOSSurfaceItem::mousePressEvent(QMouseEvent *event)
 {
-    WebOSMouseEvent e(event->type(), mapToTarget(event->localPos()).toPoint(),
+    WebOSMouseEvent e(event->type(), event->localPos().toPoint(),
                   event->button(), event->buttons(), event->modifiers(), window());
 
     if (surface()) {
@@ -293,7 +275,7 @@ void WebOSSurfaceItem::mousePressEvent(QMouseEvent *event)
 
 void WebOSSurfaceItem::mouseReleaseEvent(QMouseEvent *event)
 {
-    WebOSMouseEvent e(event->type(), mapToTarget(event->localPos()).toPoint(),
+    WebOSMouseEvent e(event->type(), event->localPos().toPoint(),
                   event->button(), event->buttons(), event->modifiers(), window());
 
     WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
@@ -316,7 +298,7 @@ void WebOSSurfaceItem::mouseReleaseEvent(QMouseEvent *event)
 
 void WebOSSurfaceItem::wheelEvent(QWheelEvent *event)
 {
-    WebOSWheelEvent e(mapToTarget(event->pos()), event->globalPos(), event->pixelDelta(),
+    WebOSWheelEvent e(event->pos(), event->globalPos(), event->pixelDelta(),
                   event->angleDelta(), event->delta(), event->orientation(),
                   event->buttons(), event->modifiers(), event->phase(), window());
 
@@ -359,14 +341,14 @@ void WebOSSurfaceItem::touchEvent(QTouchEvent *event)
         if (!points.isEmpty())
             pointPos = points.at(0).pos().toPoint();
 
-        if (e.type() == QEvent::TouchBegin && !inputRegionContains(pointPos))
+        if (e.type() == QEvent::TouchBegin && !surface()->inputRegionContains(pointPos))
             return;
 
         if (seat->mouseFocus() != view())
             seat->sendMouseMoveEvent(view(), pointPos, mapToScene(pointPos));
         seat->sendFullTouchEvent(surface(), &e);
     } else {
-        QWaylandQuickItem::touchEvent(&e);
+        QWaylandQuickItem::touchEvent(event);
     }
 }
 

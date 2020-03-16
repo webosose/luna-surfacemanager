@@ -541,7 +541,6 @@ protected:
 
     virtual bool contains(const QPointF & point) const;
 
-    QPointF mapToTarget(const QPointF& point) const;
     QList<QTouchEvent::TouchPoint> mapToTarget(const QList<QTouchEvent::TouchPoint>& points) const;
 
     void takeWlKeyboardFocus() const;
