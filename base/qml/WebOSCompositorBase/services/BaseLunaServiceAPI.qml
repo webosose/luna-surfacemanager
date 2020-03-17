@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2019 LG Electronics, Inc.
+// Copyright (c) 2017-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -99,6 +99,7 @@ Service {
 
     function captureCompositorOutput(param) {
         var path = "";
+        var window = null;
         var target = null;
         var format = "";
         var ret = {};
@@ -119,8 +120,19 @@ Service {
             return JSON.stringify(ret);
         }
 
+        if (param.displayId) {
+            if (typeof param.displayId === 'number' && param.displayId >= 0 && param.displayId < compositor.windows.length) {
+                window = compositor.windows[param.displayId];
+            } else {
+                ret.errorCode = 106;
+                ret.errorText = "ERR_INVALID_DISPLAY";
+                console.warn("errorCode: " + ret.errorCode + ", errorText: " + ret.errorText);
+                return JSON.stringify(ret);
+            }
+        }
+
         if (param.appId) {
-            target = Utils.surfaceForApplication(param.appId);
+            target = Utils.surfaceForApplication(param.appId, param.displayId);
             if (!target) {
                 ret.errorCode = 103;
                 ret.errorText = "ERR_NO_SURFACE";
@@ -142,7 +154,7 @@ Service {
         }
 
         if (!ret.errorCode) {
-            var result = Utils.capture(path, target, format);
+            var result = Utils.capture(path, target, format, window);
             if (result == ScreenShot.SUCCESS) {
                 var size = Utils.capturedSize();
                 ret.output = path

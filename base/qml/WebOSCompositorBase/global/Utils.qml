@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2019 LG Electronics, Inc.
+// Copyright (c) 2017-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,10 +35,12 @@ Item {
         id: screenShot
     }
 
-    function capture(path, target, format) {
+    function capture(path, target, format, window /* optional */) {
         screenShot.path = path;
         screenShot.target = target;
         screenShot.format = format;
+        if (window)
+            screenShot.window = window;
 
         return screenShot.take();
     }
@@ -51,13 +53,17 @@ Item {
         return (parent % 2 ? parent + 1 : parent) / 2 - (me % 2 ? me + 1 : me) / 2;
     }
 
-    function surfaceForApplication(appId) {
+    function surfaceForApplication(appId, displayId /* optional */) {
         var i, item;
 
         for (i = compositor.surfaceModel.rowCount() - 1; i >= 0; i--) {
             item = compositor.surfaceModel.data(compositor.surfaceModel.index(i, 0));
-            if (item.appId === appId)
-                return item;
+            if (item.appId === appId) {
+                if (typeof displayId === "undefined")
+                    return item;
+                else if (displayId === item.displayAffinity)
+                    return item;
+            }
         }
         return null;
     }
