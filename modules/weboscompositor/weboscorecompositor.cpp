@@ -368,8 +368,14 @@ void WebOSCoreCompositor::setInputMethod(WebOSInputMethod* inputMethod)
 
         m_inputMethod = inputMethod;
 
-        connect(m_inputMethod, SIGNAL(inputMethodActivated()), this, SIGNAL(inputPanelRequested()));
-        connect(m_inputMethod, SIGNAL(inputMethodDeactivated()), this, SIGNAL(inputPanelDismissed()));
+        connect(m_inputMethod, &WaylandInputMethod::activeChanged, [this] {
+            if (m_inputMethod) {
+                if (m_inputMethod->active())
+                    emit this->inputPanelRequested();
+                else
+                    emit this->inputPanelDismissed();
+            }
+        });
 
         emit inputMethodChanged();
     }
