@@ -91,11 +91,6 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
     //it can restore the cursor from the system ui's cursor. See QQuickWindowPrivate::updateCursor()
     setCursor(Qt::ArrowCursor);
 
-    if (!qgetenv("WEBOS_DISABLE_TOUCH").isEmpty())
-        setTouchEventsEnabled(false);
-    else
-        setTouchEventsEnabled(true);
-
     connect(this, &QQuickItem::windowChanged, this, &WebOSSurfaceItem::handleWindowChanged);
 
     setObjectName(QStringLiteral("surfaceItem_default"));
