@@ -32,9 +32,6 @@ class QWaylandOutput;
 class QWaylandSeat;
 class WebOSCoreCompositor;
 class WebOSSurfaceItem;
-#ifdef USE_CONFIG
-class WebOSCompositorConfig;
-#endif
 class WebOSCompositorPluginLoader;
 
 class WEBOS_COMPOSITOR_EXPORT WebOSCompositorWindow : public QQuickView {
@@ -166,9 +163,6 @@ private slots:
 private:
     // variables
     WebOSCoreCompositor* m_compositor;
-#ifdef USE_CONFIG
-    WebOSCompositorConfig* m_config;
-#endif
 
     int m_displayId;
     bool m_accessible = false;

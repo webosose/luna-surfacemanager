@@ -73,13 +73,6 @@ SOURCES += \
     compositorextensionfactory.cpp \
     unixsignalhandler.cpp
 
-use_config {
-    # Config loader
-    MODULE_DEFINES += USE_CONFIG
-    HEADERS += weboscompositorconfig.h
-    SOURCES += weboscompositorconfig.cpp
-}
-
 !no_multi_input {
     # Multiple input support
     MODULE_DEFINES += MULTIINPUT_SUPPORT

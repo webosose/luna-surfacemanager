@@ -31,9 +31,6 @@
 #include "weboscompositorwindow.h"
 #include "weboscorecompositor.h"
 #include "webossurfaceitem.h"
-#ifdef USE_CONFIG
-#include "weboscompositorconfig.h"
-#endif
 #include "weboscompositorpluginloader.h"
 
 
@@ -135,11 +132,6 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
     // More info
     qDebug() << "OutputGeometry:" << screen() << this << "screen size and dpr:" << screenSize << dpr;
 
-#ifdef USE_CONFIG
-    m_config = new WebOSCompositorConfig;
-    m_config->load();
-#endif
-
     m_outputGeometryPendingTimer.setSingleShot(true);
     connect(&m_outputGeometryPendingTimer, &QTimer::timeout, this, &WebOSCompositorWindow::onOutputGeometryPendingExpired);
     if (qgetenv("WEBOS_COMPOSITOR_EXIT_ON_QMLWARN").toInt() == 1)
@@ -153,9 +145,6 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
 
 WebOSCompositorWindow::~WebOSCompositorWindow()
 {
-#ifdef USE_CONFIG
-    delete m_config;
-#endif
 }
 
 QList<WebOSCompositorWindow *> WebOSCompositorWindow::initializeExtraWindows(const QString primaryScreen, const int count, WebOSCompositorPluginLoader *pluginLoader)
@@ -269,9 +258,6 @@ void WebOSCompositorWindow::setCompositor(WebOSCoreCompositor* compositor)
         // Set global context properties available to qml everywhere
         rootContext()->setContextProperty(QLatin1String("compositor"), m_compositor);
         rootContext()->setContextProperty(QLatin1String("compositorWindow"), this);
-#ifdef USE_CONFIG
-        rootContext()->setContextProperty(QLatin1String("config"), m_config->config());
-#endif
     }
 }
 
