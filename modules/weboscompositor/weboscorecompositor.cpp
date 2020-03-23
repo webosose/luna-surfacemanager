@@ -58,6 +58,7 @@
 #include "weboskeyboard.h"
 
 #include "weboscompositortracer.h"
+#include "weboscompositorconfig.h"
 
 // Need to access QtWayland::Keyboard::focusChanged
 #include <QtWaylandCompositor/private/qwaylandsurface_p.h>
@@ -233,6 +234,7 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
     WebOSCompositorWindow *webosWindow = static_cast<WebOSCompositorWindow *>(window);
     insertToWindows(webosWindow);
     webosWindow->setOutput(output);
+    webosWindow->setObjectName(name);
 
     connect(window, &QQuickWindow::frameSwapped, this, &WebOSCoreCompositor::frameSwappedSlot);
     //TODO: check is it ok just to use primary window to handle activeFocusItem
@@ -248,6 +250,7 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
         setInputMethod(new WebOSInputMethod(this));
 
         connect(m_unixSignalHandler, &UnixSignalHandler::sighup, this, &WebOSCoreCompositor::reloadConfig);
+        connect(m_unixSignalHandler, &UnixSignalHandler::sighup, WebOSCompositorConfig::instance(), &WebOSCompositorConfig::dump);
 
         // TODO: support multiple keyboard focus
         connect(defaultSeat()->keyboard(), &QWaylandKeyboard::focusChanged, this, &WebOSCoreCompositor::activeSurfaceChanged);

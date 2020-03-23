@@ -32,7 +32,7 @@
 #include "weboscorecompositor.h"
 #include "webossurfaceitem.h"
 #include "weboscompositorpluginloader.h"
-
+#include "weboscompositorconfig.h"
 
 static int s_displays = 0;
 
@@ -74,6 +74,8 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
         }
     }
 
+    m_displayName = screen()->name();
+
     if (surfaceFormat) {
         qInfo () << "Using surface format given:" << *surfaceFormat;
         setFormat(*surfaceFormat);
@@ -103,12 +105,10 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
 
     if (!geometryString.isEmpty()) {
         qInfo() << "OutputGeometry:" << screen() << "using geometryString" << geometryString;
-    } else if (geometryString.isEmpty() && !qEnvironmentVariableIsEmpty("WEBOS_COMPOSITOR_GEOMETRY")) {
-        geometryString = QString(qgetenv("WEBOS_COMPOSITOR_GEOMETRY"));
-        qInfo() << "OutputGeometry:" << screen() << "using geometryString from WEBOS_COMPOSITOR_GEOMETRY" << geometryString;
     } else {
-        geometryString = QString("1920x1080+0+0r0s1");
-        qWarning() << "OutputGeometry:" << screen() << "no geometryString set, using default" << geometryString;
+        // Refer to geometryString of the primary display
+        geometryString = WebOSCompositorConfig::instance()->geometryString();
+        qInfo() << "OutputGeometry:" << screen() << "using geometryString of primary display from config" << geometryString;
     }
 
     if (parseGeometryString(geometryString, m_outputGeometry, m_outputRotation, m_outputRatio)) {
@@ -134,7 +134,7 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
 
     m_outputGeometryPendingTimer.setSingleShot(true);
     connect(&m_outputGeometryPendingTimer, &QTimer::timeout, this, &WebOSCompositorWindow::onOutputGeometryPendingExpired);
-    if (qgetenv("WEBOS_COMPOSITOR_EXIT_ON_QMLWARN").toInt() == 1)
+    if (WebOSCompositorConfig::instance()->exitOnQmlWarn())
         connect(engine(), &QQmlEngine::warnings, this, &WebOSCompositorWindow::onQmlError);
 
     // Start with cursor invisible
@@ -147,75 +147,47 @@ WebOSCompositorWindow::~WebOSCompositorWindow()
 {
 }
 
-QList<WebOSCompositorWindow *> WebOSCompositorWindow::initializeExtraWindows(const QString primaryScreen, const int count, WebOSCompositorPluginLoader *pluginLoader)
+QList<WebOSCompositorWindow *> WebOSCompositorWindow::initializeExtraWindows(WebOSCoreCompositor* compositor, const int count, WebOSCompositorPluginLoader *pluginLoader)
 {
     QList<WebOSCompositorWindow *> list;
 
-    if (!qEnvironmentVariableIsEmpty("WEBOS_COMPOSITOR_DISPLAY_CONFIG")) {
-        // WEBOS_COMPOSITOR_DISPLAY_CONFIG has a json in the extended format of QT_QPA_EGLFS_CONFIG.
-        // [
-        //     {
-        //         "device": "<display-device>",
-        //         "outputs": [
-        //             {
-        //                 "name": "<display-name>",
-        //                 "geometry": "<geometry-string>",
-        //                 ...
-        //             },
-        //             ...
-        //         ]
-        //     },
-        //     ...
-        // ]
-        QJsonDocument doc = QJsonDocument::fromJson(qgetenv("WEBOS_COMPOSITOR_DISPLAY_CONFIG"));
-        if (doc.isArray()) {
-            for (int i = 0; i < doc.array().size(); i++) {
-                QJsonObject obj = doc.array().at(i).toObject();
-                QJsonArray outputs = obj.value(QStringLiteral("outputs")).toArray();
-                for (int j = 0; j < outputs.size(); j++) {
-                    QJsonObject objj = outputs.at(j).toObject();
-                    QString screenName = objj.value(QStringLiteral("name")).toString();
-                    if (screenName.isEmpty()) {
-                        qWarning() << "ExtraWindow: 'name' is missing in an element of WEBOS_COMPOSITOR_DISPLAY_CONFIG, skipped";
-                        continue;
-                    } else if (QString::compare(screenName, primaryScreen) == 0) {
-                        continue;
-                    }
-                    QString geometryString = objj.value(QStringLiteral("geometry")).toString();
-                    if (geometryString.isEmpty()) {
-                        qWarning() << "ExtraWindow: 'geometry' is missing in an element of WEBOS_COMPOSITOR_DISPLAY_CONFIG, skipped";
-                        continue;
-                    }
-
-                    WebOSCompositorWindow *extraWindow = nullptr;
-                    if (pluginLoader) {
-                        qInfo() << "ExtraWindow: trying the extended compositorWindow from the plugin" << screenName << geometryString;
-                        extraWindow = pluginLoader->compositorWindow(screenName, geometryString);
-                    }
-                    if (!extraWindow) {
-                        qInfo() << "ExtraWindow: using default WebOSCompositorWindow" << screenName << geometryString;
-                        extraWindow = new WebOSCompositorWindow(screenName, geometryString);
-                    }
-
-                    if (extraWindow) {
-                        list.append(extraWindow);
-                        qInfo() << "ExtraWindow: an extra compositor window is added," << extraWindow << screenName << geometryString;
-                        if (list.size() >= count) {
-                            qInfo() << "ExtraWindow: created" << count << "extra compositor window(s) as expected";
-                            return list;
-                        }
-                    } else {
-                        qWarning() << "ExtraWindow: could not instantiate an extra compositor window for" << screenName << geometryString;
-                    }
-                }
-            }
-            // Must be less entries in WEBOS_COMPOSITOR_DISPLAY_CONFIG than expected
-            qWarning() << "ExtraWindow: expected" << count << "extra compositor windows(s) but less entries in WEBOS_COMPOSITOR_DISPLAY_CONFIG";
-        } else {
-            qWarning() << "ExtraWindow: WEBOS_COMPOSITOR_DISPLAY_CONFIG does not contain a JSON array, could not create any extra compositor window";
+    QMap<QString, QJsonObject> outputConfigs = WebOSCompositorConfig::instance()->outputConfigs();
+    QMap<QString, QJsonObject>::const_iterator i = outputConfigs.constBegin();
+    QString primaryScreen = WebOSCompositorConfig::instance()->primaryScreen();
+    for (; i != outputConfigs.constEnd(); i++) {
+        if (i.key() == primaryScreen)
+            continue;
+        WebOSCompositorWindow *extraWindow = nullptr;
+        QString geometryString = i.value().value(QStringLiteral("geometry")).toString();
+        if (geometryString.isEmpty())
+            geometryString = WebOSCompositorConfig::instance()->geometryString();
+        if (pluginLoader) {
+            qInfo() << "ExtraWindow: trying the extended compositorWindow from the plugin" << i.key() << geometryString;
+            extraWindow = pluginLoader->compositorWindow(i.key(), geometryString);
         }
-    } else {
-        qWarning() << "ExtraWindow: WEBOS_COMPOSITOR_DISPLAY_CONFIG is not defined. could not create any extra compositor window";
+        if (!extraWindow) {
+            qInfo() << "ExtraWindow: using default WebOSCompositorWindow" << i.key() << geometryString;
+            extraWindow = new WebOSCompositorWindow(i.key(), geometryString);
+        }
+        if (extraWindow) {
+            // FIXME: Consider adding below if we need to call registerWindow
+            // for an extra window
+            //extraWindow->installEventFilter(new EventFilter(compositor));
+            compositor->registerWindow(extraWindow, i.key());
+            extraWindow->setCompositor(compositor);
+            QUrl source = i.value().value(QStringLiteral("source")).toString();
+            if (!source.isValid())
+                source = WebOSCompositorConfig::instance()->source2();
+            extraWindow->setCompositorMain(source);
+            list.append(extraWindow);
+            qInfo() << "ExtraWindow: an extra compositor window is added," << extraWindow << i.key() << geometryString;
+            if (list.size() >= count) {
+                qInfo() << "ExtraWindow: created" << count << "extra compositor window(s) as expected";
+                return list;
+            }
+        } else {
+            qWarning() << "ExtraWindow: could not instantiate an extra compositor window for" << i.key() << geometryString;
+        }
     }
 
     return list;
@@ -269,18 +241,13 @@ bool WebOSCompositorWindow::setCompositorMain(const QUrl& main)
         return false;
     }
 
-    if (!main.isEmpty()) {
-        m_main = main;
-        qInfo() << "Using main QML" << m_main << "for window" << this;
-    } else if (!qEnvironmentVariableIsEmpty("WEBOS_COMPOSITOR_MAIN")) {
-        m_main = QString(qgetenv("WEBOS_COMPOSITOR_MAIN"));
-        qInfo() << "Using main QML from WEBOS_COMPOSITOR_MAIN" << m_main << "for window" << this;
-    }
-
-    if (!m_main.isValid()) {
-        qCritical() << this << "main QML" << m_main << "is not valid for window" << this;
+    if (!main.isValid()) {
+        qCritical() << this << "main QML" << main << "is not valid for window" << this;
         return false;
     }
+
+    m_main = main;
+    qInfo() << "Using main QML" << m_main << "for window" << this;
 
     if (m_compositor) {
         setSource(m_main);

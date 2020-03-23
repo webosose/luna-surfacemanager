@@ -26,7 +26,7 @@ load(qt_build_paths)
 QT += qml quick waylandcompositor quick-private core-private waylandcompositor-private weboscompositorextension
 CONFIG += debug
 
-DEFINES += QT_COMPOSITOR_QUICK \
+DEFINES += WEBOS_INSTALL_QML=\\\"$$WEBOS_INSTALL_QML\\\" \
            WEBOS_INSTALL_QTPLUGINSDIR=\\\"$$WEBOS_INSTALL_QTPLUGINSDIR\\\"
 
 !no_pmlog {
@@ -46,6 +46,7 @@ HEADERS += \
     weboscompositorwindow.h \
     weboscompositorinterface.h \
     weboscompositorpluginloader.h \
+    weboscompositorconfig.h \
     webosinputmethod.h \
     webossurfacemodel.h \
     webossurfaceitem.h \
@@ -63,6 +64,7 @@ SOURCES += \
     weboscorecompositor.cpp \
     weboscompositorwindow.cpp \
     weboscompositorpluginloader.cpp \
+    weboscompositorconfig.cpp \
     webosinputmethod.cpp \
     webossurfacemodel.cpp \
     webossurfaceitem.cpp \
@@ -81,6 +83,10 @@ SOURCES += \
 !no_upstart {
     # Upstart signaling support
     MODULE_DEFINES += UPSTART_SIGNALING
+}
+
+use_qresources {
+    MODULE_DEFINES += USE_QRESOURCES
 }
 
 # lttng-ust tracing

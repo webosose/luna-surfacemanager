@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 LG Electronics, Inc.
+// Copyright (c) 2014-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,75 +17,94 @@
 #ifndef WEBOSCOMPOSITORCONFIG_H
 #define WEBOSCOMPOSITORCONFIG_H
 
-#include <QFile>
-#include <QJsonObject>
-#include <QJsonParseError>
+#include <WebOSCoreCompositor/weboscompositorexport.h>
+
+#include <QObject>
 #include <QMap>
-#include <QVariant>
+#include <QString>
+#include <QUrl>
+#include <QJsonDocument>
+#include <QJsonObject>
 
-// A temporaty class to allow the combination of multiple JSON objects
-// into one so that there are no duplicates. Kinda wonky but there are
-// no stock solutions and this is still pretty straight forward.
-class Node {
-
+class WEBOS_COMPOSITOR_EXPORT WebOSCompositorConfig : public QObject
+{
+    Q_OBJECT
 public:
-    Node(const QString& key = "")
-        : m_key(key)
-    {
-    }
+    ~WebOSCompositorConfig();
 
-    ~Node()
-    {
-        // Calls delete on the inserted value
-        qDeleteAll(m_children);
-    }
+    static WebOSCompositorConfig* instance();
 
+    Q_INVOKABLE void dump() const;
 
-    Node* child(const QString& key)
-    {
-        if (!m_children.contains(key)) {
-            Node* n = new Node(key);
-            m_children.insert(key, n);
-        }
-        return m_children.value(key);
-    }
+    // Compositor plugin to use
+    QString compositorPlugin() const { return m_compositorPlugin; }
 
-    void setValue(QVariant v)
-    {
-        m_value = v;
-    }
+    // Comma-separated list of compositor extensions to use
+    QString compositorExtensions() const { return m_compositorExtensions; }
 
-    void write(QJsonObject& to)
-    {
-        if (m_value.isValid()) {
-            to[m_key] = QJsonValue::fromVariant(m_value);
-        } else {
-            QJsonObject j;
-            foreach (Node* n, m_children) {
-                n->write(j);
-            }
-            to[m_key] = j;
-        }
-    }
+    // Name of the primary screen
+    QString primaryScreen() const { return m_primaryScreen; }
+
+    // Display configuration JSON and convenient container for JSON objects per display
+    // The JSON is in the extended format of QT_QPA_EGLFS_CONFIG.
+    // [
+    //     {
+    //         "device": "<display-device>",
+    //         "outputs": [
+    //             {
+    //                 "name": "<display-name>",
+    //                 "geometry": "<geometry-string>",
+    //                 ...
+    //             },
+    //             ...
+    //         ]
+    //     },
+    //     ...
+    // ]
+    QJsonDocument displayConfig() const { return m_displayConfig; }
+    QMap<QString, QJsonObject> outputConfigs() const { return m_outputConfigs; }
+
+    // Number of displays
+    int displayCount() const { return m_displayCount; }
+
+    // Default geometryString (= geometryString of the primary screen)
+    QString geometryString() const { return m_geometryString; }
+
+    // Source QML for the primary screen
+    QUrl source() const { return m_source; }
+
+    // Default source QML for extra screens if not specified
+    QUrl source2() const { return m_source2; }
+
+    // Hide cursor if set to 1
+    bool cursorHide() const { return m_cursorHide; }
+
+    // Cursor timeout in milli-seconds
+    int cursorTimeout() const { return m_cursorTimeout; }
+
+    // Exit on QML warning if set to 1
+    bool exitOnQmlWarn() const { return m_exitOnQmlWarn; }
 
 private:
-    QString m_key;
-    QVariant m_value;
-    QMap<QString, Node*> m_children;
-};
-
-class WebOSCompositorConfig {
-
-public:
     WebOSCompositorConfig();
 
-    void load();
+    QString m_compositorPlugin;
+    QString m_compositorExtensions;
 
-    QVariantMap config();
+    QString m_primaryScreen;
 
-private:
-    void merge(Node* root, const QJsonObject& from);
-    QJsonObject m_root;
+    QJsonDocument m_displayConfig;
+    QMap<QString, QJsonObject> m_outputConfigs;
+
+    int m_displayCount;
+    QString m_geometryString;
+    QUrl m_source;
+    QUrl m_source2;
+
+    bool m_cursorHide;
+    int m_cursorTimeout;
+
+    bool m_exitOnQmlWarn;
 };
 
 #endif

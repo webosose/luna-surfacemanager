@@ -39,6 +39,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCompositorWindow : public QQuickView {
     Q_OBJECT
 
     Q_PROPERTY(int displayId READ displayId CONSTANT)
+    Q_PROPERTY(QString displayName READ displayName CONSTANT)
     Q_PROPERTY(bool accessible READ accessible WRITE setAccessible NOTIFY accessibleChanged)
     Q_PROPERTY(QRect outputGeometry READ outputGeometry NOTIFY outputGeometryChanged)
     Q_PROPERTY(int outputRotation READ outputRotation NOTIFY outputRotationChanged)
@@ -64,7 +65,7 @@ public:
     WebOSCompositorWindow(QString screenName = QString(), QString geometryString = QString(), QSurfaceFormat *surfaceFormat = 0);
     virtual ~WebOSCompositorWindow();
 
-    static QList<WebOSCompositorWindow *> initializeExtraWindows(const QString primaryScreen, const int count, WebOSCompositorPluginLoader *pluginLoader = nullptr);
+    static QList<WebOSCompositorWindow *> initializeExtraWindows(WebOSCoreCompositor* compositor, const int count, WebOSCompositorPluginLoader *pluginLoader = nullptr);
     static bool parseGeometryString(const QString string, QRect &geometry, int &rotation, double &ratio);
 
     void setCompositor(WebOSCoreCompositor* compositor);
@@ -72,7 +73,8 @@ public:
 
     Q_INVOKABLE void showWindow();
 
-    int displayId() const { return m_displayId; } ;
+    int displayId() const { return m_displayId; }
+    QString displayName() const { return m_displayName; }
 
     bool accessible() const { return m_accessible; }
     void setAccessible(bool enable);
@@ -165,6 +167,8 @@ private:
     WebOSCoreCompositor* m_compositor;
 
     int m_displayId;
+    QString m_displayName;
+
     bool m_accessible = false;
 
     QUrl m_main;

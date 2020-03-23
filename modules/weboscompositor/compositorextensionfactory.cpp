@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 #include "compositorextensionfactory.h"
 #include "weboscorecompositor.h"
+#include "weboscompositorconfig.h"
 
 #include <compositorextensionplugin.h>
 #include <compositorextension.h>
@@ -42,7 +43,7 @@ QHash<QString, CompositorExtension *> CompositorExtensionFactory::create(WebOSCo
 {
     QHash<QString, CompositorExtension *> hash;
 
-    QStringList extensions = QString::fromLocal8Bit(qgetenv("WEBOS_COMPOSITOR_EXTENSIONS")).split(QLatin1String(","), QString::SkipEmptyParts);
+    QStringList extensions = WebOSCompositorConfig::instance()->compositorExtensions().split(QLatin1String(","), QString::SkipEmptyParts);
 
     m_webosCompositor = compositor;
 
