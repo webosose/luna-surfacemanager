@@ -27,6 +27,7 @@
 #include "weboscompositorpluginloader.h"
 #include "weboscompositorwindow.h"
 #include "weboscorecompositor.h"
+#include "weboscompositorconfig.h"
 
 #ifdef CURSOR_THEME
 const char* EGLFS_CURSOR_DESCRIPTION = WEBOS_INSTALL_DATADIR "/icons/webos/cursors/cursor.json";
@@ -39,27 +40,21 @@ class EventFilter : public QObject {
 public:
     EventFilter(WebOSCoreCompositor *compositor)
         : m_compositor(compositor)
-        , m_useCursor(true)
-        , m_cursorTimeout(0)
         , m_cursorTimer(0)
     {
+        m_hideCursor = WebOSCompositorConfig::instance()->cursorHide();
         // This keeps the cursor invisible but doesn't disable mount events
-        if (qEnvironmentVariableIsSet("WEBOS_CURSOR_HIDE")) {
-            if (!(m_useCursor = qgetenv("WEBOS_CURSOR_HIDE").toInt() != 1))
-                m_compositor->setCursorVisible(false);
-        }
-
-        if (m_useCursor) {
+        if (m_hideCursor) {
+            qDebug("Set cursor visibility off by config");
+            m_compositor->setCursorVisible(false);
+        } else {
             // Set up the cursor timer if the timeout value is given
-            if (qEnvironmentVariableIsSet("WEBOS_CURSOR_TIMEOUT")) {
-                QByteArray env = qgetenv("WEBOS_CURSOR_TIMEOUT");
-                m_cursorTimeout = env.toInt();
-                if (m_cursorTimeout > 0) {
-                    m_cursorTimer = new QTimer(this);
-                    connect(m_cursorTimer, &QTimer::timeout, this, &EventFilter::onCursorTimerExpired);
-                    qDebug("Cursor timeout is set as %d <- WEBOS_CURSOR_TIMEOUT=%s", m_cursorTimeout, env.constData());
-                    m_cursorTimer->start(m_cursorTimeout);
-                }
+            m_cursorTimeout = WebOSCompositorConfig::instance()->cursorTimeout();
+            if (m_cursorTimeout > 0) {
+                m_cursorTimer = new QTimer(this);
+                connect(m_cursorTimer, &QTimer::timeout, this, &EventFilter::onCursorTimerExpired);
+                qDebug("Cursor timeout is set as %d", m_cursorTimeout);
+                m_cursorTimer->start(m_cursorTimeout);
             }
         }
     }
@@ -71,7 +66,7 @@ public:
         // NOTE:
         // This cursor visiblity control refers to what libim has.
         // In case libim changes its behavior we have to follow it.
-        if (m_useCursor) {
+        if (!m_hideCursor) {
             switch (event->type()) {
             case QEvent::KeyPress:
                 switch ((static_cast<QKeyEvent *>(event))->key()) {
@@ -80,6 +75,8 @@ public:
                 case Qt::Key_Right:
                 case Qt::Key_Down:
                     hideCursor();
+                    break;
+                default:
                     break;
                 }
                 break;
@@ -90,6 +87,8 @@ public:
             case QEvent::Wheel:
                 showCursor();
                 break;
+            default:
+                break;
             }
         }
 
@@ -99,7 +98,7 @@ public:
 private slots:
     void onCursorTimerExpired()
     {
-        if (!m_useCursor)
+        if (m_hideCursor)
             return;
 
         qDebug("Cursor timeout expired");
@@ -110,7 +109,7 @@ private slots:
 private:
     void showCursor()
     {
-        if (!m_useCursor)
+        if (m_hideCursor)
             return;
         m_compositor->setCursorVisible(true);
         if (m_cursorTimer)
@@ -119,7 +118,7 @@ private:
 
     void hideCursor()
     {
-        if (!m_useCursor)
+        if (m_hideCursor)
             return;
         if (m_cursorTimer)
             m_cursorTimer->stop();
@@ -127,7 +126,7 @@ private:
     }
 
     WebOSCoreCompositor *m_compositor;
-    bool m_useCursor;
+    bool m_hideCursor;
     QTimer *m_cursorTimer;
     int m_cursorTimeout;
 };
@@ -166,31 +165,23 @@ int main(int argc, char *argv[])
     WebOSCompositorPluginLoader *compositorPluginLoader = NULL;
     int windowCount = 0;
 
-    QString compositorPluginName = QString::fromLocal8Bit(qgetenv("WEBOS_COMPOSITOR_PLUGIN"));
+    QString compositorPluginName = WebOSCompositorConfig::instance()->compositorPlugin();
     bool usePlugin = false;
     if (!compositorPluginName.isEmpty()) {
         compositorPluginLoader = new WebOSCompositorPluginLoader(compositorPluginName);
-        compositorWindow = compositorPluginLoader->compositorWindow();
+        compositorWindow = compositorPluginLoader->compositorWindow(WebOSCompositorConfig::instance()->primaryScreen(), WebOSCompositorConfig::instance()->geometryString());
         compositor = compositorPluginLoader->compositor();
 
         if (!compositorWindow && !compositor)
             delete compositorPluginLoader;
     }
 
-    // Figure out the primary screen name
-    int displays = qgetenv("WEBOS_COMPOSITOR_DISPLAYS").toInt();
-    QString primaryScreen;
-    if (displays > 1)
-        primaryScreen = qgetenv("WEBOS_COMPOSITOR_PRIMARY_SCREEN");
-    else
-        displays = 1; // we have a single display
-
     if (compositorWindow) {
         qInfo() << "Using the extended compositorWindow from the plugin" << compositorPluginName;
         usePlugin = true;
     } else {
         qInfo() << "Using WebOSCompositorWindow (default compositor window)";
-        compositorWindow = new WebOSCompositorWindow(primaryScreen);
+        compositorWindow = new WebOSCompositorWindow(WebOSCompositorConfig::instance()->primaryScreen());
     }
 
     if (compositor) {
@@ -211,7 +202,7 @@ int main(int argc, char *argv[])
     compositorWindow->installEventFilter(new EventFilter(compositor));
 
     compositor->create();
-    compositor->registerWindow(compositorWindow, "window-0");
+    compositor->registerWindow(compositorWindow, WebOSCompositorConfig::instance()->primaryScreen());
     compositor->registerTypes();
 
     compositorWindow->engine()->addImportPath(QStringLiteral("qrc:/"));
@@ -219,35 +210,21 @@ int main(int argc, char *argv[])
     QResource::registerResource(WEBOS_INSTALL_QML "/WebOSCompositor/WebOSCompositor.rcc");
 
     compositorWindow->setCompositor(compositor);
-#ifdef USE_QRESOURCES
-    compositorWindow->setCompositorMain(QUrl("qrc:/WebOSCompositorBase/main.qml"));
-#else
-    compositorWindow->setCompositorMain(QUrl("file://" WEBOS_INSTALL_QML "/WebOSCompositorBase/main.qml"));
-#endif
+    compositorWindow->setCompositorMain(WebOSCompositorConfig::instance()->source());
 
     windowCount++;
     compositorWindow->showWindow();
 
     // Extra windows
+    int displays = WebOSCompositorConfig::instance()->displayCount();
     if (displays > 1) {
         qInfo() << "Initializing extra windows, expected" << displays - 1;
-        QList<WebOSCompositorWindow *> extraWindows = WebOSCompositorWindow::initializeExtraWindows(primaryScreen, displays - 1, usePlugin ? compositorPluginLoader : nullptr);
+        QList<WebOSCompositorWindow *> extraWindows = WebOSCompositorWindow::initializeExtraWindows(compositor, displays - 1, usePlugin ? compositorPluginLoader : nullptr);
         for (int i = 0; i < extraWindows.size(); i++) {
             WebOSCompositorWindow *extraWindow = extraWindows.at(i);
-            QString name = QString("window-%1").arg(i + 1);
-            // FIXME: Consider adding below if we need to call registerWindow
-            // for an extra window
-            //extraWindow->installEventFilter(new EventFilter(compositor));
-            compositor->registerWindow(extraWindow, name);
-            extraWindow->setCompositor(compositor);
-#ifdef USE_QRESOURCES
-            extraWindow->setCompositorMain(QUrl("qrc:/WebOSCompositorBase/main2.qml"));
-#else
-            extraWindow->setCompositorMain(QUrl("file://" WEBOS_INSTALL_QML "/WebOSCompositorBase/main2.qml"));
-#endif
             windowCount++;
             extraWindow->showWindow();
-            qInfo() << "Initialized an extra window" << extraWindow << "bound to wayland display" << name;
+            qInfo() << "Initialized an extra window" << extraWindow;
         }
 
         // Focus the main window
