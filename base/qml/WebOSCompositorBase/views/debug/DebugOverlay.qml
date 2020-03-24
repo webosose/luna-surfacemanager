@@ -124,16 +124,27 @@ Item {
         }
     }
 
-    Text {
+    Rectangle {
         id: indicatorId
         anchors.top: parent.top
-        anchors.topMargin: 30
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "LSM DEBUG MODE - DISPLAY " + compositorWindow.displayId
-        opacity: 0.2
+        width: compositorWindow.outputGeometry.width / 2
+        height: 40
+        opacity: 0.8
         color: "red"
-        font.pixelSize: 64
-        style: Text.Outline
-        styleColor: "white"
+        Text {
+            id: indicatorTextId
+            anchors.centerIn: parent
+            text: "LSM DEBUG MODE: "
+                + "DISPLAY " + compositorWindow.displayId + ", "
+                + compositorWindow.displayName + ", "
+                + compositorWindow.outputGeometry.width + "x" + compositorWindow.outputGeometry.height
+                + (compositorWindow.outputGeometry.x >= 0 ? "+" : "") + compositorWindow.outputGeometry.x
+                + (compositorWindow.outputGeometry.y >= 0 ? "+" : "") + compositorWindow.outputGeometry.y
+                + "r" + compositorWindow.outputRotation + ", "
+                + compositorWindow.source
+            color: "black"
+            font.pixelSize: 16
+        }
     }
 }
