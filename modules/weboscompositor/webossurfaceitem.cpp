@@ -97,6 +97,8 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
         setTouchEventsEnabled(true);
 
     connect(this, &QQuickItem::windowChanged, this, &WebOSSurfaceItem::handleWindowChanged);
+
+    setObjectName(QStringLiteral("surfaceItem_default"));
 }
 
 WebOSSurfaceItem::~WebOSSurfaceItem()
