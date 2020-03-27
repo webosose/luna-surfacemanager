@@ -201,6 +201,8 @@ public:
     QRect outputGeometry() const { return m_outputGeometry; }
     void setOutputGeometry(QRect const &size) { m_outputGeometry = size; }
 
+    virtual void postInit() {};
+
 public slots:
     void handleActiveFocusItemChanged();
 
