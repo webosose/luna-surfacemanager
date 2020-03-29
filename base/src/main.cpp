@@ -126,9 +126,9 @@ private:
     }
 
     WebOSCoreCompositor *m_compositor;
-    bool m_hideCursor;
+    bool m_hideCursor = false;
     QTimer *m_cursorTimer;
-    int m_cursorTimeout;
+    int m_cursorTimeout = 0;
 };
 
 static gboolean deferredDeleter(gpointer data)
