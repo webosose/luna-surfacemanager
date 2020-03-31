@@ -205,12 +205,12 @@ int main(int argc, char *argv[])
     compositor->registerWindow(compositorWindow, WebOSCompositorConfig::instance()->primaryScreen());
     compositor->registerTypes();
 
-    compositorWindow->engine()->addImportPath(QStringLiteral("qrc:/"));
-    QResource::registerResource(WEBOS_INSTALL_QML "/WebOSCompositorBase/WebOSCompositorBase.rcc");
+    // Register resource files if exist (the first takes precedence)
     QResource::registerResource(WEBOS_INSTALL_QML "/WebOSCompositor/WebOSCompositor.rcc");
+    QResource::registerResource(WEBOS_INSTALL_QML "/WebOSCompositorBase/WebOSCompositorBase.rcc");
 
     compositorWindow->setCompositor(compositor);
-    compositorWindow->setCompositorMain(WebOSCompositorConfig::instance()->source());
+    compositorWindow->setCompositorMain(WebOSCompositorConfig::instance()->source(), WebOSCompositorConfig::instance()->importPath());
 
     windowCount++;
     compositorWindow->showWindow();

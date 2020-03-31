@@ -28,24 +28,22 @@ use_qresources {
     basedir = $$PWD/WebOSCompositorBase
     baseqrc = $$basedir/WebOSCompositorBase.qrc
     system(./makeqrc.sh -prefix WebOSCompositorBase $$basedir $$baseqrc)
-}
 
-# Default qrc
-defaultdir = $$PWD/WebOSCompositor
-defaultqrc = $$defaultdir/WebOSCompositorDefault.qrc
-system(./makeqrc.sh -prefix WebOSCompositor $$defaultdir $$defaultqrc)
+    # Default qrc
+    defaultdir = $$PWD/WebOSCompositorBase/imports/WebOSCompositor
+    defaultqrc = $$defaultdir/WebOSCompositorDefault.qrc
+    system(./makeqrc.sh -prefix WebOSCompositor $$defaultdir $$defaultqrc)
 
-# Install a binary rcc created from qrc files
-basercc = $$PWD/WebOSCompositorBase.rcc
-system(rcc -binary $$baseqrc $$defaultqrc -o $$basercc)
-system(rm -f $$baseqrc $$defaultqrc)
-QMAKE_CLEAN += $$basercc
+    # Install a binary rcc created from qrc files
+    basercc = $$PWD/WebOSCompositorBase.rcc
+    system(rcc -binary $$baseqrc $$defaultqrc -o $$basercc)
+    system(rm -f $$baseqrc $$defaultqrc)
+    QMAKE_CLEAN += $$basercc
 
-rcc.files = $$basercc
-rcc.path = $$WEBOS_INSTALL_QML/WebOSCompositorBase
-INSTALLS += rcc
-
-!use_qresources {
+    rcc.files = $$basercc
+    rcc.path = $$WEBOS_INSTALL_QML/WebOSCompositorBase
+    INSTALLS += rcc
+} else {
     # Install WebOSCompositorBase as files
     qml.files = WebOSCompositorBase WebOSCompositor
     qml.path = $$WEBOS_INSTALL_QML

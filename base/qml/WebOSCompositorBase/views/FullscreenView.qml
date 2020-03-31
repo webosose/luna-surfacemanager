@@ -16,9 +16,7 @@
 
 import QtQuick 2.4
 import WebOSCompositorBase 1.0
-
-import "qrc:/WebOSCompositor"
-import "file:///usr/lib/qml/WebOSCompositor"
+import WebOSCompositor 1.0
 
 SurfaceView {
     id: root

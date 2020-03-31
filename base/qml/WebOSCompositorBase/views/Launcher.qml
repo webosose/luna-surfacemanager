@@ -20,9 +20,7 @@ import Eos.Controls 0.1
 import WebOS.Global 1.0
 import WebOSServices 1.0
 import WebOSCompositorBase 1.0
-
-import "qrc:/WebOSCompositor"
-import "file:///usr/lib/qml/WebOSCompositor"
+import WebOSCompositor 1.0
 
 FocusableView {
     id: root

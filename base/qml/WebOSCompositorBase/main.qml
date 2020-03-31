@@ -18,8 +18,7 @@ import QtQuick 2.4
 import WebOSCompositorBase 1.0
 
 import "."
-import "qrc:/WebOSCompositor"
-import "file:///usr/lib/qml/WebOSCompositor"
+import WebOSCompositor 1.0
 
 // Golden rule : Never put any function body in this file.
 // This file is just description for views, controllers, models, services and their relationship(interface)
