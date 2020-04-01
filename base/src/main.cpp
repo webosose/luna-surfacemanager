@@ -231,6 +231,9 @@ int main(int argc, char *argv[])
         compositorWindow->requestActivate();
     }
 
+    // Optional post initialization after the compositor and compositor windows get initialized
+    compositor->postInit();
+
 #ifdef UPSTART_SIGNALING
     compositor->emitLsmReady();
 #endif
