@@ -123,6 +123,8 @@ public:
     MirroringState mirroringState() const { return m_mirrorState; }
     void setMirroringState(MirroringState state);
 
+    QString modelString();
+
 signals:
     void outputGeometryChanged();
     void outputRotationChanged();

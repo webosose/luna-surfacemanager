@@ -25,6 +25,7 @@
 #include <QJsonArray>
 #include <QDebug>
 #include <QStringList>
+#include <QUrlQuery>
 
 #include <qpa/qplatformscreen.h>
 
@@ -676,6 +677,17 @@ int WebOSCompositorWindow::stopMirroringToAll(WebOSSurfaceItem *source)
     }
 
     return 0;
+}
+
+QString WebOSCompositorWindow::modelString()
+{
+    // This is supposed to be used for "model" of the corresponding wl_output.
+    // We carry some meaningful display information through this.
+    QUrlQuery qs;
+    qs.addQueryItem(QLatin1String("display_id"), QString::number(m_displayId));
+    qs.addQueryItem(QLatin1String("name"), m_displayName);
+
+    return qs.toString();
 }
 
 void WebOSCompositorWindow::onQmlError(const QList<QQmlError> &errors)
