@@ -57,6 +57,7 @@ WebOSCompositorConfig::WebOSCompositorConfig()
     // * WEBOS_COMPOSITOR_DISPLAYS: Number of displays
     // * WEBOS_COMPOSITOR_GEOMETRY: Default geometryString
     // * WEBOS_COMPOSITOR_MAIN: Source QML for the primary screen
+    // * WEBOS_COMPOSITOR_IMPORT_PATH: Import path for WebOSCompositor
     m_displayCount = m_outputList.size();
     if (Q_UNLIKELY(m_displayCount <= 0)) {
         m_displayCount = qgetenv("WEBOS_COMPOSITOR_DISPLAYS").toInt();
@@ -67,6 +68,7 @@ WebOSCompositorConfig::WebOSCompositorConfig()
     if (!primary.isEmpty()) {
         m_geometryString = primary.value(QStringLiteral("geometry")).toString();
         m_source = primary.value(QStringLiteral("source")).toString();
+        m_importPath = primary.value(QStringLiteral("importPath")).toString();
     }
     if (Q_UNLIKELY(m_geometryString.isEmpty())) {
         m_geometryString = QString::fromLatin1(qgetenv("WEBOS_COMPOSITOR_GEOMETRY"));
@@ -88,6 +90,11 @@ WebOSCompositorConfig::WebOSCompositorConfig()
 #else
     m_source2 = QUrl("file://" WEBOS_INSTALL_QML "/WebOSCompositorBase/main2.qml");
 #endif
+    if (Q_UNLIKELY(m_importPath.isEmpty())) {
+        m_importPath = QString::fromLatin1(qgetenv("WEBOS_COMPOSITOR_IMPORT_PATH"));
+        if (Q_UNLIKELY(m_importPath.isEmpty()))
+            m_importPath = QString::fromLatin1(WEBOS_INSTALL_QML);
+    }
 
     m_cursorHide = (qgetenv("WEBOS_CURSOR_HIDE").toInt() == 1);
     m_cursorTimeout = qgetenv("WEBOS_CURSOR_TIMEOUT").toInt();
@@ -121,6 +128,7 @@ void WebOSCompositorConfig::dump() const
     qInfo() << "geometryString:" << m_geometryString;
     qInfo() << "source:" << m_source;
     qInfo() << "source2:" << m_source2;
+    qInfo() << "importPath:" << m_importPath;
     qInfo() << "cursorHide:" << m_cursorHide;
     qInfo() << "cursorTimeout:" << m_cursorTimeout;
     qInfo() << "exitOnQmlWarn:" << m_exitOnQmlWarn;

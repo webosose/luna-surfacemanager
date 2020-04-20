@@ -181,7 +181,10 @@ QList<WebOSCompositorWindow *> WebOSCompositorWindow::initializeExtraWindows(Web
             QUrl source = outputConfig.value(QStringLiteral("source")).toString();
             if (!source.isValid())
                 source = WebOSCompositorConfig::instance()->source2();
-            extraWindow->setCompositorMain(source);
+            QString importPath = outputConfig.value(QStringLiteral("importPath")).toString();
+            if (importPath.isEmpty())
+                importPath = WebOSCompositorConfig::instance()->importPath();
+            extraWindow->setCompositorMain(source, importPath);
             list.append(extraWindow);
             qInfo() << "ExtraWindow: an extra compositor window is added," << extraWindow << outputName << geometryString;
             if (list.size() >= count) {
@@ -236,7 +239,7 @@ void WebOSCompositorWindow::setCompositor(WebOSCoreCompositor* compositor)
     }
 }
 
-bool WebOSCompositorWindow::setCompositorMain(const QUrl& main)
+bool WebOSCompositorWindow::setCompositorMain(const QUrl& main, const QString& importPath)
 {
     // Allow the source setting only once
     if (source().isValid()) {
@@ -248,6 +251,16 @@ bool WebOSCompositorWindow::setCompositorMain(const QUrl& main)
         qCritical() << this << "main QML" << main << "is not valid for window" << this;
         return false;
     }
+
+    // Prepend import paths (important to keep the order)
+    QStringList importPaths = engine()->importPathList();
+    importPaths.prepend(QStringLiteral("qrc:/"));
+    importPaths.prepend(WEBOS_INSTALL_QML "/WebOSCompositorBase/imports");
+    importPaths.prepend(WEBOS_INSTALL_QML);
+    if (!importPath.isEmpty())
+        importPaths.prepend(importPath);
+    engine()->setImportPathList(importPaths);
+    qDebug() << "Import paths:" << importPaths;
 
     m_main = main;
     qInfo() << "Using main QML" << m_main << "for window" << this;

@@ -55,6 +55,8 @@ public:
     //             {
     //                 "name": "<display-name>",
     //                 "geometry": "<geometry-string>",
+    //                 "source": "<source-qml>",
+    //                 "importPath": "<import-path>",
     //                 ...
     //             },
     //             ...
@@ -77,6 +79,9 @@ public:
 
     // Default source QML for extra screens if not specified
     QUrl source2() const { return m_source2; }
+
+    // Default import path for WebOSCompositor
+    QString importPath() const { return m_importPath; }
 
     // Hide cursor if set to 1
     bool cursorHide() const { return m_cursorHide; }
@@ -103,6 +108,7 @@ private:
     QString m_geometryString;
     QUrl m_source;
     QUrl m_source2;
+    QString m_importPath;
 
     bool m_cursorHide;
     int m_cursorTimeout;

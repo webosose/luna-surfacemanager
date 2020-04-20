@@ -69,7 +69,7 @@ public:
     static bool parseGeometryString(const QString string, QRect &geometry, int &rotation, double &ratio);
 
     void setCompositor(WebOSCoreCompositor* compositor);
-    bool setCompositorMain(const QUrl& main);
+    bool setCompositorMain(const QUrl& main, const QString& importPath = QString());
 
     Q_INVOKABLE void showWindow();
 
