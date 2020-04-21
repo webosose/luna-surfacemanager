@@ -20,7 +20,8 @@
 #include <WebOSCoreCompositor/weboscompositorexport.h>
 
 #include <QObject>
-#include <QMap>
+#include <QList>
+#include <QHash>
 #include <QString>
 #include <QUrl>
 #include <QJsonDocument>
@@ -62,7 +63,8 @@ public:
     //     ...
     // ]
     QJsonDocument displayConfig() const { return m_displayConfig; }
-    QMap<QString, QJsonObject> outputConfigs() const { return m_outputConfigs; }
+    QList<QString> outputList() const { return m_outputList; }
+    QHash<QString, QJsonObject> outputConfigs() const { return m_outputConfigs; }
 
     // Number of displays
     int displayCount() const { return m_displayCount; }
@@ -94,7 +96,8 @@ private:
     QString m_primaryScreen;
 
     QJsonDocument m_displayConfig;
-    QMap<QString, QJsonObject> m_outputConfigs;
+    QList<QString> m_outputList;
+    QHash<QString, QJsonObject> m_outputConfigs;
 
     int m_displayCount;
     QString m_geometryString;

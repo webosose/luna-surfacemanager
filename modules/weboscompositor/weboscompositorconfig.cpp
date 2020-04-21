@@ -43,10 +43,12 @@ WebOSCompositorConfig::WebOSCompositorConfig()
         for (int j = 0; j < outputs.size(); j++) {
             QJsonObject objj = outputs.at(j).toObject();
             QString name = objj.value(QStringLiteral("name")).toString();
-            if (name.isEmpty())
+            if (name.isEmpty()) {
                 continue; // skipped
-            else
+            } else {
+                m_outputList.append(name);
                 m_outputConfigs.insert(name, objj);
+            }
         }
     }
 
@@ -55,7 +57,7 @@ WebOSCompositorConfig::WebOSCompositorConfig()
     // * WEBOS_COMPOSITOR_DISPLAYS: Number of displays
     // * WEBOS_COMPOSITOR_GEOMETRY: Default geometryString
     // * WEBOS_COMPOSITOR_MAIN: Source QML for the primary screen
-    m_displayCount = m_outputConfigs.size();
+    m_displayCount = m_outputList.size();
     if (Q_UNLIKELY(m_displayCount <= 0)) {
         m_displayCount = qgetenv("WEBOS_COMPOSITOR_DISPLAYS").toInt();
         if (Q_UNLIKELY(m_displayCount <= 0))
@@ -112,8 +114,9 @@ void WebOSCompositorConfig::dump() const
     qInfo() << "compositorExtensions:" << m_compositorExtensions;
     qInfo() << "primaryScreen:" << m_primaryScreen;
     qInfo() << "displayConfig:" << m_displayConfig;
-    for (QMap<QString, QJsonObject>::const_iterator i = m_outputConfigs.constBegin(); i != m_outputConfigs.constEnd(); i++)
-        qInfo() << "outputConfigs:" << i.key() << i.value();
+    qInfo() << "outputList:" << m_outputList;
+    for (int i = 0; i < m_outputList.size(); i++)
+        qInfo() << "outputConfigs:" << m_outputList[i] << m_outputConfigs.value(m_outputList[i]);
     qInfo() << "displayCount:" << m_displayCount;
     qInfo() << "geometryString:" << m_geometryString;
     qInfo() << "source:" << m_source;
