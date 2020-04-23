@@ -97,7 +97,7 @@ Service {
 
     function captureCompositorOutput(param) {
         var path = "";
-        var window = null;
+        var window = compositor.windows[0];
         var target = null;
         var format = "";
         var ret = {};
@@ -118,7 +118,7 @@ Service {
             return JSON.stringify(ret);
         }
 
-        if (param.displayId) {
+        if (param.displayId !== undefined) {
             if (typeof param.displayId === 'number' && param.displayId >= 0 && param.displayId < compositor.windows.length) {
                 window = compositor.windows[param.displayId];
             } else {
