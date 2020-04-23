@@ -14,8 +14,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-TEMPLATE = subdirs
+TEMPLATE = aux
 
-SUBDIRS = \
-    compositor \
-    qml
+compositortests.files = *.qml imports
+compositortests.path = $$WEBOS_INSTALL_TESTSDIR/luna-surfacemanager/compositor
+
+INSTALLS += compositortests
