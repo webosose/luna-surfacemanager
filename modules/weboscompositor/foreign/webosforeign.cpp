@@ -559,6 +559,9 @@ void WebOSExported::webos_exported_set_crop_region(
         }
     }
 
+    qInfo() << "crop_region original rect : " << m_originalInputRect << "on " << m_windowId;
+    qInfo() << "crop_region source rect : " << m_sourceRect << "on " << m_windowId;
+
     setDestinationRegion(destination_region);
 }
 

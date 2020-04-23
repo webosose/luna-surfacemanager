@@ -213,7 +213,7 @@ void WebOSShellSurface::set_state(struct wl_client *client, struct wl_resource *
     }
 
     if (that->m_state != newState) {
-        qDebug() << "state change requested:" << that->m_state << "->" << newState
+        qInfo() << "state change requested:" << that->m_state << "->" << newState
                      << that->m_surface << that->m_surface->appId();
         emit that->stateChangeRequested(newState);
     }
