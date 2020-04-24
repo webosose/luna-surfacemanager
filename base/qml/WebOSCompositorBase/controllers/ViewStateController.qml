@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2019 LG Electronics, Inc.
+// Copyright (c) 2017-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,12 +25,7 @@ Item {
     property var views
 
     // Though unused, have these to check if Settings.subscribe() works correctly
-    property string country: Settings.subscribe("com.webos.settingsservice", "getSystemSettings", {"category":"option", "keys":["country"]}) || ""
     property var allConfigs: Settings.subscribe("com.webos.service.config", "getConfigs", {"configNames":["com.webos.surfacemanager.*"]}, true) || {}
-
-    onCountryChanged: {
-        console.info("com.webos.settingsservice, option, country:", country);
-    }
 
     onAllConfigsChanged: {
         console.info("com.webos.service.config, com.webos.surfacemanager.*:", JSON.stringify(allConfigs));
