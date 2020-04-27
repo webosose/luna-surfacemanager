@@ -92,10 +92,12 @@ QtObject {
 
     readonly property ApplicationManagerService applicationManager: ApplicationManagerService {
         appId: root.appId
+        sessionId: root.sessionManager.sessionId
 
         property var appInfoList: ({})
 
         onConnectedChanged: {
+            console.log("LS.applicationManager: connected", connected);
             if (connected) {
                 subscribeAppLifeEvents();
                 subscribeApplicationList();

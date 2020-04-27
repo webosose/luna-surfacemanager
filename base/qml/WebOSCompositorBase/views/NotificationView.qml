@@ -41,6 +41,7 @@ Item {
 
     property NotificationService notificationService: NotificationService {
         id: notificationService
+        sessionId: LS.sessionManager.sessionId
         acceptAlerts: notificationRoot.access && notificationRoot.acceptAlerts
         acceptToasts: notificationRoot.access && notificationRoot.acceptToasts
         acceptPincodePrompts: notificationRoot.access && notificationRoot.acceptPincodePrompts

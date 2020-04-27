@@ -33,10 +33,10 @@ Item {
     readonly property alias system: systemSettings.settings
     readonly property alias l10n: systemSettings.l10n
 
-    function subscribe(type, method, key, returnRaw) {
+    function subscribe(type, method, key, returnRaw, sessionId) {
         if (typeof returnRaw != "boolean")
             returnRaw = false;
-        return systemSettings.subscribeOnDemand(type, method, key, returnRaw);
+        return systemSettings.subscribeOnDemand(type, method, key, returnRaw, sessionId);
     }
 
     function updateLocalSettings(obj) {

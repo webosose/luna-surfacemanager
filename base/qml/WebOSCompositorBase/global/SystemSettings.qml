@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2019 LG Electronics, Inc.
+// Copyright (c) 2017-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import WebOSServices 1.0
 
 SettingsService {
     id: root
+    sessionId: LS.sessionManager.sessionId
 
     property QtObject settings: QtObject {
         property alias cached: root.cached
@@ -41,12 +42,14 @@ SettingsService {
     property var __subscribedRequestMap: ({})
     property var __subscribedKeyValueMap: ({})
 
-    function subscribeOnDemand(serviceName, methodName, param, raw) {
+    function subscribeOnDemand(serviceName, methodName, param, raw, sessionId) {
         if (param["subscribe"] !== true)
             param["subscribe"] = true;
 
         var sortedParam = JSON.stringify(__sortObject(param));
         var keyGenerated = serviceName + methodName + sortedParam + raw;
+        if (sessionId)
+            keyGenerated += sessionId;
 
         if (__subscribedKeyValueMap[keyGenerated] == undefined) {
             // serviceName x methodName should provide only one matching item.
@@ -63,13 +66,15 @@ SettingsService {
                 subscribeItem["params"] = sortedParam;
                 subscribeItem["key"] = keyGenerated;
                 subscribeItem["raw"] = raw;
+                if (sessionId)
+                    subscribeItem["sessionId"] = sessionId;
 
-                console.info("Register subscription to " + serviceName + "/" + methodName + " " + sortedParam);
+                console.info("Register subscription to " + serviceName + "/" + methodName + " " + sortedParam + " " + sessionId);
                 __subscribeService(subscribeItem);
                 __subscribedKeyValueMap[keyGenerated] =
                     Qt.createQmlObject("import QtQuick 2.4; QtObject { property var value }", root);
             } else {
-                console.warn("Unsupported subscription: " + serviceName + "/" + methodName);
+                console.warn("Unsupported subscription: " + serviceName + "/" + methodName + " " + sessionId);
                 return;
             }
         }
@@ -94,23 +99,31 @@ SettingsService {
     }
 
     function __subscribeService(subscribeItem) {
+        var sessionId = !subscribeItem.useSession ? "no-session" : subscribeItem.sessionId;
         if (subscribeItem.connected != undefined && subscribeItem.connected) {
             subscribeItem.token = call("luna://" + subscribeItem.service,
                                        "/" + subscribeItem.method,
-                                       subscribeItem.params);
+                                       subscribeItem.params,
+                                       undefined,
+                                       sessionId);
 
             if (subscribeItem.token == 0) {
                 console.warn("Failed to subscribe to", subscribeItem.service);
             } else {
                 console.log("Subscribed to " + subscribeItem.service + "/" +
-                    subscribeItem.method + " " + subscribeItem.params);
+                    subscribeItem.method + " " + subscribeItem.params +
+                    ", token: " + subscribeItem.token +
+                    ", sessionId: " + subscribeItem.sessionId);
                 __subscribedRequestMap[subscribeItem.token] = subscribeItem;
                 return true;
             }
         }
 
         console.log("Subscription pending for " + subscribeItem.service + "/" +
-            subscribeItem.method + " " + subscribeItem.params);
+            subscribeItem.method + " " + subscribeItem.params +
+            ", token: " + subscribeItem.token +
+            ", sessionId: " + subscribeItem.sessionId);
+
         __pendingRequests.push(subscribeItem);
 
         return false;
@@ -141,8 +154,18 @@ SettingsService {
                 if (__subscribedRequestMap[i].service === serviceName) {
                     console.warn("Service is disconnected. Pending again for " +
                         __subscribedRequestMap[i].service + "/" + __subscribedRequestMap[i].method +
-                        "params: " + __subscribedRequestMap[i].params);
-                    __pendingRequests.push(__subscribedRequestMap[i]);
+                        " params: " + __subscribedRequestMap[i].params);
+
+                    var sessionList = LS.sessionManager.sessionList && LS.sessionManager.sessionList.map((e) => e.sessionId) || [];
+                    if (!("sessionId" in __subscribedRequestMap[i]) ||
+                        !(__subscribedRequestMap[i].useSession))
+                        __pendingRequests.push(__subscribedRequestMap[i]);
+                    else if (sessionList.length > 0 && sessionList.indexOf(i) != -1)
+                        __pendingRequests.push(__subscribedRequestMap[i]);
+                    else
+                        console.warn("Pending subscription is removed. token: " + i,
+                            __subscribedRequestMap[i].service + "/" + __subscribedRequestMap[i].method +
+                            " params: " + __subscribedRequestMap[i].params);
                     cancel(i);
                     delete __subscribedRequestMap[i];
                 }
@@ -156,12 +179,13 @@ SettingsService {
         for (var item in __subscriptions) {
             // Assume disconnected
             __updateServerStatus(__subscriptions[item].service, false);
-            token = registerServerStatus(__subscriptions[item].service);
+            var useSession = __subscriptions[item].useSession ? true : false;
+            token = registerServerStatus(__subscriptions[item].service, useSession);
             if (token != 0) {
-                console.info("registerServerStatus done for", __subscriptions[item].service, token);
+                console.info("registerServerStatus done for", __subscriptions[item].service, token, sessionId, useSession);
                 __statusTokens.push(token);
             } else {
-                console.error("Error on registerServerStatus for", __subscriptions[item].service);
+                console.error("Error on registerServerStatus for", __subscriptions[item].service, sessionId, useSession);
             }
         }
     }

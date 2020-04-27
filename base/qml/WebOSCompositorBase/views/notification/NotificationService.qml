@@ -26,6 +26,7 @@ Item {
     property bool acceptAlerts: true
     property bool acceptToasts: true
     property bool acceptPincodePrompts: true
+    property string sessionId: ""
 
     signal restartToastTimer()
 
@@ -178,7 +179,7 @@ Item {
         appId: LS.appId
         service: "luna://com.webos.service.bus"
         method: "signal/registerServerStatus"
-
+        sessionId: root.sessionId
 
         Component.onCompleted: {
             callService({ serviceName: "com.webos.notification", subscribe: true });
@@ -193,12 +194,17 @@ Item {
             else
                 notificationManagerService.unsubscribe();
         }
+
+        onSessionIdChanged: {
+            cancel();
+        }
     }
 
     property Service notificationManager: Service {
         id: notificationManagerService
         appId: LS.appId
         service: "luna://com.webos.notification"
+        sessionId: root.sessionId
 
         property string toastList: ""
         property string alertList: ""
@@ -258,6 +264,10 @@ Item {
             default:
                 break;
             }
+        }
+
+        onSessionIdChanged: {
+            cancel();
         }
     }
 }

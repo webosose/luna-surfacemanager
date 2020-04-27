@@ -22,6 +22,7 @@ QtObject {
         {
             service: "com.webos.settingsservice",
             method: "getSystemSettings",
+            useSession: true,
             handler: function (response) {
                 if (response.settings !== undefined) {
                     for (var keys in response.settings)
