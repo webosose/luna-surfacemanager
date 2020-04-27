@@ -29,10 +29,6 @@ WebOSCompositorConfig::WebOSCompositorConfig()
     m_compositorPlugin = QString::fromLatin1(qgetenv("WEBOS_COMPOSITOR_PLUGIN"));
     m_compositorExtensions = QString::fromLatin1(qgetenv("WEBOS_COMPOSITOR_EXTENSIONS"));
 
-    m_primaryScreen = QString::fromLatin1(qgetenv("WEBOS_COMPOSITOR_PRIMARY_SCREEN"));
-    if (Q_UNLIKELY(m_primaryScreen.isEmpty()))
-        m_primaryScreen = QGuiApplication::primaryScreen()->name();
-
     if (qEnvironmentVariableIsEmpty("WEBOS_COMPOSITOR_DISPLAY_CONFIG"))
         m_displayConfig = QJsonDocument(); // empty JSON
     else
@@ -55,6 +51,7 @@ WebOSCompositorConfig::WebOSCompositorConfig()
     // Following env variables are used if it is unable to
     // get the value from WEBOS_COMPOSITOR_DISPLAY_CONFIG.
     // * WEBOS_COMPOSITOR_DISPLAYS: Number of displays
+    // * WEBOS_COMPOSITOR_PRIMARY_SCREEN: Name of the primary screen
     // * WEBOS_COMPOSITOR_GEOMETRY: Default geometryString
     // * WEBOS_COMPOSITOR_MAIN: Source QML for the primary screen
     // * WEBOS_COMPOSITOR_IMPORT_PATH: Import path for WebOSCompositor
@@ -63,6 +60,13 @@ WebOSCompositorConfig::WebOSCompositorConfig()
         m_displayCount = qgetenv("WEBOS_COMPOSITOR_DISPLAYS").toInt();
         if (Q_UNLIKELY(m_displayCount <= 0))
             m_displayCount = 1;
+    }
+    m_primaryScreen = QString::fromLatin1(qgetenv("WEBOS_COMPOSITOR_PRIMARY_SCREEN"));
+    if (Q_UNLIKELY(m_primaryScreen.isEmpty())) {
+        if (m_outputList.size() > 0)
+            m_primaryScreen = m_outputList[0];
+        if (Q_UNLIKELY(m_primaryScreen.isEmpty()))
+            m_primaryScreen = QGuiApplication::primaryScreen()->name();
     }
     QJsonObject primary = m_outputConfigs.value(m_primaryScreen);
     if (!primary.isEmpty()) {
