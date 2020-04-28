@@ -147,4 +147,14 @@ Item {
             font.pixelSize: 16
         }
     }
+
+    Rectangle {
+        id: compositorBorder
+        anchors.fill: parent
+        color: "transparent"
+        border.color: "red"
+        border.width: 2
+        opacity: 0.8
+        visible: Settings.local.debug.compositorBorder
+    }
 }

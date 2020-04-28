@@ -25,7 +25,7 @@ Rectangle {
     property Item sourceItem
     property Item sourceView
     property color hColor: __colors[root.sourceView ? root.sourceView.layerNumber % root.__colors.length : "white"]
-    readonly property var __colors: [ "orangered", "red", "fuchsia", "crimson", "deeppink", "hotpink", "magenta" ]
+    readonly property var __colors: [ "orange", "orchid", "fuchsia", "tomato", "deeppink", "hotpink", "magenta" ]
 
     anchors.fill: parent
     color: "transparent"

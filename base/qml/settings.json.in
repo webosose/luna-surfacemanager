@@ -2,6 +2,7 @@
     "com.webos.surfacemanager": {
         "debug": {
             "enable": false,
+            "compositorBorder": false,
             "focusHighlight": false,
             "surfaceHighlight": false,
             "fpsGraphOverlay": false,
