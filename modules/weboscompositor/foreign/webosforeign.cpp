@@ -163,12 +163,10 @@ void WebOSForeign::registeredWindow()
         VideoOutputdCommunicator *pVideoOutputdCommunicator = VideoOutputdCommunicator::instance();
         if (pVideoOutputdCommunicator) {
             WebOSCompositorWindow *pWebOSCompositorWindow = qobject_cast<WebOSCompositorWindow *>(m_compositor->window());
-            if (pWebOSCompositorWindow) {
+            if (pWebOSCompositorWindow)
                 pWebOSCompositorWindow->rootContext()->setContextProperty(QLatin1String("videooutputdCommunicator"), pVideoOutputdCommunicator);
-                m_outputGeometry = pWebOSCompositorWindow->outputGeometry();
-            } else {
+            else
                 qFatal("Failed to get the window instance");
-            }
         } else {
             qFatal("Failed to get VideoOutputdCommunicator instance");
         }
@@ -203,7 +201,7 @@ void WebOSForeign::webos_foreign_export_element(Resource *resource,
                           surfaceItem,
                           (WebOSForeign::WebOSExportedType)exported_type);
 
-    pWebOSExported->assigneWindowId(generateWindowId());
+    pWebOSExported->assignWindowId(generateWindowId());
     m_exportedList.append(pWebOSExported);
 }
 
@@ -247,19 +245,18 @@ WebOSExported::WebOSExported(
     m_exportedItem->setEnabled(false);
     m_surfaceItem->appendExported(this);
 
-    qInfo() <<"Window status of surface item (" << m_surfaceItem << ") for exporter : " <<m_surfaceItem->state();
+    qInfo() <<"Window status of surface item (" << m_surfaceItem << ") for exporter : " << m_surfaceItem->state();
 
     m_isSurfaceItemFullscreen = (m_surfaceItem->state() == Qt::WindowFullScreen) ? true : false;
 
     connect(m_exportedItem, &QQuickItem::visibleChanged, this, &WebOSExported::updateVisible);
     connect(m_surfaceItem, &WebOSSurfaceItem::stateChanged, this, &WebOSExported::updateWindowState);
-    connect(m_surfaceItem, &QWaylandQuickItem::widthChanged, this, &WebOSExported::calculateExportedItemRatio);
-    connect(m_surfaceItem, &QWaylandQuickItem::widthChanged, this, &WebOSExported::calculateVideoDispRatio);
+    connect(m_surfaceItem, &QWaylandQuickItem::widthChanged, this, &WebOSExported::calculateAll);
     connect(m_surfaceItem, &QWaylandQuickItem::surfaceDestroyed, this, &WebOSExported::onSurfaceDestroyed);
     connect(m_surfaceItem, &WebOSSurfaceItem::itemAboutToBeDestroyed, this, &WebOSExported::onSurfaceDestroyed);
+    connect(m_surfaceItem, &WebOSSurfaceItem::windowChanged, this, &WebOSExported::updateCompositorWindow);
 
-    calculateVideoDispRatio();
-    calculateExportedItemRatio();
+    calculateAll();
 
 #if 0 // DEBUG
     QUrl debugUIQml = QUrl(QString("file://") +
@@ -301,15 +298,17 @@ WebOSExported::~WebOSExported()
 void WebOSExported::calculateVideoDispRatio()
 {
     qInfo() << "WebOSExported::calculateVideoDispRatio is called on " << m_windowId;
-    if (!m_surfaceItem) {
-        qWarning() << "WebOSSurfaceItem for " << m_windowId << " is already destroyed";
+    if (!m_surfaceItem || !m_surfaceItem->window()) {
+        qWarning() << "WebOSSurfaceItem for" << m_windowId << "neither exists nor belongs to a window";
         return;
     }
 
-    if (m_isSurfaceItemFullscreen && m_foreign->m_outputGeometry.isValid() && m_surfaceItem->surface()) {
-        m_videoDispRatio = (double) m_foreign->m_outputGeometry.width() / m_surfaceItem->surface()->size().width();
+    QRect outputGeometry = static_cast<WebOSCompositorWindow *>(m_surfaceItem->window())->outputGeometry();
+
+    if (m_isSurfaceItemFullscreen && outputGeometry.isValid() && m_surfaceItem->surface()) {
+        m_videoDispRatio = (double) outputGeometry.width() / m_surfaceItem->surface()->size().width();
         qInfo() << "surface geometry : " << m_surfaceItem->surface()->size().width() << "x" << m_surfaceItem->surface()->size().height();
-        qInfo() <<"m_videoDispRatio : " <<m_videoDispRatio;
+        qInfo() <<"m_videoDispRatio : " << m_videoDispRatio;
         if (m_requestedRegion.isValid() && m_videoDisplayRect.isValid()) {
             m_videoDisplayRect.setX((int) (m_requestedRegion.x()*m_videoDispRatio));
             m_videoDisplayRect.setY((int) (m_requestedRegion.y()*m_videoDispRatio));
@@ -323,17 +322,19 @@ void WebOSExported::calculateVideoDispRatio()
 
 void WebOSExported::calculateExportedItemRatio()
 {
-    qInfo() << "WebOSExported::calculateExportedItemRatio is called on " << m_windowId;
-    if (!m_surfaceItem) {
-        qWarning() << "WebOSSurfaceItem for " << m_windowId << " is  already destroyed";
+    qInfo() << "WebOSExported::calculateExportedItemRatio is called on" << m_windowId;
+    if (!m_surfaceItem || !m_surfaceItem->window()) {
+        qWarning() << "WebOSSurfaceItem for" << m_windowId << "neither exists nor belongs to a window";
         return;
     }
 
-    if (m_isSurfaceItemFullscreen && m_foreign->m_outputGeometry.isValid()) {
+    QRect outputGeometry = static_cast<WebOSCompositorWindow *>(m_surfaceItem->window())->outputGeometry();
+
+    if (m_isSurfaceItemFullscreen && outputGeometry.isValid()) {
         m_exportedWindowRatio = (double) m_surfaceItem->width() / m_surfaceItem->surface()->size().width();
         qInfo() << "surface geometry : " << m_surfaceItem->surface()->size().width() << "x" << m_surfaceItem->surface()->size().height();
         qInfo() << "surface item geometry : " << m_surfaceItem->width() << "x" << m_surfaceItem->height();
-        qInfo() <<"m_exportedWindowRatio : " <<m_exportedWindowRatio;
+        qInfo() <<"m_exportedWindowRatio : " << m_exportedWindowRatio;
         if (m_requestedRegion.isValid()) {
             m_destinationRect.setX((int)(m_requestedRegion.x()*m_exportedWindowRatio));
             m_destinationRect.setY((int)(m_requestedRegion.y()*m_exportedWindowRatio));
@@ -342,6 +343,12 @@ void WebOSExported::calculateExportedItemRatio()
         }
         updateExportedItemSize();
     }
+}
+
+void WebOSExported::calculateAll()
+{
+    calculateVideoDispRatio();
+    calculateExportedItemRatio();
 }
 
 void WebOSExported::updateWindowState()
@@ -353,10 +360,8 @@ void WebOSExported::updateWindowState()
     WebOSSurfaceItem *item = qobject_cast<WebOSSurfaceItem*>(m_surfaceItem);
     qInfo() << "update window state : " << item->state() << "for WebOSExported ( " << m_windowId << " ) ";
     m_isSurfaceItemFullscreen = item->state() == Qt::WindowFullScreen;
-    if (m_isSurfaceItemFullscreen) {
-        calculateVideoDispRatio();
-        calculateExportedItemRatio();
-    }
+    if (m_isSurfaceItemFullscreen)
+        calculateAll();
 }
 
 void WebOSExported::updateVisible()
@@ -482,6 +487,15 @@ void WebOSExported::setDestinationRegion(struct::wl_resource *destination_region
     updateExportedItemSize();
 }
 
+void WebOSExported::updateCompositorWindow(QQuickWindow *window)
+{
+    if (window != m_compositorWindow) {
+        if (m_compositorWindow)
+            disconnect(m_compositorWindow, &WebOSCompositorWindow::outputGeometryChanged, this, &WebOSExported::calculateAll);
+        m_compositorWindow = static_cast<WebOSCompositorWindow *>(window);
+        connect(m_compositorWindow, &WebOSCompositorWindow::outputGeometryChanged, this, &WebOSExported::calculateAll);
+    }
+}
 
 void WebOSExported::webos_exported_set_exported_window(
         Resource *resource,
@@ -612,7 +626,7 @@ void WebOSExported::setPunchThrough(bool needPunch)
     }
 }
 
-void WebOSExported::assigneWindowId(QString windowId)
+void WebOSExported::assignWindowId(QString windowId)
 {
     m_windowId = windowId;
     qInfo() << m_windowId << "is assigned for " << this;

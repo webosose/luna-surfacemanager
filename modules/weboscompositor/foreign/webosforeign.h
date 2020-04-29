@@ -33,6 +33,7 @@
 #define WEBOSIMPORTED_VERSION 2
 
 class WebOSCoreCompositor;
+class WebOSCompositorWindow;
 class WebOSExported;
 class WebOSImported;
 
@@ -63,7 +64,6 @@ protected:
 private:
     WebOSCoreCompositor* m_compositor = nullptr;
     QList<WebOSExported*> m_exportedList;
-    QRect m_outputGeometry;
 
     friend class WebOSExported;
     friend class WebOSImported;
@@ -86,18 +86,10 @@ public:
     ~WebOSExported();
     void setDestinationRegion(struct::wl_resource *destination_region);
     void setPunchThrough(bool needPunch);
-    void assigneWindowId(QString windowId);
+    void assignWindowId(QString windowId);
     void setParentOf(QQuickItem *surfaceItem);
-    void updateVisible();
-    void updateVideoWindowList(QString contextId, QRect videoDisplayRect, bool needRemove);
-    void updateWindowState();
     void unregisterMuteOwner();
-    void calculateVideoDispRatio();
-    void calculateExportedItemRatio();
-    void updateExportedItemSize();
     void setVideoDisplayWindow();
-    void onSurfaceDestroyed();
-    WebOSSurfaceItem *getImportedItem();
     void startImportedMirroring(WebOSSurfaceItem *parent);
     bool hasSecuredContent();
 
@@ -120,8 +112,22 @@ protected:
                                   const QString &name,
                                   const QString &value) override;
 
+private slots:
+    void updateVisible();
+    void updateWindowState();
+    void calculateAll();
+    void onSurfaceDestroyed();
+    void updateCompositorWindow(QQuickWindow *window);
+
 private:
+    void updateVideoWindowList(QString contextId, QRect videoDisplayRect, bool needRemove);
+    void calculateVideoDispRatio();
+    void calculateExportedItemRatio();
+    void updateExportedItemSize();
+    WebOSSurfaceItem *getImportedItem();
+
     WebOSForeign* m_foreign = nullptr;
+    WebOSCompositorWindow* m_compositorWindow = nullptr;
     QPointer<WebOSSurfaceItem> m_surfaceItem;
     QPointer<QQuickItem> m_exportedItem;
     QPointer<QQuickItem> m_punchThroughItem;
