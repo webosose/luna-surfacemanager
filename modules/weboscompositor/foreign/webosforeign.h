@@ -32,7 +32,6 @@
 
 class QWaylandQuickItem;
 class WebOSCoreCompositor;
-class WebOSCompositor;
 class WebOSSurfaceItem;
 class WebOSExported;
 class WebOSImported;

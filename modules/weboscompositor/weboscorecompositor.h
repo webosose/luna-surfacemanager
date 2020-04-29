@@ -47,7 +47,7 @@ class WebOSInputDevice;
 #endif
 class WebOSForeign;
 /*!
- * \class WebOSCompositor class
+ * \class WebOSCoreCompositor class
  *
  * \brief This class provides a compositor implementation
  *        based on Qt Wayland.

@@ -29,7 +29,6 @@
 class QWaylandSeat;
 class WebOSCoreCompositor;
 class QPlatformNativeInterface;
-class WebOSCompositor;
 class WebOSInputDevice;
 
 class WEBOS_COMPOSITOR_EXPORT WebOSInputManager : public QObject, public QtWaylandServer::wl_webos_input_manager {
