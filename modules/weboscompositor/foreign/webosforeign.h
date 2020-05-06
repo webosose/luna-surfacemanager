@@ -179,6 +179,7 @@ private:
     enum surface_alignment m_textureAlign = surface_alignment::surface_alignment_stretch;
     int32_t m_z_index = 0;
     bool m_punchThroughAttached = false;
+    QString m_contextId;
 
     friend class WebOSForeign;
 };

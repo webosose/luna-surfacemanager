@@ -846,6 +846,8 @@ void WebOSImported::webos_imported_attach_punchthrough_with_context(Resource* r,
             ++i;
         }
     }
+
+    m_contextId = contextId;
     m_exported->m_contextId = contextId;
     m_punchThroughAttached = true;
 
@@ -867,12 +869,20 @@ void WebOSImported::webos_imported_detach_punchthrough(Resource* r)
         return;
     }
 
-    m_exported->unregisterMuteOwner();
-    m_exported->setPunchThrough(false);
-    send_punchthrough_detached(m_exported->m_contextId);
-    m_exported->updateVideoWindowList(m_exported->m_contextId, QRect(0, 0, 0, 0), true);
-    m_exported->m_contextId = QString::null;
-    m_punchThroughAttached = false;
+    if (m_contextId == m_exported->m_contextId) {
+        qInfo() << "detach_punchthrough is called for m_exported->contextId " << m_exported->m_contextId;
+        m_exported->unregisterMuteOwner();
+        m_exported->setPunchThrough(false);
+        send_punchthrough_detached(m_exported->m_contextId);
+        m_exported->updateVideoWindowList(m_exported->m_contextId, QRect(0, 0, 0, 0), true);
+        m_exported->m_contextId = QString::null;
+        m_punchThroughAttached = false;
+    } else {
+        qInfo() << "detach_punchthrough is called for contextId " << m_contextId;
+        send_punchthrough_detached(m_contextId);
+        m_exported->updateVideoWindowList(m_contextId, QRect(0, 0, 0, 0), true);
+        m_punchThroughAttached = false;
+    }
 }
 
 void WebOSImported::webos_imported_destroy(Resource* r)
