@@ -29,7 +29,7 @@ WebOSKeyFilter::~WebOSKeyFilter()
     resetKeyFilters();
 }
 
-bool WebOSKeyFilter::handleKeyEvent(int keycode, bool pressed, bool autoRepeat)
+bool WebOSKeyFilter::handleKeyEvent(int keycode, bool pressed, bool autoRepeat, quint32 nativeModifiers)
 {
     QVariant key(keycode);
     QVariant ret;
@@ -63,7 +63,7 @@ bool WebOSKeyFilter::handleKeyEvent(int keycode, bool pressed, bool autoRepeat)
     // main key handler
     if (Q_LIKELY(!m_handlerList.isEmpty())) {
         QJSValueList args;
-        args << keycode << pressed << m_wasAutoRepeat;
+        args << keycode << pressed << m_wasAutoRepeat << nativeModifiers;
         for (int i = 0; i < m_handlerList.size(); i++) {
             QString handlerName = m_handlerList[i].first;
             QJSValue keyFilter = m_handlerList[i].second;
@@ -128,7 +128,7 @@ bool WebOSKeyFilter::eventFilter(QObject *obj, QEvent *event)
     QEvent::Type type = event->type();
     if (type == QEvent::KeyPress || type == QEvent::KeyRelease) {
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-        bool accepted = handleKeyEvent(keyEvent->key(), (type == QEvent::KeyPress), keyEvent->isAutoRepeat());
+        bool accepted = handleKeyEvent(keyEvent->key(), (type == QEvent::KeyPress), keyEvent->isAutoRepeat(), keyEvent->nativeModifiers());
 
         if (type == QEvent::KeyPress) {
             if (Q_UNLIKELY(m_disallowRelease))

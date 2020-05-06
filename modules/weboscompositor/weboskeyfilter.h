@@ -76,7 +76,7 @@ public:
 
     void keyFocusChanged();
 
-    Q_INVOKABLE bool handleKeyEvent(int keycode, bool pressed, bool autoRepeat);
+    Q_INVOKABLE bool handleKeyEvent(int keycode, bool pressed, bool autoRepeat, quint32 nativeModifiers);
 
     Q_INVOKABLE void resetKeyFilters();
     Q_INVOKABLE void addKeyFilter(QJSValue keyFilter, QString handlerName = QStringLiteral("unknown"));
