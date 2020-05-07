@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 LG Electronics, Inc.
+// Copyright (c) 2017-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,6 +27,64 @@ QtObject {
     // NOTE: Define properties readonly as they're shared globally
 
     readonly property string appId: "com.webos.surfacemanager"
+
+    readonly property Service sessionManager: Service {
+        readonly property string serviceName: "com.webos.service.sessionmanager"
+        property string sessionId
+        property var sessionList
+
+        appId: root.appId
+        service: serviceName
+        method: "getSessionList"
+
+        // Internal properties
+        property bool connected: false
+        property int serverStatusToken: 0
+        property int subscriptionToken: 0
+
+        Component.onCompleted: {
+            console.log("LS.sessionManager: checking status for", serviceName);
+            serverStatusToken = registerServerStatus(serviceName);
+        }
+
+        onConnectedChanged: {
+            console.log("LS.sessionManager: connected", connected);
+            if (connected) {
+                // All valid tokens are positive and 0 means LSMESSAGE_TOKEN_INVALID
+                if (subscriptionToken > 0)
+                    cancel(subscriptionToken);
+                var payload = {subscribe: true};
+                subscriptionToken = callService(payload);
+            } else {
+                cancel(serverStatusToken);
+                serverStatusToken = registerServerStatus(serviceName);
+            }
+        }
+
+        onResponse: {
+            console.log("LS.sessionManager: response:", payload, "method:", method, "token:", token);
+            var response = JSON.parse(payload);
+            switch (token) {
+            case serverStatusToken:
+                connected = response.connected;
+                break;
+            case subscriptionToken:
+                if (response.returnValue && response.sessionList) {
+                    sessionList = response.sessionList;
+                    if (sessionList && sessionList.length > 0) {
+                        for (var i = 0; i < sessionList.length; i++) {
+                            if (sessionList[i].deviceSetInfo.displayId == compositorWindow.displayId) {
+                                sessionId = sessionList[i].sessionId;
+                                console.info("LS.sessionManager: sessionId for this display:", sessionId, "displayId:", compositorWindow.displayId);
+                                break;
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+        }
+    }
 
     readonly property Service adhoc: Service {
         appId: root.appId
