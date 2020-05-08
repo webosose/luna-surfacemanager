@@ -1252,3 +1252,21 @@ WebOSSurfaceItem *WebOSSurfaceItem::createMirrorItem(int target)
     m_mirrorItems[target] = mirror;
     return mirror;
 }
+
+bool WebOSSurfaceItem::hasSecuredContent()
+{
+    if (!isMapped())
+        return false;
+
+    if (view() && view()->currentBuffer().hasSecuredContent()) {
+        qInfo() << "Current view has secured content";
+        return true;
+    }
+
+    if (exported() && exported()->hasSecuredContent()) {
+        qInfo() << "Exported item has secured content";
+        return true;
+    }
+
+    return false;
+}

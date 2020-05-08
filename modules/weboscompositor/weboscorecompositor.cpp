@@ -1033,6 +1033,20 @@ void WebOSCoreCompositor::directRenderingActivated(bool active)
     emit directRenderingChanged();
 }
 
+const QList<WebOSSurfaceItem *> WebOSCoreCompositor::getItems(WebOSCompositorWindow *window) const
+{
+    if (!window)
+        return m_surfaces;
+
+    QList<WebOSSurfaceItem *> surfaces;
+    foreach (WebOSSurfaceItem *item, m_surfaces) {
+        if (item && item->window() == window)
+            surfaces << item;
+    }
+
+    return surfaces;
+}
+
 void WebOSCoreCompositor::setCursorVisible(bool visibility)
 {
     if (m_cursorVisible != visibility) {

@@ -125,6 +125,8 @@ public:
 
     QString modelString();
 
+    bool hasSecuredContent();
+
 signals:
     void outputGeometryChanged();
     void outputRotationChanged();

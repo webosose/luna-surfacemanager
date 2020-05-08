@@ -705,6 +705,21 @@ QString WebOSCompositorWindow::modelString()
     return qs.toString();
 }
 
+bool WebOSCompositorWindow::hasSecuredContent()
+{
+    if (Q_UNLIKELY(!m_compositor)) {
+        qWarning() << this << "compositor is not set yet!";
+        return false;
+    }
+
+    foreach (WebOSSurfaceItem *item, m_compositor->getItems(this)) {
+        if (item && item->hasSecuredContent())
+            return true;
+    }
+
+    return false;
+}
+
 void WebOSCompositorWindow::onQmlError(const QList<QQmlError> &errors)
 {
     qWarning("==== Exiting because of QML warnings ====");

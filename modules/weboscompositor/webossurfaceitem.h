@@ -465,6 +465,8 @@ public:
     WebOSImported *imported() { return m_imported; }
     void setImported(WebOSImported *imported) { m_imported = imported; }
 
+    bool hasSecuredContent();
+
 public slots:
     void updateScreenPosition();
     void updateProperties(const QVariantMap &properties, const QString &name, const QVariant &value);

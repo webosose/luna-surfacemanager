@@ -115,8 +115,7 @@ public:
     void directRenderingActivated(bool);
     bool directRendering() const { return m_directRendering; }
 
-    // For debug purposes, remove when not needed
-    const QList<WebOSSurfaceItem*>& getItems() const { return m_surfaces; }
+    const QList<WebOSSurfaceItem *> getItems(WebOSCompositorWindow *window = nullptr) const;
 
     quint32 getFullscreenTick() { return ++m_fullscreenTick; }
     Q_INVOKABLE WebOSSurfaceItem* createProxyItem(const QString &appId, const QString &title, const QString &subtitle, const QString &snapshotPath);

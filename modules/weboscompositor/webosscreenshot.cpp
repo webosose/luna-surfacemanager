@@ -17,6 +17,7 @@
 #include "webosscreenshot.h"
 #include "webossurfaceitem.h"
 #include "weboscompositortracer.h"
+#include "weboscompositorwindow.h"
 
 #ifdef QT_OPENGL_ES
 #include <GLES2/gl2.h>
@@ -61,6 +62,10 @@ WebOSScreenShot::ScreenShotErrors WebOSScreenShot::take()
             emit screenShotError(NO_SURFACE);
             return NO_SURFACE;
         }
+        if (m_target->hasSecuredContent()) {
+            emit screenShotError(HAS_SECURED_CONTENT);
+            return HAS_SECURED_CONTENT;
+        }
         m_size = m_target->surface()->size();
 
         img = QImage(m_size, QImage::Format_ARGB32_Premultiplied);
@@ -74,6 +79,11 @@ WebOSScreenShot::ScreenShotErrors WebOSScreenShot::take()
         // this will render the scene graph and trigger the runnable to run
         win->grabWindow();
     } else {
+        WebOSCompositorWindow *compositorWindow = qobject_cast<WebOSCompositorWindow *>(win);
+        if (compositorWindow && compositorWindow->hasSecuredContent()) {
+            emit screenShotError(HAS_SECURED_CONTENT);
+            return HAS_SECURED_CONTENT;
+        }
         // Grab full window. we could use the task as well,
         // but I think we should re-use Qt code if available.
         m_size = win->size();

@@ -596,6 +596,22 @@ QWaylandQuickItem *WebOSExported::getImportedItem()
     return static_cast<WebOSSurfaceItem *>(m_exportedItem->childItems().first());
 }
 
+bool WebOSExported::hasSecuredContent()
+{
+    if (!m_exportedItem || m_exportedItem->childItems().isEmpty())
+        return false;
+
+    foreach(QQuickItem *item, m_exportedItem->childItems()) {
+        WebOSSurfaceItem *surfaceItem = qobject_cast<WebOSSurfaceItem *>(item);
+        if (surfaceItem && surfaceItem->view()) {
+            if (surfaceItem->view()->currentBuffer().hasSecuredContent())
+                return true;
+        }
+    }
+
+    return false;
+}
+
 void WebOSExported::setParentOf(QQuickItem *item)
 {
     if (!m_qwlsurfaceItem || !m_exportedItem) {

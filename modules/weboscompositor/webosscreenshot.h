@@ -42,7 +42,8 @@ public:
         NO_SURFACE,
         INVALID_PATH,
         UNABLE_TO_SAVE,
-        INVALID_ACTIVE_WINDOW
+        INVALID_ACTIVE_WINDOW,
+        HAS_SECURED_CONTENT
     };
     Q_DECLARE_FLAGS(ScreenShotErrors, ScreenShotError)
 

@@ -99,6 +99,7 @@ public:
     void onSurfaceDestroyed();
     QWaylandQuickItem *getImportedItem();
     void startImportedMirroring(QWaylandQuickItem *parent);
+    bool hasSecuredContent();
 
 signals:
     void geometryChanged();
