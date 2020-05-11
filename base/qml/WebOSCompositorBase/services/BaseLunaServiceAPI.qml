@@ -172,6 +172,10 @@ Service {
                     ret.errorCode = 105;
                     ret.errorText = "ERR_UNABLE_TO_SAVE";
                     break;
+                case ScreenShot.HAS_SECURED_CONTENT:
+                    ret.errorCode = 107;
+                    ret.errorText = "ERR_HAS_SECURED_CONTENT";
+                    break;
                 }
                 console.warn("errorCode: " + ret.errorCode + ", errorText: " + ret.errorText);
                 return JSON.stringify(ret);
