@@ -101,9 +101,6 @@ public:
     QQuickItem* viewsRoot() const { return m_viewsRoot; }
     void setViewsRoot(QQuickItem *viewsRoot);
 
-    Q_INVOKABLE void updateForegroundItems(QList<QObject *>);
-    QList<QObject *> foregroundItems() const { return m_foregroundItems; }
-
     void setOutput(QWaylandOutput *output) { m_output = output; }
     QWaylandOutput *output() { return m_output; }
     void setInputDevice(QWaylandSeat *device) { m_inputDevice = device; }
@@ -194,7 +191,6 @@ private:
     bool m_cursorVisible;
 
     QQuickItem* m_viewsRoot;
-    QList<QObject *> m_foregroundItems;
     QWaylandOutput *m_output;
     QWaylandSeat *m_inputDevice;
     // auto clear on destroyed

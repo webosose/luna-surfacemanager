@@ -75,7 +75,6 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCoreCompositor : public QWaylandQuickComposit
     Q_PROPERTY(WebOSKeyFilter* keyFilter READ keyFilter WRITE setKeyFilter NOTIFY keyFilterChanged)
     Q_PROPERTY(WebOSSurfaceItem* activeSurface READ activeSurface NOTIFY activeSurfaceChanged)
 
-    Q_PROPERTY(QList<QObject *> foregroundItems READ foregroundItems NOTIFY foregroundItemsChanged)
     Q_PROPERTY(QList<QObject *> windows READ windows NOTIFY windowsChanged)
 
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadCompleted)
@@ -187,7 +186,6 @@ public:
 
     void destroyClientForWindow(QVariant window);
 
-    QList<QObject *> foregroundItems() const;
     QList<QObject *> windows() const;
     WebOSCompositorWindow *window(int displayId);
 
@@ -245,7 +243,6 @@ signals:
 
     void outputUpdateDone();
 
-    void foregroundItemsChanged();
     void windowsChanged();
 
     void loadCompleted();

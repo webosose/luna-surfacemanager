@@ -550,18 +550,6 @@ void WebOSCompositorWindow::setFullscreenItem(WebOSSurfaceItem *item)
     emit fullscreenItemChanged(oldItem);
 }
 
-void WebOSCompositorWindow::updateForegroundItems(QList<QObject *> items)
-{
-    m_foregroundItems = items;
-
-    if (Q_UNLIKELY(!m_compositor)) {
-        qWarning() << this << "compositor is not set yet!";
-        return;
-    }
-
-    emit m_compositor->foregroundItemsChanged();
-}
-
 void WebOSCompositorWindow::onFullscreenItemChanged(WebOSSurfaceItem *oldItem)
 {
     if (stopMirroringFromTarget() == 0)

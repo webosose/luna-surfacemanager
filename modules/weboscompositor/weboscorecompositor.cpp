@@ -453,16 +453,6 @@ WebOSSurfaceItem* WebOSCoreCompositor::activeSurface()
     return qobject_cast<WebOSSurfaceItem*>(item);
 }
 
-QList<QObject *> WebOSCoreCompositor::foregroundItems() const
-{
-    QList<QObject *> items;
-
-    for (int i = 0; i < m_windows.size(); ++i)
-        items << m_windows[i]->foregroundItems();
-
-    return items;
-}
-
 QList<QObject *> WebOSCoreCompositor::windows() const
 {
     QList<QObject *> windowObjects;
