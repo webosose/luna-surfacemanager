@@ -48,11 +48,5 @@ FocusScope {
             keyController: null
             views: viewsId.views
         }
-
-        // Mandatory to use getForegroundAppInfo
-        ForegroundItemsController {
-            id: foregroundItemsControllerId
-            views: viewsId.views
-        }
     }
 }

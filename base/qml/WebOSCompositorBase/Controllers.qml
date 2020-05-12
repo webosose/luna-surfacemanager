@@ -43,12 +43,6 @@ Item {
         views: root.views
     }
 
-    // Mandatory to use getForegroundAppInfo
-    ForegroundItemsController {
-        id: foregroundItemsControllerId
-        views: root.views
-    }
-
     VideoController {
         id: videoControllerId
     }

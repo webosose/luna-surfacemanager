@@ -42,9 +42,10 @@ Item {
         }
 
         Item {
-            id: viewsId
+            id: viewsRoot
             anchors.fill: parent
 
+            property var foregroundItems: Utils.foregroundList(viewsRoot.children);
             property alias fullscreen: fullscreenViewId
 
             FullscreenView {
@@ -56,9 +57,14 @@ Item {
                 model: FullscreenWindowModel {}
             }
         }
+
+        Binding {
+            target: compositorWindow
+            property: "viewsRoot"
+            value: viewsRoot
+        }
     }
 
     // Following are needed to make getForegroundAppInfo functional
-    ForegroundItemsController { views: viewsId }
-    BaseLunaServiceAPI { appId: LS.appId; views: viewsId }
+    BaseLunaServiceAPI { appId: LS.appId; views: viewsRoot }
 }

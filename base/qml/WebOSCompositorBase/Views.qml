@@ -39,6 +39,7 @@ FocusScope {
         ViewsRoot {
             id: viewsRoot
             anchors.fill: parent
+            property var foregroundItems: Utils.foregroundList(viewsRoot.children);
         }
 
         Binding {
