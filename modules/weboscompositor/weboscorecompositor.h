@@ -78,6 +78,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCoreCompositor : public QWaylandQuickComposit
     Q_PROPERTY(QList<QObject *> foregroundItems READ foregroundItems NOTIFY foregroundItemsChanged)
     Q_PROPERTY(QList<QObject *> windows READ windows NOTIFY windowsChanged)
 
+    Q_PROPERTY(bool loaded READ loaded NOTIFY loadCompleted)
     Q_PROPERTY(bool respawned READ respawned NOTIFY respawnedChanged)
 
 public:
@@ -190,7 +191,9 @@ public:
     QList<QObject *> windows() const;
     WebOSCompositorWindow *window(int displayId);
 
+    bool loaded() const { return m_loaded; }
     bool respawned() const { return m_respawned; }
+
     void setCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY, wl_client *client);
 
     void registerSeat(QWaylandSeat *seat);
@@ -245,6 +248,7 @@ signals:
     void foregroundItemsChanged();
     void windowsChanged();
 
+    void loadCompleted();
     void respawnedChanged();
 
 protected:
@@ -340,6 +344,7 @@ private:
 
     EventPreprocessor* m_eventPreprocessor;
 
+    bool m_loaded;
     bool m_respawned;
     QRect m_outputGeometry;
 };

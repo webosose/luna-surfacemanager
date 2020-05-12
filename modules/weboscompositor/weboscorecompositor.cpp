@@ -179,6 +179,7 @@ WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *
     , m_lastMouseEventFrom(0)
     , m_inputDevicePreallocated(0)
 #endif
+    , m_loaded(false)
     , m_respawned(false)
 {
     setSocketName(socketName);
@@ -1103,8 +1104,13 @@ QWaylandSeat *WebOSCoreCompositor::queryInputDevice(QInputEvent *inputEvent)
 void WebOSCoreCompositor::emitLsmReady()
 {
     PMTRACE_FUNCTION;
+
+    qInfo("emitting loadCompleted and lsm-ready");
+
+    m_loaded = true;
+    emit loadCompleted();
+
     QString upstartCmd = QLatin1String("/sbin/initctl emit --no-wait lsm-ready");
-    qDebug("emit upstart '%s'", qPrintable(upstartCmd));
     QProcess::startDetached(upstartCmd);
 }
 
