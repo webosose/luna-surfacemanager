@@ -205,7 +205,7 @@ public:
     void mouseUngrabEvent() Q_DECL_OVERRIDE;
 
     int texture() const {
-        if (textureProvider()->texture())
+        if (textureProvider() && textureProvider()->texture())
             return textureProvider()->texture()->textureId();
         return 0;
     }

@@ -57,7 +57,7 @@ WebOSScreenShot::ScreenShotErrors WebOSScreenShot::take()
 
     QImage img;
     if (m_target) {
-        if (!m_target->surface()) {
+        if (!m_target->surface() || !m_target->window()) {
             emit screenShotError(NO_SURFACE);
             return NO_SURFACE;
         }
