@@ -173,13 +173,15 @@ protected:
                                                  int32_t z_index) override;
 
 private:
-    WebOSImported(WebOSExported* exported, struct wl_client* client, uint32_t id);
+    WebOSImported(WebOSExported* exported, struct wl_client* client, uint32_t id,
+                        WebOSForeign::WebOSExportedType exportedType);
     WebOSExported* m_exported = nullptr;
     WebOSSurfaceItem* m_childSurfaceItem = nullptr;
     enum surface_alignment m_textureAlign = surface_alignment::surface_alignment_stretch;
     int32_t m_z_index = 0;
     bool m_punchThroughAttached = false;
     QString m_contextId;
+    WebOSForeign::WebOSExportedType m_importedType;
 
     friend class WebOSForeign;
 };

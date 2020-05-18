@@ -216,7 +216,8 @@ void WebOSForeign::webos_foreign_import_element(Resource *resource,
     foreach(WebOSExported* exported, m_exportedList) {
         if (exported->m_windowId == window_id) {
             exported->m_importList.append(
-                new WebOSImported(exported, resource->client(), id));
+                new WebOSImported(exported, resource->client(), id,
+                                  (WebOSForeign::WebOSExportedType)exported_type));
             return;
         }
     }
@@ -717,11 +718,12 @@ void WebOSExported::startImportedMirroring(WebOSSurfaceItem *parent)
     }
 }
 
-WebOSImported::WebOSImported(WebOSExported* exported,
-                             struct wl_client* client, uint32_t id)
+WebOSImported::WebOSImported(WebOSExported* exported, struct wl_client* client,
+                        uint32_t id, WebOSForeign::WebOSExportedType exportedType)
     : QtWaylandServer::wl_webos_imported(client, id,
                                          WEBOSIMPORTED_VERSION)
     , m_exported(exported)
+    , m_importedType(exportedType)
 {
     qInfo() << this << "is created. Video window id is : " << m_exported->m_windowId;
     connect(exported, &WebOSExported::geometryChanged,
@@ -926,10 +928,8 @@ void WebOSImported::webos_imported_attach_surface(
     m_exported->setParentOf(m_childSurfaceItem);
     m_childSurfaceItem->setZ(m_exported->m_exportedItem->z()+m_z_index);
     updateGeometry();  //Resize texture if needed.
-    VideoOutputdCommunicator::instance()->setProperty("videoTexture", "on", NULL);
-
-    qInfo() << m_childSurfaceItem << "is attached to" << m_exported->m_exportedItem << "on " << this;
-
+    if (m_importedType == WebOSForeign::WebOSExportedType::VideoObject)
+        VideoOutputdCommunicator::instance()->setProperty("videoTexture", "on", NULL);
     send_surface_attached(surface);
 }
 
@@ -944,7 +944,8 @@ void WebOSImported::webos_imported_detach_surface(
         return;
     }
 
-    VideoOutputdCommunicator::instance()->setProperty("videoTexture", "off", NULL);
+    if (m_importedType == WebOSForeign::WebOSExportedType::VideoObject)
+        VideoOutputdCommunicator::instance()->setProperty("videoTexture", "off", NULL);
     disconnect(m_childSurfaceItem->surface(), &QWaylandSurface::surfaceDestroyed, this, &WebOSImported::childSurfaceDestroyed);
     m_childSurfaceItem->setParentItem(nullptr);
     send_surface_detached(m_childSurfaceItem->surface()->resource());
