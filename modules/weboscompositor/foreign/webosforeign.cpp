@@ -208,6 +208,7 @@ WebOSExported::WebOSExported(
     qInfo() << this << "is created";
     m_exportedItem->setClip(true);
     m_exportedItem->setZ(-1);
+    m_exportedItem->setEnabled(false);
     m_qwlsurfaceItem->setExported(this);
 
     //TODO: item == m_qwlsurfaceItem? The difference is static_cast vs qobject_cast. Any reason?
