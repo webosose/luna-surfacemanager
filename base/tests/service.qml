@@ -83,7 +83,7 @@ WebOSWindow {
         param = {"configNames":["com.webos.surfacemanager.*"]}
         serviceInHost.call("luna://com.webos.service.config", "/getConfigs", JSON.stringify(param));
 
-        serviceInSession.registerServerStatus("com.webos.settingsservice");
+        serviceInSession.registerServerStatus("com.webos.settingsservice", true);
 
         param = {"keys":["country"], "category":"option"}
         serviceInSession.call("luna://com.webos.settingsservice", "/getSystemSettings", JSON.stringify(param));
