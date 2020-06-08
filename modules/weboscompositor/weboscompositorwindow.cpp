@@ -495,7 +495,6 @@ void WebOSCompositorWindow::invalidateCursor()
     }
 
     setCursor(transparentCursor);
-    invalidateCursorItem();
 }
 
 void WebOSCompositorWindow::setCursorVisible(bool visibility)
