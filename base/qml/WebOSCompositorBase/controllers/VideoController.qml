@@ -1,4 +1,4 @@
-// Copyright (c) 2019 LG Electronics, Inc.
+// Copyright (c) 2019-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ Item {
     Connections {
         target: videooutputdCommunicator
         onSetVideoDisplayWindowRequested: {
-            // luna-send -n 1 -f luna://com.webos.service.videooutput/video/display/setDisplayWindow '{ \
+            // luna-send -n 1 -f luna://com.webos.service.videooutput/display/setDisplayWindow '{ \
             //     "displayOutput":{"width":960,"height":540,"x":160,"y":0}, \
             //     "context": contextId, \
             //     "fullScreen":false \
@@ -42,7 +42,7 @@ Item {
                                     });
 
             console.warn("Calling setVideoDisplayWindow:", params);
-            LS.adhoc.call("luna://com.webos.service.videooutput", "/video/display/setDisplayWindow", params);
+            LS.adhoc.call("luna://com.webos.service.videooutput", "/display/setDisplayWindow", params);
         }
     }
 }
