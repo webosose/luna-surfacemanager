@@ -19,7 +19,6 @@
 #include "weboscorecompositor.h"
 #include "weboscompositorwindow.h"
 #include "webosforeign.h"
-#include "webossurfaceitem.h"
 #include "videowindow_informer.h"
 
 #include <QDebug>
@@ -130,12 +129,11 @@ private:
 };
 
 
-class ImportedMirrorItem : public QWaylandQuickItem, public MirrorItemHandler {
+class ImportedMirrorItem : public WebOSSurfaceItem, public MirrorItemHandler {
 public:
-    ImportedMirrorItem(QWaylandQuickSurface *surface)
-        : QWaylandQuickItem()
+    ImportedMirrorItem(WebOSCoreCompositor *compositor, QWaylandQuickSurface *surface)
+        : WebOSSurfaceItem(compositor, surface)
     {
-        setSurface(surface);
     }
 
     void initialize(QQuickItem *item, QQuickItem *exportedItem, QQuickItem *source, QQuickItem *parent) override
@@ -708,9 +706,11 @@ void WebOSExported::startImportedMirroring(WebOSSurfaceItem *parent)
         mirror->setHandler(mirror, m_exportedItem, source);
     } else {
         WebOSSurfaceItem *si = static_cast<WebOSSurfaceItem *>(source);
-        ImportedMirrorItem *mirror = new ImportedMirrorItem(static_cast<QWaylandQuickSurface *>(si->surface()));
+        ImportedMirrorItem *mirror = new ImportedMirrorItem(m_foreign->m_compositor, static_cast<QWaylandQuickSurface *>(si->surface()));
         mirror->initialize(mirror, m_exportedItem, source, parent);
         mirror->setHandler(mirror, m_exportedItem, source);
+        mirror->setImported(si->imported());
+        connect(parent, &QWaylandQuickItem::directUpdateOnPlaneChanged, mirror, &WebOSSurfaceItem::updateDirectUpdateOnPlane);
 
         qInfo() << "source" << si << "mirror" << mirror;
     }
@@ -909,9 +909,10 @@ void WebOSImported::webos_imported_attach_surface(
 
     m_childSurfaceItem = qobject_cast<WebOSSurfaceItem*>(qwlSurface->surfaceItem());
     connect(m_childSurfaceItem->surface(), &QWaylandSurface::surfaceDestroyed, this, &WebOSImported::childSurfaceDestroyed);
+    m_childSurfaceItem->setImported(true);
+    connect(m_exported->surfaceItem(), &QWaylandQuickItem::directUpdateOnPlaneChanged, m_childSurfaceItem, &WebOSSurfaceItem::updateDirectUpdateOnPlane);
     m_exported->setParentOf(m_childSurfaceItem);
     m_childSurfaceItem->setZ(m_exported->m_exportedItem->z()+m_z_index);
-    m_childSurfaceItem->setImported(true);
     updateGeometry();  //Resize texture if needed.
 
     qInfo() << m_childSurfaceItem << "is attached to" << m_exported->m_exportedItem << "on " << this;

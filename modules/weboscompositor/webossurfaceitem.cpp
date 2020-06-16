@@ -107,6 +107,8 @@ WebOSSurfaceItem::~WebOSSurfaceItem()
 {
     emit itemAboutToBeDestroyed();
 
+    disconnect(this, &QQuickItem::windowChanged, this, &WebOSSurfaceItem::handleWindowChanged);
+
     sendCloseToGroupItems();
     if (isSurfaceGroupRoot())
         m_surfaceGroup->setRootItem(NULL);
@@ -142,7 +144,12 @@ void WebOSSurfaceItem::setDisplayAffinity(int affinity)
 void WebOSSurfaceItem::handleWindowChanged()
 {
     qInfo() << this << "moved to window" << window();
+
     setDisplayId(window() ? static_cast<WebOSCompositorWindow *>(window())->displayId() : -1);
+
+    // Unset direct update whenever it gets removed from the scene
+    if (!window())
+        setDirectUpdateOnPlane(false);
 }
 
 void WebOSSurfaceItem::requestMinimize()
@@ -1407,4 +1414,38 @@ void WebOSSurfaceItem::surfaceChangedEvent(QWaylandSurface *newSurface, QWayland
     }
 
     QWaylandQuickItem::surfaceChangedEvent(newSurface, oldSurface);
+}
+
+uint32_t WebOSSurfaceItem::planeZpos() const
+{
+    // FIXME
+    // Values copied from the underlying platform abstraction code
+    // as no proper header file exists for the definition.
+    enum PlaneOrder {
+        VideoPlane = 0,
+        FullscreenPlane = 1,
+        MainPlane = 2,
+        Plane_End = 3
+    };
+
+    if (m_imported)
+        return VideoPlane;
+
+    if (!QWaylandQuickItem::directUpdateOnPlane()) {
+        qWarning() << "This will should not happen for planeZpos of MainPlane" << this;
+        return MainPlane;
+    }
+
+    return FullscreenPlane;
+}
+
+void WebOSSurfaceItem::updateDirectUpdateOnPlane()
+{
+    WebOSSurfaceItem *wItem = qobject_cast<WebOSSurfaceItem *>(sender());
+    if (!wItem || !m_imported)
+        return;
+
+    qInfo() << "updateDirectUpdateOnPlane" << this << "by" << wItem;
+
+    setDirectUpdateOnPlane(wItem->directUpdateOnPlane());
 }

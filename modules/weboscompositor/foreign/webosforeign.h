@@ -26,12 +26,13 @@
 #include <QtWaylandCompositor/private/qwlregion_p.h>
 #include <QPointer>
 
+#include "webossurfaceitem.h"
+
 #define WEBOSFOREIGN_VERSION 1
 #define WEBOSEXPORTED_VERSION 2
 #define WEBOSIMPORTED_VERSION 2
 
 class WebOSCoreCompositor;
-class WebOSSurfaceItem;
 class WebOSExported;
 class WebOSImported;
 
@@ -99,6 +100,8 @@ public:
     WebOSSurfaceItem *getImportedItem();
     void startImportedMirroring(WebOSSurfaceItem *parent);
     bool hasSecuredContent();
+
+    WebOSSurfaceItem *surfaceItem() const { return m_surfaceItem; }
 
 signals:
     void geometryChanged();

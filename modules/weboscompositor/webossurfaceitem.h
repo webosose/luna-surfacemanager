@@ -489,10 +489,13 @@ public:
     Q_INVOKABLE void grabLastFrame();
     Q_INVOKABLE void releaseLastFrame();
 
+    uint32_t planeZpos () const override;
+
 public slots:
     void updateScreenPosition();
     void updateProperties(const QVariantMap &properties, const QString &name, const QVariant &value);
     void updateCursor();
+    void updateDirectUpdateOnPlane();
 
 signals:
     void displayIdChanged();
