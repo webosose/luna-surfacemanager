@@ -38,6 +38,7 @@
 #include "webosgroupedwindowmodel.h"
 #include "webossurfacemodel.h"
 #include "webossurfaceitem.h"
+#include "webossurfaceitemmirror.h"
 #include "webossurfacegroup.h"
 #include "webosshellsurface.h"
 #include "webosinputdevice.h"
@@ -341,6 +342,7 @@ void WebOSCoreCompositor::registerTypes()
     qmlRegisterType<WebOSScreenShot>("WebOSCoreCompositor", 1, 0, "ScreenShot");
     qmlRegisterUncreatableType<WebOSKeyPolicy>("WebOSCoreCompositor", 1, 0, "KeyPolicy", QLatin1String("Not allowed to create KeyPolicy instance"));
     qmlRegisterUncreatableType<WebOSCompositorWindow>("WebOSCoreCompositor", 1, 0, "CompositorWindow", QLatin1String("Not allowed to create CompositorWindow"));
+    qmlRegisterType<WebOSSurfaceItemMirror>("WebOSCoreCompositor", 1, 0, "SurfaceItemMirror");
 }
 
 QWaylandQuickSurface* WebOSCoreCompositor::fullscreenSurface() const

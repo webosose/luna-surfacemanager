@@ -44,31 +44,64 @@ public:
     MirrorItemHandler() {}
     ~MirrorItemHandler() { clearHandler(); }
 
+    static inline qreal getParentRatio(QQuickItem *dItem, QQuickItem *nItem, bool isWidth = true) {
+        if (dItem && dItem->parentItem() && nItem && nItem->parentItem()) {
+            if (isWidth)
+                return dItem->parentItem()->width() / (qreal)nItem->parentItem()->width();
+
+            return dItem->parentItem()->height() / (qreal)nItem->parentItem()->height();
+        }
+
+        return 1.0;
+    }
+
     virtual void initialize(QQuickItem *item, QQuickItem *exportedItem, QQuickItem *source, QQuickItem *parent)
     {
         qInfo() << "mirror" << item <<"exported" << exportedItem << "source" << source << "parent" << parent;
 
-        item->setClip(exportedItem->clip());
-        item->setX(exportedItem->x());
-        item->setY(exportedItem->y());
-        item->setZ(source->z());
-        item->setWidth(source->width());
-        item->setHeight(source->height());
+        // Set parent first, otherwise export item suddenly appears at first.
         item->setParentItem(parent);
+
+        qreal wRatio = getParentRatio(item, exportedItem);
+        qreal hRatio = getParentRatio(item, exportedItem, false);
+
+        item->setClip(exportedItem->clip());
+        item->setX(exportedItem->x() * wRatio);
+        item->setY(exportedItem->y() * hRatio);
+        item->setZ(source->z());
+        item->setWidth(source->width() * wRatio);
+        item->setHeight(source->height() * hRatio);
     }
 
     // The first parameter is to avoid multiple inheritance of QQuickItem
     void setHandler(QQuickItem *item, QQuickItem *exportedItem, QQuickItem *source)
     {
-        m_xConn = QObject::connect(exportedItem, &QQuickItem::xChanged, [item, exportedItem]() { item->setX(exportedItem->x()); });
-        m_yConn = QObject::connect(exportedItem, &QQuickItem::yChanged, [item, exportedItem]() { item->setY(exportedItem->y()); });
-        m_zConn = QObject::connect(source, &QQuickItem::widthChanged, [item, source]() { item->setZ(source->z()); });
-        m_widthConn = QObject::connect(source, &QQuickItem::widthChanged, [item, source]() { item->setWidth(source->width()); });
-        m_heightConn = QObject::connect(source, &QQuickItem::heightChanged, [item, source]() { item->setHeight(source->height()); });
+        m_xConn = QObject::connect(exportedItem, &QQuickItem::xChanged, [item, exportedItem]() { item->setX(exportedItem->x() * getParentRatio(item, exportedItem)); });
+        m_yConn = QObject::connect(exportedItem, &QQuickItem::yChanged, [item, exportedItem]() { item->setY(exportedItem->y() * getParentRatio(item, exportedItem, false)); });
+        m_zConn = QObject::connect(source, &QQuickItem::zChanged, [item, source]() { item->setZ(source->z()); });
+        m_widthConn = QObject::connect(source, &QQuickItem::widthChanged, [item, exportedItem, source]() { item->setWidth(source->width() * getParentRatio(item, exportedItem)); });
+        m_heightConn = QObject::connect(source, &QQuickItem::heightChanged, [item, exportedItem, source]() { item->setHeight(source->height() * getParentRatio(item, exportedItem, false)); });
         // Triggered when the parent is deleted.
         m_parentConn = QObject::connect(item, &QQuickItem::parentChanged, [item]() { delete item; });
         // Triggered when source imported item is deleted.
         m_sourceConn = QObject::connect(source, &QObject::destroyed, [item]() { delete item; });
+        m_parentWidthConn = QObject::connect(item->parentItem(), &QQuickItem::widthChanged, [item, exportedItem, source]() {
+            qreal wRatio = getParentRatio(item, exportedItem);
+            qreal hRatio = getParentRatio(item, exportedItem, false);
+
+            item->setX(exportedItem->x() * wRatio);
+            item->setY(exportedItem->y() * hRatio);
+            item->setWidth(source->width() * wRatio);
+            item->setHeight(source->height() * hRatio);
+        });
+        QWaylandQuickItem *wlItem = qobject_cast<QWaylandQuickItem *>(item);
+        if (wlItem) {
+            m_surfaceConn = QObject::connect(wlItem, &QWaylandQuickItem::surfaceChanged, [wlItem]() {
+                qInfo() << wlItem << "is destroyed by changing surface";
+                if (wlItem && !wlItem->surface())
+                    delete wlItem;
+            });
+        }
     }
 
     void clearHandler()
@@ -80,6 +113,8 @@ public:
         QObject::disconnect(m_heightConn);
         QObject::disconnect(m_parentConn);
         QObject::disconnect(m_sourceConn);
+        QObject::disconnect(m_parentWidthConn);
+        QObject::disconnect(m_surfaceConn);
     }
 
 private:
@@ -90,6 +125,8 @@ private:
     QMetaObject::Connection m_heightConn;
     QMetaObject::Connection m_parentConn;
     QMetaObject::Connection m_sourceConn;
+    QMetaObject::Connection m_parentWidthConn;
+    QMetaObject::Connection m_surfaceConn;
 };
 
 

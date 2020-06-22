@@ -50,6 +50,7 @@ HEADERS += \
     webosinputmethod.h \
     webossurfacemodel.h \
     webossurfaceitem.h \
+    webossurfaceitemmirror.h \
     webosscreenshot.h \
     weboskeyfilter.h \
     webosinputdevice.h \
@@ -68,6 +69,7 @@ SOURCES += \
     webosinputmethod.cpp \
     webossurfacemodel.cpp \
     webossurfaceitem.cpp \
+    webossurfaceitemmirror.cpp \
     webosscreenshot.cpp \
     weboskeyfilter.cpp \
     webosinputdevice.cpp \
