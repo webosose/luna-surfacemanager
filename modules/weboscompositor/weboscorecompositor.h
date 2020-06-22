@@ -296,8 +296,6 @@ private slots:
     void onSurfaceDestroyed(QWaylandSurface *surface, WebOSSurfaceItem *item);
     void onSurfaceSizeChanged();
 
-    void frameSwappedSlot(); //FIXME what for
-
 private:
     // variables
     // This is kept here for backwards compatibility.. see the deprecated signal

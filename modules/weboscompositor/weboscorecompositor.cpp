@@ -240,7 +240,6 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
 
     qInfo() << "Registering a compositor window" << webosWindow << webosWindow->displayId() << webosWindow->screen()->name() << webosWindow->modelString();
 
-    connect(window, &QQuickWindow::frameSwapped, this, &WebOSCoreCompositor::frameSwappedSlot);
     //TODO: check is it ok just to use primary window to handle activeFocusItem
     connect(window, &QQuickWindow::activeFocusItemChanged, this, &WebOSCoreCompositor::handleActiveFocusItemChanged);
 
@@ -531,14 +530,6 @@ void WebOSCoreCompositor::onSurfaceDestroyed(QWaylandSurface *surface, WebOSSurf
         if (item == m_fullscreenSurfaceItem)
             setFullscreen(nullptr);
     }
-}
-
-void WebOSCoreCompositor::frameSwappedSlot() {
-    PMTRACE_FUNCTION;
-    QWindow *window = qobject_cast<QWindow *>(sender());
-    QWaylandOutput *output = outputFor(window);
-    if (output != NULL)
-        output->sendFrameCallbacks();
 }
 
 /* Basic life cycle of surface and surface item.

@@ -29,7 +29,8 @@
 #include <QPointer>
 #include <QElapsedTimer>
 
-class QWaylandOutput;
+#include <QWaylandQuickOutput>
+
 class QWaylandSeat;
 class WebOSCoreCompositor;
 class WebOSSurfaceItem;
@@ -102,8 +103,8 @@ public:
     QQuickItem* viewsRoot() const { return m_viewsRoot; }
     void setViewsRoot(QQuickItem *viewsRoot);
 
-    void setOutput(QWaylandOutput *output) { m_output = output; }
-    QWaylandOutput *output() { return m_output; }
+    void setOutput(QWaylandQuickOutput *output);
+    QWaylandQuickOutput *output() { return m_output; }
     void setInputDevice(QWaylandSeat *device) { m_inputDevice = device; }
     QWaylandSeat *inputDevice() { return m_inputDevice; }
     WebOSSurfaceItem *fullscreenItem();
@@ -127,6 +128,10 @@ public:
 
     void onFrameSwapped();
     void deliverUpdateRequest();
+    void reportSurfaceDamaged(WebOSSurfaceItem* const item);
+
+private:
+    void sendFrame();
 
 protected:
     virtual bool event(QEvent *) override;
@@ -198,7 +203,7 @@ private:
     bool m_cursorVisible;
 
     QQuickItem* m_viewsRoot;
-    QWaylandOutput *m_output;
+    QWaylandQuickOutput *m_output;
     QWaylandSeat *m_inputDevice;
     // auto clear on destroyed
     QPointer<WebOSSurfaceItem> m_fullscreenItem;
@@ -212,5 +217,9 @@ private:
     bool m_hasUnhandledUpdateRequest = false;
     int m_updatesSinceFrameSwapped = 0;
     int m_updateTimerInterval = 0;
+
+    QElapsedTimer m_sinceSendFrame;
+    QTimer m_frameTimer;
+    int m_frameTimerInterval = 0;
 };
 #endif // WEBOSCOMPOSITORWINDOW_H

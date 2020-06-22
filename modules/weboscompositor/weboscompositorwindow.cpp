@@ -161,6 +161,12 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
     m_updateTimerInterval = m_vsyncInterval / 2; // changes adaptively per every frame
     m_updateTimer.setTimerType(Qt::PreciseTimer);
     connect(&m_updateTimer, &QTimer::timeout, this, &WebOSCompositorWindow::deliverUpdateRequest);
+
+    qInfo() << "Adaptive frame callback for window" << this;
+    m_frameTimerInterval = m_vsyncInterval / 3; // changes adaptively per every frame
+    m_frameTimer.setTimerType(Qt::PreciseTimer);
+    m_frameTimer.setSingleShot(true);
+    connect(&m_frameTimer, &QTimer::timeout, this, &WebOSCompositorWindow::sendFrame);
 }
 
 WebOSCompositorWindow::~WebOSCompositorWindow()
@@ -545,11 +551,18 @@ void WebOSCompositorWindow::updateCursorFocus(Qt::KeyboardModifiers modifiers)
     }
 }
 
-void WebOSCompositorWindow::setViewsRoot(QQuickItem *viewsRoot) {
+void WebOSCompositorWindow::setViewsRoot(QQuickItem *viewsRoot)
+{
     if (m_viewsRoot != viewsRoot) {
         m_viewsRoot = viewsRoot;
         emit viewsRootChanged();
     }
+}
+
+void WebOSCompositorWindow::setOutput(QWaylandQuickOutput *output)
+{
+    m_output = output;
+    m_output->setAutomaticFrameCallback(false);
 }
 
 WebOSSurfaceItem *WebOSCompositorWindow::fullscreenItem()
@@ -741,6 +754,7 @@ void WebOSCompositorWindow::onFrameSwapped()
     m_updatesSinceFrameSwapped = 0;
     m_sinceFrameSwapped.start();
     m_updateTimer.start(m_updateTimerInterval);
+    m_frameTimer.start(m_frameTimerInterval);
 }
 
 void WebOSCompositorWindow::deliverUpdateRequest()
@@ -766,6 +780,33 @@ void WebOSCompositorWindow::deliverUpdateRequest()
         QEvent request(QEvent::UpdateRequest);
         static_cast<void>(QQuickWindow::event(&request));
         m_hasUnhandledUpdateRequest = false;
+    }
+}
+
+void WebOSCompositorWindow::sendFrame()
+{
+    PMTRACE_FUNCTION;
+    if (m_output) {
+        if (m_sinceSendFrame.isValid()) {
+            // No reportSurfaceDamaged called since the last frame.
+            // It means that rendering time on client exceeds the vsync interval.
+            m_frameTimerInterval = 0;
+        }
+        m_sinceSendFrame.start();
+        m_output->sendFrameCallbacks();
+    }
+}
+
+void WebOSCompositorWindow::reportSurfaceDamaged(WebOSSurfaceItem* const item)
+{
+    Q_UNUSED(item);
+    if (m_sinceSendFrame.isValid()) {
+        int nextFrameTime = (m_updateTimerInterval) - (m_sinceSendFrame.elapsed() + 4);
+        nextFrameTime = nextFrameTime < 0 ? 0 : nextFrameTime;
+        // Decrease it immediately or increase it by 1
+        m_frameTimerInterval = nextFrameTime <= m_frameTimerInterval
+            ? nextFrameTime : m_frameTimerInterval + 1;
+        m_sinceSendFrame.invalidate();
     }
 }
 

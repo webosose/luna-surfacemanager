@@ -883,6 +883,11 @@ void WebOSSurfaceItem::onSurfaceDamaged(const QRegion &region)
     Q_UNUSED(region);
     PMTRACE_KEY_VALUE_LOG("appFirstFrame", (char *)appId().toStdString().c_str());
 
+    if (window()) {
+        WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
+        w->reportSurfaceDamaged(this);
+    }
+
     /* Some surfaces can try to render after it is detached from scengraph.
        In that case, if compositor allows the rendering, compositor needs
        to call frameFinished. It will release previous front buffer
