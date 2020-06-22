@@ -27,6 +27,7 @@
 #include <QUrl>
 #include <QQuickItem>
 #include <QPointer>
+#include <QElapsedTimer>
 
 class QWaylandOutput;
 class QWaylandSeat;
@@ -124,6 +125,12 @@ public:
 
     bool hasSecuredContent();
 
+    void onFrameSwapped();
+    void deliverUpdateRequest();
+
+protected:
+    virtual bool event(QEvent *) override;
+
 signals:
     void outputGeometryChanged();
     void outputRotationChanged();
@@ -197,5 +204,13 @@ private:
     QPointer<WebOSSurfaceItem> m_fullscreenItem;
     WebOSCompositorWindow *m_mirrorSource;
     MirroringState m_mirrorState = MirroringStateInactive;
+
+    qreal m_vsyncInterval = 1.0 / 60 * 1000;
+
+    QElapsedTimer m_sinceFrameSwapped;
+    QTimer m_updateTimer;
+    bool m_hasUnhandledUpdateRequest = false;
+    int m_updatesSinceFrameSwapped = 0;
+    int m_updateTimerInterval = 0;
 };
 #endif // WEBOSCOMPOSITORWINDOW_H

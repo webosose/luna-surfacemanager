@@ -34,6 +34,7 @@
 #include "webossurfaceitem.h"
 #include "weboscompositorpluginloader.h"
 #include "weboscompositorconfig.h"
+#include "weboscompositortracer.h"
 
 static int s_displays = 0;
 
@@ -141,7 +142,25 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
     // Start with cursor invisible
     invalidateCursor();
 
+    // Get VSync interval
+    m_vsyncInterval = 1.0 / screen()->refreshRate() * 1000;
+
     connect(this, &WebOSCompositorWindow::fullscreenItemChanged, &WebOSCompositorWindow::onFullscreenItemChanged);
+
+    connect(this, &QQuickWindow::frameSwapped, this, &WebOSCompositorWindow::onFrameSwapped);
+
+    static int defaultUpdateInterval = []() {
+        bool ok = false;
+        int customUpdateInterval = qEnvironmentVariableIntValue("QT_QPA_UPDATE_IDLE_TIME", &ok);
+        return ok ? customUpdateInterval : 5;
+    }();
+
+    qInfo() << "Adaptive update interval for window" << this << "vsyncInterval:" << m_vsyncInterval;
+    if (defaultUpdateInterval != 0)
+        qWarning() << "QT_QPA_UPDATE_IDLE_TIME is not 0 but" << defaultUpdateInterval;
+    m_updateTimerInterval = m_vsyncInterval / 2; // changes adaptively per every frame
+    m_updateTimer.setTimerType(Qt::PreciseTimer);
+    connect(&m_updateTimer, &QTimer::timeout, this, &WebOSCompositorWindow::deliverUpdateRequest);
 }
 
 WebOSCompositorWindow::~WebOSCompositorWindow()
@@ -705,6 +724,67 @@ bool WebOSCompositorWindow::hasSecuredContent()
     }
 
     return false;
+}
+
+void WebOSCompositorWindow::onFrameSwapped()
+{
+    PMTRACE_FUNCTION;
+    if (m_sinceFrameSwapped.isValid()) {
+        int sinceLastFrameSwapped = m_sinceFrameSwapped.elapsed();
+        int nextDeliverUpdateTime = m_updateTimerInterval + (int)(m_vsyncInterval - sinceLastFrameSwapped);
+        // Use existing values if the frame is not continuous ( sinceLastFrameSwapped > 32ms ).
+        nextDeliverUpdateTime = (nextDeliverUpdateTime <= 0 || nextDeliverUpdateTime >= m_vsyncInterval)
+            ? m_updateTimerInterval : nextDeliverUpdateTime;
+        m_updateTimerInterval = nextDeliverUpdateTime >= m_updateTimerInterval
+            ? nextDeliverUpdateTime : m_updateTimerInterval - 1;
+    }
+    m_updatesSinceFrameSwapped = 0;
+    m_sinceFrameSwapped.start();
+    m_updateTimer.start(m_updateTimerInterval);
+}
+
+void WebOSCompositorWindow::deliverUpdateRequest()
+{
+    PMTRACE_FUNCTION;
+    qreal correctionValue = 0;
+
+    correctionValue = m_sinceFrameSwapped.elapsed() - m_vsyncInterval * (++m_updatesSinceFrameSwapped);
+    if (correctionValue > m_vsyncInterval) {
+        // Case that the timer event arrives after a vsync interval
+        correctionValue = 0;
+    }
+
+    // Calibrate the update timer interval
+    m_updateTimer.start(m_vsyncInterval - correctionValue);
+    if (m_updatesSinceFrameSwapped >= 10) {
+        m_sinceFrameSwapped.start();
+        m_updatesSinceFrameSwapped = 0;
+    }
+
+    // Send any unhandled UpdateRequest
+    if (m_hasUnhandledUpdateRequest) {
+        QEvent request(QEvent::UpdateRequest);
+        static_cast<void>(QQuickWindow::event(&request));
+        m_hasUnhandledUpdateRequest = false;
+    }
+}
+
+bool WebOSCompositorWindow::event(QEvent *e)
+{
+    PMTRACE_FUNCTION;
+    switch (e->type()) {
+    case QEvent::UpdateRequest:
+        if (m_updateTimer.isActive()) {
+            m_hasUnhandledUpdateRequest = true;
+            return true;
+        }
+        // First UpdateRequest, just fall through to start sync
+        break;
+    default:
+        break;
+    }
+
+    return QQuickWindow::event(e);
 }
 
 void WebOSCompositorWindow::onQmlError(const QList<QQmlError> &errors)
