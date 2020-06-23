@@ -156,6 +156,11 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
     }();
 
     m_adaptiveUpdate = (qgetenv("WEBOS_COMPOSITOR_ADAPTIVE_UPDATE").toInt() == 1);
+    m_adaptiveFrame = (qgetenv("WEBOS_COMPOSITOR_ADAPTIVE_FRAME_CALLBACK").toInt() == 1);
+
+    // Adaptive frame callback requires adaptive update
+    if (m_adaptiveFrame && !m_adaptiveUpdate)
+        m_adaptiveFrame = false;
 
     if (m_adaptiveUpdate) {
         qInfo() << "Adaptive update interval for window" << this << "vsyncInterval:" << m_vsyncInterval;
@@ -165,11 +170,15 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
         m_updateTimer.setTimerType(Qt::PreciseTimer);
         connect(&m_updateTimer, &QTimer::timeout, this, &WebOSCompositorWindow::deliverUpdateRequest);
 
-        qInfo() << "Adaptive frame callback for window" << this;
-        m_frameTimerInterval = m_vsyncInterval / 3; // changes adaptively per every frame
-        m_frameTimer.setTimerType(Qt::PreciseTimer);
-        m_frameTimer.setSingleShot(true);
-        connect(&m_frameTimer, &QTimer::timeout, this, &WebOSCompositorWindow::sendFrame);
+        if (m_adaptiveFrame) {
+            qInfo() << "Adaptive frame callback for window" << this;
+            m_frameTimerInterval = m_vsyncInterval / 3; // changes adaptively per every frame
+            m_frameTimer.setTimerType(Qt::PreciseTimer);
+            m_frameTimer.setSingleShot(true);
+            connect(&m_frameTimer, &QTimer::timeout, this, &WebOSCompositorWindow::sendFrame);
+        } else {
+            qInfo() << "Default frame callback for window" << this;
+        }
     } else {
         qInfo() << "Default update interval" << defaultUpdateInterval << "for window" << this << "vsyncInterval:" << m_vsyncInterval;
     }
@@ -568,7 +577,7 @@ void WebOSCompositorWindow::setViewsRoot(QQuickItem *viewsRoot)
 void WebOSCompositorWindow::setOutput(QWaylandQuickOutput *output)
 {
     m_output = output;
-    m_output->setAutomaticFrameCallback(false);
+    m_output->setAutomaticFrameCallback(!m_adaptiveFrame);
 }
 
 WebOSSurfaceItem *WebOSCompositorWindow::fullscreenItem()
@@ -761,7 +770,8 @@ void WebOSCompositorWindow::onFrameSwapped()
         m_updatesSinceFrameSwapped = 0;
         m_sinceFrameSwapped.start();
         m_updateTimer.start(m_updateTimerInterval);
-        m_frameTimer.start(m_frameTimerInterval);
+        if (m_adaptiveFrame)
+            m_frameTimer.start(m_frameTimerInterval);
     }
 }
 
@@ -798,7 +808,7 @@ void WebOSCompositorWindow::deliverUpdateRequest()
 void WebOSCompositorWindow::sendFrame()
 {
     PMTRACE_FUNCTION;
-    if (m_output) {
+    if (m_adaptiveFrame && m_output) {
         if (m_sinceSendFrame.isValid()) {
             // No reportSurfaceDamaged called since the last frame.
             // It means that rendering time on client exceeds the vsync interval.
@@ -812,7 +822,7 @@ void WebOSCompositorWindow::sendFrame()
 void WebOSCompositorWindow::reportSurfaceDamaged(WebOSSurfaceItem* const item)
 {
     Q_UNUSED(item);
-    if (m_sinceSendFrame.isValid()) {
+    if (m_adaptiveFrame && m_sinceSendFrame.isValid()) {
         int nextFrameTime = (m_updateTimerInterval) - (m_sinceSendFrame.elapsed() + 4);
         nextFrameTime = nextFrameTime < 0 ? 0 : nextFrameTime;
         // Decrease it immediately or increase it by 1

@@ -219,6 +219,7 @@ private:
     int m_updatesSinceFrameSwapped = 0;
     int m_updateTimerInterval = 0;
 
+    bool m_adaptiveFrame = false;
     QElapsedTimer m_sinceSendFrame;
     QTimer m_frameTimer;
     int m_frameTimerInterval = 0;
