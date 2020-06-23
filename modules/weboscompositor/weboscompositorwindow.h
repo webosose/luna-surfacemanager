@@ -212,6 +212,7 @@ private:
 
     qreal m_vsyncInterval = 1.0 / 60 * 1000;
 
+    bool m_adaptiveUpdate = false;
     QElapsedTimer m_sinceFrameSwapped;
     QTimer m_updateTimer;
     bool m_hasUnhandledUpdateRequest = false;

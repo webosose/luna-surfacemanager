@@ -155,18 +155,24 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
         return ok ? customUpdateInterval : 5;
     }();
 
-    qInfo() << "Adaptive update interval for window" << this << "vsyncInterval:" << m_vsyncInterval;
-    if (defaultUpdateInterval != 0)
-        qWarning() << "QT_QPA_UPDATE_IDLE_TIME is not 0 but" << defaultUpdateInterval;
-    m_updateTimerInterval = m_vsyncInterval / 2; // changes adaptively per every frame
-    m_updateTimer.setTimerType(Qt::PreciseTimer);
-    connect(&m_updateTimer, &QTimer::timeout, this, &WebOSCompositorWindow::deliverUpdateRequest);
+    m_adaptiveUpdate = (qgetenv("WEBOS_COMPOSITOR_ADAPTIVE_UPDATE").toInt() == 1);
 
-    qInfo() << "Adaptive frame callback for window" << this;
-    m_frameTimerInterval = m_vsyncInterval / 3; // changes adaptively per every frame
-    m_frameTimer.setTimerType(Qt::PreciseTimer);
-    m_frameTimer.setSingleShot(true);
-    connect(&m_frameTimer, &QTimer::timeout, this, &WebOSCompositorWindow::sendFrame);
+    if (m_adaptiveUpdate) {
+        qInfo() << "Adaptive update interval for window" << this << "vsyncInterval:" << m_vsyncInterval;
+        if (defaultUpdateInterval != 0)
+            qWarning() << "QT_QPA_UPDATE_IDLE_TIME is not 0 but" << defaultUpdateInterval;
+        m_updateTimerInterval = m_vsyncInterval / 2; // changes adaptively per every frame
+        m_updateTimer.setTimerType(Qt::PreciseTimer);
+        connect(&m_updateTimer, &QTimer::timeout, this, &WebOSCompositorWindow::deliverUpdateRequest);
+
+        qInfo() << "Adaptive frame callback for window" << this;
+        m_frameTimerInterval = m_vsyncInterval / 3; // changes adaptively per every frame
+        m_frameTimer.setTimerType(Qt::PreciseTimer);
+        m_frameTimer.setSingleShot(true);
+        connect(&m_frameTimer, &QTimer::timeout, this, &WebOSCompositorWindow::sendFrame);
+    } else {
+        qInfo() << "Default update interval" << defaultUpdateInterval << "for window" << this << "vsyncInterval:" << m_vsyncInterval;
+    }
 }
 
 WebOSCompositorWindow::~WebOSCompositorWindow()
@@ -742,44 +748,50 @@ bool WebOSCompositorWindow::hasSecuredContent()
 void WebOSCompositorWindow::onFrameSwapped()
 {
     PMTRACE_FUNCTION;
-    if (m_sinceFrameSwapped.isValid()) {
-        int sinceLastFrameSwapped = m_sinceFrameSwapped.elapsed();
-        int nextDeliverUpdateTime = m_updateTimerInterval + (int)(m_vsyncInterval - sinceLastFrameSwapped);
-        // Use existing values if the frame is not continuous ( sinceLastFrameSwapped > 32ms ).
-        nextDeliverUpdateTime = (nextDeliverUpdateTime <= 0 || nextDeliverUpdateTime >= m_vsyncInterval)
-            ? m_updateTimerInterval : nextDeliverUpdateTime;
-        m_updateTimerInterval = nextDeliverUpdateTime >= m_updateTimerInterval
-            ? nextDeliverUpdateTime : m_updateTimerInterval - 1;
+    if (m_adaptiveUpdate) {
+        if (m_sinceFrameSwapped.isValid()) {
+            int sinceLastFrameSwapped = m_sinceFrameSwapped.elapsed();
+            int nextDeliverUpdateTime = m_updateTimerInterval + (int)(m_vsyncInterval - sinceLastFrameSwapped);
+            // Use existing values if the frame is not continuous ( sinceLastFrameSwapped > 32ms ).
+            nextDeliverUpdateTime = (nextDeliverUpdateTime <= 0 || nextDeliverUpdateTime >= m_vsyncInterval)
+                ? m_updateTimerInterval : nextDeliverUpdateTime;
+            m_updateTimerInterval = nextDeliverUpdateTime >= m_updateTimerInterval
+                ? nextDeliverUpdateTime : m_updateTimerInterval - 1;
+        }
+        m_updatesSinceFrameSwapped = 0;
+        m_sinceFrameSwapped.start();
+        m_updateTimer.start(m_updateTimerInterval);
+        m_frameTimer.start(m_frameTimerInterval);
     }
-    m_updatesSinceFrameSwapped = 0;
-    m_sinceFrameSwapped.start();
-    m_updateTimer.start(m_updateTimerInterval);
-    m_frameTimer.start(m_frameTimerInterval);
 }
 
 void WebOSCompositorWindow::deliverUpdateRequest()
 {
     PMTRACE_FUNCTION;
-    qreal correctionValue = 0;
+    if (m_adaptiveUpdate) {
+        qreal correctionValue = 0;
 
-    correctionValue = m_sinceFrameSwapped.elapsed() - m_vsyncInterval * (++m_updatesSinceFrameSwapped);
-    if (correctionValue > m_vsyncInterval) {
-        // Case that the timer event arrives after a vsync interval
-        correctionValue = 0;
-    }
+        correctionValue = m_sinceFrameSwapped.elapsed() - m_vsyncInterval * (++m_updatesSinceFrameSwapped);
+        if (correctionValue > m_vsyncInterval) {
+            // Case that the timer event arrives after a vsync interval
+            correctionValue = 0;
+        }
 
-    // Calibrate the update timer interval
-    m_updateTimer.start(m_vsyncInterval - correctionValue);
-    if (m_updatesSinceFrameSwapped >= 10) {
-        m_sinceFrameSwapped.start();
-        m_updatesSinceFrameSwapped = 0;
-    }
+        // Calibrate the update timer interval
+        m_updateTimer.start(m_vsyncInterval - correctionValue);
+        if (m_updatesSinceFrameSwapped >= 10) {
+            m_sinceFrameSwapped.start();
+            m_updatesSinceFrameSwapped = 0;
+        }
 
-    // Send any unhandled UpdateRequest
-    if (m_hasUnhandledUpdateRequest) {
-        QEvent request(QEvent::UpdateRequest);
-        static_cast<void>(QQuickWindow::event(&request));
-        m_hasUnhandledUpdateRequest = false;
+        // Send any unhandled UpdateRequest
+        if (m_hasUnhandledUpdateRequest) {
+            QEvent request(QEvent::UpdateRequest);
+            static_cast<void>(QQuickWindow::event(&request));
+            m_hasUnhandledUpdateRequest = false;
+        }
+    } else {
+        qWarning() << "deliverUpdateRequest is called for" << this << "while adaptiveUpdate is NOT set!";
     }
 }
 
@@ -815,11 +827,13 @@ bool WebOSCompositorWindow::event(QEvent *e)
     PMTRACE_FUNCTION;
     switch (e->type()) {
     case QEvent::UpdateRequest:
-        if (m_updateTimer.isActive()) {
-            m_hasUnhandledUpdateRequest = true;
-            return true;
+        if (m_adaptiveUpdate) {
+            if (m_updateTimer.isActive()) {
+                m_hasUnhandledUpdateRequest = true;
+                return true;
+            }
+            // First UpdateRequest, just fall through to start sync
         }
-        // First UpdateRequest, just fall through to start sync
         break;
     default:
         break;
