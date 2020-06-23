@@ -75,7 +75,9 @@ const struct wl_webos_shell_surface_interface WebOSShellSurface::shell_surface_i
     WebOSShellSurface::set_location_hint,
     WebOSShellSurface::set_state,
     WebOSShellSurface::set_property,
-    WebOSShellSurface::set_key_mask
+    WebOSShellSurface::set_key_mask,
+    WebOSShellSurface::set_addon,
+    WebOSShellSurface::reset_addon
 };
 
 WebOSShellSurface::WebOSShellSurface(struct wl_client* client, uint32_t id, WebOSSurfaceItem* surface, wl_resource* owner)
@@ -309,4 +311,54 @@ void WebOSShellSurface::requestSize(const QSize &size)
     if (wlShellSurface != nullptr) {
         wlShellSurface->sendConfigure(size, QWaylandWlShellSurface::ResizeEdge::BottomRightEdge);
     }
+}
+
+void WebOSShellSurface::setAddonStatus(WebOSSurfaceItem::AddonStatus status)
+{
+    if (m_shellSurface) {
+        wl_webos_shell_surface_addon_status addonStatus;
+        switch (status) {
+        case WebOSSurfaceItem::AddonStatusNull:
+            addonStatus = WL_WEBOS_SHELL_SURFACE_ADDON_STATUS_NULL;
+            break;
+        case WebOSSurfaceItem::AddonStatusLoaded:
+            addonStatus = WL_WEBOS_SHELL_SURFACE_ADDON_STATUS_LOADED;
+            break;
+        case WebOSSurfaceItem::AddonStatusDenied:
+            addonStatus = WL_WEBOS_SHELL_SURFACE_ADDON_STATUS_DENIED;
+            break;
+        case WebOSSurfaceItem::AddonStatusError:
+            addonStatus = WL_WEBOS_SHELL_SURFACE_ADDON_STATUS_ERROR;
+            break;
+        default:
+            Q_UNREACHABLE();
+            break;
+        }
+
+        wl_webos_shell_surface_send_addon_status_changed(m_shellSurface, addonStatus);
+    }
+}
+
+void WebOSShellSurface::set_addon(struct wl_client *client, struct wl_resource *resource, const char *path)
+{
+    Q_UNUSED(client);
+    WebOSShellSurface* that = static_cast<WebOSShellSurface*>(resource->data);
+    QString newAddon(path);
+    if (that->m_addon != newAddon) {
+        if (newAddon.isEmpty()) {
+            wl_webos_shell_surface_send_addon_status_changed(that->m_shellSurface, WL_WEBOS_SHELL_SURFACE_ADDON_STATUS_DENIED);
+            return;
+        }
+        qDebug() << "addon changed" << that->m_addon << "to" << newAddon;
+        that->m_addon = newAddon;
+        emit that->addonChanged();
+    }
+}
+
+void WebOSShellSurface::reset_addon(struct wl_client *client, struct wl_resource *resource)
+{
+    Q_UNUSED(client);
+    WebOSShellSurface* that = static_cast<WebOSShellSurface*>(resource->data);
+    that->m_addon.clear();
+    emit that->addonChanged();
 }

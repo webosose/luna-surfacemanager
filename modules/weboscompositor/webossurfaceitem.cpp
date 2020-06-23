@@ -809,6 +809,8 @@ void WebOSSurfaceItem::setShellSurface(WebOSShellSurface* shell)
         connect(m_shellSurface, SIGNAL(stateChangeRequested(Qt::WindowState)), this, SLOT(requestStateChange(Qt::WindowState)));
         connect(m_shellSurface, SIGNAL(propertiesChanged(QVariantMap, QString, QVariant)),
                 this, SLOT(updateProperties(QVariantMap, QString, QVariant)));
+        connect(m_shellSurface, &WebOSShellSurface::addonChanged,
+                this, &WebOSSurfaceItem::addonChanged);
     }
 }
 
@@ -820,6 +822,11 @@ WebOSSurfaceItem::LocationHints WebOSSurfaceItem::locationHint()
 WebOSSurfaceItem::KeyMasks WebOSSurfaceItem::keyMask() const
 {
     return m_shellSurface ? m_shellSurface->keyMask() : KeyMaskDefault;
+}
+
+QString WebOSSurfaceItem::addon() const
+{
+    return m_shellSurface ? m_shellSurface->addon() : QStringLiteral("");
 }
 
 void WebOSSurfaceItem::setItemState(ItemState state, const QString &reason)
@@ -1276,4 +1283,10 @@ bool WebOSSurfaceItem::hasSecuredContent()
     }
 
     return false;
+}
+
+void WebOSSurfaceItem::setAddonStatus(AddonStatus status)
+{
+    if (m_shellSurface)
+        m_shellSurface->setAddonStatus(status);
 }

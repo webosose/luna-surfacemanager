@@ -77,6 +77,9 @@ public:
     bool isTransient() const { return m_transient; }
     void requestSize(const QSize &size);
 
+    QString addon() const { return m_addon; }
+    void setAddonStatus(WebOSSurfaceItem::AddonStatus status);
+
 public slots:
     void exposed(const QRegion& region);
     // Catch shell surface becoming transient, so we can support legacy transient* functions in WebOSSurfaceItem
@@ -87,6 +90,7 @@ signals:
     void keyMaskChanged();
     void stateChangeRequested(Qt::WindowState s);
     void propertiesChanged(const QVariantMap &properties, const QString &name, const QVariant &value);
+    void addonChanged();
 
 private:
     // methods
@@ -95,6 +99,8 @@ private:
     static void set_state(struct wl_client *client, struct wl_resource *resource, uint32_t state);
     static void set_property(struct wl_client *client, struct wl_resource *resource, const char *name, const char *value);
     static void set_key_mask(struct wl_client *client, struct wl_resource *resource, uint32_t webos_key);
+    static void set_addon(struct wl_client *client, struct wl_resource *resource, const char *path);
+    static void reset_addon(struct wl_client *client, struct wl_resource *resource);
 
     void addValue(int32_t value, wl_array* to);
     bool validExposeRect(const QRect& rect);
@@ -118,5 +124,6 @@ private:
     QRegion m_exposed;
     WebOSSurfaceItem* m_surface;
     bool m_transient;
+    QString m_addon;
 };
 #endif

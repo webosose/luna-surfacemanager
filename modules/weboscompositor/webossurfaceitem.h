@@ -90,6 +90,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandQuickItem
     Q_PROPERTY(bool launchRequired READ isLaunchRequired WRITE setLaunchRequired NOTIFY launchRequiredChanged)
 
     Q_PROPERTY(WebOSSurfaceGroup* surfaceGroup READ surfaceGroup NOTIFY surfaceGroupChanged)
+    Q_PROPERTY(QString addon READ addon NOTIFY addonChanged)
 
 public:
 
@@ -153,6 +154,14 @@ public:
         ItemStateClosing,
     };
     Q_ENUM(ItemState)
+
+    enum AddonStatus {
+        AddonStatusNull,
+        AddonStatusLoaded,
+        AddonStatusDenied,
+        AddonStatusError,
+    };
+    Q_ENUM(AddonStatus)
 
     WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuickSurface* surface);
     ~WebOSSurfaceItem();
@@ -468,6 +477,9 @@ public:
 
     bool hasSecuredContent();
 
+    QString addon() const;
+    Q_INVOKABLE void setAddonStatus(AddonStatus addonStatus);
+
 public slots:
     void updateScreenPosition();
     void updateProperties(const QVariantMap &properties, const QString &name, const QVariant &value);
@@ -528,6 +540,8 @@ signals:
 
     void customImageFilePathChanged();
     void backgroundImageFilePathChanged();
+
+    void addonChanged();
 
 protected:
     void processKeyEvent(QKeyEvent *event);
