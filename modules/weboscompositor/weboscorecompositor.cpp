@@ -235,7 +235,6 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
     WebOSCompositorWindow *webosWindow = static_cast<WebOSCompositorWindow *>(window);
     insertToWindows(webosWindow);
     webosWindow->setOutput(output);
-    webosWindow->setObjectName(name);
     output->setModel(webosWindow->modelString());
 
     qInfo() << "Registering a compositor window" << webosWindow << webosWindow->displayId() << webosWindow->screen()->name() << webosWindow->modelString();

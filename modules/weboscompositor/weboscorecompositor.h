@@ -95,7 +95,7 @@ public:
     virtual ~WebOSCoreCompositor();
 
     void create() override;
-    virtual void registerWindow(QQuickWindow *window, QString name = QStringLiteral("primary"));
+    virtual void registerWindow(QQuickWindow *window, QString name = QString());
     void insertToWindows(WebOSCompositorWindow *);
 
     static void logger(QtMsgType type, const QMessageLogContext &context, const QString &message);

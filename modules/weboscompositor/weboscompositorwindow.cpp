@@ -77,6 +77,7 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
     }
 
     m_displayName = screen()->name();
+    setObjectName(m_displayName);
 
     if (surfaceFormat) {
         qInfo () << "Using surface format given:" << *surfaceFormat;
