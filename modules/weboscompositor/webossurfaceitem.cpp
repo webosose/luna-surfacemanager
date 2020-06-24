@@ -1244,10 +1244,10 @@ WebOSSurfaceItem *WebOSSurfaceItem::createMirrorItem(int target)
     mirror->setType(type());
     mirror->setItemState(WebOSSurfaceItem::ItemStateNormal);
 
-    qInfo() << "mirror item" << mirror << "exported" << exported();
+    qInfo() << "mirror item" << mirror;
 
-    if (exported())
-        exported()->startImportedMirroring(mirror);
+    foreach (WebOSExported *exported, m_exportedElements)
+        exported->startImportedMirroring(mirror);
 
     m_mirrorItems[target] = mirror;
     return mirror;
@@ -1263,9 +1263,11 @@ bool WebOSSurfaceItem::hasSecuredContent()
         return true;
     }
 
-    if (exported() && exported()->hasSecuredContent()) {
-        qInfo() << "Exported item has secured content";
-        return true;
+    foreach (WebOSExported *exported, m_exportedElements) {
+        if (exported->hasSecuredContent()) {
+            qInfo() << "Exported item has secured content";
+            return true;
+        }
     }
 
     return false;

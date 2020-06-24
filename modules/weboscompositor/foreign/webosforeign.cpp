@@ -209,7 +209,7 @@ WebOSExported::WebOSExported(
     m_exportedItem->setClip(true);
     m_exportedItem->setZ(-1);
     m_exportedItem->setEnabled(false);
-    m_surfaceItem->setExported(this);
+    m_surfaceItem->appendExported(this);
 
     qInfo() <<"Window status of surface item (" << m_surfaceItem << ") for exporter : " <<m_surfaceItem->state();
 
@@ -243,7 +243,7 @@ WebOSExported::~WebOSExported()
     qInfo() << "WebOSExported destructor is called on " << this;
 
     if (m_surfaceItem)
-        m_surfaceItem->setExported(nullptr);
+        m_surfaceItem->removeExported(this);
 
     foreach(WebOSImported* imported, m_importList) {
         imported->updateExported(nullptr);

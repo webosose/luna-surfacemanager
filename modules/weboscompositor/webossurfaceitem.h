@@ -459,8 +459,9 @@ public:
     QList<WebOSSurfaceItem *> mirrorItems() { return m_mirrorItems.values(); }
     QList<int> mirrorTargetIds() { return  m_mirrorItems.keys(); }
 
-    WebOSExported *exported() { return m_exported; }
-    void setExported(WebOSExported *exported) { m_exported = exported; }
+    QVector<WebOSExported *> exportedElements() { return m_exportedElements; }
+    void appendExported(WebOSExported *exported) { if (!m_exportedElements.contains(exported)) m_exportedElements.append(exported); }
+    void removeExported(WebOSExported *exported) { m_exportedElements.removeOne(exported); }
 
     bool imported() { return m_imported; }
     void setImported(bool imported) { m_imported = imported; }
@@ -602,7 +603,7 @@ private:
     int m_cursorHotSpotY = -1;
 
     QMap<int, WebOSSurfaceItem *> m_mirrorItems;
-    WebOSExported *m_exported = nullptr;
+    QVector<WebOSExported *> m_exportedElements;
     bool m_imported = false;
     QWaylandView m_cursorView;
 };
