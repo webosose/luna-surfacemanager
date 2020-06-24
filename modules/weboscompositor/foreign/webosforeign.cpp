@@ -29,7 +29,6 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QWaylandCompositor>
-#include <QWaylandQuickItem>
 
 #include <qpa/qplatformnativeinterface.h>
 
@@ -107,7 +106,7 @@ public:
         MirrorItemHandler::initialize(item, exportedItem, source, parent);
         /* Keep mirrored item's size from being effected by internal reason of Qtwayland.
            This can be removed in Qt6. */
-        static_cast<QWaylandQuickItem *>(item)->setSizeFollowsSurface(false);
+        static_cast<WebOSSurfaceItem *>(item)->setSizeFollowsSurface(false);
     }
 };
 
@@ -163,9 +162,10 @@ void WebOSForeign::webos_foreign_export_element(Resource *resource,
     QWaylandSurface* qwls = QWaylandSurface::fromResource(surface);
     QWaylandQuickSurface* quickSurface =
         static_cast<QWaylandQuickSurface*>(qwls);
+    WebOSSurfaceItem *surfaceItem = static_cast<WebOSSurfaceItem*>(quickSurface->surfaceItem());
     WebOSExported *pWebOSExported =
         new WebOSExported(this, resource->client(), id,
-                          quickSurface->surfaceItem(),
+                          surfaceItem,
                           (WebOSForeign::WebOSExportedType)exported_type);
 
     pWebOSExported->assigneWindowId(generateWindowId());
@@ -197,11 +197,11 @@ WebOSExported::WebOSExported(
         WebOSForeign* foreign,
         struct wl_client* client,
         uint32_t id,
-        QWaylandQuickItem* surfaceItem,
+        WebOSSurfaceItem* surfaceItem,
         WebOSForeign::WebOSExportedType exportedType)
     : QtWaylandServer::wl_webos_exported(client, id, WEBOSEXPORTED_VERSION)
     , m_foreign(foreign)
-    , m_qwlsurfaceItem(static_cast<WebOSSurfaceItem *>(surfaceItem))
+    , m_surfaceItem(static_cast<WebOSSurfaceItem *>(surfaceItem))
     , m_exportedItem(new QQuickItem(surfaceItem))
     , m_exportedType(exportedType)
 {
@@ -209,19 +209,18 @@ WebOSExported::WebOSExported(
     m_exportedItem->setClip(true);
     m_exportedItem->setZ(-1);
     m_exportedItem->setEnabled(false);
-    m_qwlsurfaceItem->setExported(this);
+    m_surfaceItem->setExported(this);
 
-    //TODO: item == m_qwlsurfaceItem? The difference is static_cast vs qobject_cast. Any reason?
-    WebOSSurfaceItem *item = qobject_cast<WebOSSurfaceItem*>(surfaceItem);
-    qInfo() <<"Window status of surface item (" << item << ") for exporter : " <<item->state();
-    m_isSurfaceItemFullscreen = (item->state() == Qt::WindowFullScreen) ? true : false;
+    qInfo() <<"Window status of surface item (" << m_surfaceItem << ") for exporter : " <<m_surfaceItem->state();
+
+    m_isSurfaceItemFullscreen = (m_surfaceItem->state() == Qt::WindowFullScreen) ? true : false;
 
     connect(m_exportedItem, &QQuickItem::visibleChanged, this, &WebOSExported::updateVisible);
-    connect(item, &WebOSSurfaceItem::stateChanged, this, &WebOSExported::updateWindowState);
-    connect(m_qwlsurfaceItem, &QWaylandQuickItem::widthChanged, this, &WebOSExported::calculateExportedItemRatio);
-    connect(m_qwlsurfaceItem, &QWaylandQuickItem::widthChanged, this, &WebOSExported::calculateVideoDispRatio);
-    connect(m_qwlsurfaceItem, &QWaylandQuickItem::surfaceDestroyed, this, &WebOSExported::onSurfaceDestroyed);
-    connect(item, &WebOSSurfaceItem::surfaceAboutToBeDestroyed, this, &WebOSExported::onSurfaceDestroyed);
+    connect(m_surfaceItem, &WebOSSurfaceItem::stateChanged, this, &WebOSExported::updateWindowState);
+    connect(m_surfaceItem, &QWaylandQuickItem::widthChanged, this, &WebOSExported::calculateExportedItemRatio);
+    connect(m_surfaceItem, &QWaylandQuickItem::widthChanged, this, &WebOSExported::calculateVideoDispRatio);
+    connect(m_surfaceItem, &QWaylandQuickItem::surfaceDestroyed, this, &WebOSExported::onSurfaceDestroyed);
+    connect(m_surfaceItem, &WebOSSurfaceItem::surfaceAboutToBeDestroyed, this, &WebOSExported::onSurfaceDestroyed);
 
     calculateVideoDispRatio();
     calculateExportedItemRatio();
@@ -243,8 +242,8 @@ WebOSExported::~WebOSExported()
 {
     qInfo() << "WebOSExported destructor is called on " << this;
 
-    if (m_qwlsurfaceItem)
-        m_qwlsurfaceItem->setExported(nullptr);
+    if (m_surfaceItem)
+        m_surfaceItem->setExported(nullptr);
 
     foreach(WebOSImported* imported, m_importList) {
         imported->updateExported(nullptr);
@@ -266,14 +265,14 @@ WebOSExported::~WebOSExported()
 void WebOSExported::calculateVideoDispRatio()
 {
     qInfo() << "WebOSExported::calculateVideoDispRatio is called on " << m_windowId;
-    if (!m_qwlsurfaceItem) {
-        qWarning() << "QWaylandQuickItem for " << m_windowId << " is already destroyed";
+    if (!m_surfaceItem) {
+        qWarning() << "WebOSSurfaceItem for " << m_windowId << " is already destroyed";
         return;
     }
 
-    if (m_isSurfaceItemFullscreen && m_foreign->m_outputGeometry.isValid() && m_qwlsurfaceItem->surface()) {
-        m_videoDispRatio = (double) m_foreign->m_outputGeometry.width() / m_qwlsurfaceItem->surface()->size().width();
-        qInfo() << "surface geometry : " << m_qwlsurfaceItem->surface()->size().width() << "x" << m_qwlsurfaceItem->surface()->size().height();
+    if (m_isSurfaceItemFullscreen && m_foreign->m_outputGeometry.isValid() && m_surfaceItem->surface()) {
+        m_videoDispRatio = (double) m_foreign->m_outputGeometry.width() / m_surfaceItem->surface()->size().width();
+        qInfo() << "surface geometry : " << m_surfaceItem->surface()->size().width() << "x" << m_surfaceItem->surface()->size().height();
         qInfo() <<"m_videoDispRatio : " <<m_videoDispRatio;
         if (m_requestedRegion.isValid() && m_videoDisplayRect.isValid()) {
             m_videoDisplayRect.setX((int) (m_requestedRegion.x()*m_videoDispRatio));
@@ -289,15 +288,15 @@ void WebOSExported::calculateVideoDispRatio()
 void WebOSExported::calculateExportedItemRatio()
 {
     qInfo() << "WebOSExported::calculateExportedItemRatio is called on " << m_windowId;
-    if (!m_qwlsurfaceItem) {
-        qWarning() << "QWaylandQuickItem for " << m_windowId << " is  already destroyed";
+    if (!m_surfaceItem) {
+        qWarning() << "WebOSSurfaceItem for " << m_windowId << " is  already destroyed";
         return;
     }
 
     if (m_isSurfaceItemFullscreen && m_foreign->m_outputGeometry.isValid()) {
-        m_exportedWindowRatio = (double) m_qwlsurfaceItem->width() / m_qwlsurfaceItem->surface()->size().width();
-        qInfo() << "surface geometry : " << m_qwlsurfaceItem->surface()->size().width() << "x" << m_qwlsurfaceItem->surface()->size().height();
-        qInfo() << "surface item geometry : " << m_qwlsurfaceItem->width() << "x" << m_qwlsurfaceItem->height();
+        m_exportedWindowRatio = (double) m_surfaceItem->width() / m_surfaceItem->surface()->size().width();
+        qInfo() << "surface geometry : " << m_surfaceItem->surface()->size().width() << "x" << m_surfaceItem->surface()->size().height();
+        qInfo() << "surface item geometry : " << m_surfaceItem->width() << "x" << m_surfaceItem->height();
         qInfo() <<"m_exportedWindowRatio : " <<m_exportedWindowRatio;
         if (m_requestedRegion.isValid()) {
             m_destinationRect.setX((int)(m_requestedRegion.x()*m_exportedWindowRatio));
@@ -311,11 +310,11 @@ void WebOSExported::calculateExportedItemRatio()
 
 void WebOSExported::updateWindowState()
 {
-    if (!m_qwlsurfaceItem) {
-        qWarning() << "QWaylandQuickItem for " << m_windowId << " is already destroyed";
+    if (!m_surfaceItem) {
+        qWarning() << "WebOSSurfaceItem for " << m_windowId << " is already destroyed";
         return;
     }
-    WebOSSurfaceItem *item = qobject_cast<WebOSSurfaceItem*>(m_qwlsurfaceItem);
+    WebOSSurfaceItem *item = qobject_cast<WebOSSurfaceItem*>(m_surfaceItem);
     qInfo() << "update window state : " << item->state() << "for WebOSExported ( " << m_windowId << " ) ";
     m_isSurfaceItemFullscreen = item->state() == Qt::WindowFullScreen;
     if (m_isSurfaceItemFullscreen) {
@@ -326,9 +325,9 @@ void WebOSExported::updateWindowState()
 
 void WebOSExported::updateVisible()
 {
-    if (!m_exportedItem) {
-        qWarning() << "QWaylandQuickItem for " << m_windowId << " is  already destroyed ";
-    }
+    if (!m_exportedItem)
+        qWarning() << "WebOSSurfaceItem for " << m_windowId << " is  already destroyed ";
+
     if (!m_contextId.isNull()) {
         if (m_exportedItem->isVisible()) {
             qInfo() << "exported item's visible is changed to true on " << m_windowId;
@@ -344,7 +343,7 @@ void WebOSExported::onSurfaceDestroyed()
 {
     qInfo() << "Surface item for (" << m_windowId << ") is destroyed";
 
-    m_qwlsurfaceItem = nullptr;
+    m_surfaceItem = nullptr;
 
     if (m_exportedItem) {
         delete m_exportedItem;
@@ -370,9 +369,8 @@ void WebOSExported::updateVideoWindowList(QString contextId, QRect videoDisplayR
 
 void WebOSExported::updateExportedItemSize()
 {
-    if (!m_exportedItem) {
-        qWarning() << "QWaylandQuickItem for " << m_windowId << " is  already destroyed ";
-    }
+    if (!m_exportedItem)
+        qWarning() << "WebOSSurfaceItem for " << m_windowId << " is  already destroyed ";
 
     qInfo() << m_exportedItem << "fits to" << m_destinationRect;
 
@@ -585,13 +583,13 @@ void WebOSExported::assigneWindowId(QString windowId)
     send_window_id_assigned(m_windowId, m_exportedType);
 }
 
-QWaylandQuickItem *WebOSExported::getImportedItem()
+WebOSSurfaceItem *WebOSExported::getImportedItem()
 {
     if (!m_exportedItem || m_exportedItem->childItems().isEmpty())
         return nullptr;
 
     if (m_exportedItem->childItems().size() > 1)
-        qWarning() << "more than one imported item for  WebOSExported" << m_qwlsurfaceItem;
+        qWarning() << "more than one imported item for WebOSExported" << m_surfaceItem;
 
     // Imported surface item
     return static_cast<WebOSSurfaceItem *>(m_exportedItem->childItems().first());
@@ -615,15 +613,15 @@ bool WebOSExported::hasSecuredContent()
 
 void WebOSExported::setParentOf(QQuickItem *item)
 {
-    if (!m_qwlsurfaceItem || !m_exportedItem) {
-        qWarning() << "unexpected null reference" << m_qwlsurfaceItem << m_exportedItem;
+    if (!m_surfaceItem || !m_exportedItem) {
+        qWarning() << "unexpected null reference" << m_surfaceItem << m_exportedItem;
         return;
     }
 
     item->setParentItem(m_exportedItem);
 
     // mirrored items
-    foreach(WebOSSurfaceItem *parent, m_qwlsurfaceItem->mirrorItems())
+    foreach(WebOSSurfaceItem *parent, m_surfaceItem->mirrorItems())
         startImportedMirroring(parent);
 }
 
@@ -654,7 +652,7 @@ void WebOSExported::webos_exported_destroy_resource(Resource *r)
     delete this;
 }
 
-void WebOSExported::startImportedMirroring(QWaylandQuickItem *parent)
+void WebOSExported::startImportedMirroring(WebOSSurfaceItem *parent)
 {
     if (!parent)
         return;
@@ -672,12 +670,12 @@ void WebOSExported::startImportedMirroring(QWaylandQuickItem *parent)
         mirror->initialize(mirror, m_exportedItem, source, parent);
         mirror->setHandler(mirror, m_exportedItem, source);
     } else {
-        QWaylandQuickItem *qsi = static_cast<QWaylandQuickItem *>(source);
-        ImportedMirrorItem *mirror = new ImportedMirrorItem(static_cast<QWaylandQuickSurface *>(qsi->surface()));
+        WebOSSurfaceItem *si = static_cast<WebOSSurfaceItem *>(source);
+        ImportedMirrorItem *mirror = new ImportedMirrorItem(static_cast<QWaylandQuickSurface *>(si->surface()));
         mirror->initialize(mirror, m_exportedItem, source, parent);
         mirror->setHandler(mirror, m_exportedItem, source);
 
-        qInfo() << "source" << qsi << "mirror" << mirror;
+        qInfo() << "source" << si << "mirror" << mirror;
     }
 }
 
@@ -880,7 +878,7 @@ void WebOSImported::webos_imported_attach_surface(
 
     qInfo() << qwlSurface << "from" << surface;
 
-    m_childSurfaceItem = qobject_cast<QWaylandQuickItem*>(qwlSurface->surfaceItem());
+    m_childSurfaceItem = qobject_cast<WebOSSurfaceItem*>(qwlSurface->surfaceItem());
     connect(m_childSurfaceItem->surface(), &QWaylandSurface::surfaceDestroyed, this, &WebOSImported::childSurfaceDestroyed);
     m_exported->setParentOf(m_childSurfaceItem);
     m_childSurfaceItem->setZ(m_exported->m_exportedItem->z()+m_z_index);

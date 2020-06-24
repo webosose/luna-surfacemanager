@@ -30,7 +30,6 @@
 #define WEBOSEXPORTED_VERSION 2
 #define WEBOSIMPORTED_VERSION 2
 
-class QWaylandQuickItem;
 class WebOSCoreCompositor;
 class WebOSSurfaceItem;
 class WebOSExported;
@@ -81,7 +80,7 @@ public:
     Q_DECLARE_FLAGS(ExportStates, ExportState)
 
     WebOSExported(WebOSForeign* foreign, struct wl_client* client,
-                  uint32_t id, QWaylandQuickItem* surfaceItem,
+                  uint32_t id, WebOSSurfaceItem* surfaceItem,
                   WebOSForeign::WebOSExportedType exportedType);
     ~WebOSExported();
     void setDestinationRegion(struct::wl_resource *destination_region);
@@ -97,8 +96,8 @@ public:
     void updateExportedItemSize();
     void setVideoDisplayWindow();
     void onSurfaceDestroyed();
-    QWaylandQuickItem *getImportedItem();
-    void startImportedMirroring(QWaylandQuickItem *parent);
+    WebOSSurfaceItem *getImportedItem();
+    void startImportedMirroring(WebOSSurfaceItem *parent);
     bool hasSecuredContent();
 
 signals:
@@ -120,7 +119,7 @@ protected:
 
 private:
     WebOSForeign* m_foreign = nullptr;
-    QPointer<WebOSSurfaceItem> m_qwlsurfaceItem;
+    QPointer<WebOSSurfaceItem> m_surfaceItem;
     QPointer<QQuickItem> m_exportedItem;
     QPointer<QQuickItem> m_punchThroughItem;
     QList<WebOSImported*> m_importList;
@@ -174,7 +173,7 @@ protected:
 private:
     WebOSImported(WebOSExported* exported, struct wl_client* client, uint32_t id);
     WebOSExported* m_exported = nullptr;
-    QWaylandQuickItem* m_childSurfaceItem = nullptr;
+    WebOSSurfaceItem* m_childSurfaceItem = nullptr;
     enum surface_alignment m_textureAlign = surface_alignment::surface_alignment_stretch;
     int32_t m_z_index = 0;
     bool m_punchThroughAttached = false;
