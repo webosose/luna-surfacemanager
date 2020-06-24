@@ -571,14 +571,14 @@ void WebOSExported::webos_exported_set_property(
         }
     }
 
-    if (m_foreign->m_compositor->window() && !m_contextId.isNull()) {
+    if (m_foreign->m_compositor->window()) {
         VideoOutputdCommunicator::instance()->setProperty(name, value, m_contextId);
         if (value == "none") {
             m_properties.remove(name);
             return;
         }
     } else {
-        qInfo() << "Do not call setProperty. Punch through is not working with " << m_windowId;
+        qInfo() << "Do not call setProperty. There is no m_windowId";
     }
 
     if (value.isNull())
