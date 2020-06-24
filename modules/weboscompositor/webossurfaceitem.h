@@ -462,8 +462,8 @@ public:
     WebOSExported *exported() { return m_exported; }
     void setExported(WebOSExported *exported) { m_exported = exported; }
 
-    WebOSImported *imported() { return m_imported; }
-    void setImported(WebOSImported *imported) { m_imported = imported; }
+    bool imported() { return m_imported; }
+    void setImported(bool imported) { m_imported = imported; }
 
     bool hasSecuredContent();
 
@@ -603,7 +603,7 @@ private:
 
     QMap<int, WebOSSurfaceItem *> m_mirrorItems;
     WebOSExported *m_exported = nullptr;
-    WebOSImported *m_imported = nullptr;
+    bool m_imported = false;
     QWaylandView m_cursorView;
 };
 

@@ -151,7 +151,6 @@ public:
     void childSurfaceDestroyed();
     void destroyResource();
     void detach();
-    void setSurfaceItemImported(bool attach);
     void setSurfaceItemSize();
     void updateExported(WebOSExported * exported);
     void updateGeometry();
