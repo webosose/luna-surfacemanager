@@ -1,0 +1,3 @@
+module WebOSCompositor
+
+ViewsRoot 1.0 MirroringViewsRoot.qml
