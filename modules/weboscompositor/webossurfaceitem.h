@@ -462,11 +462,11 @@ public:
 
     void setExposed(bool exposed);
 
-    WebOSSurfaceItem *createMirrorItem(int target);
-    WebOSSurfaceItem *takeMirrorItem(int target) { return m_mirrorItems.take(target); }
-    WebOSSurfaceItem *mirrorItem(int target) { return m_mirrorItems.value(target); }
-    QList<WebOSSurfaceItem *> mirrorItems() { return m_mirrorItems.values(); }
-    QList<int> mirrorTargetIds() { return  m_mirrorItems.keys(); }
+    WebOSSurfaceItem *createMirrorItem();
+    bool removeMirrorItem(WebOSSurfaceItem *mirror);
+    QVector<WebOSSurfaceItem *> mirrorItems() { return m_mirrorItems; }
+    bool isMirrorItem() const { return m_isMirrorItem; }
+    WebOSSurfaceItem *mirrorSource() const { return m_mirrorSource; };
 
     QVector<WebOSExported *> exportedElements() { return m_exportedElements; }
     void appendExported(WebOSExported *exported) { if (!m_exportedElements.contains(exported)) m_exportedElements.append(exported); }
@@ -616,7 +616,9 @@ private:
     int m_cursorHotSpotX = -1;
     int m_cursorHotSpotY = -1;
 
-    QMap<int, WebOSSurfaceItem *> m_mirrorItems;
+    bool m_isMirrorItem = false;
+    WebOSSurfaceItem *m_mirrorSource = nullptr;
+    QVector<WebOSSurfaceItem *> m_mirrorItems;
     QVector<WebOSExported *> m_exportedElements;
     bool m_imported = false;
     QWaylandView m_cursorView;

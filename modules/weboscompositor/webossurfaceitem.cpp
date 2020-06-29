@@ -1242,27 +1242,39 @@ void WebOSSurfaceItem::updateCursor()
     setCursor(QCursor(Qt::ArrowCursor));
 }
 
-WebOSSurfaceItem *WebOSSurfaceItem::createMirrorItem(int target)
+WebOSSurfaceItem *WebOSSurfaceItem::createMirrorItem()
 {
-    qInfo() << "createMirrorItem for" << this << "to" << target;
-
-    if (m_mirrorItems.contains(target))
+    if (m_isMirrorItem) {
+        qWarning() << "Cannot mirror a mirror item" << this;
         return nullptr;
+    }
 
     WebOSSurfaceItem *mirror = new WebOSSurfaceItem(m_compositor, static_cast<QWaylandQuickSurface *>(surface()));
-    mirror->setDisplayAffinity(target);
-    mirror->setEnabled(false);
-    mirror->setAppId(appId());
-    mirror->setType(type());
-    mirror->setItemState(WebOSSurfaceItem::ItemStateNormal);
+    mirror->m_isMirrorItem = true;
+    mirror->m_mirrorSource = this;
 
-    qInfo() << "mirror item" << mirror;
+    // Default setting for mirror item
+    mirror->setEnabled(false);
+    mirror->setDisplayAffinity(-1);
+
+    qInfo() << "Mirror item created for" << this << mirror;
 
     foreach (WebOSExported *exported, m_exportedElements)
         exported->startImportedMirroring(mirror);
 
-    m_mirrorItems[target] = mirror;
+    m_mirrorItems.append(mirror);
+
     return mirror;
+}
+
+bool WebOSSurfaceItem::removeMirrorItem(WebOSSurfaceItem *mirror)
+{
+    if (!mirror)
+        return false;
+
+    mirror->m_mirrorSource = nullptr;
+
+    return m_mirrorItems.removeOne(mirror);
 }
 
 bool WebOSSurfaceItem::hasSecuredContent()

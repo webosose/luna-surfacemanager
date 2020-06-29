@@ -52,7 +52,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCompositorWindow : public QQuickView {
     // Fullscreen item of each window
     Q_PROPERTY(WebOSSurfaceItem *fullscreenItem READ fullscreenItem WRITE setFullscreenItem NOTIFY fullscreenItemChanged)
     Q_PROPERTY(QQuickItem *viewsRoot READ viewsRoot WRITE setViewsRoot NOTIFY viewsRootChanged)
-    Q_PROPERTY(QVector<bool> isMirroringTo READ isMirroringTo NOTIFY isMirroringToChanged)
+    // State for display-to-display mirroring
     Q_PROPERTY(MirroringState mirroringState READ mirroringState NOTIFY mirroringStateChanged)
 
 public:
@@ -110,15 +110,12 @@ public:
     WebOSSurfaceItem *fullscreenItem();
     void setFullscreenItem(WebOSSurfaceItem *item);
 
+    // Methods for display-to-display mirroring
     Q_INVOKABLE int startMirroring(int target);
     Q_INVOKABLE int stopMirroring(int target);
     Q_INVOKABLE int stopMirroringToAll(WebOSSurfaceItem *source = nullptr);
-    Q_INVOKABLE int stopMirroringFromTarget();
-    int stopMirroringInternal(WebOSSurfaceItem *sItem, int targetId);
-    QVector<bool> isMirroringTo();
-    bool hasMirrorSource() const;
-    WebOSCompositorWindow *mirrorSource() const { return m_mirrorSource; }
-    void setMirrorSource(WebOSCompositorWindow *window);
+    Q_INVOKABLE int stopMirroringFromMirror(WebOSSurfaceItem *mirror);
+    int stopMirroringInternal(WebOSSurfaceItem *source, WebOSSurfaceItem *mirror);
     MirroringState mirroringState() const { return m_mirrorState; }
     void setMirroringState(MirroringState state);
 
@@ -146,7 +143,6 @@ signals:
     void cursorVisibleChanged();
     void viewsRootChanged();
     void fullscreenItemChanged(WebOSSurfaceItem *);
-    void isMirroringToChanged();
     void mirroringStateChanged();
 
     void accessibleChanged(const bool enabled);
@@ -207,7 +203,6 @@ private:
     QWaylandSeat *m_inputDevice;
     // auto clear on destroyed
     QPointer<WebOSSurfaceItem> m_fullscreenItem;
-    WebOSCompositorWindow *m_mirrorSource;
     MirroringState m_mirrorState = MirroringStateInactive;
 
     qreal m_vsyncInterval = 1.0 / 60 * 1000;
