@@ -38,22 +38,43 @@ WebOSShell::WebOSShell(WebOSCoreCompositor* compositor)
 
 void WebOSShell::bind_func(struct wl_client *client, void *data, uint32_t version, uint32_t id)
 {
-    Q_UNUSED(version);
-    wl_client_add_object(client, &wl_webos_shell_interface, &shell_interface, id, data);
+    WebOSShell* that = static_cast<WebOSShell *>(data);
+    that->bind(client, version);
+    wl_resource *shell = wl_client_add_object(client, &wl_webos_shell_interface, &shell_interface, id, data);
+    shell->destroy = WebOSShell::destroy_func;
+}
+
+void WebOSShell::destroy_func(struct wl_resource* resource)
+{
+    WebOSShell* that = static_cast<WebOSShell *>(resource->data);
+    that->unbind(wl_resource_get_client(resource));
+}
+
+void WebOSShell::bind(struct wl_client *client, int version)
+{
+    m_versionMap.insert(client, version);
+}
+
+void WebOSShell::unbind(struct wl_client *client)
+{
+    m_versionMap.take(client);
+}
+
+int WebOSShell::getVersion(struct wl_client *client)
+{
+    return m_versionMap.value(client, -1);
 }
 
 void WebOSShell::get_shell_surface(struct wl_client *client, struct wl_resource *shell_resource, uint32_t id, struct wl_resource *owner)
 {
-    Q_UNUSED(shell_resource);
-
+    WebOSShell* that = static_cast<WebOSShell *>(shell_resource->data);
     QWaylandSurface* surface = QWaylandSurface::fromResource(owner);
     WebOSSurfaceItem* item = qobject_cast<WebOSSurfaceItem*>(surface->surfaceItem());
     qDebug() << surface << item;
-    if (item) {
-        new WebOSShellSurface(client, id, item, owner);
-    } else {
+    if (item)
+        new WebOSShellSurface(client, id, item, owner, that->getVersion(client));
+    else
         qWarning() << "Could not create webos shell surface for wl_surface@" << owner->object.id;
-    }
 }
 
 void WebOSShell::get_system_pip(struct wl_client *client, struct wl_resource *resource)
@@ -80,8 +101,9 @@ const struct wl_webos_shell_surface_interface WebOSShellSurface::shell_surface_i
     WebOSShellSurface::reset_addon
 };
 
-WebOSShellSurface::WebOSShellSurface(struct wl_client* client, uint32_t id, WebOSSurfaceItem* surface, wl_resource* owner)
-    : m_locationHint(WebOSSurfaceItem::LocationHintCenter)
+WebOSShellSurface::WebOSShellSurface(struct wl_client* client, uint32_t id, WebOSSurfaceItem* surface, wl_resource* owner, int version)
+    : m_version(version)
+    , m_locationHint(WebOSSurfaceItem::LocationHintCenter)
     , m_keyMask(WebOSSurfaceItem::KeyMaskDefault)
     , m_state(Qt::WindowNoState)
     , m_preparedState(Qt::WindowNoState)
@@ -93,12 +115,11 @@ WebOSShellSurface::WebOSShellSurface(struct wl_client* client, uint32_t id, WebO
     m_shellSurface->destroy = WebOSShellSurface::destroyShellSurface;
 
     surface->setShellSurface(this);
-    qDebug() << this << "for wl_surface@" << m_owner->object.id << "m_shellSurface:" << m_shellSurface;
+    qDebug() << this << "for wl_surface@" << m_owner->object.id << "m_shellSurface:" << m_shellSurface << "version:" << m_version;
 
     QWaylandWlShellSurface *wlShellSurface = QWaylandWlShellSurface::fromResource(owner);
-    if (wlShellSurface != nullptr) {
+    if (wlShellSurface != nullptr)
         connect(wlShellSurface, &QWaylandWlShellSurface::setTransient, this, &WebOSShellSurface::handleSetTransient);
-    }
 }
 
 WebOSShellSurface::~WebOSShellSurface()
@@ -208,9 +229,8 @@ void WebOSShellSurface::close()
 
 void WebOSShellSurface::setPosition(const QPointF& pos)
 {
-    if (m_shellSurface) {
+    if (m_shellSurface)
         wl_webos_shell_surface_send_position_changed(m_shellSurface, pos.toPoint().x(), pos.toPoint().y());
-    }
 }
 
 QVariantMap WebOSShellSurface::properties() const
@@ -244,9 +264,8 @@ void WebOSShellSurface::set_property(struct wl_client *client, struct wl_resourc
     qDebug() << "set property (" << QString::fromLatin1(name) << "," << QVariant(QString::fromUtf8(value)) << ")"
                  << that->m_surface << that->m_surface->appId();
     that->setProperty(QString::fromLatin1(name), QVariant(QString::fromUtf8(value)));
-    if (emitChange) {
+    if (emitChange)
         that->emitSurfaceConvenienceSignal(key);
-    }
 }
 
 void WebOSShellSurface::emitSurfaceConvenienceSignal(const QString& key)
@@ -308,14 +327,13 @@ void WebOSShellSurface::handleSetTransient(QWaylandSurface *parentSurface, const
 void WebOSShellSurface::requestSize(const QSize &size)
 {
     QWaylandWlShellSurface *wlShellSurface = QWaylandWlShellSurface::fromResource(m_owner);
-    if (wlShellSurface != nullptr) {
+    if (wlShellSurface != nullptr)
         wlShellSurface->sendConfigure(size, QWaylandWlShellSurface::ResizeEdge::BottomRightEdge);
-    }
 }
 
 void WebOSShellSurface::setAddonStatus(WebOSSurfaceItem::AddonStatus status)
 {
-    if (m_shellSurface) {
+    if (m_shellSurface && version() >= WL_WEBOS_SHELL_SURFACE_ADDON_STATUS_CHANGED_SINCE_VERSION) {
         wl_webos_shell_surface_addon_status addonStatus;
         switch (status) {
         case WebOSSurfaceItem::AddonStatusNull:
@@ -346,7 +364,7 @@ void WebOSShellSurface::set_addon(struct wl_client *client, struct wl_resource *
     QString newAddon(path);
     if (that->m_addon != newAddon) {
         if (newAddon.isEmpty()) {
-            wl_webos_shell_surface_send_addon_status_changed(that->m_shellSurface, WL_WEBOS_SHELL_SURFACE_ADDON_STATUS_DENIED);
+            that->setAddonStatus(WebOSSurfaceItem::AddonStatusDenied);
             return;
         }
         qDebug() << "addon changed" << that->m_addon << "to" << newAddon;

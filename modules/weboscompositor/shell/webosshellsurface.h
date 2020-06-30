@@ -36,6 +36,10 @@ class WEBOS_COMPOSITOR_EXPORT WebOSShell : public QObject {
 public:
     WebOSShell(WebOSCoreCompositor* compositor);
     static void bind_func(struct wl_client *client, void *data, uint32_t version, uint32_t id);
+    static void destroy_func(struct wl_resource* resource);
+    void bind(struct wl_client *client, int version);
+    void unbind(struct wl_client *client);
+    int getVersion(struct wl_client *client);
 
 private:
     // methods
@@ -50,6 +54,7 @@ private:
     static const struct wl_webos_shell_interface shell_interface;
     WebOSCoreCompositor* m_compositor;
     QWaylandSurface* m_previousFullscreenSurface;
+    QMap<struct wl_client *, int> m_versionMap;
 };
 
 class WebOSShellSurface : public QObject {
@@ -57,8 +62,10 @@ class WebOSShellSurface : public QObject {
     Q_OBJECT
 
 public:
-    WebOSShellSurface(struct wl_client* client, uint32_t id, WebOSSurfaceItem* surface, wl_resource* owner);
+    WebOSShellSurface(struct wl_client* client, uint32_t id, WebOSSurfaceItem* surface, wl_resource* owner, int version);
     ~WebOSShellSurface();
+
+    int version() const { return m_version; }
 
     void setState(Qt::WindowState state);
     void prepareState(Qt::WindowState state);
@@ -113,6 +120,7 @@ private:
     void emitSurfaceConvenienceSignal(const QString& property);
 
     // variables
+    int m_version = -1;
     static const struct wl_webos_shell_surface_interface shell_surface_interface;
     wl_resource* m_shellSurface;
     WebOSSurfaceItem::LocationHints m_locationHint;
