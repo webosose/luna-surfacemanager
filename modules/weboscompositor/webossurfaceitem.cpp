@@ -1302,3 +1302,42 @@ void WebOSSurfaceItem::setAddonStatus(AddonStatus status)
     if (m_shellSurface)
         m_shellSurface->setAddonStatus(status);
 }
+
+QJSValue WebOSSurfaceItem::addonFilter() const
+{
+    return m_addonFilter;
+}
+
+void WebOSSurfaceItem::setAddonFilter(const QJSValue &filter)
+{
+    if (!filter.isCallable()) {
+        qWarning() << "addonFilter must be a callable function";
+        return;
+    }
+
+    if (!m_addonFilter.strictlyEquals(filter)) {
+        m_addonFilter = filter;
+        emit addonFilterChanged();
+    }
+}
+
+bool WebOSSurfaceItem::acceptsAddon(const QString &newAddon)
+{
+    bool accepts = false;
+
+    if (!addonFilter().isUndefined()) {
+        QJSValueList args;
+        args.append(QJSValue(newAddon));
+        QJSValue ret = addonFilter().call(args);
+        if (ret.isBool())
+            accepts = ret.toBool();
+        else
+            qWarning() << "addonFilter does not return bool for" << newAddon;
+    } else {
+        qWarning() << "addonFilter is undefined for" << newAddon;
+    }
+
+    qInfo() << (accepts ? "Accepted" : "Denied") << "addon" << newAddon;
+
+    return accepts;
+}

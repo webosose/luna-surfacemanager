@@ -91,6 +91,8 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandQuickItem
 
     Q_PROPERTY(WebOSSurfaceGroup* surfaceGroup READ surfaceGroup NOTIFY surfaceGroupChanged)
     Q_PROPERTY(QString addon READ addon NOTIFY addonChanged)
+    // Filter function that evaluates acceptance of the addon
+    Q_PROPERTY(QJSValue addonFilter READ addonFilter WRITE setAddonFilter NOTIFY addonFilterChanged)
 
 public:
 
@@ -480,6 +482,10 @@ public:
     QString addon() const;
     Q_INVOKABLE void setAddonStatus(AddonStatus addonStatus);
 
+    QJSValue addonFilter() const;
+    void setAddonFilter(const QJSValue &filter);
+    bool acceptsAddon(const QString &newAddon);
+
 public slots:
     void updateScreenPosition();
     void updateProperties(const QVariantMap &properties, const QString &name, const QVariant &value);
@@ -542,6 +548,7 @@ signals:
     void backgroundImageFilePathChanged();
 
     void addonChanged();
+    void addonFilterChanged();
 
 protected:
     void processKeyEvent(QKeyEvent *event);
@@ -622,6 +629,7 @@ private:
     QVector<WebOSExported *> m_exportedElements;
     bool m_imported = false;
     QWaylandView m_cursorView;
+    QJSValue m_addonFilter;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(WebOSSurfaceItem::WindowClass)

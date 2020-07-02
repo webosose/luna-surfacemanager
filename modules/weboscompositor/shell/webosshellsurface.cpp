@@ -363,7 +363,7 @@ void WebOSShellSurface::set_addon(struct wl_client *client, struct wl_resource *
     WebOSShellSurface* that = static_cast<WebOSShellSurface*>(resource->data);
     QString newAddon(path);
     if (that->m_addon != newAddon) {
-        if (newAddon.isEmpty()) {
+        if (newAddon.isEmpty() || !that->m_surface->acceptsAddon(newAddon)) {
             that->setAddonStatus(WebOSSurfaceItem::AddonStatusDenied);
             return;
         }
