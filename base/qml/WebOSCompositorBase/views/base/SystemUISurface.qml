@@ -16,7 +16,6 @@
 
 import QtQuick 2.4
 import WebOSCoreCompositor 1.0
-import WebOSCompositorBase 1.0
 
 PopupSurface {
     id: root
@@ -31,7 +30,7 @@ PopupSurface {
 
         onStatusChanged: {
             console.info("SystemUISurface.serverSideAddOn: status changed", serverSideAddOn.source, serverSideAddOn.status, serverSideAddOn.active);
-            if (root.source === undefined)
+            if (!root.source)
                 return;
 
             switch (serverSideAddOn.status) {
@@ -53,20 +52,6 @@ PopupSurface {
         Connections {
             target: source
             onAddonChanged: {
-                console.info("SystemUISurface.serverSideAddOn: addon changed to" + root.source.addon);
-                if (source.type != "_WEBOS_WINDOW_TYPE_SYSTEM_UI") {
-                    console.warn("SystemUISurface.serverSideAddOn: denied by window type", source.appId, source.type);
-                    source.setAddonStatus(SurfaceItem.AddonStatusDenied);
-                    return;
-                }
-
-                const match = (path) => source.addon.startsWith(path);
-                if (source.addon && !Settings.local.addon.directories.some(match)) {
-                    console.warn("SystemUISurface.serverSideAddOn: denied by path", source.appId, source.addon);
-                    source.setAddonStatus(SurfaceItem.AddonStatusDenied);
-                    return;
-                }
-
                 console.info("SystemUISurface.serverSideAddOn: accepted", source.addon, source.appId, source.type);
                 serverSideAddOn.source = source.addon;
             }

@@ -33,9 +33,20 @@ SurfaceView {
 
     property Component component: Qt.createComponent(root.containerQml, root)
 
+    function addonFilter(addon) {
+        console.log("SystemUIView: addonFilter for " + addon);
+        const match = (pat) => addon.startsWith(pat);
+        if (addon && !Settings.local.addon.directories.some(match)) {
+            console.warn("SystemUIView: addon denied by path", addon);
+            return false;
+        }
+        return true;
+    }
+
     onSurfaceAdded: {
         if (root.access) {
             if (PopupHandler.addPopup(component, root, item)) {
+                item.addonFilter = root.addonFilter;
                 currentItem = item;
                 if (root.consumeKeyEvents) {
                     PopupHandler.giveFocus();
@@ -55,6 +66,7 @@ SurfaceView {
         // Remove and close the surface item.
         var popupCount = PopupHandler.removePopup(item);
         console.log("SystemUIView: releasing", popupCount);
+        item.addonFilter = undefined;
         if (popupCount > 0) {
             currentItem = PopupHandler.getCurrentPopup();
             if (root.consumeKeyEvents) {
