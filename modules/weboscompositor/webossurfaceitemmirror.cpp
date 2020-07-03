@@ -43,7 +43,7 @@ void WebOSSurfaceItemMirror::setSourceItem(WebOSSurfaceItem *sourceItem)
             disconnect(m_mirrorDestroyedConnection);
 
             if (m_mirrorItem) {
-                if (m_sourceItem->removeMirrorItem(m_mirrorItem))
+                if (!m_sourceItem->removeMirrorItem(m_mirrorItem))
                     qCritical() << "Failed to remove mirror item";
 
                 delete m_mirrorItem;
