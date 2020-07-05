@@ -712,8 +712,8 @@ int WebOSCompositorWindow::stopMirroringInternal(WebOSSurfaceItem *source, WebOS
     // Mirroring state goes to inactive only if there is no
     // mirror item with a valid displayAffinity.
     bool turnedToInactive = true;
-    foreach (WebOSSurfaceItem *mirror, source->mirrorItems()) {
-        if (mirror->displayAffinity() != -1) {
+    foreach (WebOSSurfaceItem *m, source->mirrorItems()) {
+        if (m->displayAffinity() != -1) {
             turnedToInactive = false;
             break;
         }

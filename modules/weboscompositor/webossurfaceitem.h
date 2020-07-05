@@ -467,7 +467,7 @@ public:
     WebOSSurfaceItem *createMirrorItem();
     bool removeMirrorItem(WebOSSurfaceItem *mirror);
     QVector<WebOSSurfaceItem *> mirrorItems() { return m_mirrorItems; }
-    bool isMirrorItem() const { return m_isMirrorItem; }
+    Q_INVOKABLE bool isMirrorItem() const { return m_isMirrorItem; }
     WebOSSurfaceItem *mirrorSource() const { return m_mirrorSource; };
 
     QVector<WebOSExported *> exportedElements() { return m_exportedElements; }
