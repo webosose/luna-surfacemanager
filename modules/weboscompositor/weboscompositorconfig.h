@@ -83,6 +83,25 @@ public:
     // Default import path for WebOSCompositor
     QString importPath() const { return m_importPath; }
 
+    // Display cluster
+    // 2-dimensional array with display names.
+    // It is assumed that the displays are placed in 2-d matrix and adjacent each other.
+    // eg.
+    // [
+    //     ["disp1", "disp2"],
+    //     ["disp3", "disp4"]
+    // ]
+    // [
+    //     ["disp1", "disp2", "disp3", "disp4"]
+    // ]
+    // [
+    //     ["disp1"],
+    //     ["disp2"],
+    //     ["disp3"],
+    //     ["disp4"]
+    // ]
+    QJsonDocument displayCluster() const { return m_displayCluster; }
+
     // Hide cursor if set to 1
     bool cursorHide() const { return m_cursorHide; }
 
@@ -109,6 +128,8 @@ private:
     QUrl m_source;
     QUrl m_source2;
     QString m_importPath;
+
+    QJsonDocument m_displayCluster;
 
     bool m_cursorHide;
     int m_cursorTimeout;

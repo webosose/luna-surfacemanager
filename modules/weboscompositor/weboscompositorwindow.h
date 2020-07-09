@@ -54,6 +54,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCompositorWindow : public QQuickView {
     Q_PROPERTY(QQuickItem *viewsRoot READ viewsRoot WRITE setViewsRoot NOTIFY viewsRootChanged)
     // State for display-to-display mirroring
     Q_PROPERTY(MirroringState mirroringState READ mirroringState NOTIFY mirroringStateChanged)
+    Q_PROPERTY(QPoint positionInCluster READ positionInCluster NOTIFY positionInClusterChanged)
 
 public:
     enum MirroringState {
@@ -119,6 +120,9 @@ public:
     MirroringState mirroringState() const { return m_mirrorState; }
     void setMirroringState(MirroringState state);
 
+    QPoint positionInCluster() const { return m_positionInCluster; }
+    void setPositionInCluster(QPoint position);
+
     QString modelString();
 
     bool hasSecuredContent();
@@ -146,6 +150,8 @@ signals:
     void mirroringStateChanged();
 
     void accessibleChanged(const bool enabled);
+
+    void positionInClusterChanged();
 
 private:
     // classes
@@ -204,6 +210,8 @@ private:
     // auto clear on destroyed
     QPointer<WebOSSurfaceItem> m_fullscreenItem;
     MirroringState m_mirrorState = MirroringStateInactive;
+
+    QPoint m_positionInCluster;
 
     qreal m_vsyncInterval = 1.0 / 60 * 1000;
 

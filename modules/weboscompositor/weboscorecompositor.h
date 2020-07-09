@@ -34,6 +34,7 @@
 
 #include "unixsignalhandler.h"
 #include "webossurfaceitem.h"
+#include "weboscompositorconfig.h"
 
 class WebOSInputMethod;
 class WebOSSurfaceModel;
@@ -188,6 +189,7 @@ public:
 
     QList<QObject *> windows() const;
     WebOSCompositorWindow *window(int displayId);
+    void updateWindowPositionInCluster();
 
     bool loaded() const { return m_loaded; }
     bool respawned() const { return m_respawned; }

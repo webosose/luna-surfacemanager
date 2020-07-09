@@ -100,6 +100,11 @@ WebOSCompositorConfig::WebOSCompositorConfig()
             m_importPath = QString::fromLatin1(WEBOS_INSTALL_QML);
     }
 
+    if (qEnvironmentVariableIsEmpty("WEBOS_COMPOSITOR_DISPLAY_CLUSTER"))
+        m_displayCluster = QJsonDocument(); // empty JSON
+    else
+        m_displayCluster = QJsonDocument::fromJson(qgetenv("WEBOS_COMPOSITOR_DISPLAY_CLUSTER"));
+
     m_cursorHide = (qgetenv("WEBOS_CURSOR_HIDE").toInt() == 1);
     m_cursorTimeout = qgetenv("WEBOS_CURSOR_TIMEOUT").toInt();
 
@@ -133,6 +138,7 @@ void WebOSCompositorConfig::dump() const
     qInfo() << "source:" << m_source;
     qInfo() << "source2:" << m_source2;
     qInfo() << "importPath:" << m_importPath;
+    qInfo() << "displayCluster:" << m_displayCluster;
     qInfo() << "cursorHide:" << m_cursorHide;
     qInfo() << "cursorTimeout:" << m_cursorTimeout;
     qInfo() << "exitOnQmlWarn:" << m_exitOnQmlWarn;

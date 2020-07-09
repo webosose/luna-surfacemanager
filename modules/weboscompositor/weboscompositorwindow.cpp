@@ -446,7 +446,6 @@ void WebOSCompositorWindow::applyOutputGeometry()
         << "rotation:" << m_outputRotation << "->" << m_newOutputRotation;
 
     disconnect(m_compositor, &WebOSCoreCompositor::outputUpdateDone, this, &WebOSCompositorWindow::onOutputGeometryDone);
-    m_compositor->finalizeOutputUpdate();
 
     if (m_outputGeometry != m_newOutputGeometry) {
         m_outputGeometry = m_newOutputGeometry;
@@ -462,6 +461,8 @@ void WebOSCompositorWindow::applyOutputGeometry()
         updateOutputGeometry(m_newOutputRotationPending, false);
         m_newOutputRotationPending = -1;
     }
+
+    m_compositor->finalizeOutputUpdate();
 }
 
 void WebOSCompositorWindow::onOutputGeometryDone()
@@ -723,6 +724,15 @@ int WebOSCompositorWindow::stopMirroringInternal(WebOSSurfaceItem *source, WebOS
     m_compositor->removeSurfaceItem(mirror, true);
 
     return 0;
+}
+
+void WebOSCompositorWindow::setPositionInCluster(QPoint position)
+{
+    if (position != m_positionInCluster) {
+        qDebug() << "Position in cluster change for" << this << ":" << position << "->" << m_positionInCluster;
+        m_positionInCluster = position;
+        emit positionInClusterChanged();
+    }
 }
 
 QString WebOSCompositorWindow::modelString()

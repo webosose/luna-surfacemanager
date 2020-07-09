@@ -29,6 +29,7 @@
 #include <QQmlComponent>
 #include <QProcess>
 #include <QScreen>
+#include <QJsonArray>
 #include <QWaylandQuickOutput>
 
 #include "weboscorecompositor.h"
@@ -210,6 +211,7 @@ void WebOSCoreCompositor::insertToWindows(WebOSCompositorWindow *window)
         m_windows.resize(sizeNeeded);
 
     m_windows[displayId] = window;
+    updateWindowPositionInCluster();
     emit windowsChanged();
 }
 
@@ -469,6 +471,28 @@ WebOSCompositorWindow *WebOSCoreCompositor::window(int displayId)
         return nullptr;
 
     return m_windows[displayId];
+}
+
+void WebOSCoreCompositor::updateWindowPositionInCluster()
+{
+    QJsonArray displayCluster = WebOSCompositorConfig::instance()->displayCluster().array();
+    QPoint positionInCluster;
+    for (int r = 0; r < displayCluster.size(); r++) {
+        int maxHeight = 0;
+        positionInCluster.setX(0);
+        QJsonArray row = displayCluster[r].toArray();
+        for (int c = 0; c < row.size(); c++) {
+            foreach (WebOSCompositorWindow *w, m_windows) {
+                if (w->displayName() == row[c].toString()) {
+                    w->setPositionInCluster(positionInCluster);
+                    positionInCluster.rx() += w->outputGeometry().width();
+                    maxHeight = qMax(maxHeight, w->outputGeometry().height());
+                    break;
+                }
+            }
+        }
+        positionInCluster.ry() += maxHeight;
+    }
 }
 
 void WebOSCoreCompositor::onSurfaceUnmapped(QWaylandSurface *surface, WebOSSurfaceItem* item) {
@@ -1165,6 +1189,8 @@ void WebOSCoreCompositor::finalizeOutputUpdate()
             disconnect(item->surface(), &QWaylandSurface::sizeChanged, this, &WebOSCoreCompositor::onSurfaceSizeChanged);
     }
     m_surfacesOnUpdate.clear();
+
+    updateWindowPositionInCluster();
 }
 
 void WebOSCoreCompositor::onSurfaceSizeChanged()
