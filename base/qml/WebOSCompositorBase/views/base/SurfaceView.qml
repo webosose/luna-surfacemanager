@@ -29,6 +29,9 @@ FocusableView {
     property bool consumeMouseEvents: false
     property bool focusOnSurface: true
     property Item currentItem
+    property Item newItem
+
+    property SequentialAnimation swapAnimation: undefined
 
     signal surfaceTransformUpdated(Item item)
     signal surfaceAdded(Item item)
@@ -60,25 +63,28 @@ FocusableView {
 
         onSurfaceAdded: {
             console.log("Adding item " + item + " to " + root);
-            if (root.fill) {
-                item.scale = Qt.binding(
-                        function() {
-                            return item.rotation % 180 ? Math.min(root.width / item.height, root.height / item.width) : Math.min(root.width / item.width, root.height / item.height); });
+
+            // Fast-forward any on-going animations
+            if (root.openAnimation && root.openAnimation.running) {
+                console.warn("Fast-forward on-going openAnimation in " + root + " to proceed another with " + item);
+                root.openAnimation.complete();
+            }
+            if (root.swapAnimation && root.swapAnimation.running) {
+                console.warn("Fast-forward on-going swapAnimation in " + root + " to proceed another with " + item);
+                root.swapAnimation.complete();
             }
 
-            if (root.positioning) {
-                // Align to center
-                item.x = Qt.binding(function() { return Utils.center(root.width, item.width); });
-                item.y = Qt.binding(function() { return Utils.center(root.height, item.height); });
+            root.newItem = item;
+            root.newItem.parent = root;
+
+            if (root.currentItem && root.swapAnimation) {
+                console.log("Triggering swapAnimation " + root.swapAnimation + " for " + root + " with " + currentItem + " to " + newItem);
+                root.swapAnimation.alwaysRunToEnd = true;
+                root.swapAnimation.start();
+            } else {
+                console.log("Skipping swapAnimation for " + root);
+                root.handleSurfaceAdded();
             }
-
-            root.surfaceTransformUpdated(item);
-            root.surfaceAdded(item);
-            Utils.performanceLog.timeEnd("APP_LAUNCH", {"APP_ID": item.appId});
-            root.contentChanged();
-            console.log("Item added in " + root + ", currentItem: " + currentItem);
-
-            surfaceHighlight.enable(item);
         }
 
         onSurfaceRemoved: {
@@ -88,6 +94,53 @@ FocusableView {
             console.log("Item removed from " + root + ", currentItem: " + currentItem);
 
             surfaceHighlight.disable(item);
+        }
+    }
+
+    Connections {
+        target: root.swapAnimation
+        onStopped: {
+            console.log("Finished swapAnimation finished in " + root + ", currentItem: " + root.currentItem + ", newItem: " + root.newItem);
+            root.handleSurfaceAdded();
+        }
+    }
+
+    function handleSurfaceAdded() {
+        if (root.fill) {
+            root.newItem.scale = Qt.binding(
+                function() {
+                    if (!root.newItem)
+                        return 1.0;
+                    return root.newItem.rotation % 180 ? Math.min(root.width / root.newItem.height, root.height / root.newItem.width) : Math.min(root.width / root.newItem.width, root.height / root.newItem.height);
+            });
+        }
+
+        if (root.positioning) {
+            // Align to center
+            root.newItem.x = Qt.binding(function() {
+                if (!root.newItem)
+                    return 0;
+                return Utils.center(root.width, root.newItem.width);
+            });
+            root.newItem.y = Qt.binding(function() {
+                if (!root.newItem)
+                    return 0;
+                return Utils.center(root.height, root.newItem.height);
+            });
+        }
+
+        root.surfaceTransformUpdated(root.newItem);
+        root.surfaceAdded(root.newItem);
+        Utils.performanceLog.timeEnd("APP_LAUNCH", {"APP_ID": root.newItem.appId});
+        root.contentChanged();
+
+        // currentItem is supposed to be set by the inheritor.
+        // Warn in case it isn't.
+        if (root.currentItem == root.newItem) {
+            console.log("Item added in " + root + ", currentItem: " + root.currentItem);
+            surfaceHighlight.enable(root.currentItem);
+        } else {
+            console.warn("FIXME: currentItem for " + root + " seems not set correctly, currentItem: " + root.currentItem, ", newItem: " + root.newItem);
         }
     }
 
