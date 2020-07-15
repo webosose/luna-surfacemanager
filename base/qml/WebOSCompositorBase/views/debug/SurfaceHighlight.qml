@@ -47,7 +47,7 @@ Rectangle {
             color: "black"
             font.pixelSize: 16
             text: (root.sourceView ? "view:" + root.sourceView.objectName + "\n" : "") +
-                  (root.sourceItem ? "appId: " + root.sourceItem.appId + "\n" +
+                  (root.sourceItem ? "appId: " + root.sourceItem.appId + (root.sourceItem.isMirrorItem() ? "(mirrored)" : "") + "\n" +
                                     "type: " + root.sourceItem.type + "\n" +
                                     "size: " + root.sourceItem.width + "x" + root.sourceItem.height : "")
         }
