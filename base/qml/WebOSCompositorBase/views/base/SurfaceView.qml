@@ -31,7 +31,7 @@ FocusableView {
     property Item currentItem
     property Item newItem
 
-    property SequentialAnimation swapAnimation: undefined
+    property SequentialAnimation swapAnimation
 
     signal surfaceTransformUpdated(Item item)
     signal surfaceAdded(Item item)
@@ -74,6 +74,19 @@ FocusableView {
                 root.swapAnimation.complete();
             }
 
+            if (root.fill) {
+                item.scale = Qt.binding(
+                    function() {
+                        return item.rotation % 180 ? Math.min(root.width / item.height, root.height / item.width) : Math.min(root.width / item.width, root.height / item.height);
+                });
+            }
+            if (root.positioning) {
+                // Align to center
+                item.x = Qt.binding(function() { return Utils.center(root.width, item.width); });
+                item.y = Qt.binding(function() { return Utils.center(root.height, item.height); });
+            }
+            root.surfaceTransformUpdated(root.newItem);
+
             root.newItem = item;
             root.newItem.parent = root;
 
@@ -106,30 +119,6 @@ FocusableView {
     }
 
     function handleSurfaceAdded() {
-        if (root.fill) {
-            root.newItem.scale = Qt.binding(
-                function() {
-                    if (!root.newItem)
-                        return 1.0;
-                    return root.newItem.rotation % 180 ? Math.min(root.width / root.newItem.height, root.height / root.newItem.width) : Math.min(root.width / root.newItem.width, root.height / root.newItem.height);
-            });
-        }
-
-        if (root.positioning) {
-            // Align to center
-            root.newItem.x = Qt.binding(function() {
-                if (!root.newItem)
-                    return 0;
-                return Utils.center(root.width, root.newItem.width);
-            });
-            root.newItem.y = Qt.binding(function() {
-                if (!root.newItem)
-                    return 0;
-                return Utils.center(root.height, root.newItem.height);
-            });
-        }
-
-        root.surfaceTransformUpdated(root.newItem);
         root.surfaceAdded(root.newItem);
         Utils.performanceLog.timeEnd("APP_LAUNCH", {"APP_ID": root.newItem.appId});
         root.contentChanged();
