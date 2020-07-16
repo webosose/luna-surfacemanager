@@ -74,18 +74,13 @@ FocusableView {
                 root.swapAnimation.complete();
             }
 
-            if (root.fill) {
-                item.scale = Qt.binding(
-                    function() {
-                        return item.rotation % 180 ? Math.min(root.width / item.height, root.height / item.width) : Math.min(root.width / item.width, root.height / item.height);
-                });
-            }
+            // Initial scale and positioning
+            if (root.fill)
+                item.scale = item.rotation % 180 ? Math.min(root.width / item.height, root.height / item.width) : Math.min(root.width / item.width, root.height / item.height);
             if (root.positioning) {
-                // Align to center
-                item.x = Qt.binding(function() { return Utils.center(root.width, item.width); });
-                item.y = Qt.binding(function() { return Utils.center(root.height, item.height); });
+                item.x = Utils.center(root.width, item.width);
+                item.y = Utils.center(root.height, item.height);
             }
-            root.surfaceTransformUpdated(root.newItem);
 
             root.newItem = item;
             root.newItem.parent = root;
@@ -119,6 +114,20 @@ FocusableView {
     }
 
     function handleSurfaceAdded() {
+        // Finalize scale and positioning
+        var item = root.newItem;
+        if (root.fill) {
+            item.scale = Qt.binding(
+                function() {
+                    return item.rotation % 180 ? Math.min(root.width / item.height, root.height / item.width) : Math.min(root.width / item.width, root.height / item.height);
+            });
+        }
+        if (root.positioning) {
+            // Align to center
+            item.x = Qt.binding(function() { return Utils.center(root.width, item.width); });
+            item.y = Qt.binding(function() { return Utils.center(root.height, item.height); });
+        }
+        root.surfaceTransformUpdated(root.newItem);
         root.surfaceAdded(root.newItem);
         Utils.performanceLog.timeEnd("APP_LAUNCH", {"APP_ID": root.newItem.appId});
         root.contentChanged();
