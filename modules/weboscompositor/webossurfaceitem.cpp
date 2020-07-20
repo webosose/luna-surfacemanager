@@ -1252,6 +1252,7 @@ WebOSSurfaceItem *WebOSSurfaceItem::createMirrorItem()
     WebOSSurfaceItem *mirror = new WebOSSurfaceItem(m_compositor, static_cast<QWaylandQuickSurface *>(surface()));
     mirror->m_isMirrorItem = true;
     mirror->m_mirrorSource = this;
+    mirror->setObjectName(QString("mirrorItem_%1%2").arg(m_appId).arg(type()));
 
     // Default setting for mirror item
     mirror->setEnabled(false);

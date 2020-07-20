@@ -651,8 +651,10 @@ int WebOSCompositorWindow::startMirroring(int target)
 int WebOSCompositorWindow::stopMirroring(int targetId)
 {
     WebOSSurfaceItem *source = fullscreenItem();
-    if (!source)
+    if (!source) {
+        qWarning() << "stopMirroring failed, no source item";
         return -1;
+    }
 
     WebOSSurfaceItem *mirror = nullptr;
     foreach (WebOSSurfaceItem *m, source->mirrorItems()) {
@@ -662,7 +664,7 @@ int WebOSCompositorWindow::stopMirroring(int targetId)
         }
     }
     if (!mirror) {
-        qWarning("No mirror item, should not happen");
+        qWarning() << "stopMirroring failed, no mirror item";
         return -1;
     }
 
@@ -672,8 +674,10 @@ int WebOSCompositorWindow::stopMirroring(int targetId)
 int WebOSCompositorWindow::stopMirroringToAll(WebOSSurfaceItem *source)
 {
     WebOSSurfaceItem *sItem = source ? source : fullscreenItem();
-    if (!sItem)
+    if (!sItem) {
+        qWarning() << "stopMirroringToAll failed, no source item";
         return -1;
+    }
 
     // Need to iterate with a copy as stopMirroringInternal alters the list
     QVector<WebOSSurfaceItem *> mirrors(sItem->mirrorItems());
@@ -686,13 +690,13 @@ int WebOSCompositorWindow::stopMirroringToAll(WebOSSurfaceItem *source)
 int WebOSCompositorWindow::stopMirroringFromMirror(WebOSSurfaceItem *mirror)
 {
     if (!mirror->mirrorSource()) {
-        qWarning() << "No mirror source" << mirror;
+        qWarning() << "stopMirroringFromMirror failed, no source for given mirror item" << mirror;
         return -1;
     }
 
     WebOSCompositorWindow *sWindow = static_cast<WebOSCompositorWindow *>(mirror->mirrorSource()->window());
     if (!sWindow) {
-        qWarning() << "Mirror source doesn't belong to any window" << mirror << mirror->mirrorSource();
+        qWarning() << "stopMirroringFromMirror failed, mirror source doesn't belong to any window" << mirror << mirror->mirrorSource();
         return -1;
     }
 
@@ -701,10 +705,24 @@ int WebOSCompositorWindow::stopMirroringFromMirror(WebOSSurfaceItem *mirror)
 
 int WebOSCompositorWindow::stopMirroringInternal(WebOSSurfaceItem *source, WebOSSurfaceItem *mirror)
 {
+    // Disregard the case where the mirroring state is not set
+    // because stopMirroring should pair with startMirroring
+    if (m_mirrorState != MirroringStateSender)
+        return 0;
+
     WebOSCompositorWindow *tWindow = static_cast<WebOSCompositorWindow *>(mirror->window());
 
+    // Check various error cases
     if (!tWindow) {
-        qWarning("No target, should not happen");
+        qWarning() << "stopMirroringInternal failed, no window for mirror item" << mirror;
+        return -1;
+    }
+    if (static_cast<WebOSCompositorWindow *>(source->window()) != this) {
+        qWarning() << "stopMirroringInternal failed, source" << source << "does not belong to" << this;
+        return -1;
+    }
+    if (source && !source->mirrorItems().contains(mirror)) {
+        qWarning() << "stopMirroringInternal failed, mirror item already removed from" << source;
         return -1;
     }
 
