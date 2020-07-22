@@ -237,10 +237,11 @@ WebOSSurfaceItem* WebOSSurfaceGroup::itemFromResource(struct ::wl_resource* surf
 
 void WebOSSurfaceGroup::removeFromGroup(WebOSSurfaceItem* item)
 {
-    qInfo() << "Removed " << item << "from group ", qPrintable(m_name);
     if (!item) {
+        qWarning() << "removeFromGroup(): input item is nullptr, name=" << qPrintable(m_name);
         return;
     }
+    qInfo() << "Removed " << item << "from group ", qPrintable(m_name);
 
     item->disconnect(this);
     QSharedPointer<QObject> li = takeLayoutInfoFor(item);
@@ -327,10 +328,8 @@ void WebOSSurfaceGroup::removeLayer(const QString& name)
 void WebOSSurfaceGroup::removeAttachedItemsFromGroup()
 {
     QList<WebOSSurfaceItem*> attachedItems = attachedClientSurfaceItems();
-    foreach (WebOSSurfaceItem* i, attachedItems) {
-       qDebug() << "removeFromGroup on " << i;
+    foreach (WebOSSurfaceItem* i, attachedItems)
        removeFromGroup(i);
-    }
 }
 
 void WebOSSurfaceGroup::closeAttachedSurfaces()
