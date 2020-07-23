@@ -125,17 +125,20 @@ public:
 
     bool hasSecuredContent();
 
-    void onFrameSwapped();
+    void setNextUpdate();
+    void setNextUpdateWithDefaultNotifier();
     void deliverUpdateRequest();
     void reportSurfaceDamaged(WebOSSurfaceItem* const item);
 
 private:
+    void checkAdaptiveUpdate();
     void sendFrame();
 
     int stopAppMirroringInternal(WebOSSurfaceItem *source, WebOSSurfaceItem *mirror);
 
 protected:
     virtual bool event(QEvent *) override;
+    bool m_hasPageFlipNotifier = false;
 
 signals:
     void outputGeometryChanged();
@@ -152,6 +155,8 @@ signals:
     void accessibleChanged(const bool enabled);
 
     void positionInClusterChanged();
+
+    void pageFlipped();
 
 private:
     // classes
@@ -176,6 +181,10 @@ private slots:
     void onOutputGeometryPendingExpired();
     void onAppMirroringItemChanged(WebOSSurfaceItem *oldItem);
     void onQmlError(const QList<QQmlError> &errors);
+    void onBeforeSynchronizing();
+    void onBeforeRendering();
+    void onAfterRendering();
+    void onPageFlipped();
 
 private:
     // variables
@@ -216,14 +225,15 @@ private:
     qreal m_vsyncInterval = 1.0 / 60 * 1000;
 
     bool m_adaptiveUpdate = false;
-    QElapsedTimer m_sinceFrameSwapped;
     QTimer m_updateTimer;
     bool m_hasUnhandledUpdateRequest = false;
-    int m_updatesSinceFrameSwapped = 0;
     int m_updateTimerInterval = 0;
 
     bool m_adaptiveFrame = false;
     QElapsedTimer m_sinceSendFrame;
+    QElapsedTimer m_sinceSyncStart;
+    int m_timeSpentForRendering;
+    bool m_waitForFlip = false;
     QTimer m_frameTimer;
     int m_frameTimerInterval = 0;
 };
