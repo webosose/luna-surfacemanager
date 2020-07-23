@@ -145,8 +145,6 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
     // Get VSync interval
     m_vsyncInterval = 1.0 / screen()->refreshRate() * 1000;
 
-    connect(this, &WebOSCompositorWindow::fullscreenItemChanged, &WebOSCompositorWindow::onFullscreenItemChanged);
-
     connect(this, &QQuickWindow::frameSwapped, this, &WebOSCompositorWindow::onFrameSwapped);
 
     static int defaultUpdateInterval = []() {
@@ -581,49 +579,60 @@ void WebOSCompositorWindow::setOutput(QWaylandQuickOutput *output)
     m_output->setAutomaticFrameCallback(!m_adaptiveFrame);
 }
 
-WebOSSurfaceItem *WebOSCompositorWindow::fullscreenItem()
+WebOSSurfaceItem *WebOSCompositorWindow::appMirroringItem()
 {
-    return m_fullscreenItem;
+    return m_appMirroringItem;
 }
 
-void WebOSCompositorWindow::setFullscreenItem(WebOSSurfaceItem *item)
+void WebOSCompositorWindow::setAppMirroringItem(WebOSSurfaceItem *item)
 {
-    if (m_fullscreenItem == item)
+    if (m_appMirroringItem == item)
         return;
 
-    WebOSSurfaceItem *oldItem = m_fullscreenItem;
-    m_fullscreenItem = item;
-    qInfo() << "Fullscreen item changed to:" << m_fullscreenItem << "for" << this << displayId();
-    emit fullscreenItemChanged(oldItem);
+    WebOSSurfaceItem *oldItem = m_appMirroringItem;
+    m_appMirroringItem = item;
+    qInfo() << "App mirroring source item changed to:" << m_appMirroringItem << "for" << this << displayId();
+    emit appMirroringItemChanged(oldItem);
 }
 
-void WebOSCompositorWindow::onFullscreenItemChanged(WebOSSurfaceItem *oldItem)
+void WebOSCompositorWindow::onAppMirroringItemChanged(WebOSSurfaceItem *oldItem)
 {
     if (oldItem) {
         if (oldItem->isMirrorItem() && oldItem->mirrorSource())
-            stopMirroringFromMirror(oldItem);
+            stopAppMirroringFromMirror(oldItem);
         else
-            stopMirroringToAll(oldItem);
+            stopAppMirroringToAll(oldItem);
     }
 }
 
-void WebOSCompositorWindow::setMirroringState(MirroringState state)
+void WebOSCompositorWindow::setAppMirroringState(AppMirroringState state)
 {
-    if (m_mirrorState != state) {
-        m_mirrorState = state;
-        emit mirroringStateChanged();
+    if (m_appMirroringState != state) {
+        m_appMirroringState = state;
+        emit appMirroringStateChanged();
+
+        // Watch or unwatch appMirroringItem
+        switch (m_appMirroringState) {
+        case AppMirroringStateSender:
+        case AppMirroringStateReceiver:
+            connect(this, &WebOSCompositorWindow::appMirroringItemChanged, this, &WebOSCompositorWindow::onAppMirroringItemChanged);
+            break;
+        case AppMirroringStateInactive:
+            disconnect(this, &WebOSCompositorWindow::appMirroringItemChanged, this, &WebOSCompositorWindow::onAppMirroringItemChanged);
+            break;
+        }
     }
 }
 
-int WebOSCompositorWindow::startMirroring(int target)
+int WebOSCompositorWindow::startAppMirroring(int target)
 {
     WebOSCompositorWindow *tWindow = m_compositor->window(target);
     // No target window
     if (!tWindow)
         return -1;
 
-    WebOSSurfaceItem *source = fullscreenItem();
-    // No fullscreenItem
+    WebOSSurfaceItem *source = appMirroringItem();
+    // No appMirroringItem
     if (!source)
         return -1;
 
@@ -637,22 +646,22 @@ int WebOSCompositorWindow::startMirroring(int target)
     mirror->setAppId(source->appId());
     mirror->setType(source->type());
     // It is important to set the correct displayAffinity for the mirror item
-    // intended for display-to-display mirroring
+    // intended for App mirroring
     mirror->setDisplayAffinity(target);
 
     m_compositor->addSurfaceItem(mirror);
-    // This should be after mapItem considering fullscreenItemChanged
-    tWindow->setMirroringState(MirroringStateReceiver);
-    setMirroringState(MirroringStateSender);
+    // This should be after mapItem considering appMirroringItemChanged
+    tWindow->setAppMirroringState(AppMirroringStateReceiver);
+    setAppMirroringState(AppMirroringStateSender);
 
     return 0;
 }
 
-int WebOSCompositorWindow::stopMirroring(int targetId)
+int WebOSCompositorWindow::stopAppMirroring(int targetId)
 {
-    WebOSSurfaceItem *source = fullscreenItem();
+    WebOSSurfaceItem *source = appMirroringItem();
     if (!source) {
-        qWarning() << "stopMirroring failed, no source item";
+        qWarning() << "stopAppMirroring failed, no source item";
         return -1;
     }
 
@@ -664,65 +673,65 @@ int WebOSCompositorWindow::stopMirroring(int targetId)
         }
     }
     if (!mirror) {
-        qWarning() << "stopMirroring failed, no mirror item";
+        qWarning() << "stopAppMirroring failed, no mirror item";
         return -1;
     }
 
-    return stopMirroringInternal(source, mirror);
+    return stopAppMirroringInternal(source, mirror);
 }
 
-int WebOSCompositorWindow::stopMirroringToAll(WebOSSurfaceItem *source)
+int WebOSCompositorWindow::stopAppMirroringToAll(WebOSSurfaceItem *source)
 {
-    WebOSSurfaceItem *sItem = source ? source : fullscreenItem();
+    WebOSSurfaceItem *sItem = source ? source : appMirroringItem();
     if (!sItem) {
-        qWarning() << "stopMirroringToAll failed, no source item";
+        qWarning() << "stopAppMirroringToAll failed, no source item";
         return -1;
     }
 
-    // Need to iterate with a copy as stopMirroringInternal alters the list
+    // Need to iterate with a copy as stopAppMirroringInternal alters the list
     QVector<WebOSSurfaceItem *> mirrors(sItem->mirrorItems());
     foreach (WebOSSurfaceItem *mirror, mirrors)
-        stopMirroringInternal(sItem, mirror);
+        stopAppMirroringInternal(sItem, mirror);
 
     return 0;
 }
 
-int WebOSCompositorWindow::stopMirroringFromMirror(WebOSSurfaceItem *mirror)
+int WebOSCompositorWindow::stopAppMirroringFromMirror(WebOSSurfaceItem *mirror)
 {
     if (!mirror->mirrorSource()) {
-        qWarning() << "stopMirroringFromMirror failed, no source for given mirror item" << mirror;
+        qWarning() << "stopAppMirroringFromMirror failed, no source for given mirror item" << mirror;
         return -1;
     }
 
     WebOSCompositorWindow *sWindow = static_cast<WebOSCompositorWindow *>(mirror->mirrorSource()->window());
     if (!sWindow) {
-        qWarning() << "stopMirroringFromMirror failed, mirror source doesn't belong to any window" << mirror << mirror->mirrorSource();
+        qWarning() << "stopAppMirroringFromMirror failed, mirror source doesn't belong to any window" << mirror << mirror->mirrorSource();
         return -1;
     }
 
-    return sWindow->stopMirroringInternal(mirror->mirrorSource(), mirror);
+    return sWindow->stopAppMirroringInternal(mirror->mirrorSource(), mirror);
 }
 
-int WebOSCompositorWindow::stopMirroringInternal(WebOSSurfaceItem *source, WebOSSurfaceItem *mirror)
+int WebOSCompositorWindow::stopAppMirroringInternal(WebOSSurfaceItem *source, WebOSSurfaceItem *mirror)
 {
     // Disregard the case where the mirroring state is not set
-    // because stopMirroring should pair with startMirroring
-    if (m_mirrorState != MirroringStateSender)
+    // because stopAppMirroring should pair with startAppMirroring
+    if (m_appMirroringState != AppMirroringStateSender)
         return 0;
 
     WebOSCompositorWindow *tWindow = static_cast<WebOSCompositorWindow *>(mirror->window());
 
     // Check various error cases
     if (!tWindow) {
-        qWarning() << "stopMirroringInternal failed, no window for mirror item" << mirror;
+        qWarning() << "stopAppMirroringInternal failed, no window for mirror item" << mirror;
         return -1;
     }
     if (static_cast<WebOSCompositorWindow *>(source->window()) != this) {
-        qWarning() << "stopMirroringInternal failed, source" << source << "does not belong to" << this;
+        qWarning() << "stopAppMirroringInternal failed, source" << source << "does not belong to" << this;
         return -1;
     }
     if (source && !source->mirrorItems().contains(mirror)) {
-        qWarning() << "stopMirroringInternal failed, mirror item already removed from" << source;
+        qWarning() << "stopAppMirroringInternal failed, mirror item already removed from" << source;
         return -1;
     }
 
@@ -737,8 +746,8 @@ int WebOSCompositorWindow::stopMirroringInternal(WebOSSurfaceItem *source, WebOS
         }
     }
     if (turnedToInactive)
-        setMirroringState(MirroringStateInactive);
-    tWindow->setMirroringState(MirroringStateInactive);
+        setAppMirroringState(AppMirroringStateInactive);
+    tWindow->setAppMirroringState(AppMirroringStateInactive);
     m_compositor->removeSurfaceItem(mirror, true);
 
     return 0;

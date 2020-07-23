@@ -49,21 +49,20 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCompositorWindow : public QQuickView {
     Q_PROPERTY(bool outputGeometryPending READ outputGeometryPending WRITE setOutputGeometryPending NOTIFY outputGeometryPendingChanged)
     Q_PROPERTY(int outputGeometryPendingInterval READ outputGeometryPendingInterval WRITE setOutputGeometryPendingInterval NOTIFY outputGeometryPendingIntervalChanged)
     Q_PROPERTY(bool cursorVisible READ cursorVisible NOTIFY cursorVisibleChanged)
-    // Fullscreen item of each window
-    Q_PROPERTY(WebOSSurfaceItem *fullscreenItem READ fullscreenItem WRITE setFullscreenItem NOTIFY fullscreenItemChanged)
     Q_PROPERTY(QQuickItem *viewsRoot READ viewsRoot WRITE setViewsRoot NOTIFY viewsRootChanged)
-    // State for display-to-display mirroring
-    Q_PROPERTY(MirroringState mirroringState READ mirroringState NOTIFY mirroringStateChanged)
+    // State for App mirroring
+    Q_PROPERTY(AppMirroringState appMirroringState READ appMirroringState NOTIFY appMirroringStateChanged)
+    Q_PROPERTY(WebOSSurfaceItem *appMirroringItem READ appMirroringItem WRITE setAppMirroringItem NOTIFY appMirroringItemChanged)
     Q_PROPERTY(QPoint positionInCluster READ positionInCluster NOTIFY positionInClusterChanged)
 
 public:
-    enum MirroringState {
-        MirroringStateInactive = 1,
-        MirroringStateSender,
-        MirroringStateReceiver,
-        MirroringStateDisabled,
+    enum AppMirroringState {
+        AppMirroringStateInactive = 1,
+        AppMirroringStateSender,
+        AppMirroringStateReceiver,
+        AppMirroringStateDisabled,
     };
-    Q_ENUM(MirroringState);
+    Q_ENUM(AppMirroringState);
 
     WebOSCompositorWindow(QString screenName = QString(), QString geometryString = QString(), QSurfaceFormat *surfaceFormat = 0);
     virtual ~WebOSCompositorWindow();
@@ -108,17 +107,16 @@ public:
     QWaylandQuickOutput *output() { return m_output; }
     void setInputDevice(QWaylandSeat *device) { m_inputDevice = device; }
     QWaylandSeat *inputDevice() { return m_inputDevice; }
-    WebOSSurfaceItem *fullscreenItem();
-    void setFullscreenItem(WebOSSurfaceItem *item);
+    WebOSSurfaceItem *appMirroringItem();
+    void setAppMirroringItem(WebOSSurfaceItem *item);
 
-    // Methods for display-to-display mirroring
-    Q_INVOKABLE int startMirroring(int target);
-    Q_INVOKABLE int stopMirroring(int target);
-    Q_INVOKABLE int stopMirroringToAll(WebOSSurfaceItem *source = nullptr);
-    Q_INVOKABLE int stopMirroringFromMirror(WebOSSurfaceItem *mirror);
-    int stopMirroringInternal(WebOSSurfaceItem *source, WebOSSurfaceItem *mirror);
-    MirroringState mirroringState() const { return m_mirrorState; }
-    void setMirroringState(MirroringState state);
+    // Methods for App mirroring
+    Q_INVOKABLE int startAppMirroring(int target);
+    Q_INVOKABLE int stopAppMirroring(int target);
+    Q_INVOKABLE int stopAppMirroringToAll(WebOSSurfaceItem *source = nullptr);
+    Q_INVOKABLE int stopAppMirroringFromMirror(WebOSSurfaceItem *mirror);
+    AppMirroringState appMirroringState() const { return m_appMirroringState; }
+    void setAppMirroringState(AppMirroringState state);
 
     QPoint positionInCluster() const { return m_positionInCluster; }
     void setPositionInCluster(QPoint position);
@@ -134,6 +132,8 @@ public:
 private:
     void sendFrame();
 
+    int stopAppMirroringInternal(WebOSSurfaceItem *source, WebOSSurfaceItem *mirror);
+
 protected:
     virtual bool event(QEvent *) override;
 
@@ -146,8 +146,8 @@ signals:
 
     void cursorVisibleChanged();
     void viewsRootChanged();
-    void fullscreenItemChanged(WebOSSurfaceItem *);
-    void mirroringStateChanged();
+    void appMirroringItemChanged(WebOSSurfaceItem *);
+    void appMirroringStateChanged();
 
     void accessibleChanged(const bool enabled);
 
@@ -174,7 +174,7 @@ private:
 private slots:
     void onOutputGeometryDone();
     void onOutputGeometryPendingExpired();
-    void onFullscreenItemChanged(WebOSSurfaceItem *oldItem);
+    void onAppMirroringItemChanged(WebOSSurfaceItem *oldItem);
     void onQmlError(const QList<QQmlError> &errors);
 
 private:
@@ -208,8 +208,8 @@ private:
     QWaylandQuickOutput *m_output;
     QWaylandSeat *m_inputDevice;
     // auto clear on destroyed
-    QPointer<WebOSSurfaceItem> m_fullscreenItem;
-    MirroringState m_mirrorState = MirroringStateInactive;
+    QPointer<WebOSSurfaceItem> m_appMirroringItem;
+    AppMirroringState m_appMirroringState = AppMirroringStateInactive;
 
     QPoint m_positionInCluster;
 
