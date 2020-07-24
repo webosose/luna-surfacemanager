@@ -136,6 +136,7 @@ public:
 
     void addSurfaceItem(WebOSSurfaceItem *item);
     void removeSurfaceItem(WebOSSurfaceItem* item, bool emitSurfaceDestroyed);
+    void handleSurfaceUnmapped(WebOSSurfaceItem* item);
 
     //Notify which surface has pointer
     virtual void notifyPointerEnteredSurface(QWaylandSurface *surface);

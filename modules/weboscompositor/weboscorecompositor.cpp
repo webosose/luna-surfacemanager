@@ -582,10 +582,13 @@ void WebOSCoreCompositor::surfaceCreated(QWaylandSurface *surface) {
     WebOSSurfaceItem *item = new WebOSSurfaceItem(this, static_cast<QWaylandQuickSurface *>(surface));
 
     connect(surface, &QWaylandSurface::hasContentChanged, [this, surface, item] {
-        if (surface->hasContent())
+        if (surface->hasContent()) {
             this->onSurfaceMapped(surface, item);
-        else if (item->surface()) // Avoid onSurfaceUnmapped when the surface is about to be destroyed
+        } else if (item->surface() && !item->isBufferLocked()) {
+            // If the buffer is locked, surfaceUnmapped for that item should be
+            // handled later once the buffer gets unlocked (by handleSurfaceUnmapped)
             this->onSurfaceUnmapped(surface, item);
+        }
     });
 
     connect(surface, &QWaylandSurface::destroyed, [this, surface, item] {
@@ -649,6 +652,13 @@ void WebOSCoreCompositor::removeSurfaceItem(WebOSSurfaceItem* item, bool emitSur
         emit surfaceDestroyed(item);
     m_surfaces.removeOne(item);
     delete item;
+}
+
+void WebOSCoreCompositor::handleSurfaceUnmapped(WebOSSurfaceItem* item)
+{
+    qInfo() << "handling surfaceUnmapped for" << item << "upon request";
+    if (item)
+        onSurfaceUnmapped(item->surface(), item);
 }
 
 WebOSSurfaceItem* WebOSCoreCompositor::fullscreen() const

@@ -486,6 +486,9 @@ public:
     void setAddonFilter(const QJSValue &filter);
     bool acceptsAddon(const QString &newAddon);
 
+    Q_INVOKABLE void grabLastFrame();
+    Q_INVOKABLE void releaseLastFrame();
+
 public slots:
     void updateScreenPosition();
     void updateProperties(const QVariantMap &properties, const QString &name, const QVariant &value);
@@ -533,6 +536,7 @@ signals:
     void keyMaskChanged();
     void itemStateChanged();
     void itemAboutToBeDestroyed();
+    void itemAboutToBeHidden();
     void stateChanged();
     void notifyPositionToClientChanged();
     void exposedChanged();
@@ -571,6 +575,8 @@ protected:
 
     QWaylandSeat* getInputDevice(QInputEvent *event = nullptr) const;
     void takeFocus(QWaylandSeat *device = nullptr) override;
+
+    void surfaceChangedEvent(QWaylandSurface *newSurface, QWaylandSurface *oldSurface) override;
 
 private:
     // methods
@@ -630,6 +636,8 @@ private:
     bool m_imported = false;
     QWaylandView m_cursorView;
     QJSValue m_addonFilter;
+
+    QWaylandSurface *m_surfaceGrabbed = nullptr;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(WebOSSurfaceItem::WindowClass)

@@ -39,6 +39,7 @@
 #include <QtWaylandCompositor/qwaylandseat.h>
 #include <QtWaylandCompositor/private/qwaylandkeyboard_p.h>
 #include <QtWaylandCompositor/private/qwaylandpointer_p.h>
+#include <QtWaylandCompositor/private/qwaylandsurface_p.h>
 #include <QtWaylandCompositor/qwaylandbufferref.h>
 
 #include "weboscompositortracer.h"
@@ -80,6 +81,8 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
 
     if (surface) {
         connect(surface, SIGNAL(damaged(const QRegion &)), this, SLOT(onSurfaceDamaged(const QRegion &)));
+        connect(surface, &QWaylandSurface::aboutToBeDestroyed, this, &WebOSSurfaceItem::itemAboutToBeHidden);
+        connect(surface, &QWaylandSurface::nullBufferAttached, this, &WebOSSurfaceItem::itemAboutToBeHidden);
     }
 
     connect(this, &QQuickItem::xChanged, this, &WebOSSurfaceItem::updateScreenPosition);
@@ -113,6 +116,9 @@ WebOSSurfaceItem::~WebOSSurfaceItem()
 
     if (m_mirrorItems.size() > 0)
         qCritical() << "Zombie mirror items, should not happen";
+
+    if (m_surfaceGrabbed)
+        qCritical() << "m_surfaceGrabbed should be null at this point";
 }
 
 void WebOSSurfaceItem::setDisplayId(int id)
@@ -1361,4 +1367,44 @@ bool WebOSSurfaceItem::acceptsAddon(const QString &newAddon)
     qInfo() << (accepts ? "Accepted" : "Denied") << "addon" << newAddon;
 
     return accepts;
+}
+
+void WebOSSurfaceItem::grabLastFrame()
+{
+    if (surface()) {
+        qDebug() << "Grabbing surface for item" << this << "with its buffer locked";
+        setBufferLocked(true);
+        m_surfaceGrabbed = surface();
+        QWaylandSurfacePrivate::get(m_surfaceGrabbed)->ref();
+    } else {
+        qWarning() << "Attempting to grab the last frame of the item unsurfaced" << this;
+    }
+}
+
+void WebOSSurfaceItem::releaseLastFrame()
+{
+    if (m_surfaceGrabbed) {
+        qDebug() << "Releasing surface for item" << this;
+        setBufferLocked(false);
+        m_compositor->handleSurfaceUnmapped(this);
+        QWaylandSurface *s = m_surfaceGrabbed;
+        m_surfaceGrabbed = nullptr;
+        // Make sure nothing to be done for the surface item from this point
+        // since dereferencing of the surface would lead this item to be destroyed
+        // if refCount of the surface becomes 0
+        QWaylandSurfacePrivate::get(s)->deref();
+    } else {
+        qWarning() << "No surface grabbed and thus nothing to release for" << this;
+    }
+}
+
+void WebOSSurfaceItem::surfaceChangedEvent(QWaylandSurface *newSurface, QWaylandSurface *oldSurface)
+{
+    if (m_surfaceGrabbed && m_surfaceGrabbed == oldSurface) {
+        qDebug() << "Change m_surfaceGrabbed" << m_surfaceGrabbed << "to newSurface" << newSurface;
+        QWaylandSurfacePrivate::get(m_surfaceGrabbed)->deref();
+        m_surfaceGrabbed = newSurface;
+    }
+
+    QWaylandQuickItem::surfaceChangedEvent(newSurface, oldSurface);
 }
