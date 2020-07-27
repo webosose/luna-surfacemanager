@@ -730,7 +730,7 @@ int WebOSCompositorWindow::stopAppMirroringInternal(WebOSSurfaceItem *source, We
         qWarning() << "stopAppMirroringInternal failed, source" << source << "does not belong to" << this;
         return -1;
     }
-    if (source && !source->mirrorItems().contains(mirror)) {
+    if (!source->mirrorItems().contains(mirror)) {
         qWarning() << "stopAppMirroringInternal failed, mirror item already removed from" << source;
         return -1;
     }
