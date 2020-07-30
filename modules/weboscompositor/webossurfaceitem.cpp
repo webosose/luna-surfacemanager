@@ -231,10 +231,10 @@ void WebOSSurfaceItem::mouseMoveEvent(QMouseEvent * event)
 
 void WebOSSurfaceItem::mousePressEvent(QMouseEvent *event)
 {
-    WebOSMouseEvent e(event->type(), event->localPos().toPoint(),
-                  event->button(), event->buttons(), event->modifiers(), window());
-
     if (surface()) {
+        WebOSMouseEvent e(event->type(), event->localPos().toPoint(),
+                      event->button(), event->buttons(), event->modifiers(), window());
+
         WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
 #ifdef MULTIINPUT_SUPPORT
         QWaylandSeat *inputDevice = getInputDevice(&e);
@@ -256,11 +256,13 @@ void WebOSSurfaceItem::mousePressEvent(QMouseEvent *event)
             }
 
             if (!w->accessible()) {
+                // Send extra mouse move event as otherwise the client
+                // will handle the button event in the incorrect coordinate
+                // in case the surface size is changed.
+                mouseMoveEvent(&e);
                 inputDevice->sendMousePressEvent(e.button());
             } else {
                 // In accessibility mode there should be no extra mouse move event sent.
-                // That is why we call another version of sendMousePressEvent here
-                // which sends a button event only.
                 inputDevice->setMouseFocus(view());
                 inputDevice->sendMousePressEvent(e.button());
             }
@@ -272,23 +274,31 @@ void WebOSSurfaceItem::mousePressEvent(QMouseEvent *event)
 
 void WebOSSurfaceItem::mouseReleaseEvent(QMouseEvent *event)
 {
-    WebOSMouseEvent e(event->type(), event->localPos().toPoint(),
-                  event->button(), event->buttons(), event->modifiers(), window());
+    if (surface()) {
+        WebOSMouseEvent e(event->type(), event->localPos().toPoint(),
+                      event->button(), event->buttons(), event->modifiers(), window());
 
-    WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
-
-    if (!w->accessible()) {
-        QWaylandQuickItem::mouseReleaseEvent(&e);
-    } else {
-        // In accessibility mode there should be no extra mouse move event sent.
-        // That is why we call another version of sendMousePressEvent here
-        // which sends a button event only.
+        WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
+#ifdef MULTIINPUT_SUPPORT
+        QWaylandSeat *inputDevice = getInputDevice(&e);
+#else
         QWaylandSeat *inputDevice = w->inputDevice();
-        if (inputDevice) {
-            inputDevice->setMouseFocus(view());
-            inputDevice->sendMouseReleaseEvent(e.button());
+#endif
+
+        if (!w->accessible()) {
+            // Send extra mouse move event as otherwise the client
+            // will handle the button event in the incorrect coordinate
+            // in case the surface size is changed.
+            mouseMoveEvent(&e);
+            QWaylandQuickItem::mouseReleaseEvent(&e);
         } else {
-            qWarning() << "no input device for this event";
+            // In accessibility mode there should be no extra mouse move event sent.
+            if (inputDevice) {
+                inputDevice->setMouseFocus(view());
+                inputDevice->sendMouseReleaseEvent(e.button());
+            } else {
+                qWarning() << "no input device for this event";
+            }
         }
     }
 }
@@ -307,6 +317,12 @@ void WebOSSurfaceItem::wheelEvent(QWheelEvent *event)
 #endif
         if (inputDevice && inputDevice->mouseFocus() != view())
             inputDevice->setMouseFocus(view());
+
+        // Send extra mouse move event as otherwise the client
+        // will handle the wheel event in the incorrect coordinate
+        // in case the surface size is changed.
+        QMouseEvent ee(QEvent::MouseMove, event->pos(), Qt::NoButton, Qt::NoButton, event->modifiers());
+        mouseMoveEvent(&ee);
     }
 
     QWaylandQuickItem::wheelEvent(&e);
