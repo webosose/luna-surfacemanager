@@ -84,6 +84,10 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
 
     connect(this, &QQuickItem::xChanged, this, &WebOSSurfaceItem::updateScreenPosition);
     connect(this, &QQuickItem::yChanged, this, &WebOSSurfaceItem::updateScreenPosition);
+    // Send position_changed whenever the surface resizes
+    // so that the client gets notified that the resize is done
+    connect(this, &QQuickItem::widthChanged, this, &WebOSSurfaceItem::updateScreenPosition);
+    connect(this, &QQuickItem::heightChanged, this, &WebOSSurfaceItem::updateScreenPosition);
     // Set the ownership as CppOwnership explicitly to prevent from garbage collecting by JS engine
     QQmlEngine::setObjectOwnership((QObject*)this, QQmlEngine::CppOwnership);
 
