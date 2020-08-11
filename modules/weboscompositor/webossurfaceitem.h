@@ -532,7 +532,7 @@ signals:
     void locationHintChanged();
     void keyMaskChanged();
     void itemStateChanged();
-    void surfaceAboutToBeDestroyed();
+    void itemAboutToBeDestroyed();
     void stateChanged();
     void notifyPositionToClientChanged();
     void exposedChanged();

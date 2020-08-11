@@ -684,17 +684,6 @@ void WebOSCoreCompositor::setFullscreen(WebOSSurfaceItem* item)
     }
 }
 
-void WebOSCoreCompositor::surfaceAboutToBeDestroyed(QWaylandSurface *s)
-{
-    PMTRACE_FUNCTION;
-    QWaylandQuickSurface* surface = qobject_cast<QWaylandQuickSurface *>(s);
-    // NOTE: Some surface is not QWaylandQuickSurface (e.g. Cursor), we still need more attention in that case.
-    if (surface && surface->surfaceItem()) {
-        WebOSSurfaceItem* item = qobject_cast<WebOSSurfaceItem *>(surface->surfaceItem());
-        emit surfaceAboutToBeDestroyed(item);
-    }
-}
-
 void WebOSCoreCompositor::closeWindow(QVariant window, QJSValue payload)
 {
     PMTRACE_FUNCTION;

@@ -71,11 +71,11 @@ void WebOSSurfaceItemMirror::setSourceItem(WebOSSurfaceItem *sourceItem)
                     if (m_mirrorItem)
                         m_mirrorItem->setHeight(height());
                 });
-                m_sourceDestroyedConnection = connect(sourceItem, &WebOSSurfaceItem::surfaceAboutToBeDestroyed, [this]() {
+                m_sourceDestroyedConnection = connect(sourceItem, &WebOSSurfaceItem::itemAboutToBeDestroyed, [this]() {
                     qDebug() << "Source(" << m_sourceItem << ")'s surface is about to be destroyed";
                     setSourceItem(nullptr);
                 });
-                m_mirrorDestroyedConnection = connect(m_mirrorItem, &WebOSSurfaceItem::surfaceAboutToBeDestroyed, [this]() {
+                m_mirrorDestroyedConnection = connect(m_mirrorItem, &WebOSSurfaceItem::itemAboutToBeDestroyed, [this]() {
                     qDebug() << "Mirror(" << m_mirrorItem << ")'s surface is about to be destroyed";
                     m_mirrorItem = nullptr;
                 });

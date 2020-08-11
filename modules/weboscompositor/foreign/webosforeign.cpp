@@ -257,7 +257,7 @@ WebOSExported::WebOSExported(
     connect(m_surfaceItem, &QWaylandQuickItem::widthChanged, this, &WebOSExported::calculateExportedItemRatio);
     connect(m_surfaceItem, &QWaylandQuickItem::widthChanged, this, &WebOSExported::calculateVideoDispRatio);
     connect(m_surfaceItem, &QWaylandQuickItem::surfaceDestroyed, this, &WebOSExported::onSurfaceDestroyed);
-    connect(m_surfaceItem, &WebOSSurfaceItem::surfaceAboutToBeDestroyed, this, &WebOSExported::onSurfaceDestroyed);
+    connect(m_surfaceItem, &WebOSSurfaceItem::itemAboutToBeDestroyed, this, &WebOSExported::onSurfaceDestroyed);
 
     calculateVideoDispRatio();
     calculateExportedItemRatio();

@@ -108,7 +108,7 @@ void WebOSSurfaceGroup::webos_surface_group_attach_anonymous(Resource *resource,
         if (item) {
             static_cast<QWaylandQuickSurface *>(item->surface())->setUseTextureAlpha(true);
             qInfo("Attaching anonymous wl_surface@%d, to group '%s'", surface->object.id, qPrintable(m_name));
-            connect(item, SIGNAL(surfaceAboutToBeDestroyed()), this, SLOT(removeSurfaceItem()));
+            connect(item, SIGNAL(itemAboutToBeDestroyed()), this, SLOT(removeSurfaceItem()));
             QSharedPointer<QObject> li = QSharedPointer<QObject>(new QObject);
             li->setProperty("z", z_hint);
             li->setProperty("hint", true);
@@ -178,7 +178,7 @@ void WebOSSurfaceGroup::webos_surface_group_attach(Resource *resource, struct ::
         } else {
             static_cast<QWaylandQuickSurface *>(item->surface())->setUseTextureAlpha(true);
             qInfo("Attaching wl_surface@%d to %s:%s", surface->object.id, qPrintable(m_name), qPrintable(layer_name));
-            connect(item, SIGNAL(surfaceAboutToBeDestroyed()), this, SLOT(removeSurfaceItem()));
+            connect(item, SIGNAL(itemAboutToBeDestroyed()), this, SLOT(removeSurfaceItem()));
             addZOrderedSurfaceLayoutInfoList(item, l->layoutInfo());
             l->attach(item);
             item->setSurfaceGroup(this);

@@ -109,8 +109,6 @@ public:
 
     WebOSKeyFilter* keyFilter() { return m_keyFilter; }
 
-    void surfaceAboutToBeDestroyed(QWaylandSurface *surface);
-
     void setAcquired(bool);
     // Override QWaylandCompositor. This will be called from Wayland::Compositor
     void directRenderingActivated(bool);
@@ -218,7 +216,6 @@ signals:
     void inputPanelDismissed();
     void surfaceMapped(WebOSSurfaceItem* item);
     void surfaceUnmapped(WebOSSurfaceItem* item);
-    void surfaceAboutToBeDestroyed(WebOSSurfaceItem* item);
     void surfaceDestroyed(WebOSSurfaceItem* item);
     void minimizeRequested(WebOSSurfaceItem* item);
     void fullscreenRequested(WebOSSurfaceItem* item);

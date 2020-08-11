@@ -102,7 +102,7 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
 
 WebOSSurfaceItem::~WebOSSurfaceItem()
 {
-    emit surfaceAboutToBeDestroyed();
+    emit itemAboutToBeDestroyed();
 
     sendCloseToGroupItems();
     if (isSurfaceGroupRoot())
