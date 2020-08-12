@@ -30,6 +30,8 @@ FocusableView {
     property bool focusOnSurface: true
     property Item currentItem
     property Item newItem
+    property bool keepLastFrame: false
+    property Item itemToBeHidden
 
     property SequentialAnimation swapAnimation
 
@@ -159,6 +161,29 @@ FocusableView {
                 root.currentItem.takeFocus();
             else
                 console.warn("focusOnSurface is unset, skip setting focus on the current surface");
+        }
+    }
+
+    Connections {
+        target: root.currentItem
+        onItemAboutToBeHidden: {
+            console.log("Item " + currentItem + " in " + root + " is about to be hidden");
+            if (root.currentItem && root.keepLastFrame) {
+                console.info("Keep last frame of item " + currentItem + " until " + root + " is closed completely");
+                root.currentItem.grabLastFrame();
+                root.itemToBeHidden = root.currentItem;
+            }
+            // Trigger closeAnimation
+            root.closeView();
+        }
+    }
+
+    onClosed: {
+        console.log("SurfaceView " + root + " is closed");
+        if (root.itemToBeHidden) {
+            console.info("Release last frame of item " + currentItem + " from " + root);
+            root.itemToBeHidden.releaseLastFrame();
+            root.itemToBeHidden = null;
         }
     }
 }
