@@ -27,6 +27,7 @@ BaseView {
     property bool allowed: root.access
     property bool reopenInProgress: false
     property bool needToReopen: false
+    property Item itemToBeHidden: null
 
     property QtObject inputMethod: QtObject {
         // Default values that deliberately prevent the view working
@@ -90,25 +91,6 @@ BaseView {
                 root.reopenView();
             else
                 root.needToReopen = true;
-        }
-    }
-
-    ShaderEffectSource {
-        id: keyboardBacked
-        anchors.fill: keyboardArea
-
-        function activate() {
-            sourceItem = keyboardArea
-            live = true;
-        }
-
-        function freeze() {
-            live = false;
-        }
-
-        function release() {
-            live = true;
-            sourceItem = null;
         }
     }
 
@@ -200,16 +182,28 @@ BaseView {
         }
     }
 
-    onOpened: {
-        keyboardBacked.activate();
-    }
-
-    onClosing: {
-        keyboardBacked.freeze();
+    Connections {
+        target: root.currentItem
+        onItemAboutToBeHidden: {
+            console.log("Item " + currentItem + " in " + root + " is about to be hidden");
+            if (root.currentItem) {
+                console.info("Keep last frame of item " + currentItem + " until " + root + " is closed completely");
+                root.currentItem.grabLastFrame();
+                root.itemToBeHidden = root.currentItem;
+            }
+            // Trigger closeAnimation
+            root.closeView();
+        }
     }
 
     onClosed: {
-        keyboardBacked.release();
+        console.log("KeyboardView " + root + " is closed");
+        if (root.itemToBeHidden) {
+            console.info("Release last frame of item " + currentItem + " from " + root);
+            root.itemToBeHidden.releaseLastFrame();
+            root.itemToBeHidden = null;
+        }
+
         if (root.reopenInProgress) {
             root.reopenInProgress = false;
             if (inputMethod.active)
