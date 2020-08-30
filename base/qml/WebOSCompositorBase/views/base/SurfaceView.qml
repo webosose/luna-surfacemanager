@@ -172,9 +172,9 @@ FocusableView {
                 console.info("Keep last frame of item " + currentItem + " until " + root + " is closed completely");
                 root.currentItem.grabLastFrame();
                 root.itemToBeHidden = root.currentItem;
+                // Trigger closeAnimation
+                root.closeView();
             }
-            // Trigger closeAnimation
-            root.closeView();
         }
     }
 
