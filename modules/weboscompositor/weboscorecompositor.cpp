@@ -475,24 +475,53 @@ WebOSCompositorWindow *WebOSCoreCompositor::window(int displayId)
 
 void WebOSCoreCompositor::updateWindowPositionInCluster()
 {
-    QJsonArray displayCluster = WebOSCompositorConfig::instance()->displayCluster().array();
-    QPoint positionInCluster;
-    for (int r = 0; r < displayCluster.size(); r++) {
-        int maxHeight = 0;
-        positionInCluster.setX(0);
-        QJsonArray row = displayCluster[r].toArray();
-        for (int c = 0; c < row.size(); c++) {
-            foreach (WebOSCompositorWindow *w, m_windows) {
-                if (w->displayName() == row[c].toString()) {
-                    w->setPositionInCluster(positionInCluster);
-                    positionInCluster.rx() += w->outputGeometry().width();
-                    maxHeight = qMax(maxHeight, w->outputGeometry().height());
-                    break;
+    m_clusters.clear();
+
+    QJsonObject displayCluster = WebOSCompositorConfig::instance()->displayCluster().object();
+    for (const auto &cluster: displayCluster.keys()) {
+        QPoint positionInCluster;
+        QJsonArray row = displayCluster[cluster].toArray();
+        for (int r = 0; r < row.size(); r++) {
+            int maxHeight = 0;
+            positionInCluster.setX(0);
+            QJsonArray col = row[r].toArray();
+            for (int c = 0; c < col.size(); c++) {
+                foreach (WebOSCompositorWindow *w, m_windows) {
+                    if (w->displayName() == col[c].toString()) {
+                        w->setPositionInCluster(positionInCluster);
+                        positionInCluster.rx() += w->outputGeometry().width();
+                        maxHeight = qMax(maxHeight, w->outputGeometry().height());
+
+                        // Update cluster size
+                        if (m_clusters[cluster].indexOf(w) == -1)
+                            m_clusters[cluster] << w;
+                        int clusterWidth = qMax(w->clusterSize().width(), w->positionInCluster().x() + w->outputGeometry().width());
+                        int clusterHeight = qMax(w->clusterSize().height(), w->positionInCluster().y() + w->outputGeometry().height());
+                        for (auto &cw : m_clusters[cluster]) {
+                            cw->setClusterName(cluster);
+                            cw->setClusterSize(QSize(clusterWidth, clusterHeight));
+                        }
+                        break;
+                    }
                 }
             }
+            positionInCluster.ry() += maxHeight;
         }
-        positionInCluster.ry() += maxHeight;
     }
+
+    qDebug() << "Display cluster configuration:" << m_clusters;
+}
+
+QList<QObject *> WebOSCoreCompositor::windowsInCluster(QString clusterName)
+{
+    QList<QObject *> windows;
+    if (clusterName.isEmpty() || m_clusters.size() == 0 || !m_clusters.contains(clusterName))
+        return windows;
+
+    for (const auto &w: m_clusters[clusterName])
+        windows << w;
+
+    return windows;
 }
 
 void WebOSCoreCompositor::onSurfaceUnmapped(QWaylandSurface *surface, WebOSSurfaceItem* item) {

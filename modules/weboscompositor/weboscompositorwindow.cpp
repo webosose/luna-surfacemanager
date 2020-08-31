@@ -781,10 +781,28 @@ int WebOSCompositorWindow::stopAppMirroringInternal(WebOSSurfaceItem *source, We
     return 0;
 }
 
+void WebOSCompositorWindow::setClusterName(QString name)
+{
+    if (name != m_clusterName) {
+        qDebug() << "Cluster name change for" << this << ":" << m_clusterName << "->" << name;
+        m_clusterName = name;
+        emit clusterNameChanged();
+    }
+}
+
+void WebOSCompositorWindow::setClusterSize(QSize size)
+{
+    if (size != m_clusterSize) {
+        qDebug() << "Cluster size change for" << this << ":" << m_clusterSize << "->" << size;
+        m_clusterSize = size;
+        emit clusterSizeChanged();
+    }
+}
+
 void WebOSCompositorWindow::setPositionInCluster(QPoint position)
 {
     if (position != m_positionInCluster) {
-        qDebug() << "Position in cluster change for" << this << ":" << position << "->" << m_positionInCluster;
+        qDebug() << "Position in cluster change for" << this << ":" << m_positionInCluster << "->" << position;
         m_positionInCluster = position;
         emit positionInClusterChanged();
     }

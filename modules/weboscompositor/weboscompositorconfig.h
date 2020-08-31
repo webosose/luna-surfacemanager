@@ -84,22 +84,29 @@ public:
     QString importPath() const { return m_importPath; }
 
     // Display cluster
-    // 2-dimensional array with display names.
+    // Cluster name and 2-dimensional array with display names.
+    // Multiple clusters can be described with cluster names.
     // It is assumed that the displays are placed in 2-d matrix and adjacent each other.
     // eg.
-    // [
-    //     ["disp1", "disp2"],
-    //     ["disp3", "disp4"]
-    // ]
-    // [
-    //     ["disp1", "disp2", "disp3", "disp4"]
-    // ]
-    // [
-    //     ["disp1"],
-    //     ["disp2"],
-    //     ["disp3"],
-    //     ["disp4"]
-    // ]
+    // {
+    //     "Cluster": [["disp1", "disp2"],
+    //                 ["disp3", "disp4"]]
+    // }
+    // {
+    //     "Cluster": [["disp1", "disp2", "disp3", "disp4"]]
+    // }
+    // {
+    //     "Cluster":
+    //         [["disp1"],
+    //          ["disp2"],
+    //          ["disp3"],
+    //          ["disp4"]]
+    // }
+    // {
+    //     "Cluster0": [["disp1", "disp2"]],
+    //     "Cluster1": [["disp3"],
+    //                  ["disp4"]]
+    // }
     QJsonDocument displayCluster() const { return m_displayCluster; }
 
     // Hide cursor if set to 1

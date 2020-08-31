@@ -53,6 +53,8 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCompositorWindow : public QQuickView {
     // State for App mirroring
     Q_PROPERTY(AppMirroringState appMirroringState READ appMirroringState NOTIFY appMirroringStateChanged)
     Q_PROPERTY(WebOSSurfaceItem *appMirroringItem READ appMirroringItem WRITE setAppMirroringItem NOTIFY appMirroringItemChanged)
+    Q_PROPERTY(QString clusterName READ clusterName NOTIFY clusterNameChanged)
+    Q_PROPERTY(QSize clusterSize READ clusterSize NOTIFY clusterSizeChanged)
     Q_PROPERTY(QPoint positionInCluster READ positionInCluster NOTIFY positionInClusterChanged)
 
 public:
@@ -118,6 +120,10 @@ public:
     AppMirroringState appMirroringState() const { return m_appMirroringState; }
     void setAppMirroringState(AppMirroringState state);
 
+    QString clusterName() const { return m_clusterName; }
+    void setClusterName(QString name);
+    QSize clusterSize() const { return m_clusterSize; }
+    void setClusterSize(QSize size);
     QPoint positionInCluster() const { return m_positionInCluster; }
     void setPositionInCluster(QPoint position);
 
@@ -154,6 +160,8 @@ signals:
 
     void accessibleChanged(const bool enabled);
 
+    void clusterNameChanged();
+    void clusterSizeChanged();
     void positionInClusterChanged();
 
     void pageFlipped();
@@ -220,6 +228,8 @@ private:
     QPointer<WebOSSurfaceItem> m_appMirroringItem;
     AppMirroringState m_appMirroringState = AppMirroringStateInactive;
 
+    QString m_clusterName;
+    QSize m_clusterSize;
     QPoint m_positionInCluster;
 
     qreal m_vsyncInterval = 1.0 / 60 * 1000;

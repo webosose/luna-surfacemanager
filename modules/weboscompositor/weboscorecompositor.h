@@ -188,6 +188,7 @@ public:
 
     QList<QObject *> windows() const;
     WebOSCompositorWindow *window(int displayId);
+    Q_INVOKABLE QList<QObject *> windowsInCluster(QString clusterName);
     void updateWindowPositionInCluster();
 
     bool loaded() const { return m_loaded; }
@@ -342,6 +343,7 @@ private:
     bool m_loaded;
     bool m_respawned;
     QRect m_outputGeometry;
+    QMap<QString, QVector<WebOSCompositorWindow *>> m_clusters;
 };
 
 #endif // WEBOSCORECOMPOSITOR_H
