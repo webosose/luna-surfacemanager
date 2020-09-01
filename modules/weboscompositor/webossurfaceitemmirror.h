@@ -26,6 +26,8 @@ class WebOSSurfaceItemMirror : public QQuickItem
 {
     Q_OBJECT
     Q_PROPERTY(WebOSSurfaceItem *sourceItem READ sourceItem WRITE setSourceItem NOTIFY sourceItemChanged)
+    Q_PROPERTY(bool clustered READ clustered WRITE setClustered NOTIFY clusteredChanged)
+    Q_PROPERTY(bool propagateEvents READ propagateEvents WRITE setPropagateEvents NOTIFY propagateEventsChanged)
 
 public:
     WebOSSurfaceItemMirror();
@@ -34,12 +36,37 @@ public:
     WebOSSurfaceItem *sourceItem() { return m_sourceItem; }
     void setSourceItem(WebOSSurfaceItem *sourceItem);
 
+    bool clustered() { return m_clustered; }
+    void setClustered(bool clustered);
+
+    bool propagateEvents() { return m_propagateEvents; }
+    void setPropagateEvents(bool propagateEvents);
+
 signals:
     void sourceItemChanged();
+    void clusteredChanged();
+    void propagateEventsChanged();
+
+protected:
+    virtual void hoverMoveEvent(QHoverEvent *event) override;
+    virtual void hoverEnterEvent(QHoverEvent *event) override;
+    virtual void hoverLeaveEvent(QHoverEvent *event) override;
+    virtual void keyPressEvent(QKeyEvent *event) override;
+    virtual void keyReleaseEvent(QKeyEvent *event) override;
+    virtual void mouseMoveEvent(QMouseEvent *event) override;
+    virtual void mousePressEvent(QMouseEvent *event) override;
+    virtual void mouseReleaseEvent(QMouseEvent *event) override;
+    virtual void wheelEvent(QWheelEvent *event) override;
+    virtual void touchEvent(QTouchEvent *event) override;
 
 private:
+    bool needToPropagate(QEvent *event);
+    QPointF translatePoint(QPointF point);
+
     WebOSSurfaceItem *m_mirrorItem = nullptr;
     WebOSSurfaceItem *m_sourceItem = nullptr;
+    bool m_clustered = false;
+    bool m_propagateEvents = false;
 
     QMetaObject::Connection m_widthChangedConnection;
     QMetaObject::Connection m_heightChangedConnection;
