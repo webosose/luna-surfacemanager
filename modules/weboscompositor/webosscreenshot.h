@@ -82,7 +82,7 @@ protected:
     QQuickWindow* m_window;
 
 private:
-    bool isWritablePath(const QString path);
+    bool isValidPath(const QString& path) const;
 
 private slots:
     void unsetTarget();

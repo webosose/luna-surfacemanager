@@ -51,7 +51,7 @@ WebOSScreenShot::ScreenShotErrors WebOSScreenShot::take()
         return INVALID_ACTIVE_WINDOW;
     }
 
-    if (!isWritablePath(m_path)) {
+    if (!isValidPath(m_path)) {
         emit screenShotError(INVALID_PATH);
         return INVALID_PATH;
     }
@@ -120,9 +120,8 @@ void WebOSScreenShot::setTarget(WebOSSurfaceItem* target)
 
 void WebOSScreenShot::setPath(const QString& path)
 {
-    QFileInfo fileInfo(path);
-    if (fileInfo.absoluteFilePath() != m_path) {
-        m_path = fileInfo.absoluteFilePath();
+    if (path != m_path) {
+        m_path = path;
         emit pathChanged();
     }
 }
@@ -143,15 +142,22 @@ void WebOSScreenShot::setWindow(QQuickWindow* window)
     }
 }
 
-bool WebOSScreenShot::isWritablePath(const QString path)
+bool WebOSScreenShot::isValidPath(const QString& path) const
 {
+    if (path.isEmpty())
+        return false;
+
     QFileInfo pathFileInfo(path);
+
+    if (!pathFileInfo.isAbsolute())
+        return false;
+
     QFileInfo dirFileInfo(pathFileInfo.absoluteDir().path());
 
-    if (!path.isEmpty() && dirFileInfo.exists() && dirFileInfo.permission(QFile::WriteUser))
-        return true;
-    else
+    if (!dirFileInfo.exists() || !dirFileInfo.permission(QFile::WriteUser))
         return false;
+
+    return true;
 }
 
 ScreenShotTask::ScreenShotTask(WebOSScreenShot* source, QImage* destination)
