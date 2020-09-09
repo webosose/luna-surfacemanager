@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2020 LG Electronics, Inc.
+// Copyright (c) 2017-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ Item {
 
     Connections {
         target: views.fullscreen
-        onSurfaceAdded: {
+        function onSurfaceAdded(item) {
             if (views.spinner)
                 views.spinner.closeView();
             if (views.keyboard)
@@ -51,7 +51,7 @@ Item {
 
     Connections {
         target: views.overlay
-        onSurfaceAdded: {
+        function onSurfaceAdded(item) {
             if (views.spinner)
                 views.spinner.closeView();
             if (views.keyboard)
@@ -67,7 +67,7 @@ Item {
 
     Connections {
         target: views.launcher
-        onOpening: {
+        function onOpening() {
             if (views.spinner)
                 views.spinner.closeView();
             if (views.keyboard)
@@ -83,7 +83,7 @@ Item {
 
     Connections {
         target: views.popup
-        onSurfaceAdded: {
+        function onSurfaceAdded(item) {
             if (views.spinner)
                 views.spinner.closeView();
             if (views.keyboard)
@@ -95,7 +95,7 @@ Item {
 
     Connections {
         target: views.spinner
-        onOpening: {
+        function onOpening() {
             if (views.keyboard)
                 views.keyboard.closeView();
             if (views.popup)
@@ -109,7 +109,7 @@ Item {
 
     Connections {
         target: views.launcherHotspot
-        onTriggered: {
+        function onTriggered() {
             if (views.launcher)
                 views.launcher.openView();
         }
@@ -117,7 +117,7 @@ Item {
 
     Connections {
         target: LS.applicationManager
-        onAppLifeEventsChanged: {
+        function onAppLifeEventsChanged(appId, event, title, showSpinner, showSplash, splashBackground) {
             console.info(event, appId);
             // TODO: PLAT-85443
             // Use spinner only for the primary window for now.
@@ -153,7 +153,7 @@ Item {
 
     Connections {
         target: keyController
-        onHomePressed: {
+        function onHomePressed() {
             if (views.notification && views.notification.active)
                 views.notification.closeView();
             else if (views.launcher && !(views.notification && views.notification.modal))
@@ -163,7 +163,7 @@ Item {
 
     Connections {
         target: Settings.system
-        onScreenRotationChanged: {
+        function onScreenRotationChanged() {
             if (Settings.system.screenRotation == "off")
                 compositorWindow.updateOutputGeometry(0);
             else if (Settings.system.screenRotation == "90")

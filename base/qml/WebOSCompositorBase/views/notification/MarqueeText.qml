@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 LG Electronics, Inc.
+// Copyright (c) 2014-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -102,10 +102,18 @@ Item {
 
     Connections {
         target: root
-        onWidthChanged: forceUpdateStates();
-        onTextChanged: forceUpdateStates();
-        onFontChanged: forceUpdateStates();
-        onMarqueeEnabledChanged: forceUpdateStates();
+        function onWidthChanged() {
+            forceUpdateStates();
+        }
+        function onTextChanged() {
+            forceUpdateStates();
+        }
+        function onFontChanged() {
+            forceUpdateStates();
+        }
+        function onMarqueeEnabledChanged() {
+            forceUpdateStates();
+        }
     }
 
     onMarqueeSpeedChanged: forceUpdateStates();
@@ -272,7 +280,7 @@ Item {
 
     Connections {
         target: root
-        onTextChanged: {
+        function onTextChanged() {
             if (root.state != "normal")
                 root.state = "floating_init";
         }

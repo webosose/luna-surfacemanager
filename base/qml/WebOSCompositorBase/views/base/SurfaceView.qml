@@ -67,7 +67,7 @@ FocusableView {
     Connections {
         target: model
 
-        onSurfaceAdded: {
+        function onSurfaceAdded(item) {
             console.log("Adding item " + item + " to " + root);
 
             // Fast-forward any on-going animations
@@ -101,7 +101,7 @@ FocusableView {
             }
         }
 
-        onSurfaceRemoved: {
+        function onSurfaceRemoved(item) {
             console.log("Removing item " + item + " from " + root);
             root.surfaceRemoved(item);
             root.contentChanged();
@@ -113,7 +113,7 @@ FocusableView {
 
     Connections {
         target: root.swapAnimation
-        onStopped: {
+        function onStopped() {
             console.log("Finished swapAnimation finished in " + root + ", currentItem: " + root.currentItem + ", newItem: " + root.newItem);
             root.handleSurfaceAdded();
         }
@@ -170,7 +170,7 @@ FocusableView {
 
     Connections {
         target: root.currentItem
-        onItemAboutToBeHidden: {
+        function onItemAboutToBeHidden() {
             console.log("Item " + currentItem + " in " + root + " is about to be hidden");
             if (root.currentItem && root.keepLastFrame) {
                 console.info("Keep last frame of item " + currentItem + " until " + root + " is closed completely");
@@ -184,7 +184,7 @@ FocusableView {
 
     Connections {
         target: compositor
-        onSurfaceMapped: {
+        function onSurfaceMapped(item) {
             if (root.itemToBeHidden && root.itemToBeHidden == item) {
                 console.info("Abort closing item " + root.itemToBeHidden + " from " + root);
                 root.itemToBeHidden.releaseLastFrame();

@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2020 LG Electronics, Inc.
+// Copyright (c) 2014-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -63,7 +63,9 @@ Item {
 
             Connections {
                target: resourceMonitorId.item
-               onSelected: debugWindowId.requestTopItem(resourceMonitorId.item);
+               function onSelected() {
+                   debugWindowId.requestTopItem(resourceMonitorId.item);
+               }
             }
         }
 
@@ -79,7 +81,9 @@ Item {
 
             Connections {
                target: logConsoleId.item
-               onSelected: debugWindowId.requestTopItem(logConsoleId.item);
+               function onSelected() {
+                   debugWindowId.requestTopItem(logConsoleId.item);
+               }
             }
         }
 
@@ -95,7 +99,9 @@ Item {
 
             Connections {
                target: focusConsoleId.item
-               onSelected: debugWindowId.requestTopItem(focusConsoleId.item);
+               function onSelected() {
+                   debugWindowId.requestTopItem(focusConsoleId.item);
+               }
             }
         }
 
@@ -111,7 +117,9 @@ Item {
 
             Connections {
                target: surfaceConsoleId.item
-               onSelected: debugWindowId.requestTopItem(surfaceConsoleId.item);
+               function onSelected() {
+                   debugWindowId.requestTopItem(surfaceConsoleId.item);
+               }
             }
         }
 

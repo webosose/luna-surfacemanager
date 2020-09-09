@@ -132,7 +132,7 @@ WebOSWindow {
 
     Connections {
         target: root
-        onAddonStatusChanged: {
+        function onAddonStatusChanged() {
             console.warn(status);
             var text = "addon: " + root.addon + "\nstatus: ";
             switch (status) {

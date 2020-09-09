@@ -82,11 +82,11 @@ BaseView {
 
     Connections {
         target: inputMethod
-        onPanelRectChanged: {
+        function onPanelRectChanged() {
             if (inputMethod && inputMethod.active && !inputMethod.hasPreferredPanelRect && root.needToReopen)
                 root.reopenView();
         }
-        onHasPreferredPanelRectChanged: {
+        function onHasPreferredPanelRectChanged() {
             if (inputMethod && inputMethod.active)
                 root.reopenView();
             else
@@ -106,7 +106,7 @@ BaseView {
     Connections {
         target: root.model
 
-        onSurfaceAdded: {
+        function onSurfaceAdded(item) {
             console.log("Adding item " + item + " to " + keyboardArea + " of " + root);
             if (root.access) {
                 item.parent = keyboardArea;
@@ -132,7 +132,7 @@ BaseView {
             }
         }
 
-        onSurfaceRemoved: {
+        function onSurfaceRemoved(item) {
             console.log("Removing item " + item + " from " + root);
             if (currentItem == item) {
                 for (var i = root.model.count - 1; i>= 0; i--) {
@@ -179,7 +179,7 @@ BaseView {
 
     Connections {
         target: root.currentItem
-        onItemAboutToBeHidden: {
+        function onItemAboutToBeHidden() {
             console.log("Item " + currentItem + " in " + root + " is about to be hidden");
             if (root.currentItem) {
                 console.info("Keep last frame of item " + currentItem + " until " + root + " is closed completely");
@@ -193,7 +193,7 @@ BaseView {
 
     Connections {
         target: compositor
-        onSurfaceMapped: {
+        function onSurfaceMapped(item) {
             if (root.itemToBeHidden && root.itemToBeHidden == item) {
                 console.info("Abort closing item " + root.itemToBeHidden + " from " + root);
                 root.itemToBeHidden.releaseLastFrame();

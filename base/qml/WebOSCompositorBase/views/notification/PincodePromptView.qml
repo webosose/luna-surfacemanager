@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2020 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ FocusableView {
 
     Connections {
         target: pincodePromptStack
-        onStateChanged: {
+        function onStateChanged() {
             switch (pincodePromptStack.state) {
             case "open":
                 root.openView();
@@ -121,7 +121,9 @@ FocusableView {
 
                 Connections {
                     target: pincodePromptStack
-                    onScrimClicked: exitClicked();
+                    function onScrimClicked() {
+                        exitClicked();
+                    }
                 }
             }
         }

@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2020 LG Electronics, Inc.
+// Copyright (c) 2019-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ Item {
     // TODO: Is this needed per display? See PLAT-85432.
     Connections {
         target: videooutputdCommunicator
-        onSetVideoDisplayWindowRequested: {
+        function onSetVideoDisplayWindowRequested(sourceRectangle, destinationRectangle, contextId) {
             // luna-send -n 1 -f luna://com.webos.service.videooutput/display/setDisplayWindow '{ \
             //     "displayOutput":{"width":960,"height":540,"x":160,"y":0}, \
             //     "context": contextId, \

@@ -23,7 +23,9 @@ FocusScope {
 
     Connections {
         target: compositorWindow
-        onClusterSizeChanged: updateText();
+        function onClusterSizeChanged() {
+            updateText();
+        }
     }
 
     function updateText() {

@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2020 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -55,22 +55,22 @@ SurfaceView {
     Connections {
         target: compositor
 
-        onSurfaceMapped: {
+        function onSurfaceMapped(item) {
             console.log("item:", item);
             checkFullscreen(item);
         }
 
-        onSurfaceUnmapped: {
+        function onSurfaceUnmapped(item) {
             console.log("item:", item);
             resetFullscreen(item);
         }
 
-        onSurfaceDestroyed: {
+        function onSurfaceDestroyed(item) {
             console.log("item:", item);
             resetFullscreen(item);
         }
 
-        onFullscreenRequested: {
+        function onFullscreenRequested(item) {
             console.log("item:", item);
             if (!checkFullscreen(item))
                 console.warn("request ignored, item:", item);
