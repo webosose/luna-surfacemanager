@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ function requestFocus(item){
 
     var i = layer.indexOf(item);
     if (i == -1) {
-        console.log("item: " + item + " is pushed into focusChain");
+        console.info("[" + item + "] status : pushed into focus chain");
         layer.push(item);
     }
 
@@ -63,6 +63,10 @@ function requestFocus(item){
     if (topItem) {
         topItem.forceActiveFocus();
         topItem.focused();
+
+        console.info("[" + item + "] active_focus : " + topItem + ", current_chain : " + debug());
+    } else {
+        console.warn("[" + item + "] status : not found any item, current_chain : " + debug());
     }
 
     console.log(debug());
@@ -104,6 +108,10 @@ function releaseFocus(item) {
     if (topItem) {
         topItem.forceActiveFocus();
         topItem.focused();
+
+        console.info("[" + item + "] active_focus : " + topItem + ", current_chain : " + debug());
+    } else {
+        console.warn("[" + item + "] status : not found any item, current_chain : " + debug());
     }
 
     console.log(debug());
