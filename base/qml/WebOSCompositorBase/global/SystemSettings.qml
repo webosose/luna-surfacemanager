@@ -156,11 +156,10 @@ SettingsService {
                         __subscribedRequestMap[i].service + "/" + __subscribedRequestMap[i].method +
                         " params: " + __subscribedRequestMap[i].params);
 
-                    var sessionList = LS.sessionManager.sessionList && LS.sessionManager.sessionList.map((e) => e.sessionId) || [];
                     if (!("sessionId" in __subscribedRequestMap[i]) ||
                         !(__subscribedRequestMap[i].useSession))
                         __pendingRequests.push(__subscribedRequestMap[i]);
-                    else if (sessionList.length > 0 && sessionList.indexOf(i) != -1)
+                    else if (__subscribedRequestMap[i].sessionId && __subscribedRequestMap[i].sessionId == root.sessionId)
                         __pendingRequests.push(__subscribedRequestMap[i]);
                     else
                         console.warn("Pending subscription is removed. token: " + i,
@@ -272,6 +271,20 @@ SettingsService {
             while (__statusTokens.length > 0)
                 cancel(__statusTokens.pop());
             __listenServerStatus();
+        }
+    }
+
+    onSessionIdChanged: {
+        for (var i in __pendingRequests) {
+            if (__pendingRequests[i].sessionId != undefined) {
+                for (var key in __subscribedKeyValueMap) {
+                    if (__pendingRequests[i].key == key) {
+                        // To prevent the object leaks when switching sessions
+                        delete __subscribedKeyValueMap[key];
+                        break;
+                    }
+                }
+            }
         }
     }
 }
