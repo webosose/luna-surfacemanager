@@ -306,7 +306,9 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
 {
     QWaylandQuickOutput *output = new QWaylandQuickOutput(this, window);
     if (!output) {
-        qCritical() << "Failed to create QWaylandOutput for window" << window << name;
+        qCritical() << "Failed to create QWaylandOutput for window, "
+                    << "window :" << (window ? window : nullptr)
+                    << "name :" << name;
         return;
     }
 
@@ -330,6 +332,11 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
         setDefaultOutput(output);
 
         m_surfaceModel = new WebOSSurfaceModel();
+        if (m_surfaceModel == nullptr) {
+            qWarning()  << "[surfaceModel] Invalid pointer, "
+                        << "window :" << (window ? window : nullptr)
+                        << "name :" << name;
+        }
 
         setInputMethod(createInputMethod());
         m_inputMethod->initialize();
@@ -493,7 +500,7 @@ bool WebOSCoreCompositor::isMapped(WebOSSurfaceItem *item)
 void WebOSCoreCompositor::onSurfaceMapped(QWaylandSurface *surface, WebOSSurfaceItem* item) {
     PMTRACE_FUNCTION;
 
-    if (item && !item->imported()) {
+    if (!item->imported()) {
         if (item->isPartOfGroup()) {
             // The management of surface groups is left solely to the qml
             // for example the state changes etc. This is done to ensure that
@@ -530,7 +537,7 @@ void WebOSCoreCompositor::onSurfaceMapped(QWaylandSurface *surface, WebOSSurface
 
         qDebug() << item << "Items in compositor: " <<  getItems();
         emit surfaceMapped(item);
-    }
+    }        
 }
 
 WebOSSurfaceItem* WebOSCoreCompositor::activeSurface()
@@ -616,11 +623,6 @@ QList<QObject *> WebOSCoreCompositor::windowsInCluster(QString clusterName)
 void WebOSCoreCompositor::onSurfaceUnmapped(QWaylandSurface *surface, WebOSSurfaceItem* item) {
     PMTRACE_FUNCTION;
 
-    if (!item) {
-        qWarning() << "No item for surface" << surface;
-        return;
-    }
-
     qInfo() << surface << item << item->appId() << item->itemState();
 
     if (webOSWindowExtension()) {
@@ -648,7 +650,8 @@ void WebOSCoreCompositor::onSurfaceDestroyed(QWaylandSurface *surface, WebOSSurf
     PMTRACE_FUNCTION;
 
     if (!item) {
-        qWarning() << "No item for surface" << surface;
+        qWarning() << "[WebOSSurfaceItem] Invalid pointer, "
+                   << "surface :" << surface;
         return;
     }
 
@@ -696,9 +699,20 @@ void WebOSCoreCompositor::onSurfaceDestroyed(QWaylandSurface *surface, WebOSSurf
 void WebOSCoreCompositor::surfaceCreated(QWaylandSurface *surface) {
     PMTRACE_FUNCTION;
 
+    if (surface == nullptr) {
+        qWarning() << "[QWaylandSurface] Invalid pointer";
+        return;
+    }
+
     /* Ensure that WebOSSurfaceItem is created after surfaceDestroyed is connected.
        Refer to upper comment about life cycle of surface and surface item. */
     WebOSSurfaceItem *item = createSurfaceItem(static_cast<QWaylandQuickSurface *>(surface));
+    if (item != nullptr) {
+        qInfo() << surface << item << "client pid:" << item->processId();
+    } else {
+        qWarning()  << "[WebOSSurfaceItem] Invalid pointer, "
+                    << "surface :" << surface;
+    }
 
     connect(surface, &QWaylandSurface::hasContentChanged, [this, surface, item] {
         if (surface->hasContent()) {
@@ -713,13 +727,20 @@ void WebOSCoreCompositor::surfaceCreated(QWaylandSurface *surface) {
     connect(surface, &QWaylandSurface::destroyed, [this, surface, item] {
         this->onSurfaceDestroyed(surface, item);
     });
-
-    qInfo() << surface << item << "client pid:" << item->processId();
 }
 
 WebOSSurfaceItem* WebOSCoreCompositor::createProxyItem(const QString& appId, const QString& title, const QString& subtitle, const QString& snapshotPath)
 {
     WebOSSurfaceItem *item = new WebOSSurfaceItem(this, NULL);
+    if (item == nullptr) {
+        qWarning()  << "[WebOSSurfaceItem] Invalid pointer, "
+                    << "appId :" << appId
+                    << "title :" << title
+                    << "subtitle :" << subtitle
+                    << "snapshotPath :" << snapshotPath;
+        return nullptr;
+    }
+
     item->setAppId(appId);
     item->setTitle(title);
     item->setSubtitle(subtitle);
@@ -739,9 +760,17 @@ WebOSSurfaceItem* WebOSCoreCompositor::createProxyItem(const QString& appId, con
 void WebOSCoreCompositor::deleteProxyFor(WebOSSurfaceItem* newItem)
 {
     PMTRACE_FUNCTION;
+    if (newItem == nullptr) {
+        qWarning() << "[WebOSSurfaceItem] Invalid pointer";
+        return;
+    }
     QMutableListIterator<WebOSSurfaceItem*> si(m_surfaces);
     while (si.hasNext()) {
         WebOSSurfaceItem* item = si.next();
+        if (item == nullptr) {
+            qWarning() << "[WebOSSurfaceItem] Invalid pointer";
+            continue;
+        }
         if (item->itemState() == WebOSSurfaceItem::ItemStateProxy
                 && newItem->appId() == item->appId()
                 && newItem != item) { //we don't want to remove item for mapped surface
@@ -765,6 +794,11 @@ void WebOSCoreCompositor::removeSurfaceItem(WebOSSurfaceItem* item, bool emitSur
 {
     PMTRACE_FUNCTION;
 
+    if (item == nullptr) {
+        qWarning()  << "[WebOSSurfaceItem] Invalid pointer, "
+                    << "emitSurfaceDestroyed :" << emitSurfaceDestroyed;
+        return;
+    }
     qInfo() << "removing item" << item << item->itemState() << item->itemStateReason();
     m_surfaceModel->surfaceDestroyed(item);
     if (emitSurfaceDestroyed)
@@ -883,6 +917,12 @@ WebOSSurfaceItem* WebOSCoreCompositor::getSurfaceItemByAppId(const QString& appI
     QMutableListIterator<WebOSSurfaceItem*> si(m_surfaces);
     while (si.hasNext()) {
         WebOSSurfaceItem* item = si.next();
+        if (item == nullptr) {
+            qWarning()  << "[WebOSSurfaceItem] Invalid pointer, "
+                        << "appId :" << appId;
+            continue;
+        }
+
         if (item->appId() == appId) {
             return item;
         }
@@ -920,6 +960,11 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfac
 {
     PMTRACE_FUNCTION;
 
+    if (item == nullptr) {
+        qWarning()  << "[WebOSSurfaceItem] Invalid pointer, "
+                    << "stateToBe :" << stateToBe;
+        return;
+    }
     qDebug() << item << item->itemState() << stateToBe << item->itemStateReason() << item->isSurfaced();
 
     // Possible state transitions
@@ -1030,6 +1075,10 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfac
 
 void WebOSCoreCompositor::destroyClientForWindow(QVariant window) {
     QWaylandSurface *surface = qobject_cast<QWaylandQuickItem *>(qvariant_cast<QObject *>(window))->surface();
+    if (surface == nullptr) {
+        qWarning()  << "[QWaylandSurface] Invalid pointer";
+        return;
+    }
     destroyClientForSurface(surface);
 }
 
@@ -1336,7 +1385,18 @@ void WebOSCoreCompositor::finalizeOutputUpdate()
 void WebOSCoreCompositor::onSurfaceSizeChanged()
 {
     QWaylandQuickSurface *surface = qobject_cast<QWaylandQuickSurface *>(sender());
+    if (surface == nullptr) {
+        qWarning()  << "[QWaylandQuickSurface] Invalid pointer, "
+                    << "sender :" << ( (sender() != nullptr) ? sender() : nullptr);
+        return;
+    }
+
     WebOSSurfaceItem* item = WebOSSurfaceItem::getSurfaceItemFromSurface(surface);
+    if (item == nullptr) {
+        qWarning()  << "[WebOSSurfaceItem] Invalid pointer, "
+                    << "surface :" << surface;
+        return;
+    }
 
     qDebug() << "OutputGeometry: size changed for item -" << item;
 

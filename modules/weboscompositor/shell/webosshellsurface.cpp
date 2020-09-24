@@ -69,12 +69,29 @@ void WebOSShell::get_shell_surface(struct wl_client *client, struct wl_resource 
 {
     WebOSShell* that = static_cast<WebOSShell *>(shell_resource->data);
     QWaylandSurface* surface = QWaylandSurface::fromResource(owner);
+    if (surface == nullptr) {
+        qWarning()  << "[QWaylandSurface] Invalid pointer, "
+                    << "client :" << (client ? client : nullptr)
+                    << "shell_resource :" << (shell_resource ? shell_resource : nullptr)
+                    << "id :" << id
+                    << "owner :" << (owner ? owner->object.id : 0);
+        return;
+    }
+
     WebOSSurfaceItem* item = WebOSSurfaceItem::getSurfaceItemFromSurface(surface);
+    if (item == nullptr) {
+        qWarning()  << "[WebOSSurfaceItem] Invalid pointer, "
+                    << "surface :" << surface
+                    << "client :" << (client ? client : nullptr)
+                    << "shell_resource :" << (shell_resource ? shell_resource : nullptr)
+                    << "id :" << id
+                    << "owner :" << (owner ? owner->object.id : 0);
+        return;
+    }
+
     qDebug() << surface << item;
-    if (item)
-        new WebOSShellSurface(client, id, item, owner, that->getVersion(client));
-    else
-        qWarning() << "Could not create webos shell surface for wl_surface@" << owner->object.id;
+
+    new WebOSShellSurface(client, id, item, owner, that->getVersion(client));
 }
 
 void WebOSShell::get_system_pip(struct wl_client *client, struct wl_resource *resource)
@@ -88,7 +105,16 @@ void WebOSShell::get_system_pip(struct wl_client *client, struct wl_resource *re
 void WebOSShell::registerSurfaceChange(QWaylandSurface* prev, QWaylandSurface* current)
 {
     Q_UNUSED(current);
-    qDebug() << prev << current;
+
+    if (prev == nullptr || current == nullptr) {
+      qWarning()  << "[QWaylandSurface] Invalid pointer, "
+                  << "prev :" << (prev ? prev : nullptr)
+                  << "current :" << (current ? current : nullptr);
+    }
+
+    qDebug()  << "prev :" << (prev ? prev : nullptr)
+              << "current :" << (current ? current : nullptr);
+
     m_previousFullscreenSurface = prev;
 }
 
@@ -111,24 +137,46 @@ WebOSShellSurface::WebOSShellSurface(struct wl_client* client, uint32_t id, WebO
     , m_surface(surface)
 {
     m_shellSurface = wl_client_add_object(client, &wl_webos_shell_surface_interface, &shell_surface_interface, id, this);
-    m_shellSurface->destroy = WebOSShellSurface::destroyShellSurface;
 
-    surface->setShellSurface(this);
-    qDebug() << this << "for wl_surface@" << m_owner->object.id << "m_shellSurface:" << m_shellSurface << "version:" << m_version;
+    if (m_shellSurface != nullptr) {
+        m_shellSurface->destroy = WebOSShellSurface::destroyShellSurface;
+
+        surface->setShellSurface(this);
+        qDebug() << this << "for wl_surface@" << m_owner->object.id << "m_shellSurface:" << m_shellSurface;
+    } else {
+        qWarning()  << "[wl_resource] Invalid pointer, "
+                    << "client :" << (client ? client : nullptr)
+                    << "id :" << id
+                    << "surface :" << (surface ? surface : nullptr)
+                    << "owner :" << (owner ? owner->object.id : 0);
+    }
 }
 
 WebOSShellSurface::~WebOSShellSurface()
 {
     m_surface->resetShellSurface(this);
-
-    qDebug() << this << "for wl_surface@" << m_owner->object.id << "m_shellSurface:" << m_shellSurface;
-    if (m_shellSurface)
+    if (m_shellSurface != nullptr) {
+        qDebug() << this << "for wl_surface@" << m_owner->object.id << "m_shellSurface:" << m_shellSurface;
         wl_resource_destroy(m_shellSurface);
+    } else {
+        qWarning() << "[wl_resource] Invalid pointer";
+    }
 }
 
 void WebOSShellSurface::destroyShellSurface(struct wl_resource* resource)
 {
+    if (resource == nullptr) {
+        qWarning()  << "[wl_resource] Invalid pointer";
+        return;
+    }
+
     WebOSShellSurface* that = static_cast<WebOSShellSurface *>(resource->data);
+    if (that == nullptr) {
+        qWarning()  << "[WebOSShellSurface] Invalid pointer, "
+                    << "resource :" << resource;
+        return;
+    }
+
     qDebug() << that << "for resource" << resource << "m_shellSurface:" << that->m_shellSurface;
     that->m_shellSurface = NULL;
 }
@@ -177,8 +225,23 @@ void WebOSShellSurface::setState(Qt::WindowState state)
 void WebOSShellSurface::set_location_hint(struct wl_client *client, struct wl_resource *resource, uint32_t hint)
 {
     Q_UNUSED(client);
+    if (resource == nullptr) {
+        qWarning()  << "[wl_resource] Invalid pointer, "
+                    << "client :" << (client ? client : nullptr)
+                    << "hint :" << hint;
+        return;
+    }
+
     WebOSSurfaceItem::LocationHints newHint = (WebOSSurfaceItem::LocationHints)hint;
     WebOSShellSurface* that = static_cast<WebOSShellSurface*>(resource->data);
+    if (that == nullptr) {
+        qWarning()  << "[WebOSShellSurface] Invalid pointer, "
+                    << "client :" << (client ? client : nullptr)
+                    << "resource :" << resource
+                    << "hint :" << hint;
+        return;
+    }
+
     if (that->m_locationHint != newHint) {
         that->m_locationHint = newHint;
         qDebug() << "changed" << that->m_locationHint;
@@ -189,9 +252,23 @@ void WebOSShellSurface::set_location_hint(struct wl_client *client, struct wl_re
 void WebOSShellSurface::set_key_mask(struct wl_client *client, struct wl_resource *resource, uint32_t webos_key)
 {
     Q_UNUSED(client);
-    Q_UNUSED(resource);
+    if (resource == nullptr) {
+        qWarning()  << "[wl_resource] Invalid pointer, "
+                    << "client :" << (client ? client : nullptr)
+                    << "webos_key :" << webos_key;
+        return;
+    }
+
     WebOSSurfaceItem::KeyMasks newKeyMasks = (WebOSSurfaceItem::KeyMasks)webos_key;
     WebOSShellSurface* that = static_cast<WebOSShellSurface*>(resource->data);
+    if (that == nullptr) {
+        qWarning()  << "[WebOSShellSurface] Invalid pointer, "
+                    << "client :" << (client ? client : nullptr)
+                    << "resource :" << resource
+                    << "webos_key :" << webos_key;
+        return;
+    }
+
     if (that->m_keyMask != newKeyMasks) {
         that->m_keyMask = newKeyMasks;
         emit that->keyMaskChanged();
@@ -201,8 +278,22 @@ void WebOSShellSurface::set_key_mask(struct wl_client *client, struct wl_resourc
 void WebOSShellSurface::set_state(struct wl_client *client, struct wl_resource *resource, uint32_t state)
 {
     Q_UNUSED(client);
+    if (resource == nullptr) {
+        qWarning()  << "[wl_resource] Invalid pointer, "
+                    << "client :" << (client ? client : nullptr)
+                    << "state :" << state;
+        return;
+    }
+
     Qt::WindowState newState = qtWindowStateFromWaylandState(state);
     WebOSShellSurface* that = static_cast<WebOSShellSurface*>(resource->data);
+    if (that == nullptr) {
+        qWarning()  << "[WebOSShellSurface] Invalid pointer, "
+                    << "client :" << (client ? client : nullptr)
+                    << "resource :" << resource
+                    << "state :" << state;
+        return;
+    }
 
     if (!that->m_surface->isMapped()) {
         qWarning() << "Ignored for unmapped surface" << that->m_surface << that << that->m_state << newState;
@@ -254,9 +345,27 @@ void WebOSShellSurface::setProperty(const QString &name, const QVariant &value, 
 void WebOSShellSurface::set_property(struct wl_client *client, struct wl_resource *resource, const char *name, const char *value)
 {
     Q_UNUSED(client);
+    if (resource == nullptr || name == nullptr || value == nullptr) {
+        qWarning()  << "[wl_resource] Invalid pointer, "
+                    << "client :" << (client ? client : nullptr)
+                    << "name :" << (name ? name : nullptr)
+                    << "value :" << (value ? value : nullptr);
+        return;
+    }
+
     WebOSShellSurface* that = static_cast<WebOSShellSurface*>(resource->data);
+    if (that == nullptr) {
+        qWarning()  << "[WebOSShellSurface] Invalid pointer, "
+                    << "client :" << (client ? client : nullptr)
+                    << "resource :" << resource
+                    << "name :" << name
+                    << "value :" << value;
+        return;
+    }
+
     QString key = QString::fromLatin1(name);
     QVariant newValue = QVariant(QString::fromUtf8(value));
+
     bool emitChange = that->property(key) != newValue;
     qDebug() << "set property (" << QString::fromLatin1(name) << "," << QVariant(QString::fromUtf8(value)) << ")"
                  << that->m_surface << that->m_surface->appId();
@@ -268,6 +377,12 @@ void WebOSShellSurface::set_property(struct wl_client *client, struct wl_resourc
 void WebOSShellSurface::emitSurfaceConvenienceSignal(const QString& key)
 {
     const QMetaObject* mo = m_surface->metaObject();
+    if (mo == nullptr) {
+        qWarning()  << "[QMetaObject] Invalid pointer, "
+                    << "key :" << key;
+        return;
+    }
+
     int propertyIndex = mo->indexOfProperty(key.toLatin1().data());
     QMetaProperty property = mo->property(propertyIndex);
     if (property.isValid() && property.hasNotifySignal()) {
