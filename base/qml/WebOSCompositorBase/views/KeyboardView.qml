@@ -34,7 +34,7 @@ BaseView {
         property bool active: false
         property bool allowed: false
         property rect panelRect: Qt.rect(0, 0, 0, 0)
-        property size panelSurfaceSize: Qt.size(0, 0)
+        property size panelSize: Qt.size(0, 0)
         property rect preferredPanelRect: Qt.rect(0, 0, 0, 0)
         property bool hasPreferredPanelRect: false
     }
@@ -61,13 +61,13 @@ BaseView {
         value: if (inputMethod.hasPreferredPanelRect) {
             // Floating
             inputMethod.preferredPanelRect
-        } else if (inputMethod.panelSurfaceSize.height > 0) {
+        } else if (inputMethod.panelSize.height > 0) {
             // Anchored at bottom, depending on panel surface size
             Qt.rect(
                 0,
-                root.parent.height - inputMethod.panelSurfaceSize.height,
+                root.parent.height - inputMethod.panelSize.height,
                 root.parent.width,
-                inputMethod.panelSurfaceSize.height
+                inputMethod.panelSize.height
             )
         } else {
             // Default
