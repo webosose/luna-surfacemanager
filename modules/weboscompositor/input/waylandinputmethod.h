@@ -44,7 +44,7 @@ class WaylandInputMethod : public QObject {
     Q_PROPERTY(bool allowed READ allowed WRITE setAllowed NOTIFY allowedChanged)
 
     Q_PROPERTY(QRect panelRect READ panelRect WRITE setPanelRect NOTIFY panelRectChanged)
-    Q_PROPERTY(QSize panelSurfaceSize READ panelSurfaceSize NOTIFY panelSurfaceSizeChanged)
+    Q_PROPERTY(QSize panelSize READ panelSize NOTIFY panelSizeChanged)
     Q_PROPERTY(QRect preferredPanelRect READ preferredPanelRect NOTIFY preferredPanelRectChanged)
     Q_PROPERTY(bool hasPreferredPanelRect READ hasPreferredPanelRect NOTIFY hasPreferredPanelRectChanged)
 
@@ -75,7 +75,7 @@ public:
     QRect panelRect() const;
     void setPanelRect(const QRect& rect);
 
-    QSize panelSurfaceSize() const;
+    QSize panelSize() const;
 
     QRect preferredPanelRect() const { return m_preferredPanelRect; }
     void setPreferredPanelRect(const QRect& rect);
@@ -95,7 +95,7 @@ signals:
     void activeChanged();
     void allowedChanged();
     void panelRectChanged();
-    void panelSurfaceSizeChanged();
+    void panelSizeChanged();
     void preferredPanelRectChanged();
     void hasPreferredPanelRectChanged();
     void displayIdChanged();

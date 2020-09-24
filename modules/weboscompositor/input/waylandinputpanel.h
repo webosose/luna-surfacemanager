@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -84,23 +84,23 @@ public:
     struct wl_client * client() const { return m_client; }
     QRect inputPanelRect() const { return m_rect; }
     void setInputPanelRect(const QRect& rect);
-    QSize inputPanelSurfaceSize() const;
+    QSize inputPanelSize() const;
 
 signals:
     void reportPanelState(InputPanelState state);
     void reportPanelRect(const QRect& rect);
     void inputPanelRectChanged(const QRect& rect);
-    void inputPanelSurfaceSizeChanged(const QSize& size);
+    void inputPanelSizeChanged(const QSize& size);
 
 private:
     // methods
     void updateActiveInputPanelSurface(WaylandInputPanelSurface *surface = 0);
-    void setInputPanelSurfaceSize(const QSize& size);
+    void setInputPanelSize(const QSize& size);
 
 private slots:
     void onInputPanelSurfaceMapped();
     void onInputPanelSurfaceUnmapped();
-    void updateInputPanelSurfaceSize();
+    void updateInputPanelSize();
     void updateInputPanelState();
 
 private:
@@ -113,7 +113,7 @@ private:
 
     InputPanelState m_state;
     QRect m_rect;
-    QSize m_inputPanelSurfaceSize;
+    QSize m_inputPanelSize;
 };
 
 #endif //WAYLANDINPUTPANEL_H

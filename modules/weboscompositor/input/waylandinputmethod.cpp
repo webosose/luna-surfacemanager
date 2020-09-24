@@ -168,10 +168,10 @@ void WaylandInputMethod::setPanelRect(const QRect& rect)
         qWarning() << "No input panel created, unable to set panel rect";
 }
 
-QSize WaylandInputMethod::panelSurfaceSize() const
+QSize WaylandInputMethod::panelSize() const
 {
     if (m_inputPanel)
-        return m_inputPanel->inputPanelSurfaceSize();
+        return m_inputPanel->inputPanelSize();
 
     qWarning() << "No active panel surface, surface size is empty";
     return QSize();
@@ -206,5 +206,5 @@ void WaylandInputMethod::setInputPanel(WaylandInputPanel *panel)
     m_inputPanel = panel;
 
     connect(m_inputPanel, &WaylandInputPanel::inputPanelRectChanged, this, &WaylandInputMethod::panelRectChanged);
-    connect(m_inputPanel, &WaylandInputPanel::inputPanelSurfaceSizeChanged, this, &WaylandInputMethod::panelSurfaceSizeChanged);
+    connect(m_inputPanel, &WaylandInputPanel::inputPanelSizeChanged, this, &WaylandInputMethod::panelSizeChanged);
 }
