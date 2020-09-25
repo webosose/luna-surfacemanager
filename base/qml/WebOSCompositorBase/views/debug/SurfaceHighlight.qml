@@ -18,18 +18,18 @@ import QtQuick 2.4
 import WebOSCoreCompositor 1.0
 import WebOSCompositorBase 1.0
 
+import "DebugUtils.js" as DebugUtils
+
 Rectangle {
     id: root
     visible: Settings.local.debug.enable && Settings.local.debug.surfaceHighlight === true && root.sourceItem && root.sourceView
 
     property Item sourceItem
     property Item sourceView
-    property color hColor: __colors[root.sourceView ? root.sourceView.layerNumber % root.__colors.length : "white"]
-    readonly property var __colors: [ "orange", "orchid", "fuchsia", "tomato", "deeppink", "hotpink", "magenta" ]
 
     anchors.fill: parent
     color: "transparent"
-    border.color: root.hColor
+    border.color: DebugUtils.colorByType(root.sourceItem)
     border.width: 4
 
     Rectangle {
@@ -37,7 +37,7 @@ Rectangle {
         anchors.top: parent.top
         width: 400
         height: 100
-        color: root.hColor
+        color: DebugUtils.colorByType(root.sourceItem)
         opacity: 0.8
         Text {
             anchors.left: parent.left
@@ -46,7 +46,7 @@ Rectangle {
             anchors.topMargin: 10
             color: "black"
             font.pixelSize: 16
-            text: (root.sourceView ? "view:" + root.sourceView.objectName + "\n" : "") +
+            text: (root.sourceView ? "view: " + root.sourceView.objectName + "\n" : "") +
                   (root.sourceItem ? "appId: " + root.sourceItem.appId + (root.sourceItem.isMirrorItem() ? "(mirrored)" : "") + "\n" +
                                     "type: " + root.sourceItem.type + "\n" +
                                     "size: " + root.sourceItem.width + "x" + root.sourceItem.height : "")

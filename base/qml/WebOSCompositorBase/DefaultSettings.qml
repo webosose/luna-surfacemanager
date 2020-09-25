@@ -33,6 +33,7 @@ QtObject {
             "compositorBorder": false,
             "focusHighlight": false,
             "surfaceHighlight": false,
+            "surfaceStack": false,
             "fpsGraphOverlay": false,
             "spinnerRepaint": false,
             "touchOverlay": false,

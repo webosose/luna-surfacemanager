@@ -37,6 +37,13 @@ Item {
         source: Settings.local.debug.touchOverlay ? "TouchOverlay.qml" : ""
     }
 
+    Loader {
+        id: surfaceStackId
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        source: Settings.local.debug.surfaceStack ? "SurfaceStack.qml" : ""
+    }
+
     Item {
         id: debugWindowId
 
