@@ -17,4 +17,5 @@
 TEMPLATE = subdirs
 
 SUBDIRS = \
+    tablet_event_test \
     touch_latency_test
