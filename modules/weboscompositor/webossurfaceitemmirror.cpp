@@ -250,11 +250,14 @@ QPointF WebOSSurfaceItemMirror::translatePoint(QPointF point)
     if (point.y() > compositorWindow->outputGeometry().height())
         point.setY((int)point.y() % compositorWindow->outputGeometry().height());
 
-    point += compositorWindow->positionInCluster();
+    // Substract by the offset of item
+    point -= QPointF(x(), y());
 
     QSize clusterSize = compositorWindow->clusterSize();
-    point.setX(point.x() * m_sourceItem->width() / clusterSize.width());
-    point.setY(point.y() * m_sourceItem->height() / clusterSize.height());
+    if (m_sourceItem->width() <= compositorWindow->outputGeometry().width())
+        point.setX(point.x() * m_sourceItem->width() / clusterSize.width());
+    if (m_sourceItem->height() <= compositorWindow->outputGeometry().height())
+        point.setY(point.y() * m_sourceItem->height() / clusterSize.height());
 
     return point;
 }
