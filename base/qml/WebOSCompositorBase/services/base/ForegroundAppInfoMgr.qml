@@ -42,29 +42,34 @@ QtObject {
             }
         }
 
-        if (diff) {
-            if (enabled)
+        if (enabled) {
+            if (diff) {
                 root.foregroundAppInfoChanged();
-            else
-                console.warn("Foreground app info changed but skipped notifying it");
-
-            // Update the item list to check difference
-            __foregroundItemsToCheck = [];
-            for (var i = 0; i < foregroundItems.length; i++) {
-                var ii = {
-                    "appId":      foregroundItems[i].appId,
-                    "displayId":  foregroundItems[i].displayId
+                // Update the item list to check difference
+                __foregroundItemsToCheck = [];
+                for (var i = 0; i < foregroundItems.length; i++) {
+                    var ii = {
+                        "appId":      foregroundItems[i].appId,
+                        "displayId":  foregroundItems[i].displayId
+                    }
+                    __foregroundItemsToCheck.push(ii);
                 }
-                __foregroundItemsToCheck.push(ii);
+            } else {
+                console.log("Skipped notifying as the foreground item list is identical");
             }
         } else {
-            console.log("Skipped notifying as the foreground item list is identical");
+            console.log("Skipped notifying as enabled is false");
         }
     }
 
     onForegroundItemsChanged: {
         if (!__init)
             __init = initialized();
+        if (__init)
+            checkAndNotify();
+    }
+
+    onEnabledChanged: {
         if (__init)
             checkAndNotify();
     }
