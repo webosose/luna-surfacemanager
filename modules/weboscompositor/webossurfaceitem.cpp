@@ -1393,7 +1393,10 @@ void WebOSSurfaceItem::releaseLastFrame()
     if (m_surfaceGrabbed) {
         qDebug() << "Releasing surface for item" << this;
         setBufferLocked(false);
-        m_compositor->handleSurfaceUnmapped(this);
+        if (!isMapped()) {
+            qDebug() << "Confirmed surface is unmapped, handling surfaceUnmapped for item" << this;
+            m_compositor->handleSurfaceUnmapped(this);
+        }
         QWaylandSurface *s = m_surfaceGrabbed;
         m_surfaceGrabbed = nullptr;
         // Make sure nothing to be done for the surface item from this point

@@ -392,11 +392,15 @@ void WebOSCoreCompositor::setInputMethod(WebOSInputMethod* inputMethod)
 
 bool WebOSCoreCompositor::isMapped(WebOSSurfaceItem *item)
 {
+    if (!item->surface() || !item->surface()->hasContent())
+        return false;
+
     if (webOSWindowExtension())
-        return item->surface() && m_surfaceModel->indexFromItem(item).isValid();
+        return m_surfaceModel->indexFromItem(item).isValid();
     else
-        return item->surface() && m_surfaces.contains(item);
+        return m_surfaces.contains(item);
 }
+
 /*
  * update our internal model of mapped surface in response to wayland surfaces being mapped
  * and unmapped. WindowModels use this as their source of windows.
