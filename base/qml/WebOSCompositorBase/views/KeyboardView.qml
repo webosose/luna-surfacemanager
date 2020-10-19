@@ -196,6 +196,18 @@ BaseView {
         }
     }
 
+    Connections {
+        target: compositor
+        onSurfaceMapped: {
+            if (root.itemToBeHidden && root.itemToBeHidden == item) {
+                console.info("Abort closing item " + root.itemToBeHidden + " from " + root);
+                root.itemToBeHidden.releaseLastFrame();
+                root.itemToBeHidden = null;
+                root.openView();
+            }
+        }
+    }
+
     onClosed: {
         console.log("KeyboardView " + root + " is closed");
         if (root.itemToBeHidden) {
