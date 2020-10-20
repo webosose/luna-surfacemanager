@@ -1,4 +1,4 @@
-// Copyright (c) 2018 LG Electronics, Inc.
+// Copyright (c) 2018-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,22 +21,18 @@
 #include <QTabletEvent>
 
 #include <QtWaylandCompositor/private/qwayland-server-wayland.h>
-
-#include <wayland-server.h>
-
-#include <WebOSCoreCompositor/weboscompositorexport.h>
 #include <WebOSCoreCompositor/private/qwayland-server-webos-tablet.h>
-
 
 class WebOSCoreCompositor;
 class QWaylandView;
 
-class WebOSTablet : public QObject, public QtWaylandServer::wl_webos_tablet {
+class WebOSTablet : public QObject, public QtWaylandServer::wl_webos_tablet
+{
     Q_OBJECT
 public:
     WebOSTablet(WebOSCoreCompositor* compositor);
     bool postTabletEvent(QTabletEvent*, QWaylandView*);
     void advertiseApproximation(QTabletEvent*);
 };
-#endif
 
+#endif

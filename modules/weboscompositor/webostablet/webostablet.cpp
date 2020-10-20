@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019 LG Electronics, Inc.
+// Copyright (c) 2018-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,21 +14,15 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <QtWaylandCompositor/qwaylandview.h>
+
 #include "webostablet.h"
 #include "weboscorecompositor.h"
 
-#include <QGuiApplication>
-#include <QDebug>
-#include <QWaylandCompositor>
-#include <QString>
-
-#include <QtWaylandCompositor/qwaylandsurface.h>
-#include <QtWaylandCompositor/qwaylandview.h>
-
 #define WEBOSTABLET_VERSION 1
 
-//wl_fixed_t has 8 bits of decimal precision. So we can't send data such as 1/4096.
-//So use this scale value to use 23 bits of integer precision.
+// As wl_fixed_t has 8 bits of decimal precision, we can't send data such as 1/4096.
+// So use this scale value to use 23 bits of integer precision.
 #define TABLET_PRESSURE_SCALE_FACTOR 1000000
 
 WebOSTablet::WebOSTablet(WebOSCoreCompositor* compositor)

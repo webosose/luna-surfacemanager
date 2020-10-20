@@ -581,8 +581,8 @@ protected:
 
     void surfaceChangedEvent(QWaylandSurface *newSurface, QWaylandSurface *oldSurface) override;
 
+    bool event(QEvent *) override;
     bool tabletEvent(QTabletEvent* event);
-    bool event(QEvent *) Q_DECL_OVERRIDE;
 
 private:
     // methods

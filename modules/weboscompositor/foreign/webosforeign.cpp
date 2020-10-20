@@ -592,7 +592,7 @@ void WebOSExported::webos_exported_set_property(
             return;
         }
     } else {
-        qInfo() << "Do not call setProperty. There is no m_windowId";
+        qInfo() << "Do not call setProperty as there is no window for this WebOSExported" << this;
     }
 
     if (value.isNull())

@@ -48,7 +48,6 @@
 #include "webosevent.h"
 #include "compositorextension.h"
 #include "compositorextensionfactory.h"
-#include "webostablet.h"
 
 #include "webossurfacegroupcompositor.h"
 #include "webosscreenshot.h"
@@ -59,6 +58,7 @@
 #include "waylandinputmethod.h"
 
 #include "weboskeyboard.h"
+#include "webostablet/webostablet.h"
 
 #include "weboscompositortracer.h"
 #include "weboscompositorconfig.h"
@@ -1379,13 +1379,13 @@ bool WebOSCoreCompositor::EventPreprocessor::eventFilter(QObject *obj, QEvent *e
 #endif
 
     // These events are only sent to QGuiApp. So deliver these to all tablet client.
-
     if (event->type() == QEvent::TabletEnterProximity ||
         event->type() == QEvent::TabletLeaveProximity) {
         if (m_compositor->tabletDevice())
             m_compositor->tabletDevice()->advertiseApproximation((QTabletEvent*)event);
         eventAccepted = true;
     }
+
     return eventAccepted;
 }
 

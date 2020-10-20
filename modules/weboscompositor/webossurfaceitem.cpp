@@ -241,7 +241,11 @@ bool WebOSSurfaceItem::event(QEvent* ev)
     case QEvent::TabletPress:
     case QEvent::TabletRelease:
         return tabletEvent((QTabletEvent*)ev);
+    default:
+        break;
     }
+
+    // TODO: Check the closest the super class that overrides event()
     return QQuickItem::event(ev);
 }
 
@@ -249,8 +253,8 @@ bool WebOSSurfaceItem::tabletEvent(QTabletEvent* event)
 {
     if (m_compositor->tabletDevice())
         return m_compositor->tabletDevice()->postTabletEvent(event, surface()->primaryView());
-    else
-        return false;
+
+    return false;
 }
 
 void WebOSSurfaceItem::hoverMoveEvent(QHoverEvent *event)
@@ -402,6 +406,7 @@ void WebOSSurfaceItem::touchEvent(QTouchEvent *event)
     } else {
         QWaylandQuickItem::touchEvent(event);
     }
+
     event->setAccepted(e.isAccepted());
 }
 

@@ -957,18 +957,9 @@ bool WebOSCompositorWindow::event(QEvent *e)
     return QQuickWindow::event(e);
 }
 
-void WebOSCompositorWindow::onQmlError(const QList<QQmlError> &errors)
-{
-    qWarning("==== Exiting because of QML warnings ====");
-    for (auto it = errors.constBegin(), end = errors.constEnd(); it != end; ++it)
-        qWarning() << *it;
-    qWarning("=========================================");
-    QCoreApplication::exit(1);
-}
-
 bool WebOSCompositorWindow::handleTabletEvent(QQuickItem* item, QTabletEvent* event)
 {
-    //event grabber exists. Send it directly.
+    // Event grabber exists. Send it directly.
     if (m_tabletGrabberItem) {
         QPointF p = m_tabletGrabberItem->mapFromScene(event->posF());
         QTabletEvent ev(event->type(), p, p, event->device(),
@@ -982,16 +973,15 @@ bool WebOSCompositorWindow::handleTabletEvent(QQuickItem* item, QTabletEvent* ev
         QCoreApplication::sendEvent(m_tabletGrabberItem, &ev);
         event->accept();
 
-        if (event->type() == QEvent::TabletRelease) {
+        if (event->type() == QEvent::TabletRelease)
             m_tabletGrabberItem = nullptr;
-        }
         return true;
     } else if (m_mouseGrabberItem) {
-        return translateTabletToMouse(event, NULL);
+        return translateTabletToMouse(event, nullptr);
     }
 
-    //The Algorithm finds top-most item that can handle tablet event.
-    //Main idea is borrowed from QQuickWindowPrivate::deliverHoverEvent().
+    // Find the top-most item that can handle tablet events.
+    // The main idea is inspired from QQuickWindowPrivate::deliverHoverEvent().
     QQuickItemPrivate *itemPrivate = QQuickItemPrivate::get(item);
 
     if (itemPrivate->flags & QQuickItem::ItemClipsChildrenToShape) {
@@ -1011,12 +1001,11 @@ bool WebOSCompositorWindow::handleTabletEvent(QQuickItem* item, QTabletEvent* ev
 
     QPointF p = item->mapFromScene(event->posF());
 
-#ifdef __WEBOS_TABLET_DEBUG__
+#ifdef WEBOS_TABLET_DEBUG
     qDebug() << "tablet item finding... tablet grabber:" << m_tabletGrabberItem <<
         " mouse grabber:" << m_mouseGrabberItem << " item:" << item << "=" <<
         item->contains(p) << "," << itemPrivate->acceptedMouseButtons();
 #endif
-
 
     if (item->contains(p) && itemPrivate->acceptedMouseButtons()) {
         QTabletEvent ev(event->type(), p, p, event->device(),
@@ -1027,16 +1016,14 @@ bool WebOSCompositorWindow::handleTabletEvent(QQuickItem* item, QTabletEvent* ev
                         event->button(), event->buttons());
         ev.accept();
         if (!m_mouseGrabberItem && QCoreApplication::sendEvent(item, &ev)) {
-            if (event->pointerType() == QTabletEvent::Pen && event->type() == QEvent::TabletRelease && event->pressure() != 0) {
+            if (event->pointerType() == QTabletEvent::Pen && event->type() == QEvent::TabletRelease && event->pressure() != 0)
                 m_tabletGrabberItem = item;
-            } else if (event->type() == QEvent::TabletPress) {
+            else if (event->type() == QEvent::TabletPress)
                 m_tabletGrabberItem = item;
-            }
             event->accept();
             return true;
         } else {
-            if (translateTabletToMouse(event, NULL))
-            {
+            if (translateTabletToMouse(event, nullptr)) {
                 event->accept();
                 return true;
             }
@@ -1069,4 +1056,13 @@ bool WebOSCompositorWindow::translateTabletToMouse(QTabletEvent* event, QQuickIt
     }
 
     return accepted;
+}
+
+void WebOSCompositorWindow::onQmlError(const QList<QQmlError> &errors)
+{
+    qWarning("==== Exiting because of QML warnings ====");
+    for (auto it = errors.constBegin(), end = errors.constEnd(); it != end; ++it)
+        qWarning() << *it;
+    qWarning("=========================================");
+    QCoreApplication::exit(1);
 }

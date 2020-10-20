@@ -46,7 +46,6 @@ class WebOSInputManager;
 #ifdef MULTIINPUT_SUPPORT
 class WebOSInputDevice;
 #endif
-
 class WebOSForeign;
 class WebOSTablet;
 
