@@ -267,6 +267,9 @@ void WebOSSurfaceItem::hoverMoveEvent(QHoverEvent *event)
 
 void WebOSSurfaceItem::mouseMoveEvent(QMouseEvent * event)
 {
+    // Make sure client to receive the latest position before the mouse event
+    updateScreenPosition();
+
     WebOSMouseEvent e(event->type(), event->pos(),
                   event->button(), event->buttons(), event->modifiers(), window());
     QWaylandQuickItem::mouseMoveEvent(&e);
@@ -922,7 +925,11 @@ void WebOSSurfaceItem::setClosePolicy(QVariantMap &policy)
 void WebOSSurfaceItem::updateScreenPosition()
 {
     if (m_shellSurface && m_notifyPositionToClient) {
-        m_shellSurface->setPosition(mapToScene(QPointF(0, 0)));
+        QPointF newPos = mapToScene(QPointF(0, 0));
+        if (newPos != m_position) {
+            m_shellSurface->setPosition(newPos);
+            m_position = newPos;
+        }
     }
 }
 
@@ -980,9 +987,8 @@ void WebOSSurfaceItem::setNotifyPositionToClient(bool notify)
     if (m_notifyPositionToClient != notify) {
         m_notifyPositionToClient = notify;
         emit notifyPositionToClientChanged();
-        if (m_notifyPositionToClient) {
+        if (m_notifyPositionToClient)
             updateScreenPosition();
-        }
     }
 }
 

@@ -610,6 +610,7 @@ private:
     QString m_itemStateReason;
 
     bool m_notifyPositionToClient;
+    QPointF m_position;
 
     int m_displayId;
     int m_displayAffinity;
