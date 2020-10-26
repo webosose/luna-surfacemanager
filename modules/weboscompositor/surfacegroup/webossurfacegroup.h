@@ -73,6 +73,7 @@ public:
     Q_INVOKABLE bool allowLayerKeyOrder() const;
     void makeKeyOrderedItems();
     WebOSSurfaceItem* nextKeyOrderedSurfaceGroupItem(WebOSSurfaceItem* currentItem);
+    WebOSSurfaceItem* findKeyFocusedItem();
 
     WebOSSurfaceGroupLayer* surfaceGroupLayer(const QString &name) { return m_layers.value(name, nullptr); }
 

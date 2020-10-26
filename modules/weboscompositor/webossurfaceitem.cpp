@@ -1702,3 +1702,14 @@ QSGNode *WebOSSurfaceItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData
     return QWaylandQuickItem::updatePaintNode(oldNode, data);
 }
 #endif
+
+WebOSSurfaceItem* WebOSSurfaceItem::currentKeyFocusedItem()
+{
+    if (m_surfaceGroup) {
+        qInfo() << "Item has surfaceGroup";
+        return m_surfaceGroup->findKeyFocusedItem();
+    } else {
+        qInfo() << "Item does not have surfaceGroup";
+        return NULL;
+    }
+}

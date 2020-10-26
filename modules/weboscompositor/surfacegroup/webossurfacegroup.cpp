@@ -549,3 +549,30 @@ WebOSSurfaceItem* WebOSSurfaceGroup::nextKeyOrderedSurfaceGroupItem(WebOSSurface
     }
     return returnItem;
 }
+
+WebOSSurfaceItem* WebOSSurfaceGroup::findKeyFocusedItem()
+{
+    WebOSSurfaceItem* returnItem = NULL;
+    int topIndex = -1;
+
+    if (allowLayerKeyOrder()) {
+        topIndex = m_keyOrderedItems.size() -1;
+        qInfo() << "topIndex: " << topIndex << " in m_keyOrderedItems: " << m_keyOrderedItems.size();
+        if (topIndex >= 0)
+            returnItem = qobject_cast<WebOSSurfaceItem *>(m_keyOrderedItems[topIndex].first);
+    } else {
+        if (!m_zOrderedSurfaceLayoutInfoList.isEmpty()) {
+            topIndex = m_zOrderedSurfaceLayoutInfoList.size() - 1;
+            qInfo() << "topIndex: " << topIndex << " in m_zOrderedSurfaceLayoutInfoList: " << m_zOrderedSurfaceLayoutInfoList.size();
+            if (topIndex >= 0)
+                returnItem = qobject_cast<WebOSSurfaceItem *>(m_zOrderedSurfaceLayoutInfoList[topIndex].first);
+        }
+    }
+
+    if (returnItem)
+        qInfo() << "returnItem: " << returnItem;
+    else
+        qInfo() << "returnItem is null";
+
+    return returnItem;
+}
