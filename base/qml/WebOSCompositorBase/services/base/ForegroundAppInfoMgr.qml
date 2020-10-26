@@ -15,6 +15,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import QtQuick 2.4
+import WebOSCompositorBase 1.0
 
 QtObject {
     id: root
@@ -27,6 +28,64 @@ QtObject {
     property var __foregroundItemsToCheck: []
 
     signal foregroundAppInfoChanged
+
+    Component.onCompleted: {
+        if (compositor.loaded) {
+            bindForegroundItems();
+        } else {
+            console.warn("pending bindForegroundItems until compositor loaded fully");
+            compositor.loadCompleted.connect(bindForegroundItems);
+        }
+    }
+
+    onForegroundItemsChanged: {
+        if (!__init)
+            __init = initialized();
+        if (__init)
+            checkAndNotify();
+    }
+
+    onEnabledChanged: {
+        if (__init && enabled)
+            renewForegroundItems();
+    }
+
+    function initialized() {
+        for (var i = 0; i < foregroundItems.length; i++)
+            if (foregroundItems[i]) return true;
+        return false;
+    }
+
+    function bindForegroundItems() {
+        console.info("binding foregroundItems of all compositor windows:", compositor.windows.length);
+        for (var i = 0; i < compositor.windows.length; i++)
+            compositor.windows[i].viewsRoot.foregroundItemsChanged.connect(updateForegroundItems);
+        // This method should be called only once as otherwise connections may leak
+    }
+
+    function updateForegroundItems() {
+        console.log("updating foregroundAppInfoMgr.foregroundItems:", compositor.windows.length);
+        var mergedList = [];
+        for (var i = 0; i < compositor.windows.length; i++) {
+            // "length" property of foregroundItems in windows other than
+            // the primary appears as undefined. So null-checking is used here
+            // for the loop-end condition. It needs to be revisited later
+            // although it could be a bug or restriction of QML engine.
+            for (var j = 0; compositor.windows[i].viewsRoot.foregroundItems[j]; j++) {
+                console.log("foregroundItem, window:", i, "appId:", compositor.windows[i].viewsRoot.foregroundItems[j].appId);
+                mergedList.push(compositor.windows[i].viewsRoot.foregroundItems[j]);
+            }
+        }
+        foregroundItems = mergedList;
+    }
+
+    function renewForegroundItems() {
+        console.log("renewing foregroundAppInfoMgr.foregroundItems using Utils.foregroundList:", compositor.windows.length);
+        var mergedList = [];
+        for (var i = 0; i < compositor.windows.length; i++)
+            mergedList.push(Utils.foregroundList(compositor.windows[i].viewsRoot.children));
+        foregroundItems = mergedList;
+    }
 
     function checkAndNotify() {
         var diff = false;
@@ -60,24 +119,6 @@ QtObject {
         } else {
             console.log("Skipped notifying as enabled is false");
         }
-    }
-
-    onForegroundItemsChanged: {
-        if (!__init)
-            __init = initialized();
-        if (__init)
-            checkAndNotify();
-    }
-
-    onEnabledChanged: {
-        if (__init)
-            checkAndNotify();
-    }
-
-    function initialized() {
-        for (var i = 0; i < foregroundItems.length; i++)
-            if (foregroundItems[i]) return true;
-        return false;
     }
 
     function getForegroundAppInfoParam(item) {

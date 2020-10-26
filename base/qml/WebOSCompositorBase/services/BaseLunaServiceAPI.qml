@@ -54,41 +54,7 @@ Service {
         return JSON.stringify(ret);
     }
 
-    readonly property ForegroundAppInfoMgr foregroundAppInfoMgr: ForegroundAppInfoMgr {
-        function updateForegroundItems() {
-            console.log("updating foregroundAppInfoMgr.foregroundItems:", compositor.windows.length);
-            var mergedList = [];
-            for (var i = 0; i < compositor.windows.length; i++) {
-                // "length" property of foregroundItems in windows other than
-                // the primary appears as undefined. So null-checking is used here
-                // for the loop-end condition. It needs to be revisited later
-                // although it could be a bug or restriction of QML engine.
-                for (var j = 0; compositor.windows[i].viewsRoot.foregroundItems[j]; j++) {
-                    console.log("foregroundItem, window:", i, "appId:", compositor.windows[i].viewsRoot.foregroundItems[j].appId);
-                    mergedList.push(compositor.windows[i].viewsRoot.foregroundItems[j]);
-                }
-            }
-            foregroundItems = mergedList;
-        }
-
-        function bindForegroundItems() {
-            console.info("binding foregroundItems of all compositor windows:", compositor.windows.length);
-            for (var i = 0; i < compositor.windows.length; i++)
-                compositor.windows[i].viewsRoot.foregroundItemsChanged.connect(updateForegroundItems);
-            // This method should be called only once as otherwise connections may leak
-        }
-
-        Component.onCompleted: {
-            if (compositor.loaded) {
-                bindForegroundItems();
-            } else {
-                console.warn("pending bindForegroundItems until compositor loaded fully");
-                compositor.loadCompleted.connect(function () {
-                    bindForegroundItems();
-                });
-            }
-        }
-    }
+    readonly property ForegroundAppInfoMgr foregroundAppInfoMgr: ForegroundAppInfoMgr {}
 
     function getForegroundAppInfo(param) {
         function __replySubscription() {
