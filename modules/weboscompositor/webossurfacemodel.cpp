@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ QVariant WebOSSurfaceModel::data(const QModelIndex &index, int role) const
 
     // surfaceItem is our only role for now. we might have something like a title, enabled state etc here.
     // just returns the corresponding surfaceitem
-    return qVariantFromValue(m_list.at(index.row()));
+    return QVariant::fromValue(m_list.at(index.row()));
 }
 
 void WebOSSurfaceModel::appendRow(WebOSSurfaceItem *item)

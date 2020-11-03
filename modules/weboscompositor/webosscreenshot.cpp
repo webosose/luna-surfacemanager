@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2020 LG Electronics, Inc.
+// Copyright (c) 2014-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,12 +19,8 @@
 #include "weboscompositortracer.h"
 #include "weboscompositorwindow.h"
 
-#ifdef QT_OPENGL_ES
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
-#else
-#include <GL/gl.h>
-#endif
 
 #include <QImage>
 #include <QGuiApplication>
@@ -172,7 +168,6 @@ void ScreenShotTask::run() {
             GLuint fbo = 0;
             GLuint texture = (GLuint) target->texture();
 
-#ifdef QT_OPENGL_ES
             glGenFramebuffers(1, &fbo);
             glBindFramebuffer(GL_FRAMEBUFFER, fbo);
             glBindTexture(GL_TEXTURE_2D, texture);
@@ -183,12 +178,6 @@ void ScreenShotTask::run() {
             glBindTexture(GL_TEXTURE_2D, 0);
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glDeleteFramebuffers(1, &fbo);
-#else
-            //TODO : Not verified yet for Desktop case.
-            glBindTexture(GL_TEXTURE_2D, texture);
-            glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_BYTE, m_image->bits());
-            glBindTexture(GL_TEXTURE_2D, 0);
-#endif
         } else {
             // Nothing to capture as the target has been unset before entering here.
         }

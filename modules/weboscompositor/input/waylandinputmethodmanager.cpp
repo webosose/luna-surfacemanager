@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,8 +34,7 @@ bool WaylandInputMethodManager::requestInputMethod()
     if (m_inputMethodAvaliable)
         return true;
 
-    QString upstartCmd = QLatin1String("/sbin/initctl emit ime-activate");
-    QProcess::startDetached(upstartCmd);
+    QProcess::startDetached("/sbin/initctl", { "emit", "ime-activate" }, "./");
     return false;
 }
 

@@ -313,9 +313,8 @@ void WebOSCoreCompositor::checkDaemonFiles()
                 QFileDevice::ReadOwner | QFileDevice::WriteOwner |
                 QFileDevice::ReadGroup | QFileDevice::WriteGroup)) {
         // TODO: Qt doesn't provide a method to chown at the moment
-        QString cmd = QString("/bin/chown %1:%2 %3").arg(dInfo.owner()).arg(dInfo.group()).arg(sInfo.absoluteFilePath());
-        qDebug() << "Setting ownership of" << sInfo.absoluteFilePath() << "by" << cmd;
-        QProcess::startDetached(cmd);
+        qDebug() << "Setting ownership of" << sInfo.absoluteFilePath() << "using /bin/chown";
+        QProcess::startDetached("/bin/chown", { QString("%1:%2").arg(dInfo.owner()).arg(dInfo.group()), sInfo.absoluteFilePath() }, "./");
     } else {
         qCritical() << "Unable to set permission for" << sInfo.absoluteFilePath();
     }
@@ -1150,8 +1149,7 @@ void WebOSCoreCompositor::emitLsmReady()
     m_loaded = true;
     emit loadCompleted();
 
-    QString upstartCmd = QLatin1String("/sbin/initctl emit --no-wait lsm-ready");
-    QProcess::startDetached(upstartCmd);
+    QProcess::startDetached("/sbin/initctl", { "emit", "--no-wait", "lsm-ready" }, "./");
 }
 
 int WebOSCoreCompositor::prepareOutputUpdate()
