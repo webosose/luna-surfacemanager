@@ -244,6 +244,7 @@ WebOSExported::WebOSExported(
     m_exportedItem->setZ(-1);
     m_exportedItem->setEnabled(false);
     m_surfaceItem->appendExported(this);
+    updateCompositorWindow(m_surfaceItem->window());
 
     qInfo() <<"Window status of surface item (" << m_surfaceItem << ") for exporter : " << m_surfaceItem->state();
 
@@ -298,17 +299,21 @@ WebOSExported::~WebOSExported()
 void WebOSExported::calculateVideoDispRatio()
 {
     qInfo() << "WebOSExported::calculateVideoDispRatio is called on " << m_windowId;
-    if (!m_surfaceItem || !m_surfaceItem->window()) {
+    if (!m_surfaceItem || !m_compositorWindow) {
         qWarning() << "WebOSSurfaceItem for" << m_windowId << "neither exists nor belongs to a window";
         return;
     }
 
-    QRect outputGeometry = static_cast<WebOSCompositorWindow *>(m_surfaceItem->window())->outputGeometry();
+    if (m_compositorWindow->outputGeometryPending()) {
+        qWarning() << "OutputGeometry is being changed, should wait a bit more";
+        return;
+    }
+
+    QRect outputGeometry = m_compositorWindow->outputGeometry();
 
     if (m_isSurfaceItemFullscreen && outputGeometry.isValid() && m_surfaceItem->surface()) {
         m_videoDispRatio = (double) outputGeometry.width() / m_surfaceItem->surface()->size().width();
-        qInfo() << "surface geometry : " << m_surfaceItem->surface()->size().width() << "x" << m_surfaceItem->surface()->size().height();
-        qInfo() <<"m_videoDispRatio : " << m_videoDispRatio;
+        qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->size() << "m_videoDispRatio:" << m_videoDispRatio;
         if (m_requestedRegion.isValid() && m_videoDisplayRect.isValid()) {
             m_videoDisplayRect.setX((int) (m_requestedRegion.x()*m_videoDispRatio));
             m_videoDisplayRect.setY((int) (m_requestedRegion.y()*m_videoDispRatio));
@@ -323,18 +328,21 @@ void WebOSExported::calculateVideoDispRatio()
 void WebOSExported::calculateExportedItemRatio()
 {
     qInfo() << "WebOSExported::calculateExportedItemRatio is called on" << m_windowId;
-    if (!m_surfaceItem || !m_surfaceItem->window()) {
+    if (!m_surfaceItem || !m_compositorWindow) {
         qWarning() << "WebOSSurfaceItem for" << m_windowId << "neither exists nor belongs to a window";
         return;
     }
 
-    QRect outputGeometry = static_cast<WebOSCompositorWindow *>(m_surfaceItem->window())->outputGeometry();
+    if (m_compositorWindow->outputGeometryPending()) {
+        qWarning() << "OutputGeometry is being changed, should wait a bit more";
+        return;
+    }
+
+    QRect outputGeometry = m_compositorWindow->outputGeometry();
 
     if (m_isSurfaceItemFullscreen && outputGeometry.isValid()) {
         m_exportedWindowRatio = (double) m_surfaceItem->width() / m_surfaceItem->surface()->size().width();
-        qInfo() << "surface geometry : " << m_surfaceItem->surface()->size().width() << "x" << m_surfaceItem->surface()->size().height();
-        qInfo() << "surface item geometry : " << m_surfaceItem->width() << "x" << m_surfaceItem->height();
-        qInfo() <<"m_exportedWindowRatio : " << m_exportedWindowRatio;
+        qInfo() << "surface size: " << m_surfaceItem->surface()->size() << "item size:" << m_surfaceItem->size() << "m_exportedWindowRatio:" << m_exportedWindowRatio;
         if (m_requestedRegion.isValid()) {
             m_destinationRect.setX((int)(m_requestedRegion.x()*m_exportedWindowRatio));
             m_destinationRect.setY((int)(m_requestedRegion.y()*m_exportedWindowRatio));
@@ -385,6 +393,7 @@ void WebOSExported::onSurfaceDestroyed()
     qInfo() << "Surface item for (" << m_windowId << ") is destroyed";
 
     m_surfaceItem = nullptr;
+    updateCompositorWindow(nullptr);
 
     if (m_exportedItem) {
         delete m_exportedItem;
