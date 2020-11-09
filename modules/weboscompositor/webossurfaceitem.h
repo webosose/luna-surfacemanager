@@ -219,9 +219,14 @@ public:
 
     void mouseUngrabEvent() override;
 
-    int texture() const {
-        if (textureProvider() && textureProvider()->texture())
-            return textureProvider()->texture()->textureId();
+    GLuint texture() const {
+        QSGTexture *texture = textureProvider() ?  textureProvider()->texture() : nullptr;
+        if (texture)
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+            return texture->nativeInterface<QNativeInterface::QSGOpenGLTexture>()->nativeTexture();
+#else
+            return texture->textureId();
+#endif
         return 0;
     }
 
