@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2021 LG Electronics, Inc.
+// Copyright (c) 2013-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -90,6 +90,7 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
         , m_launchLastApp(false)
         , m_coverState(CoverStateNormal)
         , m_activeRegion(QRect(0,0,0,0))
+        , m_orientation(Qt::LandscapeOrientation)
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
     setAcceptTouchEvents(true);
@@ -117,6 +118,7 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
     setCursor(Qt::ArrowCursor);
 
     connect(this, &QQuickItem::windowChanged, this, &WebOSSurfaceItem::handleWindowChanged);
+    connect(surface, &QWaylandSurface::contentOrientationChanged, this, &WebOSSurfaceItem::contentOrientationChanged);
 
     setObjectName(QStringLiteral("surfaceItem_default"));
     if (surface)
@@ -1414,6 +1416,17 @@ WebOSSurfaceItem::KeyMasks WebOSSurfaceItem::keyMaskFromQt(int key) const
     }
 
     return retKeyMask;
+}
+
+void WebOSSurfaceItem::contentOrientationChanged()
+{
+    qInfo() << "orientation changed: item=" << this
+            << ", orientation=" << surface()->contentOrientation();
+
+    if (m_orientation !=  surface()->contentOrientation()) {
+        m_orientation = surface()->contentOrientation();
+        emit orientationChanged();
+    }
 }
 
 void WebOSSurfaceItem::setCursorSurface(QWaylandSurface *surface, int hotSpotX, int hotSpotY)

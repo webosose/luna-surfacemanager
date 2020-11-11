@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2021 LG Electronics, Inc.
+// Copyright (c) 2013-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -85,6 +85,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandQuickItem
     Q_PROPERTY(QVariantMap closePolicy READ closePolicy WRITE setClosePolicy NOTIFY closePolicyChanged RESET unsetClosePolicy)
     Q_PROPERTY(CoverState coverState READ coverState WRITE setCoverState NOTIFY coverStateChanged)
     Q_PROPERTY(QRect activeRegion READ activeRegion WRITE setActiveRegion NOTIFY activeRegionChanged)
+    Q_PROPERTY(Qt::ScreenOrientation orientation READ orientationInfo NOTIFY orientationChanged)
 
     Q_PROPERTY(Qt::WindowState state READ state WRITE setState NOTIFY stateChanged)
     Q_PROPERTY(bool notifyPositionToClient READ notifyPositionToClient WRITE setNotifyPositionToClient NOTIFY notifyPositionToClientChanged)
@@ -406,6 +407,14 @@ public:
     void setBackgroundColor(QString color) { m_backgroundColor = color; }
 
     /*!
+     * Convenience function to return the screen orientation for this surface.
+     */
+    Qt::ScreenOrientation orientationInfo() {
+        qDebug() << "orientation info = " << m_orientation << " , webosSurfaceItem= " << this;
+        return m_orientation;
+    }
+
+    /*!
      * Function to delete snapshot.
      */
     void deleteSnapShot();
@@ -516,6 +525,7 @@ public slots:
     void updateProperties(const QVariantMap &properties, const QString &name, const QVariant &value);
     void updateCursor();
     void updateDirectUpdateOnPlane();
+    void contentOrientationChanged();
 
 signals:
     void displayIdChanged();
@@ -572,6 +582,7 @@ signals:
 
     void customImageFilePathChanged();
     void backgroundImageFilePathChanged();
+    void orientationChanged();
 
     void addonChanged();
     void addonFilterChanged();
@@ -641,6 +652,7 @@ private:
     QString m_subtitle;
     QString m_params;
     bool m_launchLastApp;
+    Qt::ScreenOrientation m_orientation;
 
     QString m_processId;
     QString m_userId;
