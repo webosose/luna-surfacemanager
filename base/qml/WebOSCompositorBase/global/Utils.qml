@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2020 LG Electronics, Inc.
+// Copyright (c) 2017-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -82,6 +82,15 @@ Item {
                 } else if (viewList[i].currentItem && viewList[i].currentItem.displayId >= 0) {
                     ret.push(viewList[i].currentItem);
                     console.log("Foreground item " + viewList[i].currentItem.appId + " in " + viewList[i]);
+
+                    if (viewList[i].hasMultiItems) {
+                        for (var j = 0; j < viewList[i].items.length; j++) {
+                            if (viewList[i].items[j] != viewList[i].currentItem) {
+                                ret.push(viewList[i].items[j]);
+                                console.info("Foreground item(non-current) " + viewList[i].items[j].appId + " in " + viewList[i]);
+                            }
+                        }
+                    }
                 }
             }
         }
