@@ -101,6 +101,7 @@ public:
     void unregisterMuteOwner();
     void setVideoDisplayWindow();
     void updateDisplayPosition(bool forceUpdate = false);
+    void updateOrientation();
     void onSurfaceItemMapped(WebOSSurfaceItem *mappedItem);
     void startImportedMirroring(WebOSSurfaceItem *parent);
     bool hasSecuredContent();
@@ -157,6 +158,7 @@ protected:
     QString m_windowId;
     QString m_contextId;
     QString m_muteRegisteredContextId;
+    QString m_appRotation = "Deg0";
     QMap<QString, QString> m_properties;
     bool m_isSurfaceItemFullscreen;
     bool m_directVideoScalingMode = false; // If this mode is enabled, do not call setDisplayWindow and setCropRegion of videooutputd

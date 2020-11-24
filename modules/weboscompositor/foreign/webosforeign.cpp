@@ -284,8 +284,10 @@ WebOSExported::WebOSExported(
     connect(m_surfaceItem, &WebOSSurfaceItem::coverStateChanged, this, &WebOSExported::updateCoverState);
     connect(m_surfaceItem, &WebOSSurfaceItem::activeRegionChanged, this, &WebOSExported::updateActiveRegion);
     connect(m_surfaceItem, &WebOSSurfaceItem::typeChanged, this, &WebOSExported::updateWindowType);
+    connect(m_surfaceItem, &WebOSSurfaceItem::orientationChanged, this, &WebOSExported::updateOrientation);
     connect(m_foreign->m_compositor, &WebOSCoreCompositor::surfaceMapped, this, &WebOSExported::onSurfaceItemMapped);
 
+    updateOrientation();
     updateWindowType();
     updateCoverState();
     updateActiveRegion();
@@ -332,6 +334,28 @@ WebOSExported::~WebOSExported()
     // Usually it is deleted by QObjectPrivate::deleteChildren with its parent surfaceItem.
     if (m_exportedItem)
         delete m_exportedItem;
+}
+
+void WebOSExported::updateOrientation()
+{
+    if (!m_surfaceItem) {
+        qWarning() << "surfaceItem for " << m_windowId << " is null";
+        return;
+    }
+
+    Qt::ScreenOrientation orientationInfo = m_surfaceItem->orientationInfo();
+    qInfo() << "surface item= " << m_surfaceItem << " orientation changed : " << orientationInfo <<  " on " << m_windowId;
+
+    if (orientationInfo == Qt::PortraitOrientation)
+        m_appRotation = "Deg90";
+    else if (orientationInfo == Qt::InvertedLandscapeOrientation)
+        m_appRotation = "Deg180";
+    else if (orientationInfo == Qt::InvertedPortraitOrientation)
+        m_appRotation = "Deg270";
+    else
+        m_appRotation = "Deg0";
+
+    webos_exported_set_property(nullptr, "appRotation", m_appRotation);
 }
 
 void WebOSExported::onSurfaceItemMapped(WebOSSurfaceItem *mappedItem)
@@ -384,9 +408,9 @@ void WebOSExported::calculateVideoDispRatio()
         //TODO: m_videoDispRatio will be replaced by m_surfaceItem->scale();
         m_videoDispRatio = m_surfaceItem->scale();
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
-        qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->bufferSize() << "m_videoDispRatio:" << m_videoDispRatio;
+        qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->bufferSize()  <<  ", app rotation : " << m_appRotation <<  " on " << "m_videoDispRatio:" << m_videoDispRatio;
 #else
-        qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->size() << "m_videoDispRatio:" << m_videoDispRatio;
+        qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->size()  <<  ", app rotation :        " << m_appRotation <<  " on " << "m_videoDispRatio:" << m_videoDispRatio;
 #endif
 
         if (m_requestedRegion.isValid()) {
@@ -577,7 +601,7 @@ void WebOSExported::updateVideoWindowList(QString contextId, QRect videoDisplayR
                     m_surfaceItem->width()*scaleFactor,
                     m_surfaceItem->height()*scaleFactor);
             }
-            VideoWindowInformer::instance()->insertVideoWindowList(contextId, videoDisplayRect, m_windowId, appId, appWindow);
+            VideoWindowInformer::instance()->insertVideoWindowList(contextId, videoDisplayRect, m_windowId, appId, appWindow, m_appRotation);
         }
     }
 }

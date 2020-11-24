@@ -30,11 +30,11 @@ public:
     // Testing purpose only
     static void resetInstance();
 
-    void insertVideoWindowList(const QString contextId, const QRect destinationRectangle, const QString windowId, const QString appId, const QRect appWindow);
+    void insertVideoWindowList(const QString contextId, const QRect destinationRectangle, const QString windowId, const QString appId, const QRect appWindow, const QString appRotation);
     void removeVideoWindowList(const QString contextId);
 
 signals:
-    void insertVideoWindowInfo(const QString contextId, const QRect destinationRectangle, const QString windowId, const QString appId, const QRect appWindow);
+    void insertVideoWindowInfo(const QString contextId, const QRect destinationRectangle, const QString windowId, const QString appId, const QRect appWindow, const QString appRotation);
     void removeVideoWindowInfo(const QString contextId);
 
 protected:

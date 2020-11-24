@@ -42,10 +42,10 @@ void VideoWindowInformer::resetInstance()
     m_instance = nullptr;
 }
 
-void VideoWindowInformer::insertVideoWindowList(const QString contextId, const QRect destinationRectangle, const QString windowId, const QString appId, const QRect appWindow)
+void VideoWindowInformer::insertVideoWindowList(const QString contextId, const QRect destinationRectangle, const QString windowId, const QString appId, const QRect appWindow, const QString appRotation)
 {
-    qDebug() << "insertVideoWindowList() with contextId : " << contextId << " , destinationRectangle : " << destinationRectangle << " , windowId : " << windowId << "  ,  appId " << appId << " , appWindow : " << appWindow;
-    emit insertVideoWindowInfo(contextId, destinationRectangle, windowId, appId, appWindow);
+    qDebug() << "insertVideoWindowList() with contextId : " << contextId << " , destinationRectangle : " << destinationRectangle << " , windowId : " << windowId << "  ,  appId " << appId << " , appWindow : " << appWindow << " , appRotation : " << appRotation;
+    emit insertVideoWindowInfo(contextId, destinationRectangle, windowId, appId, appWindow, appRotation);
 }
 
 void VideoWindowInformer::removeVideoWindowList(const QString contextId)
