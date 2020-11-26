@@ -84,6 +84,8 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
         for (int i = 0; i < screens.count(); i++) {
             if (screenName == screens.at(i)->handle()->name()) {
                 setScreen(screens.at(i));
+                // Needed in Qt 6 as otherwise it ends up with a crash
+                setGeometry(screens.at(i)->geometry());
                 qInfo() << "Setting displayId:" << m_displayId << "screen:" << screen() << "for this window" << this;
                 break;
             }
