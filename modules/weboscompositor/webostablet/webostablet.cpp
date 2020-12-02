@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2020 LG Electronics, Inc.
+// Copyright (c) 2018-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,12 +36,19 @@ bool WebOSTablet::postTabletEvent(QTabletEvent* event, QWaylandView* view)
     Resource* target = resourceMap().contains(client) ? resourceMap().value(client) : nullptr;
     if (target) {
         const QByteArray& uniqueIdArray = QByteArray::number(event->uniqueId());
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        send_tablet_event(target->handle, uniqueIdArray, static_cast<int32_t>(event->pointerType()), event->buttons(),
+            wl_fixed_from_double(event->globalPosF().x()), wl_fixed_from_double(event->globalPosF().y()),
+            event->xTilt(), event->yTilt(),
+            wl_fixed_from_double(event->pressure() * TABLET_PRESSURE_SCALE_FACTOR),
+            wl_fixed_from_double(event->rotation()));
+#else
         send_tablet_event(target->handle, uniqueIdArray, event->pointerType(), event->buttons(),
-                      wl_fixed_from_double(event->globalPosF().x()),
-                      wl_fixed_from_double(event->globalPosF().y()),
-                      event->xTilt(), event->yTilt(),
-                      wl_fixed_from_double(event->pressure() * TABLET_PRESSURE_SCALE_FACTOR),
-                      wl_fixed_from_double(event->rotation()));
+            wl_fixed_from_double(event->globalPosF().x()), wl_fixed_from_double(event->globalPosF().y()),
+            event->xTilt(), event->yTilt(),
+            wl_fixed_from_double(event->pressure() * TABLET_PRESSURE_SCALE_FACTOR),
+            wl_fixed_from_double(event->rotation()));
+#endif
         return true;
     }
     return false;
@@ -51,5 +58,9 @@ void WebOSTablet::advertiseApproximation(QTabletEvent* event)
 {
     const QByteArray& uniqueIdArray = QByteArray::number(event->uniqueId());
     foreach (const Resource* res, resourceMap().values())
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        send_tablet_event(res->handle, uniqueIdArray, static_cast<int32_t>(event->pointerType()), 0, 0, 0, 0, 0, 0, 0);
+#else
         send_tablet_event(res->handle, uniqueIdArray, event->pointerType(), 0, 0, 0, 0, 0, 0, 0);
+#endif
 }

@@ -966,12 +966,21 @@ bool WebOSCompositorWindow::handleTabletEvent(QQuickItem* item, QTabletEvent* ev
     // Event grabber exists. Send it directly.
     if (m_tabletGrabberItem) {
         QPointF p = m_tabletGrabberItem->mapFromScene(event->posF());
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        QTabletEvent ev(event->type(), event->pointingDevice(), p, p,
+                        event->pressure(),
+                        event->xTilt(), event->yTilt(),
+                        event->tangentialPressure(), event->rotation(),
+                        event->z(), event->modifiers(),
+                        event->button(), event->buttons());
+#else
         QTabletEvent ev(event->type(), p, p, event->device(),
                         event->pointerType(), event->pressure(),
                         event->xTilt(), event->yTilt(),
                         event->tangentialPressure(), event->rotation(),
                         event->z(), event->modifiers(), event->uniqueId(),
                         event->button(), event->buttons());
+#endif
         ev.accept();
 
         QCoreApplication::sendEvent(m_tabletGrabberItem, &ev);
@@ -1012,18 +1021,34 @@ bool WebOSCompositorWindow::handleTabletEvent(QQuickItem* item, QTabletEvent* ev
 #endif
 
     if (item->contains(p) && itemPrivate->acceptedMouseButtons()) {
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        QTabletEvent ev(event->type(), event->pointingDevice(), p, p,
+                        event->pressure(),
+                        event->xTilt(), event->yTilt(),
+                        event->tangentialPressure(), event->rotation(),
+                        event->z(), event->modifiers(),
+                        event->button(), event->buttons());
+#else
         QTabletEvent ev(event->type(), p, p, event->device(),
                         event->pointerType(), event->pressure(),
                         event->xTilt(), event->yTilt(),
                         event->tangentialPressure(), event->rotation(),
                         event->z(), event->modifiers(), event->uniqueId(),
                         event->button(), event->buttons());
+#endif
         ev.accept();
         if (!m_mouseGrabberItem && QCoreApplication::sendEvent(item, &ev)) {
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+            if (event->pointerType() == QPointingDevice::PointerType::Pen && event->type() == QEvent::TabletRelease && event->pressure() != 0)
+                m_tabletGrabberItem = item;
+            else if (event->type() == QEvent::TabletPress)
+                m_tabletGrabberItem = item;
+#else
             if (event->pointerType() == QTabletEvent::Pen && event->type() == QEvent::TabletRelease && event->pressure() != 0)
                 m_tabletGrabberItem = item;
             else if (event->type() == QEvent::TabletPress)
                 m_tabletGrabberItem = item;
+#endif
             event->accept();
             return true;
         } else {
