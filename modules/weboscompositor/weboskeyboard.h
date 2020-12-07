@@ -42,11 +42,11 @@ public:
     WebOSKeyboard(QWaylandSeat *seat);
 
     void setFocus(QWaylandSurface *surface) override;
-    void sendKeyModifiers(QWaylandClient *client, uint32_t serial) override;
     void sendKeyPressEvent(uint code, bool repeat) override;
     void sendKeyReleaseEvent(uint code, bool repeat) override;
     void addClient(QWaylandClient *client, uint32_t id, uint32_t version) override;
 
+    void updateModifierState(uint code, uint32_t state, bool repeat);
 
     void startGrab(KeyboardGrabber *grab);
     void endGrab();

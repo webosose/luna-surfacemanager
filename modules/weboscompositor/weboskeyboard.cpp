@@ -39,23 +39,41 @@ void WebOSKeyboard::setFocus(QWaylandSurface *surface)
         QWaylandKeyboard::setFocus(surface);
 }
 
-void WebOSKeyboard::sendKeyModifiers(QWaylandClient *client, uint32_t serial)
+void WebOSKeyboard::updateModifierState(uint code, uint32_t state, bool repeat)
 {
     Q_D(QWaylandKeyboard);
 
-    if (m_grab) {
 #if QT_CONFIG(xkbcommon)
-        auto xkb_state = d->xkbState();
-        modsDepressed = xkb_state_serialize_mods(xkb_state, (xkb_state_component)XKB_STATE_MODS_DEPRESSED);
-        modsLatched   = xkb_state_serialize_mods(xkb_state, (xkb_state_component)XKB_STATE_MODS_LATCHED);
-        modsLocked    = xkb_state_serialize_mods(xkb_state, (xkb_state_component)XKB_STATE_MODS_LOCKED);
-        group         = xkb_state_serialize_group(xkb_state, (xkb_state_component)XKB_STATE_EFFECTIVE);
-        xkb_state_update_mask(xkb_state, modsDepressed, modsLatched, modsLocked, 0, 0, group);
-#endif
-        m_grab->modifiers(serial, modsDepressed, modsLatched, modsLocked, group);
+    auto xkb_state = d->xkbState();
+
+    if (!xkb_state || repeat)
+        return;
+
+    xkb_state_update_key(xkb_state, code, state == WL_KEYBOARD_KEY_STATE_PRESSED ? XKB_KEY_DOWN : XKB_KEY_UP);
+
+    xkb_mod_mask_t depressed = xkb_state_serialize_mods(xkb_state, (xkb_state_component)XKB_STATE_DEPRESSED);
+    xkb_mod_mask_t latched = xkb_state_serialize_mods(xkb_state, (xkb_state_component)XKB_STATE_LATCHED);
+    xkb_mod_mask_t locked = xkb_state_serialize_mods(xkb_state, (xkb_state_component)XKB_STATE_LOCKED);
+    xkb_mod_mask_t grp = xkb_state_serialize_group(xkb_state, (xkb_state_component)XKB_STATE_EFFECTIVE);
+
+    if (this->modsDepressed == depressed && this->modsLatched == latched && this->modsLocked == locked && this->group == grp)
+        return;
+
+    this->modsDepressed = depressed;
+    this->modsLatched = latched;
+    this->modsLocked = locked;
+    this->group = grp;
+
+    if (m_grab) {
+        qDebug() << "Updating modifiers for grabber" << m_grab << depressed << latched << locked << grp;
+        m_grab->modifiers(compositor()->nextSerial(), depressed, latched, locked, grp);
+    } else {
+        qDebug() << "Updating modifiers for keyboard" << this << depressed << latched << locked << grp;
+        d->modifiers(compositor()->nextSerial(), depressed, latched, locked, grp);
     }
-    else
-        QWaylandKeyboard::sendKeyModifiers(client, serial);
+#else
+    d->updateModifierState(code, state, repeat);
+#endif
 }
 
 void WebOSKeyboard::sendKeyPressEvent(uint code, bool repeat)
