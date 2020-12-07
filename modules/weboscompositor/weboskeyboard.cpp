@@ -119,6 +119,4 @@ void WebOSKeyboard::sendKeyEvent(uint code, uint32_t state, bool repeat)
     uint32_t serial = compositor()->nextSerial();
     uint key = code - 8;
     m_grab->key(serial, time, key, state);
-
-    d->updateModifierState(code, state, repeat);
 }
