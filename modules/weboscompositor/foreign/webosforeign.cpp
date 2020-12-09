@@ -789,12 +789,15 @@ WebOSImported::WebOSImported(WebOSExported* exported, struct wl_client* client,
     , m_exported(exported)
     , m_importedType(exportedType)
 {
-    qInfo() << this << "is created. Video window id is : " << m_exported->m_windowId;
-    connect(exported, &WebOSExported::geometryChanged,
-            this, &WebOSImported::updateGeometry);
-    if (exported)
+    if (exported) {
+        qInfo() << this << "is created. Video window id is : " << m_exported->m_windowId;
+        connect(exported, &WebOSExported::geometryChanged,
+                this, &WebOSImported::updateGeometry);
         send_destination_region_changed(exported->m_destinationRect.width(),
                                         exported->m_destinationRect.height());
+    } else {
+        qWarning() << this << "is created with a null video window";
+    }
 }
 
 WebOSImported::~WebOSImported()

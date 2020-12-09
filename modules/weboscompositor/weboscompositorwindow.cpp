@@ -72,6 +72,8 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
     , m_output(nullptr)
     , m_inputDevice(nullptr)
     , m_mouseGrabberItem(nullptr)
+    , m_viewsRoot(nullptr)
+    , m_timeSpentForRendering(0)
 {
     if (screenName.isEmpty()) {
         setScreen(QGuiApplication::primaryScreen());

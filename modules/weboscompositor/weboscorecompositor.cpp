@@ -227,14 +227,14 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
     static bool firstRegister = true;
 
     QWaylandQuickOutput *output = new QWaylandQuickOutput(this, window);
-    QWaylandOutputMode mode(m_outputGeometry.isValid() ? m_outputGeometry.size() : window->size(), 60000);
-    output->addMode(mode, true);
-    output->setCurrentMode(mode);
-
     if (!output) {
         qCritical() << "Failed to create QWaylandOutput for window" << window << name;
         return;
     }
+
+    QWaylandOutputMode mode(m_outputGeometry.isValid() ? m_outputGeometry.size() : window->size(), 60000);
+    output->addMode(mode, true);
+    output->setCurrentMode(mode);
 
     WebOSCompositorWindow *webosWindow = static_cast<WebOSCompositorWindow *>(window);
     insertToWindows(webosWindow);
