@@ -1,0 +1,8 @@
+{
+    "com.webos.app.surfacemanager-acg-old-*": [
+        "launcher.control",
+        "launcher.status",
+        "surfaces.control",
+        "surfaces.status"
+    ]
+}

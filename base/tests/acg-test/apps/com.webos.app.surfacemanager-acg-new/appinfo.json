@@ -1,0 +1,11 @@
+{
+    "id": "com.webos.app.surfacemanager-acg-new",
+    "version": "0.0.1",
+    "vendor": "LG Electronics",
+    "type": "qml",
+    "main": "acg-test.qml",
+    "title": "LSM ACG Test (New)",
+    "icon": "icon.png",
+    "iconColor": "#888888",
+    "visible": false
+}

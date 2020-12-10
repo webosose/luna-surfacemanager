@@ -1,0 +1,7 @@
+{
+    "com.webos.app.surfacemanager-acg-new-*": [
+        "surfacemanager.operation",
+        "surfacemanager.query",
+        "surfacemanager.devutility"
+    ]
+}

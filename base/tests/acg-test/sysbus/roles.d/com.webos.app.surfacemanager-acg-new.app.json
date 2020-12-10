@@ -1,0 +1,15 @@
+{
+    "appId": "com.webos.app.surfacemanager-acg-new",
+    "type": "regular",
+    "allowedNames": [
+        "com.webos.app.surfacemanager-acg-new-*"
+    ],
+    "permissions": [
+        {
+            "service": "com.webos.app.surfacemanager-acg-new-*",
+            "outbound": [
+                "*"
+            ]
+        }
+    ]
+}
