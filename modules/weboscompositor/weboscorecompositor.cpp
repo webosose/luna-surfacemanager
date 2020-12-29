@@ -191,6 +191,27 @@ WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *
     initializeExtensions(extensions);
 
     connect(this, &QWaylandCompositor::surfaceCreated, this, &WebOSCoreCompositor::surfaceCreated);
+
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    const QVector<ShmFormat> supportedWaylandFormats = {
+        ShmFormat_ARGB8888,
+        ShmFormat_XRGB8888,
+        ShmFormat_C8,
+        ShmFormat_XRGB4444,
+        ShmFormat_ARGB4444,
+        ShmFormat_XRGB1555,
+        ShmFormat_RGB565,
+        ShmFormat_RGB888,
+        ShmFormat_XBGR8888,
+        ShmFormat_ABGR8888,
+        ShmFormat_XRGB2101010,
+        ShmFormat_XBGR2101010,
+        ShmFormat_ARGB2101010,
+        ShmFormat_ABGR2101010
+    };
+
+    QWaylandCompositor::setAdditionalShmFormats(supportedWaylandFormats);
+#endif
 }
 
 WebOSCoreCompositor::~WebOSCoreCompositor()
