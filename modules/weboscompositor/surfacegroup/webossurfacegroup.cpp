@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2020 LG Electronics, Inc.
+// Copyright (c) 2014-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -229,7 +229,7 @@ WebOSSurfaceItem* WebOSSurfaceGroup::itemFromResource(struct ::wl_resource* surf
     QWaylandSurface* s = QWaylandSurface::fromResource(surface);
     if (s) {
         QWaylandQuickSurface *qsurface = qobject_cast<QWaylandQuickSurface *>(s);
-        return qobject_cast<WebOSSurfaceItem*>(qsurface->surfaceItem());
+        return WebOSSurfaceItem::getSurfaceItemFromSurface(qsurface);
     }
     qWarning("Could not resolve wl_surface@%d to surface item", surface->object.id);
     return NULL;

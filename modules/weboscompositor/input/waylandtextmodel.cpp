@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2020 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -160,7 +160,7 @@ void WaylandTextModel::textModelActivate(struct wl_client *client, struct wl_res
     WaylandTextModel* that = static_cast<WaylandTextModel*>(resource->data);
     QWaylandSurface *surfaceRequested = QWaylandSurface::fromResource(surface);
     QWaylandQuickSurface *qs = static_cast<QWaylandQuickSurface *>(surfaceRequested);
-    WebOSSurfaceItem* wsi = qobject_cast<WebOSSurfaceItem *>(qs->surfaceItem());
+    WebOSSurfaceItem* wsi = WebOSSurfaceItem::getSurfaceItemFromSurface(qs);
 
     if (!wsi) {
         qWarning() << "Unexpected:" << that << surfaceRequested << "has no WebOSSurfaceItem";

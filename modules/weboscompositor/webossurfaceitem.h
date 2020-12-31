@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2020 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -491,6 +491,10 @@ public:
     Q_INVOKABLE void releaseLastFrame();
 
     uint32_t planeZpos () const override;
+
+    static WebOSSurfaceItem *getSurfaceItemFromSurface(QWaylandSurface *surface) {
+        return (!surface || surface->views().isEmpty()) ? nullptr : qobject_cast<WebOSSurfaceItem*>(surface->views().first()->renderObject());
+    }
 
 public slots:
     void updateScreenPosition();

@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2020 LG Electronics, Inc.
+// Copyright (c) 2018-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -195,7 +195,7 @@ void WebOSForeign::webos_foreign_export_element(Resource *resource,
     QWaylandSurface* qwls = QWaylandSurface::fromResource(surface);
     QWaylandQuickSurface* quickSurface =
         static_cast<QWaylandQuickSurface*>(qwls);
-    WebOSSurfaceItem *surfaceItem = static_cast<WebOSSurfaceItem*>(quickSurface->surfaceItem());
+    WebOSSurfaceItem *surfaceItem = WebOSSurfaceItem::getSurfaceItemFromSurface(quickSurface);
     WebOSExported *pWebOSExported =
         new WebOSExported(this, resource->client(), id,
                           surfaceItem,
@@ -988,7 +988,7 @@ void WebOSImported::webos_imported_attach_surface(
 
     qInfo() << qwlSurface << "from" << surface;
 
-    m_childSurfaceItem = qobject_cast<WebOSSurfaceItem*>(qwlSurface->surfaceItem());
+    m_childSurfaceItem = WebOSSurfaceItem::getSurfaceItemFromSurface(qwlSurface);
     connect(m_childSurfaceItem->surface(), &QWaylandSurface::surfaceDestroyed, this, &WebOSImported::childSurfaceDestroyed);
     m_childSurfaceItem->setImported(true);
     m_childSurfaceItem->setDirectUpdateOnPlane(m_exported->surfaceItem()->directUpdateOnPlane());

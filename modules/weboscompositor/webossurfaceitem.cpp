@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2020 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -763,7 +763,7 @@ WebOSSurfaceItem* WebOSSurfaceItem::transientParent()
 
     QWaylandQuickSurface* parent = qobject_cast<QWaylandQuickSurface *>(surface()->parent());
     if (parent) {
-         WebOSSurfaceItem *parent_item = static_cast<WebOSSurfaceItem*>(parent->surfaceItem());
+         WebOSSurfaceItem *parent_item = WebOSSurfaceItem::getSurfaceItemFromSurface(parent);
          WebOSShellSurface *parent_shell = parent_item->shellSurface();
          if (parent_shell == NULL) return NULL;
          if (!parent_shell->isTransient ()) return NULL;

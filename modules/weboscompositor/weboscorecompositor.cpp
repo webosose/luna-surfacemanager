@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2020 LG Electronics, Inc.
+// Copyright (c) 2014-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -999,7 +999,7 @@ void WebOSCoreCompositor::setMouseFocus(QWaylandSurface* surface)
     }
 #else
     QWaylandQuickSurface *qsurface = static_cast<QWaylandQuickSurface *>(surface);
-    QWaylandQuickItem *item = qsurface->surfaceItem();
+    WebOSSurfaceItem *item = WebOSSurfaceItem::getSurfaceItemFromSurface(qsurface);
     defaultSeat()->setMouseFocus(item ? item->view(): nullptr);
 #endif
 }
@@ -1230,7 +1230,7 @@ void WebOSCoreCompositor::finalizeOutputUpdate()
 void WebOSCoreCompositor::onSurfaceSizeChanged()
 {
     QWaylandQuickSurface *surface = qobject_cast<QWaylandQuickSurface *>(sender());
-    WebOSSurfaceItem* item = qobject_cast<WebOSSurfaceItem*>(surface->surfaceItem());
+    WebOSSurfaceItem* item = WebOSSurfaceItem::getSurfaceItemFromSurface(surface);
 
     qDebug() << "OutputGeometry: size changed for item -" << item;
 

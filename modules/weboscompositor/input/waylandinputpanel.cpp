@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2020 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -139,7 +139,7 @@ void WaylandInputPanel::getInputPanelSurface(struct wl_client *client, struct wl
     WaylandInputPanel* that = static_cast<WaylandInputPanel*>(resource->data);
     QWaylandSurface* qwls = QWaylandSurface::fromResource(surface_resource);
     QWaylandQuickSurface *qsurface = static_cast<QWaylandQuickSurface *>(qwls);
-    WebOSSurfaceItem* ipsi = qobject_cast<WebOSSurfaceItem*>(qsurface->surfaceItem());
+    WebOSSurfaceItem* ipsi = WebOSSurfaceItem::getSurfaceItemFromSurface(qsurface);
 
     qDebug() << "wl_surface@" << surface_resource->object.id;
     if (!ipsi) {

@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2020 LG Electronics, Inc.
+// Copyright (c) 2014-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ void WebOSSurfaceGroupCompositor::webos_surface_group_compositor_create_surface_
     QWaylandSurface* surface = QWaylandSurface::fromResource(parent);
     if (surface) {
         QWaylandQuickSurface *qsurface = qobject_cast<QWaylandQuickSurface *>(surface);
-        WebOSSurfaceItem* item = qobject_cast<WebOSSurfaceItem*>(qsurface->surfaceItem());
+        WebOSSurfaceItem* item = WebOSSurfaceItem::getSurfaceItemFromSurface(qsurface);
         // A group can only be created to surfaces that
         // a) do not have a group
         // b) do not belong to a group

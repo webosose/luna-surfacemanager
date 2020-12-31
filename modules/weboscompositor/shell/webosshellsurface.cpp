@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2020 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ void WebOSShell::get_shell_surface(struct wl_client *client, struct wl_resource 
 {
     WebOSShell* that = static_cast<WebOSShell *>(shell_resource->data);
     QWaylandSurface* surface = QWaylandSurface::fromResource(owner);
-    WebOSSurfaceItem* item = qobject_cast<WebOSSurfaceItem*>(surface->surfaceItem());
+    WebOSSurfaceItem* item = WebOSSurfaceItem::getSurfaceItemFromSurface(surface);
     qDebug() << surface << item;
     if (item)
         new WebOSShellSurface(client, id, item, owner, that->getVersion(client));
