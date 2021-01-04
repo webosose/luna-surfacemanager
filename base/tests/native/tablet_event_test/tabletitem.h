@@ -52,17 +52,17 @@ private:
     void setValues(QTabletEvent *event);
     void setTouchValues(QTouchEvent *event);
 
-    int m_id;
+    int m_id = 0;
     QString m_type;
     QString m_device;
     QPointF m_pos;
-    int m_z;
-    int m_xTilt;
-    int m_yTilt;
-    qreal m_pressure;
-    qint64 m_uniqueId;
-    int m_xTouch;
-    int m_yTouch;
+    int m_z = 0;
+    int m_xTilt = 0;
+    int m_yTilt = 0;
+    qreal m_pressure = 0.0;
+    qint64 m_uniqueId = 0;
+    int m_xTouch = 0;
+    int m_yTouch = 0;
     QString m_eventType;
 };
 
