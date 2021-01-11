@@ -325,8 +325,13 @@ void WebOSExported::calculateVideoDispRatio()
 
     if (m_isSurfaceItemFullscreen && outputGeometry.isValid() && m_surfaceItem->surface()) {
         QPointF offset = m_surfaceItem->mapToItem(m_compositorWindow->viewsRoot(), QPointF(0.0, 0.0));
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        m_videoDispRatio = (double) outputGeometry.width() / m_surfaceItem->surface()->bufferSize().width() * m_surfaceItem->scale();
+        qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->bufferSize() << "m_videoDispRatio:" << m_videoDispRatio;
+#else
         m_videoDispRatio = (double) outputGeometry.width() / m_surfaceItem->surface()->size().width() * m_surfaceItem->scale();
         qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->size() << "m_videoDispRatio:" << m_videoDispRatio;
+#endif
         qInfo() << "Item scale:" << m_surfaceItem->scale() << "item offset:" << offset;
         if (m_requestedRegion.isValid() && m_videoDisplayRect.isValid()) {
             m_videoDisplayRect.setX((int) (m_requestedRegion.x()*m_videoDispRatio + offset.x()));
@@ -357,8 +362,13 @@ void WebOSExported::calculateExportedItemRatio()
     QRect outputGeometry = m_compositorWindow->outputGeometry();
 
     if (m_isSurfaceItemFullscreen && outputGeometry.isValid()) {
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        m_exportedWindowRatio = (double) m_surfaceItem->width() / m_surfaceItem->surface()->bufferSize().width();
+        qInfo() << "surface size: " << m_surfaceItem->surface()->bufferSize() << "item size:" << m_surfaceItem->size() << "m_exportedWindowRatio:" << m_exportedWindowRatio;
+#else
         m_exportedWindowRatio = (double) m_surfaceItem->width() / m_surfaceItem->surface()->size().width();
         qInfo() << "surface size: " << m_surfaceItem->surface()->size() << "item size:" << m_surfaceItem->size() << "m_exportedWindowRatio:" << m_exportedWindowRatio;
+#endif
         if (m_requestedRegion.isValid()) {
             m_destinationRect.setX((int)(m_requestedRegion.x()*m_exportedWindowRatio));
             m_destinationRect.setY((int)(m_requestedRegion.y()*m_exportedWindowRatio));
@@ -850,7 +860,11 @@ void WebOSImported::updateGeometry()
     if (m_childSurfaceItem) {
         switch (m_textureAlign) {
         case WebOSImported::surface_alignment::surface_alignment_stretch:
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+            connect(m_childSurfaceItem->surface(), &QWaylandSurface::bufferSizeChanged, this, &WebOSImported::setSurfaceItemSize);
+#else
             connect(m_childSurfaceItem->surface(), &QWaylandSurface::sizeChanged, this, &WebOSImported::setSurfaceItemSize);
+#endif
             if (m_exported && m_exported->m_exportedItem) {
                 qInfo() << m_childSurfaceItem << "fits to" << m_exported->m_exportedItem;
                 m_childSurfaceItem->setWidth(m_exported->m_exportedItem->width());

@@ -1007,7 +1007,11 @@ void WebOSSurfaceItem::setExposed(bool exposed)
 {
     if (m_exposed != exposed) {
         if (m_shellSurface && surface()) {
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+            QRegion r = exposed ? QRegion(QRect(QPoint(0, 0), surface()->bufferSize())) : QRegion();
+#else
             QRegion r = exposed ? QRegion(QRect(QPoint(0, 0), surface()->size())) : QRegion();
+#endif
             m_shellSurface->exposed(r);
         } else {
             qWarning("no surface or shellSurface, no one to send to.");

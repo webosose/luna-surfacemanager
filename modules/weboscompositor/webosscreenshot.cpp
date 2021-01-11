@@ -62,7 +62,11 @@ WebOSScreenShot::ScreenShotErrors WebOSScreenShot::take()
             emit screenShotError(HAS_SECURED_CONTENT);
             return HAS_SECURED_CONTENT;
         }
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        m_size = m_target->surface()->bufferSize();
+#else
         m_size = m_target->surface()->size();
+#endif
 
         img = QImage(m_size, QImage::Format_ARGB32_Premultiplied);
 

@@ -1188,7 +1188,11 @@ int WebOSCoreCompositor::prepareOutputUpdate()
         if (!item->surface() || qFuzzyCompare(item->width(), item->height()) || item->state() == Qt::WindowMinimized)
             continue;
 
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        connect(item->surface(), &QWaylandSurface::bufferSizeChanged, this, &WebOSCoreCompositor::onSurfaceSizeChanged);
+#else
         connect(item->surface(), &QWaylandSurface::sizeChanged, this, &WebOSCoreCompositor::onSurfaceSizeChanged);
+#endif
         m_surfacesOnUpdate << item;
         qDebug() << "OutputGeometry: watching item for the size change -" << item;
     }
@@ -1248,7 +1252,11 @@ void WebOSCoreCompositor::finalizeOutputUpdate()
 {
     foreach (WebOSSurfaceItem *item, m_surfacesOnUpdate) {
         if (item->surface())
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+            disconnect(item->surface(), &QWaylandSurface::bufferSizeChanged, this, &WebOSCoreCompositor::onSurfaceSizeChanged);
+#else
             disconnect(item->surface(), &QWaylandSurface::sizeChanged, this, &WebOSCoreCompositor::onSurfaceSizeChanged);
+#endif
     }
     m_surfacesOnUpdate.clear();
 
@@ -1263,7 +1271,11 @@ void WebOSCoreCompositor::onSurfaceSizeChanged()
     qDebug() << "OutputGeometry: size changed for item -" << item;
 
     m_surfacesOnUpdate.removeOne(item);
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    disconnect(surface, &QWaylandSurface::bufferSizeChanged, this, &WebOSCoreCompositor::onSurfaceSizeChanged);
+#else
     disconnect(surface, &QWaylandSurface::sizeChanged, this, &WebOSCoreCompositor::onSurfaceSizeChanged);
+#endif
 
     // We assume that if size is updated, output changes are applied to client.
     if (m_surfacesOnUpdate.isEmpty())

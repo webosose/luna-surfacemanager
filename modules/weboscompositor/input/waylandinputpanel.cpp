@@ -43,7 +43,11 @@ WaylandInputPanelSurface::WaylandInputPanelSurface(WebOSSurfaceItem* item, wl_cl
     if (m_surfaceItem->surface()) {
         connect(m_surfaceItem->surface(), SIGNAL(hasContentChanged()), this, SLOT(onSurfaceMapped()));
         connect(m_surfaceItem->surface(), SIGNAL(hasContentChanged()), this, SLOT(onSurfaceUnmapped()));
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        connect(m_surfaceItem->surface(), &QWaylandSurface::bufferSizeChanged, this, &WaylandInputPanelSurface::sizeChanged);
+#else
         connect(m_surfaceItem->surface(), &QWaylandSurface::sizeChanged, this, &WaylandInputPanelSurface::sizeChanged);
+#endif
         connect(m_surfaceItem->surface(), &QWaylandSurface::destroyed, this, &WaylandInputPanelSurface::onSurfaceDestroyed);
     }
 }
@@ -202,7 +206,11 @@ void WaylandInputPanel::updateInputPanelState()
 
     // Considered as shown only if the active input panel surface has a valid size
     if (m_activeSurface && m_activeSurface->surface())
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        state = m_activeSurface->surface()->bufferSize().isValid() ? InputPanelShown : InputPanelHidden;
+#else
         state = m_activeSurface->surface()->size().isValid() ? InputPanelShown : InputPanelHidden;
+#endif
 
     qDebug() << "activeSurface:" << m_activeSurface << m_state << "->" << state;
 
