@@ -1,0 +1,6 @@
+{
+    "allowedNames": ["com.webos.surfacemanager*"],
+    "surfacemanager.devutility": ["oem"],
+    "surfacemanager.operation": ["oem"],
+    "surfacemanager.query": ["oem"]
+}
