@@ -518,15 +518,15 @@ void WebOSSurfaceItem::mouseUngrabEvent()
 {
 #ifdef MULTIINPUT_SUPPORT
     if (surface()) {
-        QTouchEvent e(QEvent::TouchCancel);
+        QScopedPointer<QTouchEvent> e(new QTouchEvent(QEvent::TouchCancel));
         for (int i = 1; i < m_compositor->inputDevices().size(); i++) {
             QWaylandSeat *dev = m_compositor->inputDevices().at(i);
             if (!surface()->views().isEmpty() && dev && dev->mouseFocus() == surface()->views().first()) {
-                e = QTouchEvent(QEvent::TouchCancel, Q_NULLPTR, (Qt::KeyboardModifiers)(static_cast<WebOSInputDevice*>(dev)->id()));
+                e.reset(new QTouchEvent(QEvent::TouchCancel, Q_NULLPTR, (Qt::KeyboardModifiers)(static_cast<WebOSInputDevice*>(dev)->id())));
                 break;
             }
         }
-        QWaylandQuickItem::touchEvent(&e);
+        QWaylandQuickItem::touchEvent(e.get());
     }
 #else
     QWaylandQuickItem::mouseUngrabEvent();
