@@ -220,7 +220,6 @@ public:
             return textureProvider()->texture()->textureId();
         return 0;
     }
-    QSize textureSize() const { return surface()->size(); }
 
     void setDisplayAffinity(int affinity);
 
