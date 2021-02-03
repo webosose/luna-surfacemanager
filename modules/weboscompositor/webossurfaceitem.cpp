@@ -1363,7 +1363,7 @@ bool WebOSSurfaceItem::hasSecuredContent()
     if (!isMapped())
         return false;
 
-    if (view() && view()->currentBuffer().hasSecuredContent()) {
+    if (view() && view()->currentBuffer().hasProtectedContent()) {
         qInfo() << "Current view has secured content";
         return true;
     }

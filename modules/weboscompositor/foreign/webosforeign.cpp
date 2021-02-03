@@ -689,7 +689,7 @@ bool WebOSExported::hasSecuredContent()
     foreach(QQuickItem *item, m_exportedItem->childItems()) {
         WebOSSurfaceItem *surfaceItem = qobject_cast<WebOSSurfaceItem *>(item);
         if (surfaceItem && surfaceItem->view()) {
-            if (surfaceItem->view()->currentBuffer().hasSecuredContent())
+            if (surfaceItem->view()->currentBuffer().hasProtectedContent())
                 return true;
         }
     }
