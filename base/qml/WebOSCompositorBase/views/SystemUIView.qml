@@ -29,7 +29,7 @@ SurfaceView {
     consumeMouseEvents: false
 
     property bool consumeKeyEvents: false
-    property url containerQml: "./base/SystemUISurface.qml"
+    property url containerQml: Qt.resolvedUrl("./base/SystemUISurface.qml")
 
     property Component component: Qt.createComponent(root.containerQml, root)
 

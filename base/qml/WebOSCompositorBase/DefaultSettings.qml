@@ -18,7 +18,7 @@ import QtQuick 2.4
 import WebOS.Global 1.0
 
 QtObject {
-    readonly property url imagePath: "resources/images/"
+    readonly property url imagePath: Qt.resolvedUrl("resources/images/")
     readonly property var settings: {
         "addon": {
             "directories": [
