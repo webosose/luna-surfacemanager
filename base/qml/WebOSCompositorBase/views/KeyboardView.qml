@@ -29,35 +29,24 @@ BaseView {
     property bool needToReopen: false
     property Item itemToBeHidden: null
 
-    property QtObject inputMethod: QtObject {
-        // Default values that deliberately prevent the view working
-        property bool active: false
-        property bool allowed: false
-        property rect panelRect: Qt.rect(0, 0, 0, 0)
-        property size panelSize: Qt.size(0, 0)
-        property rect preferredPanelRect: Qt.rect(0, 0, 0, 0)
-        property bool hasPreferredPanelRect: false
-    }
-
-    x: inputMethod.panelRect.x
-    y: inputMethod.panelRect.y
-    width: inputMethod.panelRect.width
-    height: inputMethod.panelRect.height
-    clip: true
+    property WaylandInputMethod inputMethod
 
     Binding {
-        // Lazy binding that takes effect only when the actual WaylandInputMethod gets available
-        property InputMethod primaryInputMethod: compositor.inputMethod
         target: root
         property: "inputMethod"
-        when: primaryInputMethod.methods[compositorWindow.displayId] || false
-        value: primaryInputMethod.methods[compositorWindow.displayId]
+        value: compositor.inputMethod.methods[compositorWindow.displayId]
+    }
+
+    Binding {
+        target: inputMethod
+        property: "allowed"
+        value: root.allowed
     }
 
     Binding {
         target: inputMethod
         property: "panelRect"
-        value: if (inputMethod.hasPreferredPanelRect) {
+        value: if (inputMethod && inputMethod.hasPreferredPanelRect) {
             // Floating
             inputMethod.preferredPanelRect
         } else if (currentItem && currentItem.height > 0) {
@@ -79,14 +68,20 @@ BaseView {
         }
     }
 
+    x: inputMethod ? inputMethod.panelRect.x : 0
+    y: inputMethod ? inputMethod.panelRect.y : 0
+    width: inputMethod ? inputMethod.panelRect.width : 0
+    height: inputMethod ? inputMethod.panelRect.height : 0
+    clip: true
+
     Connections {
         target: inputMethod
         onPanelRectChanged: {
-            if (inputMethod.active && !inputMethod.hasPreferredPanelRect && root.needToReopen)
+            if (inputMethod && inputMethod.active && !inputMethod.hasPreferredPanelRect && root.needToReopen)
                 root.reopenView();
         }
         onHasPreferredPanelRectChanged: {
-            if (inputMethod.active)
+            if (inputMethod && inputMethod.active)
                 root.reopenView();
             else
                 root.needToReopen = true;
@@ -100,12 +95,6 @@ BaseView {
         anchors.bottom: root.bottom
         // No bottomMargin allowed when it's open
         anchors.bottomMargin: root.isOpen ? 0 : -height
-    }
-
-    Binding {
-        target: inputMethod
-        property: "allowed"
-        value: root.allowed
     }
 
     Connections {
@@ -131,7 +120,8 @@ BaseView {
                 console.log("Item added in " + root + ", currentItem: " + currentItem);
             } else {
                 item.close();
-                inputMethod.deactivate();
+                if (inputMethod)
+                    inputMethod.deactivate();
                 console.warn("AccessControl: KeyboardView is restricted by the access control policy.");
             }
         }
@@ -217,13 +207,13 @@ BaseView {
 
         if (root.reopenInProgress) {
             root.reopenInProgress = false;
-            if (inputMethod.active)
+            if (inputMethod && inputMethod.active)
                 root.openView();
             else
                 console.warn("Abort re-opening as the input method appears to be inactive.")
             return;
         }
-        if (!root.isOpen && root.model.count > 0) {
+        if (!root.isOpen && root.model.count > 0 && inputMethod) {
             // Deactivate the input method context as it must be the case
             // that someone else wants to close this view.
             inputMethod.deactivate();
