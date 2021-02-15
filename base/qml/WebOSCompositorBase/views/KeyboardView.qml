@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2020 LG Electronics, Inc.
+// Copyright (c) 2018-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -57,17 +57,16 @@ BaseView {
     Binding {
         target: inputMethod
         property: "panelRect"
-        when: inputMethod.active
         value: if (inputMethod.hasPreferredPanelRect) {
             // Floating
             inputMethod.preferredPanelRect
-        } else if (inputMethod.panelSize.height > 0) {
+        } else if (currentItem && currentItem.height > 0) {
             // Anchored at bottom, depending on panel surface size
             Qt.rect(
                 0,
-                root.parent.height - inputMethod.panelSize.height,
+                root.parent.height - currentItem.height,
                 root.parent.width,
-                inputMethod.panelSize.height
+                currentItem.height
             )
         } else {
             // Default
