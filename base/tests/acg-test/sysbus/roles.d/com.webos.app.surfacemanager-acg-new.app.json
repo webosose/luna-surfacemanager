@@ -1,12 +1,13 @@
 {
     "appId": "com.webos.app.surfacemanager-acg-new",
     "type": "regular",
+    "trustLevel": "oem",
     "allowedNames": [
-        "com.webos.app.surfacemanager-acg-new-*"
+        "com.webos.app.surfacemanager-acg-new*"
     ],
     "permissions": [
         {
-            "service": "com.webos.app.surfacemanager-acg-new-*",
+            "service": "com.webos.app.surfacemanager-acg-new*",
             "outbound": [
                 "*"
             ]

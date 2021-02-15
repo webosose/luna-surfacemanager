@@ -2,11 +2,11 @@
     "appId": "com.webos.app.surfacemanager-acg-old",
     "type": "regular",
     "allowedNames": [
-        "com.webos.app.surfacemanager-acg-old-*"
+        "com.webos.app.surfacemanager-acg-old*"
     ],
     "permissions": [
         {
-            "service": "com.webos.app.surfacemanager-acg-old-*",
+            "service": "com.webos.app.surfacemanager-acg-old*",
             "outbound": [
                 "*"
             ]
