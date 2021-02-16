@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2020 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -168,15 +168,6 @@ void WaylandInputMethod::setPanelRect(const QRect& rect)
         qWarning() << "No input panel created, unable to set panel rect";
 }
 
-QSize WaylandInputMethod::panelSize() const
-{
-    if (m_inputPanel)
-        return m_inputPanel->inputPanelSize();
-
-    qWarning() << "No active panel surface, surface size is empty";
-    return QSize();
-}
-
 void WaylandInputMethod::setPreferredPanelRect(const QRect& rect)
 {
     if (m_preferredPanelRect != rect) {
@@ -206,5 +197,4 @@ void WaylandInputMethod::setInputPanel(WaylandInputPanel *panel)
     m_inputPanel = panel;
 
     connect(m_inputPanel, &WaylandInputPanel::inputPanelRectChanged, this, &WaylandInputMethod::panelRectChanged);
-    connect(m_inputPanel, &WaylandInputPanel::inputPanelSizeChanged, this, &WaylandInputMethod::panelSizeChanged);
 }

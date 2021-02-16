@@ -169,14 +169,6 @@ void WaylandInputPanel::onInputPanelSurfaceUnmapped()
         updateActiveInputPanelSurface();
 }
 
-void WaylandInputPanel::setInputPanelSize(const QSize& size)
-{
-    if (m_inputPanelSize != size) {
-        m_inputPanelSize = size;
-        emit inputPanelSizeChanged(m_inputPanelSize);
-    }
-}
-
 void WaylandInputPanel::updateActiveInputPanelSurface(WaylandInputPanelSurface *surface)
 {
     WaylandInputPanelSurface *target = 0;
@@ -198,15 +190,10 @@ void WaylandInputPanel::updateActiveInputPanelSurface(WaylandInputPanelSurface *
 
     if (m_activeSurface != target) {
         qInfo() << "changing active inputPanelSurface" << m_activeSurface << "->" << target;
-        if (m_activeSurface)
-            disconnect(m_activeSurface, &WaylandInputPanelSurface::sizeChanged, this, &WaylandInputPanel::updateInputPanelSize);
-        if (target)
-            connect(target, &WaylandInputPanelSurface::sizeChanged, this, &WaylandInputPanel::updateInputPanelSize);
         m_activeSurface = target;
     }
 
     updateInputPanelState();
-    updateInputPanelSize();
 }
 
 void WaylandInputPanel::updateInputPanelState()
@@ -227,14 +214,6 @@ void WaylandInputPanel::updateInputPanelState()
     }
 }
 
-void WaylandInputPanel::updateInputPanelSize()
-{
-    if (m_activeSurface && m_activeSurface->surface())
-        setInputPanelSize(m_activeSurface->surface()->size());
-    else
-        setInputPanelSize(QSize());
-}
-
 void WaylandInputPanel::setInputPanelRect(const QRect& rect)
 {
     if (m_rect != rect) {
@@ -243,11 +222,4 @@ void WaylandInputPanel::setInputPanelRect(const QRect& rect)
         if (m_state == InputPanelShown)
             emit reportPanelRect(m_rect);
     }
-}
-
-QSize WaylandInputPanel::inputPanelSize() const
-{
-    if (m_activeSurface && m_activeSurface->surface())
-        return m_activeSurface->surfaceItem()->size().toSize();
-    return QSize();
 }

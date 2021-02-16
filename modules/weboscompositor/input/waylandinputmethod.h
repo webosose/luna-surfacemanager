@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2020 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ class WaylandInputMethod : public QObject {
     Q_PROPERTY(bool allowed READ allowed WRITE setAllowed NOTIFY allowedChanged)
 
     Q_PROPERTY(QRect panelRect READ panelRect WRITE setPanelRect NOTIFY panelRectChanged)
-    Q_PROPERTY(QSize panelSize READ panelSize NOTIFY panelSizeChanged)
     Q_PROPERTY(QRect preferredPanelRect READ preferredPanelRect NOTIFY preferredPanelRectChanged)
     Q_PROPERTY(bool hasPreferredPanelRect READ hasPreferredPanelRect NOTIFY hasPreferredPanelRectChanged)
 
@@ -75,8 +74,6 @@ public:
     QRect panelRect() const;
     void setPanelRect(const QRect& rect);
 
-    QSize panelSize() const;
-
     QRect preferredPanelRect() const { return m_preferredPanelRect; }
     void setPreferredPanelRect(const QRect& rect);
     void resetPreferredPanelRect();
@@ -95,7 +92,6 @@ signals:
     void activeChanged();
     void allowedChanged();
     void panelRectChanged();
-    void panelSizeChanged();
     void preferredPanelRectChanged();
     void hasPreferredPanelRectChanged();
     void displayIdChanged();
