@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
 
 class WaylandInputMethodContext;
 class WaylandTextModelFactory;
+class WebOSSurfaceItem;
 
 class WaylandTextModel : public QObject {
 
@@ -72,7 +73,7 @@ public:
 
     bool isAllowed() const { return m_inputMethod && m_inputMethod->allowed(); }
     WaylandInputMethod *inputMethod() const { return m_inputMethod; }
-    void setInputMethod(WaylandInputMethod *method);
+    void setInputMethod(WaylandInputMethod *method, WebOSSurfaceItem *item);
     WaylandTextModelFactory *factory() const { return m_factory; }
 
 public slots:

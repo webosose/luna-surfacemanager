@@ -43,6 +43,7 @@ WaylandInputMethod::WaylandInputMethod(QWaylandCompositor* compositor)
     , m_inputMethodManager(0)
     , m_allowed(true)
     , m_displayId(-1)
+    , m_targetSurfaceItem(nullptr)
 {
     m_inputMethodManager = new WaylandInputMethodManager(this);
     connect(this, &WaylandInputMethod::inputMethodBound, m_inputMethodManager, &WaylandInputMethodManager::onInputMethodAvaliable, Qt::QueuedConnection);
@@ -188,6 +189,14 @@ void WaylandInputMethod::setHasPreferredPanelRect(const bool flag)
     if (m_hasPreferredPanelRect != flag) {
         m_hasPreferredPanelRect = flag;
         emit hasPreferredPanelRectChanged();
+    }
+}
+
+void WaylandInputMethod::setTargetSurfaceItem(WebOSSurfaceItem *item)
+{
+    if (m_targetSurfaceItem != item) {
+        m_targetSurfaceItem = item;
+        emit setTargetSurfaceItemChanged();
     }
 }
 

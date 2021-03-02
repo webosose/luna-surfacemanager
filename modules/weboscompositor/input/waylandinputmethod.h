@@ -32,6 +32,8 @@ class QWaylandSeat;
 class WaylandTextModel;
 class WaylandInputMethodContext;
 class WaylandInputMethodManager;
+class WebOSSurfaceItem;
+
 /*!
  * Talks with the input method sitting in the VKB
  * process.
@@ -46,6 +48,7 @@ class WaylandInputMethod : public QObject {
     Q_PROPERTY(QRect panelRect READ panelRect WRITE setPanelRect NOTIFY panelRectChanged)
     Q_PROPERTY(QRect preferredPanelRect READ preferredPanelRect NOTIFY preferredPanelRectChanged)
     Q_PROPERTY(bool hasPreferredPanelRect READ hasPreferredPanelRect NOTIFY hasPreferredPanelRectChanged)
+    Q_PROPERTY(WebOSSurfaceItem* targetSurfaceItem READ targetSurfaceItem NOTIFY setTargetSurfaceItemChanged)
 
 public:
     WaylandInputMethod();
@@ -78,6 +81,8 @@ public:
     void setPreferredPanelRect(const QRect& rect);
     void resetPreferredPanelRect();
     bool hasPreferredPanelRect() const { return m_hasPreferredPanelRect; }
+    void setTargetSurfaceItem(WebOSSurfaceItem *item);
+    WebOSSurfaceItem* targetSurfaceItem() const { return m_targetSurfaceItem; }
     int displayId() { return m_displayId; }
 
     QWaylandSeat *inputDevice();
@@ -94,6 +99,7 @@ signals:
     void panelRectChanged();
     void preferredPanelRectChanged();
     void hasPreferredPanelRectChanged();
+    void setTargetSurfaceItemChanged();
     void displayIdChanged();
 
 protected:
@@ -111,6 +117,7 @@ private:
     QPointer<WaylandInputPanel> m_inputPanel;
     QRect m_preferredPanelRect;
     bool m_hasPreferredPanelRect;
+    WebOSSurfaceItem* m_targetSurfaceItem;
     WaylandInputMethodManager* m_inputMethodManager;
     bool m_allowed;
     int m_displayId;

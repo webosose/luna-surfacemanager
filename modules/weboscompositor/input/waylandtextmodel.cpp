@@ -136,7 +136,7 @@ void WaylandTextModel::textModelSetSurroundingText(struct wl_client *client, str
 
 }
 
-void WaylandTextModel::setInputMethod(WaylandInputMethod *method)
+void WaylandTextModel::setInputMethod(WaylandInputMethod *method, WebOSSurfaceItem *item)
 {
     Q_ASSERT(method);
 
@@ -147,6 +147,7 @@ void WaylandTextModel::setInputMethod(WaylandInputMethod *method)
 
     m_inputMethod = method;
 
+    m_inputMethod->setTargetSurfaceItem(item);
     // Check m_preferredPanelRect as it can be set before.
     // Otherwise make sure preferredPanelRect reset.
     if (m_preferredPanelRect.isNull())
@@ -176,7 +177,7 @@ void WaylandTextModel::textModelActivate(struct wl_client *client, struct wl_res
     }
 
     // Whenever activating text model, update input method
-    that->setInputMethod(method);
+    that->setInputMethod(method, wsi);
 
     if (!that->isAllowed()) {
         qWarning() << "activation declined as IME is not allowed at the moment";
