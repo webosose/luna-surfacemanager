@@ -47,8 +47,14 @@ BaseView {
         target: inputMethod
         property: "panelRect"
         value: if (inputMethod && inputMethod.hasPreferredPanelRect) {
-            // Floating
-            inputMethod.preferredPanelRect
+            // Floating case needs to consider the target item's geometry.
+            // It is assumed that the transform origin of the target item is center.
+            Qt.rect(
+                inputMethod.preferredPanelRect.x * inputMethod.targetSurfaceItem.scale + (inputMethod.targetSurfaceItem.width - inputMethod.targetSurfaceItem.width * inputMethod.targetSurfaceItem.scale) / 2 + inputMethod.targetSurfaceItem.x,
+                inputMethod.preferredPanelRect.y * inputMethod.targetSurfaceItem.scale + (inputMethod.targetSurfaceItem.height - inputMethod.targetSurfaceItem.height * inputMethod.targetSurfaceItem.scale) / 2 + inputMethod.targetSurfaceItem.y,
+                inputMethod.preferredPanelRect.width * inputMethod.targetSurfaceItem.scale,
+                inputMethod.preferredPanelRect.height * inputMethod.targetSurfaceItem.scale
+            )
         } else if (currentItem && currentItem.height > 0) {
             // Anchored at bottom, depending on panel surface size
             Qt.rect(
