@@ -39,6 +39,9 @@
 
 #include <qweboskeyextension.h>
 
+#include <QtQuick/private/qquickwindow_p.h>
+#include <QtQuick/private/qsgrenderer_p.h>
+
 #include <QtWaylandCompositor/qwaylandseat.h>
 #include <QtWaylandCompositor/private/qwaylandkeyboard_p.h>
 #include <QtWaylandCompositor/private/qwaylandpointer_p.h>
@@ -1524,7 +1527,7 @@ uint32_t WebOSSurfaceItem::planeZpos() const
     if (m_imported)
         return VideoPlane;
 
-    if (!QWaylandQuickItem::directUpdateOnPlane()) {
+    if (!directUpdateOnPlane()) {
         qWarning() << "This will should not happen for planeZpos of MainPlane" << this;
         return MainPlane;
     }
@@ -1541,4 +1544,39 @@ void WebOSSurfaceItem::updateDirectUpdateOnPlane()
     qInfo() << "updateDirectUpdateOnPlane" << this << "by" << wItem;
 
     setDirectUpdateOnPlane(wItem->directUpdateOnPlane());
+}
+
+bool WebOSSurfaceItem::directUpdateOnPlane() const
+{
+    return m_directUpdateOnPlane;
+}
+
+void WebOSSurfaceItem::setDirectUpdateOnPlane(bool enable)
+{
+    if (m_directUpdateOnPlane != enable) {
+        m_directUpdateOnPlane = enable;
+
+        if (!m_directUpdateOnPlane) {
+            QWaylandBufferRef ref = view()->currentBuffer();
+            // The negative plane to clear overlay plane
+            ref.directUpdate(this, -1);
+        }
+
+        emit directUpdateOnPlaneChanged();
+    }
+}
+
+QSGNode *WebOSSurfaceItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data)
+{
+    QWaylandBufferRef ref = view()->currentBuffer();
+
+    if (directUpdateOnPlane() && ref.directUpdate(this, planeZpos())) {
+        QQuickWindowPrivate *d = QQuickWindowPrivate::get(window());
+        emit d->renderer->sceneGraphChanged();
+        // This is needed when rendering mode is changed from general texture to direct update
+        delete oldNode;
+        return nullptr;
+    }
+
+    return QWaylandQuickItem::updatePaintNode(oldNode, data);
 }

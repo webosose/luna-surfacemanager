@@ -97,6 +97,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandQuickItem
     Q_PROPERTY(QString addon READ addon NOTIFY addonChanged)
     // Filter function that evaluates acceptance of the addon
     Q_PROPERTY(QJSValue addonFilter READ addonFilter WRITE setAddonFilter NOTIFY addonFilterChanged)
+    Q_PROPERTY(bool directUpdateOnPlane READ directUpdateOnPlane WRITE setDirectUpdateOnPlane NOTIFY directUpdateOnPlaneChanged)
 
 public:
 
@@ -467,11 +468,15 @@ public:
     Q_INVOKABLE void grabLastFrame();
     Q_INVOKABLE void releaseLastFrame();
 
-    uint32_t planeZpos () const override;
+    uint32_t planeZpos () const;
+    bool directUpdateOnPlane() const;
+    void setDirectUpdateOnPlane(bool enable);
 
     static WebOSSurfaceItem *getSurfaceItemFromSurface(QWaylandSurface *surface) {
         return (!surface || surface->views().isEmpty()) ? nullptr : qobject_cast<WebOSSurfaceItem*>(surface->views().first()->renderObject());
     }
+
+    QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data) override;
 
 public slots:
     void updateScreenPosition();
@@ -534,6 +539,7 @@ signals:
 
     void addonChanged();
     void addonFilterChanged();
+    void directUpdateOnPlaneChanged();
 
 protected:
     void processKeyEvent(QKeyEvent *event);
@@ -623,6 +629,7 @@ private:
     QJSValue m_addonFilter;
 
     QWaylandSurface *m_surfaceGrabbed = nullptr;
+    bool m_directUpdateOnPlane = false;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(WebOSSurfaceItem::WindowClass)
