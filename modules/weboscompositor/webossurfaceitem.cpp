@@ -107,6 +107,8 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
     connect(this, &QQuickItem::windowChanged, this, &WebOSSurfaceItem::handleWindowChanged);
 
     setObjectName(QStringLiteral("surfaceItem_default"));
+
+    setSmooth(true);
 }
 
 WebOSSurfaceItem::~WebOSSurfaceItem()
