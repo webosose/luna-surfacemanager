@@ -1,0 +1,6 @@
+{
+    "com.webos.app.surfacemanager-test": [
+        "settings.query",
+        "systemconfig.query"
+    ]
+}

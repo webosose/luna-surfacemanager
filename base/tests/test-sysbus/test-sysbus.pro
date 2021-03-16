@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021 LG Electronics, Inc.
+# Copyright (c) 2021 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,11 +14,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-TEMPLATE = subdirs
+TEMPLATE = aux
 
-SUBDIRS = \
-    acg-test \
-    compositor \
-    native \
-    qml \
-    test-sysbus
+sysbus.files = client-permissions.d manifests.d roles.d
+
+sysbus.path = $$WEBOS_INSTALL_SYSBUS_DATADIR
+
+INSTALLS += sysbus

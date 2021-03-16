@@ -1,0 +1,16 @@
+{
+    "appId": "com.webos.app.surfacemanager-test",
+    "type": "regular",
+    "trustLevel": "oem",
+    "allowedNames": [
+        "com.webos.app.surfacemanager-test"
+    ],
+    "permissions": [
+        {
+            "service": "com.webos.app.surfacemanager-test",
+            "outbound": [
+                "*"
+            ]
+        }
+    ]
+}
