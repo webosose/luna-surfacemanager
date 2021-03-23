@@ -550,6 +550,15 @@ void WebOSSurfaceItem::processKeyEvent(QKeyEvent *event)
 
     auto keyboard = static_cast<WebOSKeyboard*>(inputDevice->keyboard());
 
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    // Make "autoRepeat" to "false" so that the event is handled
+    // in QWaylandSeat::sendFullKeyEvent even when it was "true".
+    // It is the policy we have been using in webOS for a long time.
+    new (event) QKeyEvent(event->type(), event->key(), event->modifiers(),
+            event->nativeScanCode(), event->nativeVirtualKey(), event->nativeModifiers(),
+            event->text(), false /* autorep */);
+#endif
+
     // General case
     if (!(isPartOfGroup() || isSurfaceGroupRoot()) ||
         // If keyboard is grabbed, do not propagate key events between
