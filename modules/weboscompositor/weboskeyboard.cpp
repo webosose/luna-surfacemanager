@@ -20,6 +20,11 @@ WebOSKeyboard::WebOSKeyboard(QWaylandSeat *seat)
     : QWaylandKeyboard(seat)
 {
     connect(&m_pendingFocusDestroyListener, &QWaylandDestroyListener::fired, this, &WebOSKeyboard::pendingFocusDestroyed);
+
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    // In webOS, auto repeat key events are supposed to be handled by input drivers.
+    setRepeatRate(0);
+#endif
 }
 
 void WebOSKeyboard::setFocus(QWaylandSurface *surface)
