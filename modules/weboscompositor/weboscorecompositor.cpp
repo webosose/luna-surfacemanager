@@ -182,6 +182,7 @@ WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *
     , m_lastMouseEventFrom(0)
     , m_inputDevicePreallocated(0)
 #endif
+    , m_autoStart(true)
     , m_loaded(false)
     , m_respawned(false)
 {
@@ -1139,6 +1140,14 @@ QWaylandSeat *WebOSCoreCompositor::queryInputDevice(QInputEvent *inputEvent)
     return newInputDevice;
 }
 #endif
+
+void WebOSCoreCompositor::setAutoStart(bool autoStart)
+{
+    if (m_autoStart != autoStart) {
+        m_autoStart = autoStart;
+        emit autoStartChanged();
+    }
+}
 
 void WebOSCoreCompositor::emitLsmReady()
 {

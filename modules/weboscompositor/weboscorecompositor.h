@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2020 LG Electronics, Inc.
+// Copyright (c) 2014-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -80,6 +80,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCoreCompositor : public QWaylandQuickComposit
 
     Q_PROPERTY(QList<QObject *> windows READ windows NOTIFY windowsChanged)
 
+    Q_PROPERTY(bool autoStart READ autoStart WRITE setAutoStart NOTIFY autoStartChanged)
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadCompleted)
     Q_PROPERTY(bool respawned READ respawned NOTIFY respawnedChanged)
 
@@ -195,6 +196,8 @@ public:
     Q_INVOKABLE QList<QObject *> windowsInCluster(QString clusterName);
     void updateWindowPositionInCluster();
 
+    bool autoStart() const { return m_autoStart; }
+    void setAutoStart(bool autoStart);
     bool loaded() const { return m_loaded; }
     bool respawned() const { return m_respawned; }
 
@@ -250,6 +253,7 @@ signals:
 
     void windowsChanged();
 
+    void autoStartChanged();
     void loadCompleted();
     void respawnedChanged();
 
@@ -347,6 +351,7 @@ private:
 
     EventPreprocessor* m_eventPreprocessor;
 
+    bool m_autoStart;
     bool m_loaded;
     bool m_respawned;
     QRect m_outputGeometry;
