@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2020 LG Electronics, Inc.
+// Copyright (c) 2017-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -235,7 +235,8 @@ int main(int argc, char *argv[])
     compositor->postInit();
 
 #ifdef UPSTART_SIGNALING
-    compositor->emitLsmReady();
+    if (compositor->autoStart())
+        compositor->emitLsmReady();
 #endif
 
     // Create $XDG_RUNTIME_DIR/surface-manager.windowcount
