@@ -53,7 +53,6 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
         , m_compositor(compositor)
         , m_fullscreen(false)
         , m_lastFullscreenTick(0)
-        , m_transientModel(0)
         , m_groupedWindowModel(0)
         , m_cardSnapShotFilePath()
         , m_customImageFilePath(QLatin1String("none"))
@@ -730,16 +729,6 @@ void WebOSSurfaceItem::setLaunchLastApp(const bool& launchLastApp, bool updatePr
     }
 }
 
-void WebOSSurfaceItem::setTransientModel(WebOSWindowModel* model)
-{
-    PMTRACE_FUNCTION;
-    if (model != m_transientModel) {
-        m_transientModel = model;
-        m_transientModel->setSurfaceSource(m_compositor->surfaceModel());
-        emit transientModelChanged();
-    }
-}
-
 void WebOSSurfaceItem::setGroupedWindowModel(WebOSGroupedWindowModel* model)
 {
     PMTRACE_FUNCTION;
@@ -747,29 +736,6 @@ void WebOSSurfaceItem::setGroupedWindowModel(WebOSGroupedWindowModel* model)
         m_groupedWindowModel = model;
         emit groupedWindowModelChanged();
     }
-}
-
-bool WebOSSurfaceItem::isTransient() const
-{
-    if (shellSurface() == NULL) return false;
-
-    return shellSurface()->isTransient();
-}
-
-WebOSSurfaceItem* WebOSSurfaceItem::transientParent()
-{
-    if( !isSurfaced() )
-        return NULL;
-
-    QWaylandQuickSurface* parent = qobject_cast<QWaylandQuickSurface *>(surface()->parent());
-    if (parent) {
-         WebOSSurfaceItem *parent_item = WebOSSurfaceItem::getSurfaceItemFromSurface(parent);
-         WebOSShellSurface *parent_shell = parent_item->shellSurface();
-         if (parent_shell == NULL) return NULL;
-         if (!parent_shell->isTransient ()) return NULL;
-         return parent_item;
-    }
-    return NULL;
 }
 
 void WebOSSurfaceItem::setCardSnapShotFilePath(const QString& fPath)
@@ -983,15 +949,6 @@ void WebOSSurfaceItem::onSurfaceDamaged(const QRegion &region)
        available buffer. */
     if (!window() && surface())
         surface()->sendFrameCallbacks();
-}
-
-void WebOSSurfaceItem::resizeClientTo(int width, int height)
-{
-    if (!isSurfaced() || m_shellSurface == nullptr) {
-        qWarning("failed, null surface()");
-        return;
-    }
-    return m_shellSurface->requestSize(QSize(width, height));
 }
 
 void WebOSSurfaceItem::setNotifyPositionToClient(bool notify)

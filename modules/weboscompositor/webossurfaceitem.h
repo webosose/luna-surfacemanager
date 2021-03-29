@@ -72,9 +72,6 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandQuickItem
     Q_PROPERTY(QString backgroundColor READ backgroundColor WRITE setBackgroundColor)
     Q_PROPERTY(QString processId READ processId NOTIFY processIdChanged)
     Q_PROPERTY(qint32 lastFullscreenTick READ lastFullscreenTick NOTIFY lastFullscreenTickChanged)
-    Q_PROPERTY(bool transient READ isTransient NOTIFY transientChanged)
-    Q_PROPERTY(WebOSSurfaceItem* transientParent READ transientParent NOTIFY transientParentChanged)
-    Q_PROPERTY(WebOSWindowModel* transientModel READ transientModel WRITE setTransientModel NOTIFY transientModelChanged)
     Q_PROPERTY(WebOSGroupedWindowModel* groupedWindowModel READ groupedWindowModel WRITE setGroupedWindowModel NOTIFY groupedWindowModelChanged)
     Q_PROPERTY(LocationHints locationHint READ locationHint NOTIFY locationHintChanged)
     Q_PROPERTY(KeyMasks keyMask READ keyMask NOTIFY keyMaskChanged)
@@ -313,30 +310,7 @@ public:
      */
     void setParams(const QString &params, bool updateProperty = true);
 
-    /*!
-     * Indicates weather this surface is a transient surface to some other
-     * surface.
-     */
-    bool isTransient() const;
-
-    /*!
-     * Returns the parent surface for this surface. If there is no
-     * parent, i.e. this surface is not a transient surface, NULL
-     * is returned.
-     */
-    WebOSSurfaceItem* transientParent();
-
-    /*!
-     * The returned model holds all the transient surfaces for this surface
-     */
-    WebOSWindowModel* transientModel() { return m_transientModel; }
-
     WebOSGroupedWindowModel* groupedWindowModel() { return m_groupedWindowModel; }
-
-    /*!
-     * Sets the model. Currently the model is created in qml
-     */
-    void setTransientModel(WebOSWindowModel* model);
 
     void setGroupedWindowModel(WebOSGroupedWindowModel* model);
 
@@ -429,8 +403,6 @@ public:
 
     KeyMasks keyMask() const;
 
-    Q_INVOKABLE void resizeClientTo(int width, int height);
-
     bool notifyPositionToClient() { return m_notifyPositionToClient; }
     bool exposed() { return m_exposed; }
 
@@ -515,11 +487,6 @@ signals:
      */
     void windowPropertiesChanged(const QVariantMap &windowProperties);
 
-
-    void transientParentChanged();
-    void transientModelChanged();
-    void transientChanged();
-
     void groupedWindowModelChanged();
 
     void typeChanged();
@@ -603,7 +570,6 @@ private:
     WebOSCoreCompositor* m_compositor;
     bool m_fullscreen;
     qint32 m_lastFullscreenTick;
-    WebOSWindowModel* m_transientModel;
     WebOSGroupedWindowModel* m_groupedWindowModel;
     QString m_cardSnapShotFilePath;
     QString m_customImageFilePath;

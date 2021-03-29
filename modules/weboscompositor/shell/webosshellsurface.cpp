@@ -109,17 +109,12 @@ WebOSShellSurface::WebOSShellSurface(struct wl_client* client, uint32_t id, WebO
     , m_preparedState(Qt::WindowNoState)
     , m_owner(owner)
     , m_surface(surface)
-    , m_transient(false)
 {
     m_shellSurface = wl_client_add_object(client, &wl_webos_shell_surface_interface, &shell_surface_interface, id, this);
     m_shellSurface->destroy = WebOSShellSurface::destroyShellSurface;
 
     surface->setShellSurface(this);
     qDebug() << this << "for wl_surface@" << m_owner->object.id << "m_shellSurface:" << m_shellSurface << "version:" << m_version;
-
-    QWaylandWlShellSurface *wlShellSurface = QWaylandWlShellSurface::fromResource(owner);
-    if (wlShellSurface != nullptr)
-        connect(wlShellSurface, &QWaylandWlShellSurface::setTransient, this, &WebOSShellSurface::handleSetTransient);
 }
 
 WebOSShellSurface::~WebOSShellSurface()
@@ -319,18 +314,6 @@ bool WebOSShellSurface::validExposeRect(const QRect& rect)
            rect.y() < 0 ||
            rect.width() < 0 ||
            rect.height() < 0);
-}
-
-void WebOSShellSurface::handleSetTransient(QWaylandSurface *parentSurface, const QPoint &relativeToParent, bool inactive)
-{
-    m_transient = true;
-}
-
-void WebOSShellSurface::requestSize(const QSize &size)
-{
-    QWaylandWlShellSurface *wlShellSurface = QWaylandWlShellSurface::fromResource(m_owner);
-    if (wlShellSurface != nullptr)
-        wlShellSurface->sendConfigure(size, QWaylandWlShellSurface::ResizeEdge::BottomRightEdge);
 }
 
 void WebOSShellSurface::setAddonStatus(WebOSSurfaceItem::AddonStatus status)
