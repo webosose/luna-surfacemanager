@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2020 LG Electronics, Inc.
+// Copyright (c) 2017-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,13 +29,13 @@ QtObject {
     readonly property string appId: "com.webos.surfacemanager"
 
     readonly property Service sessionManager: Service {
-        readonly property string serviceName: "com.webos.service.sessionmanager"
+        readonly property string serviceName: "com.webos.service.account"
         property string sessionId
         property var sessionList
 
         appId: root.appId
         service: serviceName
-        method: "getSessionList"
+        method: "getSessions"
 
         // Internal properties
         property bool connected: false
@@ -69,8 +69,8 @@ QtObject {
                 connected = response.connected;
                 break;
             case subscriptionToken:
-                if (response.returnValue && response.sessionList) {
-                    sessionList = response.sessionList;
+                if (response.returnValue && response.sessions) {
+                    sessionList = response.sessions;
                     if (sessionList && sessionList.length > 0) {
                         for (var i = 0; i < sessionList.length; i++) {
                             if (sessionList[i].deviceSetInfo.displayId == compositorWindow.displayId) {

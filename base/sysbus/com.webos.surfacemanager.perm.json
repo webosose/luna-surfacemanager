@@ -1,12 +1,12 @@
 {
     "com.webos.surfacemanager*": [
+        "account.query",
         "application.launcher",
         "application.operation",
         "audio.operation",
         "audio.query",
         "boot.query",
         "database.operation",
-        "session.management",
         "settings.management",
         "settings.query",
         "systemconfig.management",
