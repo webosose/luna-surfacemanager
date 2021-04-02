@@ -322,7 +322,7 @@ void WebOSExported::calculateVideoDispRatio()
     QRect outputGeometry = m_compositorWindow->outputGeometry();
 
     if (m_isSurfaceItemFullscreen && outputGeometry.isValid() && m_surfaceItem->surface()) {
-        QPointF offset = m_surfaceItem->mapToScene(QPointF(0.0, 0.0));
+        QPointF offset = m_surfaceItem->mapToItem(m_compositorWindow->viewsRoot(), QPointF(0.0, 0.0));
         m_videoDispRatio = (double) outputGeometry.width() / m_surfaceItem->surface()->size().width() * m_surfaceItem->scale();
         qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->size() << "m_videoDispRatio:" << m_videoDispRatio;
         qInfo() << "Item scale:" << m_surfaceItem->scale() << "item offset:" << offset;
@@ -498,8 +498,8 @@ void WebOSExported::setDestinationRegion(struct::wl_resource *destination_region
 
         QPointF offset(0.0, 0.0);
 
-        if (m_surfaceItem)
-            offset = m_surfaceItem->mapToScene(offset);
+        if (m_surfaceItem && m_compositorWindow)
+            offset = m_surfaceItem->mapToItem(m_compositorWindow->viewsRoot(), offset);
 
         m_videoDisplayRect = QRect(
             (int) (m_requestedRegion.x()*m_videoDispRatio + offset.x()),
