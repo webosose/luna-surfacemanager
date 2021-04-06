@@ -16,6 +16,7 @@
 
 #include <qwaylandquickitem.h>
 #include <QWaylandSeat>
+#include <QtGui/qpa/qwindowsysteminterface_p.h>
 #include <QtWaylandCompositor/private/qwaylandkeyboard_p.h>
 #include <QtWaylandCompositor/private/qwaylandseat_p.h>
 #include <QtWaylandCompositor/private/qwaylandcompositor_p.h>
@@ -199,6 +200,10 @@ WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *
     };
 
     QWaylandCompositor::setAdditionalShmFormats(supportedWaylandFormats);
+
+    // Remove any WindowSystemEventHandler installed by the base class.
+    if (QWindowSystemInterfacePrivate::eventHandler)
+        QWindowSystemInterfacePrivate::removeWindowSystemEventhandler(QWindowSystemInterfacePrivate::eventHandler);
 #endif
 }
 
