@@ -1281,6 +1281,13 @@ void WebOSSurfaceItem::setCursorSurface(QWaylandSurface *surface, int hotSpotX, 
     if (m_cursorView.surface() == surface && m_cursorHotSpotX == hotSpotX && m_cursorHotSpotY == hotSpotY) {
         qWarning() << "Cursor: attempting to set the same cursor surface, ignored" << surface << hotSpotX << hotSpotY;
     } else {
+        if (!surface) {
+            // Ignore null cursor surface because we use a different way to hide the cursor
+            // by setting hotspot as 254. (see WebOSCoreCompositor::getCursor)
+            qWarning() << "Cursor: null cursor has no effect in webOS";
+            return;
+        }
+
         qDebug() << "Cursor: updating cursor with surface" << surface << hotSpotX << hotSpotY;
 
         QCursor cursor;
@@ -1288,9 +1295,6 @@ void WebOSSurfaceItem::setCursorSurface(QWaylandSurface *surface, int hotSpotX, 
 
         if (m_compositor->getCursor(surface, hotSpotX, hotSpotY, cursor)) {
             qDebug() << "Cursor: use the cursor designated by compositor" << cursor;
-            staticCursor = true;
-        } else if (!surface) {
-            cursor = QCursor(Qt::BlankCursor);
             staticCursor = true;
         } else {
             staticCursor = false;
