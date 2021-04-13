@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2020 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,14 +23,14 @@
 #include <QtWaylandCompositor/private/qwaylandkeyboard_p.h>
 
 WebOSInputDevice::WebOSInputDevice(QWaylandCompositor *compositor)
-    : QWaylandSeat(compositor, DefaultCapabilities)
+    : WebOSWaylandSeat(compositor)
     , m_compositor(compositor)
     , m_deviceId(-1) //No device ID yet, will be set with queryInputDevice in qtwayland
 {
     WebOSCoreCompositor *wcompositor = static_cast<WebOSCoreCompositor *>(m_compositor);
-    WebOSKeyboard *wkeyboard = static_cast<WebOSKeyboard *>(wcompositor->defaultSeat()->keyboard());
-
     wcompositor->registerSeat(this);
+
+    WebOSKeyboard *wkeyboard = static_cast<WebOSKeyboard *>(wcompositor->defaultSeat()->keyboard());
 
     /* To trigger keyboard_enter after requested get_keyboard by clinet */
     setKeyboardFocus(wcompositor->defaultSeat()->keyboardFocus());
@@ -46,7 +46,7 @@ WebOSInputDevice::WebOSInputDevice(QWaylandCompositor *compositor)
 
 // This constuctor is for window-dedicated device, not multi-input support
 WebOSInputDevice::WebOSInputDevice(QWaylandCompositor *compositor, CapabilityFlags caps)
-    : QWaylandSeat(compositor, caps)
+    : WebOSWaylandSeat(compositor, caps)
     , m_compositor(compositor)
     , m_deviceId(-1) // should not be set, distinguished from multi input deivices.
 {

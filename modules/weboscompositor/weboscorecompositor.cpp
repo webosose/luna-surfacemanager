@@ -63,6 +63,8 @@
 #include "weboscompositortracer.h"
 #include "weboscompositorconfig.h"
 
+#include "weboswaylandseat.h"
+
 // Need to access QtWayland::Keyboard::focusChanged
 #include <QtWaylandCompositor/private/qwaylandsurface_p.h>
 
@@ -83,25 +85,6 @@ protected:
     }
     Q_DECLARE_PUBLIC(WebOSCoreCompositor)
 };
-
-
-class WebOSWaylandSeat : public QWaylandSeat {
-public:
-    WebOSWaylandSeat(QWaylandCompositor *compositor)
-        : QWaylandSeat(compositor)
-    {}
-
-    virtual void setCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY, wl_client *client)
-    {
-        QWaylandSeat::setCursorSurface(surface, hotspotX, hotspotY, client);
-        WebOSCoreCompositor *webos_compositor = static_cast<WebOSCoreCompositor *>(compositor());
-        if (webos_compositor)
-            webos_compositor->setCursorSurface(surface, hotspotX, hotspotY, client);
-        else
-            qWarning() << "could not call setCursorSurface() as compositor() returns null";
-    }
-};
-
 
 void WebOSCoreCompositor::logger(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {

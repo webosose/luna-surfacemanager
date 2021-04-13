@@ -58,6 +58,7 @@ HEADERS += \
     webosinputdevice.h \
     webosevent.h \
     weboskeyboard.h \
+    weboswaylandseat.h \
     compositorextensionfactory.h \
     unixsignalhandler.h
 
@@ -76,6 +77,7 @@ SOURCES += \
     weboskeyfilter.cpp \
     webosinputdevice.cpp \
     weboskeyboard.cpp \
+    weboswaylandseat.cpp \
     compositorextensionfactory.cpp \
     unixsignalhandler.cpp
 
