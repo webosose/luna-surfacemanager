@@ -40,8 +40,10 @@ WebOSInputDevice::WebOSInputDevice(QWaylandCompositor *compositor)
         WebOSKeyboard *this_wkeyboard = static_cast<WebOSKeyboard *>(keyboard());
         this_wkeyboard->startGrab(wkeyboard->currentGrab());
     }
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     /* We use multiple keyboard device but use same modifier state */
     updateModifierState(wcompositor->defaultSeat());
+#endif
 }
 
 // This constuctor is for window-dedicated device, not multi-input support

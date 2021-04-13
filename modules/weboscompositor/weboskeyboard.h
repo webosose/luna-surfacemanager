@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2020 LG Electronics, Inc.
+// Copyright (c) 2019-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -42,8 +42,13 @@ public:
     WebOSKeyboard(QWaylandSeat *seat);
 
     void setFocus(QWaylandSurface *surface) override;
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    void sendKeyPressEvent(uint code) override;
+    void sendKeyReleaseEvent(uint code) override;
+#else
     void sendKeyPressEvent(uint code, bool repeat) override;
     void sendKeyReleaseEvent(uint code, bool repeat) override;
+#endif
     void addClient(QWaylandClient *client, uint32_t id, uint32_t version) override;
 
     void updateModifierState(uint code, uint32_t state, bool repeat);
@@ -53,7 +58,7 @@ public:
     KeyboardGrabber *currentGrab() const;
 
 private:
-    void sendKeyEvent(uint code, uint32_t state, bool repeat);
+    void sendKeyEvent(uint code, uint32_t state);
     void pendingFocusDestroyed(void *data);
 
 private:

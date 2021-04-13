@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2020 LG Electronics, Inc.
+// Copyright (c) 2019-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -69,27 +69,51 @@ void WebOSKeyboard::updateModifierState(uint code, uint32_t state, bool repeat)
         m_grab->modifiers(compositor()->nextSerial(), depressed, latched, locked, grp);
     } else {
         qDebug() << "Updating modifiers for keyboard" << this << depressed << latched << locked << grp;
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        d->send_modifiers(compositor()->nextSerial(), depressed, latched, locked, grp);
+#else
         d->modifiers(compositor()->nextSerial(), depressed, latched, locked, grp);
+#endif
     }
 #else
-    d->updateModifierState(code, state, repeat);
+    d->updateModifierState(code, state);
 #endif
 }
 
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+void WebOSKeyboard::sendKeyPressEvent(uint code)
+#else
 void WebOSKeyboard::sendKeyPressEvent(uint code, bool repeat)
+#endif
 {
-    if (m_grab)
-        sendKeyEvent(code, WL_KEYBOARD_KEY_STATE_PRESSED, repeat);
-    else
-        QWaylandKeyboard::sendKeyPressEvent(code, repeat);
+    if (m_grab) {
+        sendKeyEvent(code, WL_KEYBOARD_KEY_STATE_PRESSED);
+        return;
+    }
+
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    QWaylandKeyboard::sendKeyPressEvent(code);
+#else
+    QWaylandKeyboard::sendKeyPressEvent(code, repeat);
+#endif
 }
 
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+void WebOSKeyboard::sendKeyReleaseEvent(uint code)
+#else
 void WebOSKeyboard::sendKeyReleaseEvent(uint code, bool repeat)
+#endif
 {
-    if (m_grab)
-        sendKeyEvent(code, WL_KEYBOARD_KEY_STATE_RELEASED, repeat);
-    else
-        QWaylandKeyboard::sendKeyReleaseEvent(code, repeat);
+    if (m_grab) {
+        sendKeyEvent(code, WL_KEYBOARD_KEY_STATE_RELEASED);
+        return;
+    }
+
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    QWaylandKeyboard::sendKeyReleaseEvent(code);
+#else
+    QWaylandKeyboard::sendKeyReleaseEvent(code, repeat);
+#endif
 }
 
 void WebOSKeyboard::addClient(QWaylandClient *client, uint32_t id, uint32_t version)
@@ -112,9 +136,11 @@ void WebOSKeyboard::endGrab()
     m_grab = nullptr;
     setFocus(m_pendingFocus);
 
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     //Modifier state can be changed during grab status.
     //So send it again.
     d->updateModifierState(this);
+#endif
 }
 
 KeyboardGrabber *WebOSKeyboard::currentGrab() const
@@ -130,7 +156,7 @@ void WebOSKeyboard::pendingFocusDestroyed(void *data)
     m_pendingFocus = nullptr;
 }
 
-void WebOSKeyboard::sendKeyEvent(uint code, uint32_t state, bool repeat)
+void WebOSKeyboard::sendKeyEvent(uint code, uint32_t state)
 {
     Q_D(QWaylandKeyboard);
     uint32_t time = compositor()->currentTimeMsecs();
