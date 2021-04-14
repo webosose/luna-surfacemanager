@@ -18,6 +18,10 @@
 #include "webossurfaceitem.h"
 #include "webossurfaceitemmirror.h"
 
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+#include <QtGui/private/qeventpoint_p.h>
+#endif
+
 WebOSSurfaceItemMirror::WebOSSurfaceItemMirror()
         : QQuickItem()
 {
@@ -234,10 +238,18 @@ void WebOSSurfaceItemMirror::touchEvent(QTouchEvent *event)
         return;
 
     QList<QTouchEvent::TouchPoint> touchPoints;
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    foreach (QTouchEvent::TouchPoint point, event->points()) {
+        auto &p = QMutableEventPoint::from(point);
+        p.setPosition(translatePoint(point.scenePosition()));
+        touchPoints.append(p);
+    }
+#else
     foreach (QTouchEvent::TouchPoint point, event->touchPoints()) {
         point.setPos(translatePoint(point.scenePos()));
         touchPoints.append(point);
     }
+#endif
 
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
     QTouchEvent te(event->type(), event->pointingDevice(), event->modifiers(), event->touchPointStates(), touchPoints);

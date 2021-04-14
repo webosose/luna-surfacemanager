@@ -80,6 +80,9 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
         , m_itemStateReason(QString())
         , m_launchLastApp(false)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    setAcceptTouchEvents(true);
+#endif
     setSurface(surface);
 
     if (surface) {
@@ -199,8 +202,14 @@ QList<QTouchEvent::TouchPoint> WebOSSurfaceItem::mapToTarget(const QList<QTouchE
 {
     QList<QTouchEvent::TouchPoint> result;
     foreach (QTouchEvent::TouchPoint point, points) {
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        auto &p = QMutableEventPoint::from(point);
+        p.setPosition(mapToSurface(point.position()));
+        result.append(p);
+#else
         point.setPos(mapToSurface(point.pos()));
         result.append(point);
+#endif
     }
     return result;
 }
