@@ -47,8 +47,9 @@
 
 #include "weboscompositortracer.h"
 #include "weboskeyboard.h"
+#include "webossurface.h"
 
-WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuickSurface* surface)
+WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuickSurface* quickSurface)
         : QWaylandQuickItem()
         , m_compositor(compositor)
         , m_fullscreen(false)
@@ -83,12 +84,13 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
     setAcceptTouchEvents(true);
 #endif
+    WebOSSurface *surface = static_cast<WebOSSurface*>(quickSurface);
     setSurface(surface);
 
     if (surface) {
         connect(surface, SIGNAL(damaged(const QRegion &)), this, SLOT(onSurfaceDamaged(const QRegion &)));
-        connect(surface, &QWaylandSurface::aboutToBeDestroyed, this, &WebOSSurfaceItem::itemAboutToBeHidden);
-        connect(surface, &QWaylandSurface::nullBufferAttached, this, &WebOSSurfaceItem::itemAboutToBeHidden);
+        connect(surface, &WebOSSurface::aboutToBeDestroyed, this, &WebOSSurfaceItem::itemAboutToBeHidden);
+        connect(surface, &WebOSSurface::nullBufferAttached, this, &WebOSSurfaceItem::itemAboutToBeHidden);
     }
 
     connect(this, &QQuickItem::xChanged, this, &WebOSSurfaceItem::updateScreenPosition);

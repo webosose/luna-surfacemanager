@@ -38,6 +38,7 @@
 #include "weboswindowmodel.h"
 #include "webosgroupedwindowmodel.h"
 #include "webossurfacemodel.h"
+#include "webossurface.h"
 #include "webossurfaceitem.h"
 #include "webossurfaceitemmirror.h"
 #include "webossurfacegroup.h"
@@ -173,6 +174,10 @@ WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *
 
     initializeExtensions(extensions);
 
+    connect(this, &QWaylandCompositor::surfaceRequested, this, [this] (QWaylandClient *client, uint id, int version) {
+        WebOSSurface *surface = new WebOSSurface();
+        surface->initialize(this, client, id, version);
+    });
     connect(this, &QWaylandCompositor::surfaceCreated, this, &WebOSCoreCompositor::surfaceCreated);
 
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)

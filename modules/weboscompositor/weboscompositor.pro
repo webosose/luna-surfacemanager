@@ -37,6 +37,9 @@ DEFINES += WEBOS_INSTALL_QML=\\\"$$WEBOS_INSTALL_QML\\\" \
     DEFINES += USE_PMLOGLIB
 }
 
+# This is needed to use QWaylandQuickSurface with qtwayland 5.12
+DEFINES += QT_WAYLAND_COMPOSITOR_QUICK
+
 # TODO: remove this from here
 CONFIG += config_xcomposite config_glx
 
@@ -59,6 +62,7 @@ HEADERS += \
     webosevent.h \
     weboskeyboard.h \
     weboswaylandseat.h \
+    webossurface.h \
     compositorextensionfactory.h \
     unixsignalhandler.h
 
@@ -78,6 +82,7 @@ SOURCES += \
     webosinputdevice.cpp \
     weboskeyboard.cpp \
     weboswaylandseat.cpp \
+    webossurface.cpp \
     compositorextensionfactory.cpp \
     unixsignalhandler.cpp
 
