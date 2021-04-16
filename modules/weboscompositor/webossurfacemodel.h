@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,13 +39,13 @@ public:
     void clear();
 
     // Hidden from QAbstractListModel
-    QHash<int, QByteArray> roleNames () const;
+    QHash<int, QByteArray> roleNames () const override;
     bool removeRow(int row, const QModelIndex &parent = QModelIndex());
 
     // Reimplemented from QAbstractListModel
-    bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex());
-    int rowCount(const QModelIndex &parent = QModelIndex()) const;
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+    bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 
     WebOSSurfaceItem* surfaceItemForAppId(const QString& appId);
     WebOSSurfaceItem* surfaceItemForIndex(int index);

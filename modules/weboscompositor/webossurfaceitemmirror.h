@@ -1,4 +1,4 @@
-// Copyright (c) 2020 LG Electronics, Inc.
+// Copyright (c) 2020-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ class WebOSSurfaceItemMirror : public QQuickItem
 {
     Q_OBJECT
     Q_PROPERTY(WebOSSurfaceItem *sourceItem READ sourceItem WRITE setSourceItem NOTIFY sourceItemChanged)
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    Q_MOC_INCLUDE("webossurfaceitem.h")
+#endif
     Q_PROPERTY(bool clustered READ clustered WRITE setClustered NOTIFY clusteredChanged)
     Q_PROPERTY(bool propagateEvents READ propagateEvents WRITE setPropagateEvents NOTIFY propagateEventsChanged)
 

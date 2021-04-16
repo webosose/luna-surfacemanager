@@ -1,4 +1,4 @@
-// Copyright (c) 2020 LG Electronics, Inc.
+// Copyright (c) 2020-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -65,7 +65,9 @@ void WebOSSurfaceItemMirror::setSourceItem(WebOSSurfaceItem *sourceItem)
             m_mirrorItem = sourceItem->createMirrorItem();
             if (m_mirrorItem) {
                 m_mirrorItem->setParentItem(this);
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
                 m_mirrorItem->setSizeFollowsSurface(false);
+#endif
                 m_mirrorItem->setSize(size());
 
                 m_widthChangedConnection = connect(this, &QQuickItem::widthChanged, [this]() {
@@ -117,8 +119,11 @@ void WebOSSurfaceItemMirror::hoverMoveEvent(QHoverEvent *event)
 {
     if (!needToPropagate(event))
         return;
-
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    QHoverEvent he(event->type(), translatePoint(event->position()), translatePoint(event->oldPos()));
+#else
     QHoverEvent he(event->type(), translatePoint(event->pos()), translatePoint(event->oldPos()));
+#endif
     QCoreApplication::sendEvent(m_sourceItem, &he);
 }
 
@@ -127,7 +132,11 @@ void WebOSSurfaceItemMirror::hoverEnterEvent(QHoverEvent *event)
     if (!needToPropagate(event))
         return;
 
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    QHoverEvent he(event->type(), translatePoint(event->position()), translatePoint(event->oldPos()));
+#else
     QHoverEvent he(event->type(), translatePoint(event->pos()), translatePoint(event->oldPos()));
+#endif
     QCoreApplication::sendEvent(m_sourceItem, &he);
 }
 
@@ -136,7 +145,11 @@ void WebOSSurfaceItemMirror::hoverLeaveEvent(QHoverEvent *event)
     if (!needToPropagate(event))
         return;
 
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    QHoverEvent he(event->type(), translatePoint(event->position()), translatePoint(event->oldPos()));
+#else
     QHoverEvent he(event->type(), translatePoint(event->pos()), translatePoint(event->oldPos()));
+#endif
     QCoreApplication::sendEvent(m_sourceItem, &he);
 }
 
@@ -161,8 +174,11 @@ void WebOSSurfaceItemMirror::mouseMoveEvent(QMouseEvent *event)
     if (!needToPropagate(event))
         return;
 
-    QMouseEvent me(event->type(), translatePoint(event->localPos()),
-                   event->button(), event->buttons(), event->modifiers());
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    QMouseEvent me(event->type(), translatePoint(event->position()), event->button(), event->buttons(), event->modifiers());
+#else
+    QMouseEvent me(event->type(), translatePoint(event->localPos()), event->button(), event->buttons(), event->modifiers());
+#endif
     QCoreApplication::sendEvent(m_sourceItem, &me);
 }
 
@@ -171,8 +187,12 @@ void WebOSSurfaceItemMirror::mousePressEvent(QMouseEvent *event)
     if (!needToPropagate(event))
         return;
 
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    QMouseEvent me(event->type(), translatePoint(event->position()),
+ #else
     QMouseEvent me(event->type(), translatePoint(event->localPos()),
-                   event->button(), event->buttons(), event->modifiers());
+#endif
+                  event->button(), event->buttons(), event->modifiers());
     QCoreApplication::sendEvent(m_sourceItem, &me);
 }
 
@@ -181,8 +201,11 @@ void WebOSSurfaceItemMirror::mouseReleaseEvent(QMouseEvent *event)
     if (!needToPropagate(event))
         return;
 
-    QMouseEvent me(event->type(), translatePoint(event->localPos()),
-                   event->button(), event->buttons(), event->modifiers());
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    QMouseEvent me(event->type(), translatePoint(event->position()), event->button(), event->buttons(), event->modifiers());
+#else
+    QMouseEvent me(event->type(), translatePoint(event->localPos()), event->button(), event->buttons(), event->modifiers());
+#endif
     QCoreApplication::sendEvent(m_sourceItem, &me);
 }
 
@@ -191,10 +214,17 @@ void WebOSSurfaceItemMirror::wheelEvent(QWheelEvent *event)
     if (!needToPropagate(event))
         return;
 
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    QWheelEvent we(translatePoint(event->position()), translatePoint(event->globalPosition()),
+                   event->pixelDelta(), event->angleDelta(),
+                   event->buttons(), event->modifiers(),
+                   event->phase(), event->inverted(), event->source());
+#else
     QWheelEvent we(translatePoint(event->pos()), translatePoint(event->globalPos()),
                    event->pixelDelta(), event->angleDelta(),
                    event->buttons(), event->modifiers(),
                    event->phase(), event->inverted(), event->source());
+#endif
     QCoreApplication::sendEvent(m_sourceItem, &we);
 }
 
@@ -209,8 +239,11 @@ void WebOSSurfaceItemMirror::touchEvent(QTouchEvent *event)
         touchPoints.append(point);
     }
 
-    QTouchEvent te(event->type(), event->device(),
-                   event->modifiers(), event->touchPointStates(), touchPoints);
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    QTouchEvent te(event->type(), event->pointingDevice(), event->modifiers(), event->touchPointStates(), touchPoints);
+#else
+    QTouchEvent te(event->type(), event->device(), event->modifiers(), event->touchPointStates(), touchPoints);
+#endif
     QCoreApplication::sendEvent(m_sourceItem, &te);
 }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2020 LG Electronics, Inc.
+// Copyright (c) 2014-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -83,16 +83,16 @@ WebOSCompositorConfig::WebOSCompositorConfig()
         m_source = QString::fromLatin1(qgetenv("WEBOS_COMPOSITOR_MAIN"));
         if (Q_UNLIKELY(m_source.isEmpty())) {
 #ifdef USE_QRESOURCES
-            m_source = QUrl("qrc:/WebOSCompositorBase/main.qml");
+            m_source = QUrl(QString::fromUtf8("qrc:/WebOSCompositorBase/main.qml"));
 #else
-            m_source = QUrl("file://" WEBOS_INSTALL_QML "/WebOSCompositorBase/main.qml");
+            m_source = QUrl(QString::fromUtf8("file://" WEBOS_INSTALL_QML "/WebOSCompositorBase/main.qml"));
 #endif
         }
     }
 #ifdef USE_QRESOURCES
-    m_source2 = QUrl("qrc:/WebOSCompositorBase/main2.qml");
+    m_source2 = QUrl(QString::fromUtf8("qrc:/WebOSCompositorBase/main2.qml"));
 #else
-    m_source2 = QUrl("file://" WEBOS_INSTALL_QML "/WebOSCompositorBase/main2.qml");
+    m_source2 = QUrl(QString::fromUtf8("file://" WEBOS_INSTALL_QML "/WebOSCompositorBase/main2.qml"));
 #endif
     if (Q_UNLIKELY(m_importPath.isEmpty())) {
         m_importPath = QString::fromLatin1(qgetenv("WEBOS_COMPOSITOR_IMPORT_PATH"));

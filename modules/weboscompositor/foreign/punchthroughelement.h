@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019 LG Electronics, Inc.
+// Copyright (c) 2018-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,55 +21,7 @@
 #include <qquickitem.h>
 #include <qsgnode.h>
 #include <qsgsimplerectnode.h>
-#include <qsgsimplematerial.h>
-
-struct State
-{
-    //Fragment color
-    QColor color;
-};
-
-class PunchThroughShader : public QSGSimpleMaterialShader<State>
-{
-    QSG_DECLARE_SIMPLE_SHADER(PunchThroughShader, State);
-public:
-    const char *vertexShader() const {
-        return
-                "attribute highp vec4 vertex;                              \n"
-                "uniform highp mat4 qt_Matrix;                             \n"
-                "void main() {                                             \n"
-                "    gl_Position = qt_Matrix * vertex;                     \n"
-                "}";
-    }
-
-    const char *fragmentShader() const {
-        return
-                "uniform lowp vec4 color;                                  \n"
-                "uniform lowp float qt_Opacity;                            \n"
-                "void main ()                                              \n"
-                "{                                                         \n"
-                "    gl_FragColor = color * qt_Opacity;  \n"
-                "}";
-    }
-
-    QList<QByteArray> attributes() const
-    {
-        return QList<QByteArray>() << "vertex";
-    }
-
-    void updateState(const State *state, const State *)
-    {
-        program()->setUniformValue(m_fragmentColor, state->color);
-    }
-
-    void resolveUniforms()
-    {
-        m_fragmentColor = program()->uniformLocation("color");
-    }
-
-private:
-    int m_fragmentColor = 0;
-};
+#include <qsgflatcolormaterial.h>
 
 class PunchThroughNode : public QSGGeometryNode
 {
@@ -79,7 +31,7 @@ public:
     {
         setGeometry(&m_geometry);
 
-        QSGSimpleMaterial<State> *material = PunchThroughShader::createMaterial();
+        auto material = new QSGFlatColorMaterial();
         setMaterial(material);
         setFlag(OwnsMaterial);
     }
@@ -97,14 +49,16 @@ public:
         setFlag(ItemHasContents, true);
     }
 
-    QSGNode *updatePaintNode(QSGNode *node, UpdatePaintNodeData *)
+    QSGNode *updatePaintNode(QSGNode *node, UpdatePaintNodeData *) override
     {
         PunchThroughNode *n = static_cast<PunchThroughNode *>(node);
         if (!node)
             n = new PunchThroughNode();
 
         QSGGeometry::updateTexturedRectGeometry(n->geometry(), boundingRect(), QRectF(0, 0, 1, 1));
-        static_cast<QSGSimpleMaterial<State>*>(n->material())->state()->color = m_color;
+        auto material = static_cast<QSGFlatColorMaterial*>(n->material());
+        material->setColor(m_color);
+        material->setFlag(QSGMaterial::Blending, false);
 
         n->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
 

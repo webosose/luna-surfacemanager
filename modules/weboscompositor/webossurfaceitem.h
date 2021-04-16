@@ -74,6 +74,9 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandQuickItem
     Q_PROPERTY(QString userId READ userId NOTIFY userIdChanged)
     Q_PROPERTY(qint32 lastFullscreenTick READ lastFullscreenTick NOTIFY lastFullscreenTickChanged)
     Q_PROPERTY(WebOSGroupedWindowModel* groupedWindowModel READ groupedWindowModel WRITE setGroupedWindowModel NOTIFY groupedWindowModelChanged)
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    Q_MOC_INCLUDE("webosgroupedwindowmodel.h")
+#endif
     Q_PROPERTY(LocationHints locationHint READ locationHint NOTIFY locationHintChanged)
     Q_PROPERTY(KeyMasks keyMask READ keyMask NOTIFY keyMaskChanged)
     Q_PROPERTY(ItemState itemState READ itemState WRITE setItemState NOTIFY itemStateChanged)
@@ -88,6 +91,9 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandQuickItem
     Q_PROPERTY(bool launchRequired READ isLaunchRequired WRITE setLaunchRequired NOTIFY launchRequiredChanged)
 
     Q_PROPERTY(WebOSSurfaceGroup* surfaceGroup READ surfaceGroup NOTIFY surfaceGroupChanged)
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    Q_MOC_INCLUDE("webossurfacegroup.h")
+#endif
     Q_PROPERTY(QString addon READ addon NOTIFY addonChanged)
     // Filter function that evaluates acceptance of the addon
     Q_PROPERTY(QJSValue addonFilter READ addonFilter WRITE setAddonFilter NOTIFY addonFilterChanged)
@@ -206,12 +212,12 @@ public:
      * not just when a mouse button is pressed. The QWaylandQuickItem does not
      * handle the hover events at all.
      */
-    void hoverMoveEvent(QHoverEvent *event);
+    void hoverMoveEvent(QHoverEvent *event) override;
 
-    void hoverEnterEvent(QHoverEvent *event);
-    void hoverLeaveEvent(QHoverEvent *event);
+    void hoverEnterEvent(QHoverEvent *event) override;
+    void hoverLeaveEvent(QHoverEvent *event) override;
 
-    void mouseUngrabEvent() Q_DECL_OVERRIDE;
+    void mouseUngrabEvent() override;
 
     int texture() const {
         if (textureProvider() && textureProvider()->texture())
@@ -526,18 +532,18 @@ signals:
 
 protected:
     void processKeyEvent(QKeyEvent *event);
-    virtual void keyPressEvent(QKeyEvent *event);
-    virtual void keyReleaseEvent(QKeyEvent *event);
-    virtual void focusInEvent(QFocusEvent *event);
-    virtual void focusOutEvent(QFocusEvent *event);
+    virtual void keyPressEvent(QKeyEvent *event) override;
+    virtual void keyReleaseEvent(QKeyEvent *event) override;
+    virtual void focusInEvent(QFocusEvent *event) override;
+    virtual void focusOutEvent(QFocusEvent *event) override;
 
-    virtual void mouseMoveEvent(QMouseEvent *event);
-    virtual void mousePressEvent(QMouseEvent *event);
-    virtual void mouseReleaseEvent(QMouseEvent *event);
-    virtual void wheelEvent(QWheelEvent *event);
-    virtual void touchEvent(QTouchEvent *event);
+    virtual void mouseMoveEvent(QMouseEvent *event) override;
+    virtual void mousePressEvent(QMouseEvent *event) override;
+    virtual void mouseReleaseEvent(QMouseEvent *event) override;
+    virtual void wheelEvent(QWheelEvent *event) override;
+    virtual void touchEvent(QTouchEvent *event) override;
 
-    virtual bool contains(const QPointF & point) const;
+    virtual bool contains(const QPointF & point) const override;
 
     QList<QTouchEvent::TouchPoint> mapToTarget(const QList<QTouchEvent::TouchPoint>& points) const;
 

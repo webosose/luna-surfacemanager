@@ -25,6 +25,7 @@
 #include <wayland-server.h>
 #include <wayland-input-method-server-protocol.h>
 
+#include "webossurfaceitem.h"
 #include "waylandinputpanel.h"
 
 class QWaylandCompositor;

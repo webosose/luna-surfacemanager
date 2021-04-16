@@ -1,4 +1,4 @@
-// Copyright (c) 2019 LG Electronics, Inc.
+// Copyright (c) 2019-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public:
 
     static void bind(struct wl_client *client, void *data, uint32_t version, uint32_t id);
 
-    void handleDestroy() Q_DECL_OVERRIDE;
+    void handleDestroy() override;
     QList<QObject *> methods();
     WaylandInputMethod *getInputMethod(int displayId);
 

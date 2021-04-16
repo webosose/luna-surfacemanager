@@ -139,9 +139,11 @@ public:
     void initialize(QQuickItem *item, QQuickItem *exportedItem, QQuickItem *source, QQuickItem *parent) override
     {
         MirrorItemHandler::initialize(item, exportedItem, source, parent);
-        /* Keep mirrored item's size from being effected by internal reason of Qtwayland.
-           This can be removed in Qt6. */
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+        // Keep mirrored item's size from being effected by internal reason of Qtwayland.
+        // This can be removed in Qt6.
         static_cast<WebOSSurfaceItem *>(item)->setSizeFollowsSurface(false);
+#endif
     }
 };
 

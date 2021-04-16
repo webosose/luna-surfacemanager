@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2020 LG Electronics, Inc.
+// Copyright (c) 2014-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -104,7 +104,9 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
         qInfo () << "Using default surface format:" << QWindow::format();
     }
 
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     setClearBeforeRendering(true);
+#endif
     setColor(Qt::transparent);
 
     // We need a platform window right now
@@ -273,7 +275,7 @@ QList<WebOSCompositorWindow *> WebOSCompositorWindow::initializeExtraWindows(Web
 bool WebOSCompositorWindow::parseGeometryString(const QString string, QRect &geometry, int &rotation, double &ratio)
 {
     // Syntax: WIDTH[x]HEIGHT[+/-]X[+/-]Y[r]ROTATION[s]RATIO
-    QRegularExpression re("([0-9]+)x([0-9]+)([\+\-][0-9]+)([\+\-][0-9]+)r([0-9]+)s([0-9]+\.?[0-9]*)");
+    QRegularExpression re(QString::fromUtf8("([0-9]+)x([0-9]+)([\+\-][0-9]+)([\+\-][0-9]+)r([0-9]+)s([0-9]+\.?[0-9]*)"));
     QRegularExpressionMatch match = re.match(string);
 
     if (match.hasMatch()) {

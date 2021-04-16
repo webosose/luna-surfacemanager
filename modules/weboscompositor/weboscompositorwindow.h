@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2020 LG Electronics, Inc.
+// Copyright (c) 2014-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -53,6 +53,9 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCompositorWindow : public QQuickView {
     // State for App mirroring
     Q_PROPERTY(AppMirroringState appMirroringState READ appMirroringState NOTIFY appMirroringStateChanged)
     Q_PROPERTY(WebOSSurfaceItem *appMirroringItem READ appMirroringItem WRITE setAppMirroringItem NOTIFY appMirroringItemChanged)
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    Q_MOC_INCLUDE("webossurfaceitem.h")
+#endif
     Q_PROPERTY(QString clusterName READ clusterName NOTIFY clusterNameChanged)
     Q_PROPERTY(QSize clusterSize READ clusterSize NOTIFY clusterSizeChanged)
     Q_PROPERTY(QPoint positionInCluster READ positionInCluster NOTIFY positionInClusterChanged)
@@ -178,7 +181,7 @@ private:
     {
     public:
         RotationJob(WebOSCompositorWindow* window) { m_window = window; }
-        void run() Q_DECL_OVERRIDE { m_window->sendOutputGeometry(); }
+        void run() override { m_window->sendOutputGeometry(); }
     private:
         WebOSCompositorWindow* m_window;
     };

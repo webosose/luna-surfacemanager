@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2020 LG Electronics, Inc.
+// Copyright (c) 2014-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,6 +31,9 @@ class WEBOS_COMPOSITOR_EXPORT WebOSScreenShot : public QObject
     Q_OBJECT
     Q_FLAGS(ScreenShotErrors)
     Q_PROPERTY(WebOSSurfaceItem* target READ target WRITE setTarget NOTIFY targetChanged)
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    Q_MOC_INCLUDE("webossurfaceitem.h")
+#endif
     Q_PROPERTY(QString path READ path WRITE setPath NOTIFY pathChanged)
     Q_PROPERTY(QString format READ format WRITE setFormat NOTIFY formatChanged)
     Q_PROPERTY(QSize size READ size)
@@ -94,7 +97,7 @@ class ScreenShotTask: public QObject, public QRunnable {
     Q_OBJECT
 public:
     ScreenShotTask(WebOSScreenShot* source, QImage* destination);
-    void run() Q_DECL_OVERRIDE;
+    void run() override;
     void readPixels();
 signals:
     void done();

@@ -260,7 +260,11 @@ bool WebOSSurfaceItem::tabletEvent(QTabletEvent* event)
 void WebOSSurfaceItem::hoverMoveEvent(QHoverEvent *event)
 {
     if (acceptHoverEvents()) {
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        QMouseEvent e(QEvent::MouseMove, event->position(), Qt::NoButton, Qt::NoButton, event->modifiers());
+#else
         QMouseEvent e(QEvent::MouseMove, event->pos(), Qt::NoButton, Qt::NoButton, event->modifiers());
+#endif
         mouseMoveEvent(&e);
     }
 }
@@ -270,8 +274,11 @@ void WebOSSurfaceItem::mouseMoveEvent(QMouseEvent * event)
     // Make sure client to receive the latest position before the mouse event
     updateScreenPosition();
 
-    WebOSMouseEvent e(event->type(), event->pos(),
-                  event->button(), event->buttons(), event->modifiers(), window());
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    WebOSMouseEvent e(event->type(), event->position(), event->button(), event->buttons(), event->modifiers(), window());
+#else
+    WebOSMouseEvent e(event->type(), event->pos(), event->button(), event->buttons(), event->modifiers(), window());
+#endif
     QWaylandQuickItem::mouseMoveEvent(&e);
 }
 
@@ -351,9 +358,15 @@ void WebOSSurfaceItem::mouseReleaseEvent(QMouseEvent *event)
 
 void WebOSSurfaceItem::wheelEvent(QWheelEvent *event)
 {
-    WebOSWheelEvent e(event->pos(), event->globalPos(), event->pixelDelta(),
-                  event->angleDelta(), event->delta(), event->orientation(),
-                  event->buttons(), event->modifiers(), event->phase(), window());
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    WebOSWheelEvent e(event->position(), event->globalPosition(), event->pixelDelta(), event->angleDelta(),
+            event->buttons(), event->modifiers(), event->phase(), window(),
+            event->inverted());
+#else
+    WebOSWheelEvent e(event->pos(), event->globalPos(), event->pixelDelta(), event->angleDelta(),
+            event->delta(), event->orientation(),
+            event->buttons(), event->modifiers(), event->phase(), window());
+#endif
 
     if (surface()) {
 #ifdef MULTIINPUT_SUPPORT
@@ -367,7 +380,11 @@ void WebOSSurfaceItem::wheelEvent(QWheelEvent *event)
         // Send extra mouse move event as otherwise the client
         // will handle the wheel event in the incorrect coordinate
         // in case the surface size is changed.
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        QMouseEvent ee(QEvent::MouseMove, event->position(), Qt::NoButton, Qt::NoButton, event->modifiers());
+#else
         QMouseEvent ee(QEvent::MouseMove, event->pos(), Qt::NoButton, Qt::NoButton, event->modifiers());
+#endif
         mouseMoveEvent(&ee);
     }
 
@@ -376,15 +393,20 @@ void WebOSSurfaceItem::wheelEvent(QWheelEvent *event)
 
 void WebOSSurfaceItem::touchEvent(QTouchEvent *event)
 {
-    QTouchEvent e(event->type(), event->device(), event->modifiers(),
-                  event->touchPointStates(), mapToTarget(event->touchPoints()));
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    QTouchEvent e(event->type(), event->pointingDevice(), event->modifiers(), event->touchPointStates(), mapToTarget(event->touchPoints()));
+#else
+    QTouchEvent e(event->type(), event->device(), event->modifiers(), event->touchPointStates(), mapToTarget(event->touchPoints()));
     e.setWindow(event->window());
+#endif
 
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     // This may not be needed with QtWayland 5.12
     // Currently, this is due to QWaylandSurfaceItem::mouseUngrabEvent
     // which sends the Cancel without window().
     if (!event->window())
         e.setWindow(window());
+#endif
 
     if (surface() && inputEventsEnabled() && touchEventsEnabled()) {
         WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
@@ -397,8 +419,13 @@ void WebOSSurfaceItem::touchEvent(QTouchEvent *event)
 
         QPoint pointPos;
         const QList<QTouchEvent::TouchPoint> &points = e.touchPoints();
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        if (!points.isEmpty())
+            pointPos = points.at(0).position().toPoint();
+#else
         if (!points.isEmpty())
             pointPos = points.at(0).pos().toPoint();
+#endif
 
         if (e.type() == QEvent::TouchBegin && !surface()->inputRegionContains(pointPos))
             return;
@@ -427,7 +454,11 @@ void WebOSSurfaceItem::hoverEnterEvent(QHoverEvent *event)
             // In accessibility mode, there should be an explicit mouse move event
             // for an item where a hover event arrives.
             if (w->accessible())
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+                inputDevice->sendMouseMoveEvent(view(), event->position(), mapToScene(event->position()));
+#else
                 inputDevice->sendMouseMoveEvent(view(), event->pos(), mapToScene(event->pos()));
+#endif
         } else {
             qWarning() << "no input device for this event";
         }

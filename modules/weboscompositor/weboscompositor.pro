@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2020 LG Electronics, Inc.
+# Copyright (c) 2014-2021 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ load(qt_build_paths)
 
 QT += qml quick waylandcompositor quick-private core-private waylandcompositor-private weboscompositorextension
 CONFIG += debug
+
+LIBS += -lxkbcommon
 
 DEFINES += WEBOS_INSTALL_QML=\\\"$$WEBOS_INSTALL_QML\\\" \
            WEBOS_INSTALL_QTPLUGINSDIR=\\\"$$WEBOS_INSTALL_QTPLUGINSDIR\\\"

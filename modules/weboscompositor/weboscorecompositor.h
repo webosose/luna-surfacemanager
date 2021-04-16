@@ -64,6 +64,9 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCoreCompositor : public QWaylandQuickComposit
     Q_DECLARE_PRIVATE(WebOSCoreCompositor)
 
     Q_PROPERTY(WebOSSurfaceModel* surfaceModel READ surfaceModel NOTIFY surfaceModelChanged)
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    Q_MOC_INCLUDE("webossurfacemodel.h")
+#endif
     // To retain backwards compatibility due to the setFullscreenSurface signature this
     // property is introduced
     Q_PROPERTY(WebOSSurfaceItem* fullscreen READ fullscreen WRITE setFullscreen NOTIFY fullscreenChanged)
@@ -71,6 +74,9 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCoreCompositor : public QWaylandQuickComposit
     Q_PROPERTY(bool mouseEventEnabled READ mouseEventEnabled WRITE setMouseEventEnabled NOTIFY mouseEventEnabledChanged)
 
     Q_PROPERTY(WebOSInputMethod* inputMethod READ inputMethod NOTIFY inputMethodChanged)
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    Q_MOC_INCLUDE("webosinputmethod.h")
+#endif
     Q_PROPERTY(bool directRendering READ directRendering NOTIFY directRenderingChanged)
     Q_PROPERTY(bool cursorVisible READ cursorVisible NOTIFY cursorVisibleChanged) // deprecated
     Q_PROPERTY(QVariantMap surfaceItemClosePolicy READ surfaceItemClosePolicy WRITE setSurfaceItemClosePolicy NOTIFY surfaceItemClosePolicyChanged)
@@ -276,7 +282,7 @@ private:
         EventPreprocessor(WebOSCoreCompositor*);
 
     protected:
-        bool eventFilter(QObject *obj, QEvent *event);
+        bool eventFilter(QObject *obj, QEvent *event) override;
 
     private:
         WebOSCoreCompositor* m_compositor;

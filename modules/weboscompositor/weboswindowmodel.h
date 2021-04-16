@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,6 +33,9 @@ class WEBOS_COMPOSITOR_EXPORT WebOSWindowModel : public QSortFilterProxyModel {
 
     Q_PROPERTY(QString windowType READ windowType WRITE setWindowType NOTIFY windowTypeChanged);
     Q_PROPERTY(WebOSSurfaceModel* surfaceSource READ surfaceSource WRITE setSurfaceSource NOTIFY surfaceSourceChanged);
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    Q_MOC_INCLUDE("webossurfacemodel.h")
+#endif
     Q_PROPERTY(QString sortFunction READ sortFunction WRITE setSortFunction NOTIFY sortFunctionChanged);
     Q_PROPERTY(QString acceptFunction READ acceptFunction WRITE setAcceptFunction NOTIFY acceptFunctionChanged);
     Q_PROPERTY(int count READ count NOTIFY countChanged);
@@ -59,8 +62,8 @@ public:
 
     Q_INVOKABLE int indexForItem(QVariant);
 
-    bool hasChildren (const QModelIndex& ) const { return false; }
-    QModelIndex parent(const QModelIndex& ) const { return QModelIndex(); }
+    bool hasChildren (const QModelIndex& ) const override { return false; }
+    QModelIndex parent(const QModelIndex& ) const override { return QModelIndex(); }
 
     bool locked();
     void setLocked(bool);
@@ -78,8 +81,8 @@ signals:
     void invalidated();
 
 protected:
-    virtual bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
-    bool lessThan(const QModelIndex &left, const QModelIndex &right) const;
+    virtual bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
+    bool lessThan(const QModelIndex &left, const QModelIndex &right) const override;
     void deferInvalidate();
 
 protected slots:

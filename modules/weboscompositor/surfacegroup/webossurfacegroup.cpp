@@ -25,6 +25,7 @@
 #include <QDebug>
 #include <QQmlPropertyMap>
 #include <QQmlEngine>
+#include <algorithm>
 
 WebOSSurfaceGroup::WebOSSurfaceGroup()
     : QtWaylandServer::wl_webos_surface_group()
@@ -492,9 +493,8 @@ QList<WebOSSurfaceItem*> WebOSSurfaceGroup::attachedClientSurfaceItems()
 
 void WebOSSurfaceGroup::sortZOrderedSurfaceLayoutInfoList()
 {
-    if (!m_zOrderedSurfaceLayoutInfoList.isEmpty()) {
-        qSort(m_zOrderedSurfaceLayoutInfoList.begin(), m_zOrderedSurfaceLayoutInfoList.end(), zOrderedLessThan);
-    }
+    if (!m_zOrderedSurfaceLayoutInfoList.isEmpty())
+        std::sort(m_zOrderedSurfaceLayoutInfoList.begin(), m_zOrderedSurfaceLayoutInfoList.end(), zOrderedLessThan);
 }
 
 bool WebOSSurfaceGroup::allowLayerKeyOrder() const

@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2019 LG Electronics, Inc.
+// Copyright (c) 2014-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,6 +39,9 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceGroup : public QObject, public QtWayla
     Q_PROPERTY(bool allowAnonymous READ allowAnonymous NOTIFY allowAnonymousChanged)
     Q_PROPERTY(WebOSSurfaceItem* rootItem READ rootItem NOTIFY rootItemChanged)
     Q_PROPERTY(WebOSSurfaceItem* keyboardFocusedSurface READ keyboardFocusedSurface NOTIFY keyboardFocusedSurfaceChanged)
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    Q_MOC_INCLUDE("webossurfaceitem.h")
+#endif
 
 public:
     WebOSSurfaceGroup();
@@ -79,22 +82,22 @@ signals:
     void keyOrderChanged();
 
 protected:
-    virtual void webos_surface_group_bind_resource(Resource *resource);
+    virtual void webos_surface_group_bind_resource(Resource *resource) override;
 
-    virtual void webos_surface_group_destroy_resource(Resource *resource);
-    virtual void webos_surface_group_destroy(Resource *resource);
+    virtual void webos_surface_group_destroy_resource(Resource *resource) override;
+    virtual void webos_surface_group_destroy(Resource *resource) override;
 
-    virtual void webos_surface_group_allow_anonymous_layers(Resource *resource, uint32_t allow);
-    virtual void webos_surface_group_attach_anonymous(Resource *resource, struct ::wl_resource *surface, uint32_t z_hint);
-    virtual void webos_surface_group_detach(Resource *resource, struct ::wl_resource *surface);
+    virtual void webos_surface_group_allow_anonymous_layers(Resource *resource, uint32_t allow) override;
+    virtual void webos_surface_group_attach_anonymous(Resource *resource, struct ::wl_resource *surface, uint32_t z_hint) override;
+    virtual void webos_surface_group_detach(Resource *resource, struct ::wl_resource *surface) override;
 
-    virtual void webos_surface_group_create_layer(Resource *resource, uint32_t id, const QString &name, int32_t z_index);
-    virtual void webos_surface_group_attach(Resource *resource, struct ::wl_resource *surface, const QString &layer_name);
+    virtual void webos_surface_group_create_layer(Resource *resource, uint32_t id, const QString &name, int32_t z_index) override;
+    virtual void webos_surface_group_attach(Resource *resource, struct ::wl_resource *surface, const QString &layer_name) override;
 
-    virtual void webos_surface_group_focus_owner(Resource *resource);
-    virtual void webos_surface_group_focus_layer(Resource *resource, const QString &layer);
+    virtual void webos_surface_group_focus_owner(Resource *resource) override;
+    virtual void webos_surface_group_focus_layer(Resource *resource, const QString &layer) override;
 
-    virtual void webos_surface_group_commit_key_index(Resource *resource, uint32_t commit);
+    virtual void webos_surface_group_commit_key_index(Resource *resource, uint32_t commit) override;
 
     void addZOrderedSurfaceLayoutInfoList(WebOSSurfaceItem* item, QSharedPointer<QObject> layoutInfo);
     void removeZOrderedSurfaceLayoutInfoList(WebOSSurfaceItem* item);

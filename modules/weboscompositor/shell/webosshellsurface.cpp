@@ -285,7 +285,7 @@ void WebOSShellSurface::exposed(const QRegion& region)
     wl_array rects;
     wl_array_init(&rects);
 
-    foreach(QRect r, region.rects()) {
+    for (auto &r: region) {
         if (validExposeRect(r)) {
             addValue(r.x(), &rects);
             addValue(r.y(), &rects);

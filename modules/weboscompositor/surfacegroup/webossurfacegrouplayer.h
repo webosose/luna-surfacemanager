@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2019 LG Electronics, Inc.
+// Copyright (c) 2014-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -61,10 +61,10 @@ signals:
     void layerDestroyed(const QString& name);
 
 protected:
-    virtual void webos_surface_group_layer_set_z_index(Resource *resource, int32_t z_index);
-    virtual void webos_surface_group_layer_set_key_index(Resource *resource, int32_t key_index);
-    virtual void webos_surface_group_layer_destroy_resource(Resource *resource);
-    virtual void webos_surface_group_layer_destroy(Resource *resource);
+    virtual void webos_surface_group_layer_set_z_index(Resource *resource, int32_t z_index) override;
+    virtual void webos_surface_group_layer_set_key_index(Resource *resource, int32_t key_index) override;
+    virtual void webos_surface_group_layer_destroy_resource(Resource *resource) override;
+    virtual void webos_surface_group_layer_destroy(Resource *resource) override;
 
 private:
     QString m_name;

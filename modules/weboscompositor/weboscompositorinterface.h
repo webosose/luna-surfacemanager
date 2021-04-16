@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2020 LG Electronics, Inc.
+// Copyright (c) 2018-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,7 +33,12 @@ public:
     virtual WebOSCoreCompositor *compositorExtended() { return 0; }
     virtual WebOSCompositorWindow *compositorWindowExtended() { return 0; }
     // New version
-    virtual WebOSCompositorWindow *compositorWindowExtended(QString screenName = QString(), QString geometryString = QString(), QSurfaceFormat *surfaceFormat = 0) { return 0; }
+    virtual WebOSCompositorWindow *compositorWindowExtended(QString screenName = QString(), QString geometryString = QString(), QSurfaceFormat *surfaceFormat = 0) {
+        Q_UNUSED(screenName);
+        Q_UNUSED(geometryString);
+        Q_UNUSED(surfaceFormat);
+        return 0;
+    }
 
 protected:
     WebOSCoreCompositor *m_compositor;

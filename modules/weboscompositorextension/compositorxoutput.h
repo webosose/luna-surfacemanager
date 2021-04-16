@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,12 +31,12 @@ public:
     virtual void setStereoscopeAvailable(bool avail) { Q_UNUSED(avail); }
     virtual void clearStereoscope() { }
 
-    virtual bool setMagnifierRun(bool run) { return false; }
-    virtual bool setMagnifierPos(quint32 posX, quint32 posY) { return false; }
-    virtual bool setMagnification(quint32 magnification) { return false; }
-    virtual bool setMagnifierSize(const QString &size) { return false; }
-    virtual bool setMagnifierShape(const QString &shape) { return false; }
-    virtual bool setMagnifierShapeAndSize(const QString &shape, const QString &size) { return false; }
+    virtual bool setMagnifierRun(bool run) { Q_UNUSED(run); return false; }
+    virtual bool setMagnifierPos(quint32 posX, quint32 posY) { Q_UNUSED(posX); Q_UNUSED(posY); return false; }
+    virtual bool setMagnification(quint32 magnification) { Q_UNUSED(magnification); return false; }
+    virtual bool setMagnifierSize(const QString &size) { Q_UNUSED(size); return false; }
+    virtual bool setMagnifierShape(const QString &shape) { Q_UNUSED(shape); return false; }
+    virtual bool setMagnifierShapeAndSize(const QString &shape, const QString &size) { Q_UNUSED(shape); Q_UNUSED(size); return false; }
 
 signals:
     void stereoScopeChanged();

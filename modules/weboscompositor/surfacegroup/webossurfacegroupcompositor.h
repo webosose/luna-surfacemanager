@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 LG Electronics, Inc.
+// Copyright (c) 2014-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,8 +39,8 @@ public:
 
 protected:
     void webos_surface_group_compositor_create_surface_group(Resource *resource, uint32_t id,
-                                                             struct ::wl_resource *parent, const QString &name);
-    void webos_surface_group_compositor_get_surface_group(Resource *resource, uint32_t id, const QString &name);
+                                                             struct ::wl_resource *parent, const QString &name) override;
+    void webos_surface_group_compositor_get_surface_group(Resource *resource, uint32_t id, const QString &name) override;
 
 
 private:
