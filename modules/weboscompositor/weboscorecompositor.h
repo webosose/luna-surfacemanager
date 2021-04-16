@@ -58,7 +58,7 @@ class WebOSTablet;
 
 class WebOSCoreCompositorPrivate;
 
-class WEBOS_COMPOSITOR_EXPORT WebOSCoreCompositor : public QWaylandQuickCompositor
+class WEBOS_COMPOSITOR_EXPORT WebOSCoreCompositor : public QWaylandCompositor
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(WebOSCoreCompositor)
@@ -182,7 +182,6 @@ public:
     void initTestPluginLoader();
 
     QList<QWaylandSeat *> inputDevices() const;
-    QWaylandSeat *seatFor(QInputEvent *inputEvent) override;
     QWaylandSeat *keyboardDeviceForWindow(QQuickWindow *window);
     QWaylandSeat *keyboardDeviceForDisplayId(int displayId);
 

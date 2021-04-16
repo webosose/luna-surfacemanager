@@ -81,12 +81,64 @@ public:
         : QWaylandCompositorPrivate(compositor)
     {};
 
-protected:
-    QWaylandSurface *createDefaultSurface() override {
-        return new QWaylandQuickSurface();
-    }
+    QWaylandSeat *seatFor(QInputEvent *inputEvent) override;
+
     Q_DECLARE_PUBLIC(WebOSCoreCompositor)
 };
+
+QWaylandSeat *WebOSCoreCompositorPrivate::seatFor(QInputEvent *inputEvent)
+{
+    Q_Q(WebOSCoreCompositor);
+#ifdef MULTIINPUT_SUPPORT
+    QWaylandSeat *dev = NULL;
+    // The first input device in the input device list must be default input device
+    // which is QWaylandSeat, so that it always returns true for isOwner().
+    for (int i = 1; i < seats.size(); i++) {
+        QWaylandSeat *candidate = seats.at(i);
+        if (candidate->isOwner(inputEvent)) {
+            dev = candidate;
+            return dev;
+        }
+    }
+
+    dev = q->queryInputDevice(inputEvent);
+    if (!dev)
+        dev = q->defaultSeat();
+
+    return dev;
+#else
+    QEvent::Type type = inputEvent->type();
+    if (type == QEvent::TouchBegin || type == QEvent::TouchUpdate ||
+        type == QEvent::TouchEnd || type == QEvent::TouchCancel) {
+        QTouchEvent *touch = static_cast<QTouchEvent *>(inputEvent);
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+        if (touch->window())
+            return static_cast<WebOSCompositorWindow *>(touch->window())->inputDevice();
+#endif
+    }
+
+    if (type == QEvent::MouseMove || type == QEvent::MouseButtonPress ||
+        type ==  QEvent::MouseButtonRelease) {
+        WebOSMouseEvent *wMouse = nullptr;
+        QMouseEvent *mouse = static_cast<QMouseEvent *>(inputEvent);
+        if (mouse->source() == Qt::MouseEventSource::MouseEventSynthesizedByApplication)
+            wMouse = static_cast<WebOSMouseEvent *>(mouse);
+        if (wMouse && wMouse->window())
+            return static_cast<WebOSCompositorWindow *>(wMouse->window())->inputDevice();
+    }
+
+    if (type == QEvent::Wheel) {
+        WebOSWheelEvent *wWheel = nullptr;
+        QWheelEvent *wheel = static_cast<QWheelEvent *>(inputEvent);
+        if (wheel->source() == Qt::MouseEventSource::MouseEventSynthesizedByApplication)
+            wWheel = static_cast<WebOSWheelEvent *>(wheel);
+        if (wWheel && wWheel->window())
+            return static_cast<WebOSCompositorWindow *>(wWheel->window())->inputDevice();
+    }
+
+    return QWaylandCompositorPrivate::seatFor(inputEvent);
+#endif
+}
 
 void WebOSCoreCompositor::logger(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
@@ -144,7 +196,7 @@ void WebOSCoreCompositor::logger(QtMsgType type, const QMessageLogContext &conte
 }
 
 WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *socketName)
-    : QWaylandQuickCompositor()
+    : QWaylandCompositor(*new WebOSCoreCompositorPrivate(this))
     , m_previousFullscreenSurfaceItem(0)
     , m_fullscreenSurfaceItem(nullptr)
     , m_keyFilter(0)
@@ -233,7 +285,7 @@ void WebOSCoreCompositor::insertToWindows(WebOSCompositorWindow *window)
 
 void WebOSCoreCompositor::create()
 {
-    QWaylandQuickCompositor::create();
+    QWaylandCompositor::create();
     checkDaemonFiles();
 }
 
@@ -1300,58 +1352,6 @@ QList<QWaylandSeat *> WebOSCoreCompositor::inputDevices() const
     return d->seats;
 }
 
-QWaylandSeat *WebOSCoreCompositor::seatFor(QInputEvent *inputEvent)
-{
-#ifdef MULTIINPUT_SUPPORT
-    QWaylandSeat *dev = NULL;
-    // The first input device in the input device list must be default input device
-    // which is QWaylandSeat, so that it always returns true for isOwner().
-    for (int i = 1; i < inputDevices().size(); i++) {
-        QWaylandSeat *candidate = inputDevices().at(i);
-        if (candidate->isOwner(inputEvent)) {
-            dev = candidate;
-            return dev;
-        }
-    }
-
-    dev =  queryInputDevice(inputEvent);
-    if (!dev) {
-        dev = defaultSeat();
-    }
-
-    return dev;
-#else
-    QEvent::Type type = inputEvent->type();
-    if (type == QEvent::TouchBegin || type == QEvent::TouchUpdate ||
-        type == QEvent::TouchEnd || type == QEvent::TouchCancel) {
-        QTouchEvent *touch = static_cast<QTouchEvent *>(inputEvent);
-        if (touch->window())
-            return static_cast<WebOSCompositorWindow *>(touch->window())->inputDevice();
-    }
-
-    if (type == QEvent::MouseMove || type == QEvent::MouseButtonPress ||
-        type ==  QEvent::MouseButtonRelease) {
-        WebOSMouseEvent *wMouse = nullptr;
-        QMouseEvent *mouse = static_cast<QMouseEvent *>(inputEvent);
-        if (mouse->source() == Qt::MouseEventSource::MouseEventSynthesizedByApplication)
-            wMouse = static_cast<WebOSMouseEvent *>(mouse);
-        if (wMouse && wMouse->window())
-            return static_cast<WebOSCompositorWindow *>(wMouse->window())->inputDevice();
-    }
-
-    if (type == QEvent::Wheel) {
-        WebOSWheelEvent *wWheel = nullptr;
-        QWheelEvent *wheel = static_cast<QWheelEvent *>(inputEvent);
-        if (wheel->source() == Qt::MouseEventSource::MouseEventSynthesizedByApplication)
-            wWheel = static_cast<WebOSWheelEvent *>(wheel);
-        if (wWheel && wWheel->window())
-            return static_cast<WebOSCompositorWindow *>(wWheel->window())->inputDevice();
-    }
-
-    return QWaylandCompositor::seatFor(inputEvent);
-#endif
-}
-
 QWaylandSeat *WebOSCoreCompositor::keyboardDeviceForWindow(QQuickWindow *window)
 {
     if (!window)
@@ -1427,7 +1427,7 @@ QWaylandSeat *WebOSCoreCompositor::createSeat()
 
 QWaylandPointer *WebOSCoreCompositor::createPointerDevice(QWaylandSeat *seat)
 {
-    return QWaylandQuickCompositor::createPointerDevice(seat);
+    return QWaylandCompositor::createPointerDevice(seat);
 }
 
 QWaylandKeyboard *WebOSCoreCompositor::createKeyboardDevice(QWaylandSeat *seat)
@@ -1437,7 +1437,7 @@ QWaylandKeyboard *WebOSCoreCompositor::createKeyboardDevice(QWaylandSeat *seat)
 
 QWaylandTouch *WebOSCoreCompositor::createTouchDevice(QWaylandSeat *seat)
 {
-    return QWaylandQuickCompositor::createTouchDevice(seat);
+    return QWaylandCompositor::createTouchDevice(seat);
 }
 
 void WebOSCoreCompositor::registerSeat(QWaylandSeat *seat)
