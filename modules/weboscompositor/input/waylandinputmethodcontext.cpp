@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2020 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -350,7 +350,8 @@ void WaylandInputMethodContext::activateTextModel()
     m_activated = true;
 
     emit activated();
-    m_textModel->sendEntered();
+    if (m_textModel)
+        m_textModel->sendEntered();
 }
 
 void WaylandInputMethodContext::continueTextModelActivation()
@@ -366,6 +367,9 @@ void WaylandInputMethodContext::deactivateTextModel()
     WaylandTextModel* textModel = qobject_cast<WaylandTextModel*>(sender());
     qDebug() << "model" << textModel;
     cleanup();
+    updatePanelState(WaylandInputPanel::InputPanelHidden);
+    if (m_textModel)
+        m_textModel->sendLeft();
 }
 
 void WaylandInputMethodContext::destroyTextModel()
