@@ -68,48 +68,99 @@ void TabletItem::setValues(QTabletEvent *event)
     m_pressure = event->pressure();
     m_uniqueId = event->uniqueId();
 
-    switch (event->device()) {
-    case QTabletEvent::NoDevice:
-        m_device = "NoDevice";
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    switch (event->deviceType()) {
+    case QInputDevice::DeviceType::Mouse:
+        m_device = "Mouse";
         break;
-    case QTabletEvent::Puck:
+    case QInputDevice::DeviceType::TouchScreen:
+        m_device = "TouchScreen";
+        break;
+    case QInputDevice::DeviceType::TouchPad:
+        m_device = "TouchPad";
+        break;
+    case QInputDevice::DeviceType::Puck:
         m_device = "Puck";
         break;
-    case QTabletEvent::Stylus:
+    case QInputDevice::DeviceType::Stylus:
         m_device = "Stylus";
         break;
-    case QTabletEvent::Airbrush:
+    case QInputDevice::DeviceType::Airbrush:
         m_device = "Airbrush";
         break;
-    case QTabletEvent::FourDMouse:
-        m_device = "FourDMouse";
+    case QInputDevice::DeviceType::Keyboard:
+        m_device = "Keyboard";
         break;
-    case QTabletEvent::XFreeEraser:
-        m_device = "XFreeEraser";
-        break;
-    case QTabletEvent::RotationStylus:
-        m_device = "RotationStylus";
-        break;
+    case QInputDevice::DeviceType::Unknown:
+        [[fallthrough]];
     default:
         m_device = "Unknown";
+        break;
     }
 
     switch (event->pointerType()) {
-    case QTabletEvent::Pen:
+    case QPointingDevice::PointerType::Pen:
         m_type = "Pen";
         break;
-    case QTabletEvent::Cursor:
+    case QPointingDevice::PointerType::Cursor:
         m_type = "Cursor";
         break;
-    case QTabletEvent::Eraser:
+    case QPointingDevice::PointerType::Eraser:
         if (event->buttons() & Qt::ExtraButton24)
             m_type = "Palm Eraser";
         else
             m_type = "Pen Eraser";
         break;
-    case QTabletEvent::UnknownPointer:
+    case QPointingDevice::PointerType::Unknown:
+        [[fallthrough]];
     default:
         m_type = "Unknown";
         break;
     }
+#else
+    switch (event->device()) {
+        case QTabletEvent::NoDevice:
+            m_device = "NoDevice";
+            break;
+        case QTabletEvent::Puck:
+            m_device = "Puck";
+            break;
+        case QTabletEvent::Stylus:
+            m_device = "Stylus";
+            break;
+        case QTabletEvent::Airbrush:
+            m_device = "Airbrush";
+            break;
+        case QTabletEvent::FourDMouse:
+            m_device = "FourDMouse";
+            break;
+        case QTabletEvent::XFreeEraser:
+            m_device = "XFreeEraser";
+            break;
+        case QTabletEvent::RotationStylus:
+            m_device = "RotationStylus";
+            break;
+        default:
+            m_device = "Unknown";
+    }
+
+    switch (event->pointerType()) {
+        case QTabletEvent::Pen:
+            m_type = "Pen";
+            break;
+        case QTabletEvent::Cursor:
+            m_type = "Cursor";
+            break;
+        case QTabletEvent::Eraser:
+            if (event->buttons() & Qt::ExtraButton24)
+                m_type = "Palm Eraser";
+            else
+                m_type = "Pen Eraser";
+            break;
+        case QTabletEvent::UnknownPointer:
+        default:
+            m_type = "Unknown";
+            break;
+    }
+#endif
 }
