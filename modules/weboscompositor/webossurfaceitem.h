@@ -71,6 +71,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandQuickItem
     Q_PROPERTY(QString backgroundImageFilePath READ backgroundImageFilePath WRITE setBackgroundImageFilePath NOTIFY backgroundImageFilePathChanged)
     Q_PROPERTY(QString backgroundColor READ backgroundColor WRITE setBackgroundColor)
     Q_PROPERTY(QString processId READ processId NOTIFY processIdChanged)
+    Q_PROPERTY(QString userId READ userId NOTIFY userIdChanged)
     Q_PROPERTY(qint32 lastFullscreenTick READ lastFullscreenTick NOTIFY lastFullscreenTickChanged)
     Q_PROPERTY(WebOSGroupedWindowModel* groupedWindowModel READ groupedWindowModel WRITE setGroupedWindowModel NOTIFY groupedWindowModelChanged)
     Q_PROPERTY(LocationHints locationHint READ locationHint NOTIFY locationHintChanged)
@@ -317,18 +318,12 @@ public:
     /*!
      * Convenience function to return the processId for this surface.
      */
-    QString processId() {
-        pid_t pid;
+    QString processId() const { return m_processId; }
 
-        // Look more info here: https://doc.qt.io/qt-5/qwaylandclient.html
-        struct wl_client *client = surface() && surface()->client() ? surface()->client()->client() : NULL;
-        if (client)
-            wl_client_get_credentials(client, &pid, 0,0);
-        else
-            pid = getpid();
-        m_processId = QStringLiteral("%1").arg(pid);
-        return m_processId;
-    }
+    /*!
+     * Convenience function to return the userId for this surface.
+     */
+    QString userId() const { return m_userId; }
 
     /*!
      * Convenience function to return the time since the last fullscreen mode for this surface.
@@ -498,6 +493,7 @@ signals:
     void paramsChanged();
 
     void processIdChanged();
+    void userIdChanged();
     void lastFullscreenTickChanged();
     void hasKeyboardFocusChanged();
     void grabKeyboardFocusOnClickChanged();
@@ -594,6 +590,7 @@ private:
     bool m_launchLastApp;
 
     QString m_processId;
+    QString m_userId;
     bool m_exposed;
     bool m_launchRequired;
     bool m_hasKeyboardFocus;

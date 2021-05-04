@@ -70,6 +70,7 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
         , m_subtitle("")
         , m_params("")
         , m_processId()
+        , m_userId()
         , m_exposed(false)
         , m_launchRequired(false)
         , m_surfaceGroup(0)
@@ -1418,6 +1419,30 @@ void WebOSSurfaceItem::surfaceChangedEvent(QWaylandSurface *newSurface, QWayland
         qDebug() << "Change m_surfaceGrabbed" << m_surfaceGrabbed << "to newSurface" << newSurface;
         QWaylandSurfacePrivate::get(m_surfaceGrabbed)->deref();
         m_surfaceGrabbed = newSurface;
+    }
+
+    pid_t pid;
+    uid_t uid;
+
+    // Look more info here: https://doc.qt.io/qt-5/qwaylandclient.html
+    struct wl_client *client = surface() && surface()->client() ? surface()->client()->client() : nullptr;
+    if (client) {
+        wl_client_get_credentials(client, &pid, &uid, 0);
+    } else {
+        pid = getpid();
+        uid = getuid();
+    }
+
+    QString processId = QStringLiteral("%1").arg(pid);
+    if (m_processId != processId) {
+        m_processId = processId;
+        emit processIdChanged();
+    }
+
+    QString userId = QStringLiteral("%1").arg(uid);
+    if (m_userId != userId) {
+        m_userId = userId;
+        emit userIdChanged();
     }
 
     QWaylandQuickItem::surfaceChangedEvent(newSurface, oldSurface);
