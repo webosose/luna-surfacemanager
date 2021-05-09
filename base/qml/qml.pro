@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2018 LG Electronics, Inc.
+# Copyright (c) 2017-2021 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,16 +27,16 @@ use_qresources {
     # Make a qrc file for WebOSCompositorBase
     basedir = $$PWD/WebOSCompositorBase
     baseqrc = $$basedir/WebOSCompositorBase.qrc
-    system(./makeqrc.sh -prefix WebOSCompositorBase $$basedir $$baseqrc)
+    !system(./makeqrc.sh -prefix WebOSCompositorBase $$basedir $$baseqrc): error("Error on running makeqrc.sh")
 
     # Default qrc
     defaultdir = $$PWD/WebOSCompositorBase/imports/WebOSCompositor
     defaultqrc = $$defaultdir/WebOSCompositorDefault.qrc
-    system(./makeqrc.sh -prefix WebOSCompositor $$defaultdir $$defaultqrc)
+    !system(./makeqrc.sh -prefix WebOSCompositor $$defaultdir $$defaultqrc): error("Error on running makeqrc.sh")
 
     # Install a binary rcc created from qrc files
     basercc = $$PWD/WebOSCompositorBase.rcc
-    system(rcc -binary $$baseqrc $$defaultqrc -o $$basercc)
+    !system(rcc -binary $$baseqrc $$defaultqrc -o $$basercc): error("Error on running rcc")
     system(rm -f $$baseqrc $$defaultqrc)
     QMAKE_CLEAN += $$basercc
 
