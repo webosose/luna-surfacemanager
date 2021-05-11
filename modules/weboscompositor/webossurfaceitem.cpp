@@ -1330,7 +1330,7 @@ void WebOSSurfaceItem::setCursorSurface(QWaylandSurface *surface, int hotSpotX, 
 void WebOSSurfaceItem::updateCursor()
 {
     m_cursorView.advance();
-    QImage image = m_cursorView.currentBuffer().image();
+    QImage image = m_cursorView.currentBuffer().image().copy();
     if (!image.isNull()) {
         if (m_cursorHotSpotX >= 0 && m_cursorHotSpotX <= image.size().width() &&
             m_cursorHotSpotY >= 0 && m_cursorHotSpotY <= image.height()) {
