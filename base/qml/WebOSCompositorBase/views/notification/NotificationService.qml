@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2018 LG Electronics, Inc.
+// Copyright (c) 2016-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -185,7 +185,7 @@ Item {
             callService({ serviceName: "com.webos.notification", subscribe: true });
         }
 
-        onResponse: {
+        onResponse: (method, payload, token) => {
             var response = JSON.parse(payload);
             root.connected = response.connected;
 
@@ -235,7 +235,7 @@ Item {
             }
         }
 
-        onResponse: {
+        onResponse: (method, payload, token) => {
             var receivedObj = JSON.parse(payload);
 
             if (!receivedObj)

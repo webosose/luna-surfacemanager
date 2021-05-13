@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 LG Electronics, Inc.
+// Copyright (c) 2017-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ Rectangle {
     anchors.rightMargin: Settings.local.notification.closeButton.margins
     smooth: true
 
-    Keys.onPressed: {
+    Keys.onPressed: (event) => {
         if (!event.isAutoRepeat) {
             if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
                 keyPressed = true;
@@ -45,7 +45,7 @@ Rectangle {
         }
     }
 
-    Keys.onReleased: {
+    Keys.onReleased: (event) => {
         if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && keyPressed) {
             keyPressed = false;
             root.clicked();
@@ -82,7 +82,7 @@ Rectangle {
         propagateComposedEvents: true
         enabled: root.enabled
         hoverEnabled: enabled
-        onClicked: root.clicked();
+        onClicked: (mouse) => { root.clicked(); }
         onHighlightChanged: {
             if (highlight)
                 root.focus = true;

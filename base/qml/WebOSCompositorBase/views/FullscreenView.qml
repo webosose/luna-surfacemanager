@@ -25,7 +25,7 @@ SurfaceView {
     positioning: true
     consumeMouseEvents: true
 
-    onSurfaceAdded: {
+    onSurfaceAdded: (item) => {
         if (root.access) {
             var oldItem = currentItem || null;
             currentItem = item;
@@ -41,7 +41,7 @@ SurfaceView {
         }
     }
 
-    onSurfaceRemoved: {
+    onSurfaceRemoved: (item) => {
         if (currentItem == item)
             currentItem = null;
         if (!currentItem) {

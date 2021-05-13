@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2020 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ SurfaceView {
     positioning: true
     consumeMouseEvents: true
 
-    onSurfaceAdded: {
+    onSurfaceAdded: (item) => {
         if (root.access) {
             // Close currentItem if exists
             if (currentItem !== null)
@@ -41,7 +41,7 @@ SurfaceView {
         }
     }
 
-    onSurfaceRemoved: {
+    onSurfaceRemoved: (item) => {
         if (currentItem == item)
             currentItem = null;
         if (!currentItem) {

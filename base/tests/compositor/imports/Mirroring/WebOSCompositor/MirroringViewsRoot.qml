@@ -73,7 +73,7 @@ FocusScope {
 
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: {
+                        onClicked: (mouse) => {
                             if (mirrorButton.activeMirroring) {
                                 mirrorButton.activeMirroring = false;
 
@@ -151,7 +151,7 @@ FocusScope {
 
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: mirror.expanded = mirror.expanded ? false : true;
+                        onClicked: (mouse) => { mirror.expanded = mirror.expanded ? false : true; }
                     }
                 }
 

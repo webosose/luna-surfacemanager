@@ -30,11 +30,11 @@ WebOSWindow {
 
         MouseArea {
             anchors.fill: parent
-            onClicked: doTest();
+            onClicked: (mouse) => { doTest(); }
         }
 
         Component.onCompleted: forceActiveFocus();
-        Keys.onRightPressed: doTest();
+        Keys.onRightPressed: (event) => { doTest(); }
     }
 
     Text {
@@ -83,7 +83,7 @@ WebOSWindow {
 
     property Service myService: Service {
         appId: root.appId
-        onResponse: {
+        onResponse: (method, payload, token) => {
             if (method == "/signal/registerServerStatus")
                 result1.text = "1) registerServerStatus for com.webos.surfacemanager: Received";
             else if (method == "/closeByAppId")

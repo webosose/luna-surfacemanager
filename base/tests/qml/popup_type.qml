@@ -23,7 +23,7 @@ WebOSWindow {
             font.pixelSize: 32
             color: "red"
             Component.onCompleted: forceActiveFocus();
-            Keys.onPressed: {
+            Keys.onPressed: (event) => {
                 text = root.title + "\nKEY: " + event.key;
             }
         }
@@ -59,14 +59,14 @@ WebOSWindow {
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
-        onPositionChanged: {
+        onPositionChanged: (mouse) => {
              pointerCursor.x = mouse.x - pointerCursor.width/2;
              pointerCursor.y = mouse.y - pointerCursor.height/2;
         }
         onEntered: pointerCursor.color = "steelblue";
         onExited: pointerCursor.color = "gray";
-        onPressed: pointerCursor.color = "blue";
-        onReleased: pointerCursor.color = "steelblue";
+        onPressed: (mouse) => { pointerCursor.color = "blue"; }
+        onReleased: (mouse) => { pointerCursor.color = "steelblue"; }
     }
 
     MultiPointTouchArea {

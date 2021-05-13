@@ -86,7 +86,7 @@ Item {
                 color: root.color
                 elide: Text.ElideRight
 
-                onContentWidthChanged:{
+                onContentWidthChanged: {
                     if (truncated)
                         truncatedWidth = _text.contentWidth;
                 }

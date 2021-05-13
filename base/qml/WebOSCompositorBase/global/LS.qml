@@ -61,7 +61,7 @@ QtObject {
             }
         }
 
-        onResponse: {
+        onResponse: (method, payload, token) => {
             console.log("LS.sessionManager: response:", payload, "method:", method, "token:", token);
             var response = JSON.parse(payload);
             switch (token) {

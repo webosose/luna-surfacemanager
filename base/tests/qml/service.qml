@@ -56,7 +56,7 @@ WebOSWindow {
 
     property Service serviceInHost: Service {
         appId: root.appId
-        onResponse: {
+        onResponse: (method, payload, token) => {
             if (method == "/signal/registerServerStatus")
                 result1.text = "1) registerServerStatus for com.webos.service.config:" + payload;
             else
@@ -67,7 +67,7 @@ WebOSWindow {
     property Service serviceInSession: Service {
         appId: root.appId
         sessionId: params['sessionId']
-        onResponse: {
+        onResponse: (method, payload, token) => {
             if (method == "/signal/registerServerStatus")
                 result3.text = "3) registerServerStatus for com.webos.settingsservice:" + payload;
             else

@@ -20,7 +20,7 @@ WebOSWindow {
         font.pixelSize: 32
 
         Component.onCompleted: forceActiveFocus();
-        Keys.onPressed: {
+        Keys.onPressed: (event) => {
             text = root.title + "\nKEY: " + event.key;
         }
         onActiveFocusChanged: {
@@ -43,13 +43,13 @@ WebOSWindow {
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
-        onPositionChanged: {
+        onPositionChanged: (mouse) => {
              cursor.x = mouse.x - cursor.width/2;
              cursor.y = mouse.y - cursor.height/2;
         }
         onEntered: cursor.color = "blue";
         onExited: cursor.color = "gray";
-        onPressed: cursor.color = "red";
-        onReleased: cursor.color = "blue";
+        onPressed: (mouse) => { cursor.color = "red"; }
+        onReleased: (mouse) => { cursor.color = "blue"; }
     }
 }

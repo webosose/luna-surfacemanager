@@ -24,7 +24,7 @@ WebOSWindow {
         onActiveFocusChanged: {
             color = activeFocus ? "red" : "black";
         }
-        Keys.onPressed: {
+        Keys.onPressed: (event) => {
             text = text0.title + "\nKEY: " + event.key;
             cursor1.color = "red";
             switch (event.key) {
@@ -51,14 +51,14 @@ WebOSWindow {
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
-        onPositionChanged: {
+        onPositionChanged: (mouse) => {
              cursor1.x = mouse.x - cursor1.width/2;
              cursor1.y = mouse.y - cursor1.height/2;
         }
         onEntered: cursor1.color = "blue";
         onExited: cursor1.color = "gray";
-        onPressed: cursor1.color = "red";
-        onReleased: cursor1.color = "blue";
+        onPressed: (mouse) => { cursor1.color = "red"; }
+        onReleased: (mouse) => { cursor1.color = "blue"; }
     }
 
     MultiPointTouchArea {

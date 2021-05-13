@@ -38,8 +38,8 @@ WebOSWindow {
 
             MouseArea {
                 anchors.fill: parent
-                onClicked: {
-                    root.addon = Qt.resolvedUrl(parent.url)
+                onClicked: (mouse) => {
+                    root.addon = Qt.resolvedUrl(parent.url);
                 }
             }
         }
@@ -60,8 +60,8 @@ WebOSWindow {
 
             MouseArea {
                 anchors.fill: parent
-                onClicked: {
-                    root.addon = "file:///tmp/" + parent.url
+                onClicked: (mouse) => {
+                    root.addon = "file:///tmp/" + parent.url;
                 }
             }
         }
@@ -82,8 +82,8 @@ WebOSWindow {
 
             MouseArea {
                 anchors.fill: parent
-                onClicked: {
-                    root.addon = Qt.resolvedUrl(parent.url)
+                onClicked: (mouse) => {
+                    root.addon = Qt.resolvedUrl(parent.url);
                 }
             }
         }
@@ -102,7 +102,7 @@ WebOSWindow {
 
             MouseArea {
                 anchors.fill: parent
-                onClicked: {
+                onClicked: (mouse) => {
                     root.resetAddon();
                 }
             }

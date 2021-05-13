@@ -32,7 +32,7 @@ WebOSWindow {
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
-        onClicked: {
+        onClicked: (mouse) => {
             switch (rootWebOSWindow.locationHint) {
                 case WebOSWindow.LocationHintCenter: appDetails.text = "LocationHintEast"; rootWebOSWindow.locationHint = WebOSWindow.LocationHintEast; break;
                 case WebOSWindow.LocationHintEast: appDetails.text = "LocationHintWest"; rootWebOSWindow.locationHint =  WebOSWindow.LocationHintWest; break;

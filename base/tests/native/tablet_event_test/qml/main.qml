@@ -160,17 +160,17 @@ WebOSWindow {
 
         MouseArea {
             anchors.fill: parent
-            onClicked: {
+            onClicked: (mouse) => {
                 parent.count += 1;
                 mouseAreaClickStatus.text = 'clicked ' + parent.count + ' times';
             }
-            onPressed: {
+            onPressed: (mouse) => {
                 mouseAreaStatus.text = 'pressed';
             }
-            onReleased: {
+            onReleased: (mouse) => {
                 mouseAreaStatus.text = 'released';
             }
-            onPressAndHold: {
+            onPressAndHold: (mouse) => {
                 mouseAreaStatus.text = 'pressAndHold';
                 mouseAreaClickStatus.text = '';
             }
@@ -221,14 +221,14 @@ WebOSWindow {
 
         MultiPointTouchArea {
             anchors.fill: parent
-            onTouchUpdated: {
+            onTouchUpdated: (touchPoints) => {
                 parent.count += 1;
                 touchUpdateStatus.text = 'touchUpdated ' + parent.count + ' times';
             }
-            onPressed: {
+            onPressed: (touchPoints) => {
                 touchStatus.text = 'pressed';
             }
-            onReleased: {
+            onReleased: (touchPoints) => {
                 touchStatus.text = 'released';
             }
         }

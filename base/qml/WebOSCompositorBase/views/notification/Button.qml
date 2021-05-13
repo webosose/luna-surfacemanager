@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ FocusScope {
         cursorVisible: notificationRoot.cursorVisible
         anchors.fill: background
         hoverEnabled: true
-        onClicked: root.clicked();
+        onClicked: (mouse) => { root.clicked(); }
         onHighlightChanged: {
             if (highlight)
                 root.focus = true;
@@ -70,7 +70,7 @@ FocusScope {
         }
     }
 
-    Keys.onPressed: {
+    Keys.onPressed: (event) => {
         if (!event.isAutoRepeat) {
             if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
                 root.keyPressed = true;
@@ -79,7 +79,7 @@ FocusScope {
         }
     }
 
-    Keys.onReleased: {
+    Keys.onReleased: (event) => {
         if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && root.keyPressed) {
             root.keyPressed = false;
             root.clicked();

@@ -154,7 +154,7 @@ FocusableView {
         hoverEnabled: enabled
         visible: enabled
         acceptedButtons: Qt.AllButtons
-        onWheel: {}
+        onWheel: (wheel) => {}
     }
 
     onFocused: {

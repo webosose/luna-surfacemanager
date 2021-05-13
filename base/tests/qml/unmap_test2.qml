@@ -19,7 +19,7 @@ WebOSWindow {
 
     MouseArea {
         anchors.fill: parent
-        onClicked: {
+        onClicked: (mouse) => {
             root.visible = false;
             timer.restart();
         }

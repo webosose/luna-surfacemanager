@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2020 LG Electronics, Inc.
+// Copyright (c) 2017-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -202,11 +202,11 @@ SettingsService {
         __listenServerStatus();
     }
 
-    onL10nLoadSucceeded:    console.info("Localization: Loaded", file);
-    onL10nInstallSucceeded: console.info("Localization: Installed", file);
-    onL10nLoadFailed:       console.warn("Localization: Failed to load", file);
-    onL10nInstallFailed:    console.warn("Localization: Failed to install", file);
-    onError:                console.warn("Localization: An error occurred,", errorText);
+    onL10nLoadSucceeded: (file) => { console.info("Localization: Loaded", file); }
+    onL10nInstallSucceeded: (file) => { console.info("Localization: Installed", file); }
+    onL10nLoadFailed: (file) => { console.warn("Localization: Failed to load", file); }
+    onL10nInstallFailed: (file) => { console.warn("Localization: Failed to install", file); }
+    onError: (errorCode, errorText, token) => { console.warn("Localization: An error occurred,", errorText); }
 
     onCurrentLocaleChanged: {
         if (currentLocale && currentLocale !== "")
@@ -221,7 +221,7 @@ SettingsService {
         console.info("Localization: UI Locale changed. locale: " + l10n.locale + "(" + currentLocale + "), isRTL: " + l10n.isRTL);
     }
 
-    onResponse: {
+    onResponse: (method, payload, token) => {
         if (__statusTokens.indexOf(token) != -1) {
             // Response for registerServerStatus
             var response = JSON.parse(payload);
@@ -258,7 +258,7 @@ SettingsService {
         }
     }
 
-    onCancelled: {
+    onCancelled: (token) => {
         if (token == 0) {
             console.warn("All LS2 calls have been cancelled for some reason. Re-listen to server status for all");
             __listenServerStatus();

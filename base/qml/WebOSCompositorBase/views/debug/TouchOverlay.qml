@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 LG Electronics, Inc.
+// Copyright (c) 2014-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ MultiPointTouchArea {
     anchors.fill: parent
     mouseEnabled: false
 
-    onPressed: {
+    onPressed: (touchPoints) => {
         console.log("PRESSED :" + JSON.stringify(touchPoints.map(function (val) {
                     return val.pointId;
                 })
@@ -38,7 +38,7 @@ MultiPointTouchArea {
         canvas.requestPaint();
     }
 
-    onUpdated: {
+    onUpdated: (touchPoints) => {
         console.log("UPDATED :" + JSON.stringify(touchPoints.map(function (val) {
                     return val.pointId;
                 })
@@ -55,7 +55,7 @@ MultiPointTouchArea {
         canvas.requestPaint();
     }
 
-    onReleased: {
+    onReleased: (touchPoints) => {
         console.log("RELEASED :" + JSON.stringify(touchPoints.map(function (val) {
                     return val.pointId;
                 })
@@ -77,7 +77,7 @@ MultiPointTouchArea {
         property real touchSize: 30.0
         property real cleanDelta: 5.0
 
-        onPaint: {
+        onPaint: (region) => {
             var ctx = getContext("2d");
             clearPoints(ctx, pointsToClear);
             drawPoints(ctx, pointsToDraw);

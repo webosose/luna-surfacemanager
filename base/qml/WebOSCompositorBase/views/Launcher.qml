@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2020 LG Electronics, Inc.
+// Copyright (c) 2017-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ FocusableView {
         enabled: root.isOpen
         visible: enabled
         hoverEnabled: enabled
-        onClicked: {
+        onClicked: (mouse) => {
             if (mouse.button == Qt.LeftButton)
                 root.closeView();
         }
@@ -93,7 +93,7 @@ FocusableView {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorVisible: compositorWindow.cursorVisible
-                        onClicked: parent.clicked();
+                        onClicked: (mouse) => { parent.clicked(); }
                         onEntered: {
                             listArea.currentIndex = index;
                             listArea.currentItem.focus = true;

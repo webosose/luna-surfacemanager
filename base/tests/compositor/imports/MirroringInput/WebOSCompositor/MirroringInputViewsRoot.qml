@@ -70,7 +70,7 @@ Item {
 
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: {
+                    onClicked: (mouse) => {
                         if (!mirror.sourceItem && !fullscreenViewId.currentItem) {
                             console.info("Failed to get currentItem");
                             return;
@@ -111,7 +111,7 @@ Item {
 
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: {
+                    onClicked: (mouse) => {
                         if (!mirror.sourceItem && !fullscreenViewId.currentItem) {
                             console.info("Failed to get currentItem");
                             return;

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 LG Electronics, Inc.
+// Copyright (c) 2019-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,11 +39,11 @@ MouseArea {
 
     signal triggered
 
-    onPressed: {
+    onPressed: (mouse) => {
         root.active = true;
     }
 
-    onReleased: {
+    onReleased: (mouse) => {
         root.active = false;
         root.hp = !vertical && reverse ? width : 0;
         root.vp = vertical && reverse ? height : 0;
@@ -51,7 +51,7 @@ MouseArea {
         root.oldVp = root.vp;
     }
 
-    onPositionChanged: {
+    onPositionChanged: (mouse) => {
         if (root.active) {
             hp = mouse.x;
             vp = mouse.y;

@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 LG Electronics, Inc.
+// Copyright (c) 2014-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -54,14 +54,14 @@ Rectangle {
             id: dragArea
             anchors.fill: parent
             drag.target: root
-            onClicked: {
+            onClicked: (mouse) => {
                 if (statusbarHeight)
                     if (root.height <= 20)
                         root.height = 400;
                     else
                         root.height = 20;
             }
-            onPressed: root.selected(dragArea);
+            onPressed: (mouse) => { root.selected(dragArea); }
         }
     }
 
@@ -77,7 +77,7 @@ Rectangle {
 
         MouseArea {
             anchors.fill: parent
-            onPressed: root.selected(view);
+            onPressed: (mouse) => { root.selected(view); }
         }
     }
 
@@ -95,7 +95,7 @@ Rectangle {
 
         MouseArea {
             anchors.fill: parent
-            onPressed: root.selected(statusbar);
+            onPressed: (mouse) => { root.selected(statusbar); }
         }
     }
 
@@ -111,13 +111,13 @@ Rectangle {
             id: resizeArea
             anchors.fill: resizeHandle
             drag.target: resizeHandle
-            onPositionChanged: {
+            onPositionChanged: (mouse) => {
                 if (drag.active) {
                     root.width = Math.max(100, resizeHandle.x + resizeHandle.width);
                     root.height = Math.max(20, resizeHandle.y + resizeHandle.height);
                 }
             }
-            onPressed: root.selected(resizeHandle);
+            onPressed: (mouse) => { root.selected(resizeHandle); }
         }
     }
 

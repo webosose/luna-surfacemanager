@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -280,7 +280,7 @@ FocusScope {
         return title;
     }
 
-    Keys.onReleased: {
+    Keys.onReleased: (event) => {
         switch(event.key) {
         case Qt.Key_0:
             numpadClicked("0");

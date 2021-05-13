@@ -17,7 +17,7 @@ WebOSWindow {
 
         MouseArea {
             anchors.fill: parent
-            onClicked: border.focus = true;
+            onClicked: (mouse) => { border.focus = true; }
         }
 
         Rectangle {

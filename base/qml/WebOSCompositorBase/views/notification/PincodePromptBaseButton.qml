@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2018 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,17 +35,17 @@ Item {
         cursorVisible: notificationRoot.cursorVisible
         anchors.fill: parent
         hoverEnabled: root.enabled
-        onClicked: {
+        onClicked: (mouse) => {
             if (root.enabled)
                 root.clicked(root.text);
         }
-        onPressed: {
+        onPressed: (mouse) => {
             if (root.enabled) {
                 root.focus = false;
                 root.pressed = true;
             }
         }
-        onReleased: {
+        onReleased: (mouse) => {
             if (root.enabled) {
                 root.focus = true;
                 root.pressed = false;
@@ -59,7 +59,7 @@ Item {
         }
     }
 
-    Keys.onPressed: {
+    Keys.onPressed: (event) => {
         if (!root.enabled || event.isAutoRepeat)
             return;
 
@@ -69,7 +69,7 @@ Item {
             root.keyPressed = false;
     }
 
-    Keys.onReleased: {
+    Keys.onReleased: (event) => {
         if (!root.enabled) return;
 
         if (root.keyPressed && event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {

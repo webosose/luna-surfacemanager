@@ -16,11 +16,11 @@ WebOSWindow {
 
         MouseArea {
             anchors.fill: parent
-            onClicked: {
+            onClicked: (mouse) => {
                 if (Qt.colorEqual(rect.color, "red"))
-                    rect.color = "green"
+                    rect.color = "green";
                 else
-                    rect.color = "red"
+                    rect.color = "red";
             }
         }
 
@@ -40,7 +40,7 @@ WebOSWindow {
             font.pixelSize: 50
             text: "KEY:"
             Component.onCompleted: forceActiveFocus();
-            Keys.onPressed: {
+            Keys.onPressed: (event) => {
                 text = "KEY: " + event.key;
             }
         }
