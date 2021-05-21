@@ -47,6 +47,7 @@
 #include <QtWaylandCompositor/private/qwaylandpointer_p.h>
 #include <QtWaylandCompositor/private/qwaylandsurface_p.h>
 #include <QtWaylandCompositor/qwaylandbufferref.h>
+#include <QtWaylandCompositor/private/qwaylandquickhardwarelayer_p.h>
 
 #include "weboscompositortracer.h"
 #include "weboskeyboard.h"
@@ -1556,16 +1557,23 @@ void WebOSSurfaceItem::setDirectUpdateOnPlane(bool enable)
     if (m_directUpdateOnPlane != enable) {
         m_directUpdateOnPlane = enable;
 
-        if (!m_directUpdateOnPlane) {
-            QWaylandBufferRef ref = view()->currentBuffer();
-            // The negative plane to clear overlay plane
-            ref.directUpdate(this, -1);
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        qInfo() << m_directUpdateOnPlane << this;
+        if (m_directUpdateOnPlane) {
+            m_hardwarelayer = new QWaylandQuickHardwareLayer(this);
+            m_hardwarelayer->setStackingLevel(planeZpos());
+            m_hardwarelayer->initialize();
+        } else {
+            delete m_hardwarelayer;
+            m_hardwarelayer = nullptr;
         }
-
+#endif
         emit directUpdateOnPlaneChanged();
     }
 }
 
+
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
 QSGNode *WebOSSurfaceItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data)
 {
     QWaylandBufferRef ref = view()->currentBuffer();
@@ -1580,3 +1588,4 @@ QSGNode *WebOSSurfaceItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData
 
     return QWaylandQuickItem::updatePaintNode(oldNode, data);
 }
+#endif

@@ -41,6 +41,7 @@ class WebOSExported;
 class WebOSImported;
 class WebOSSurfaceItem;
 class WebOSSurfaceGroup;
+class QWaylandQuickHardwareLayer;
 
 /*!
  * \brief Provides a webOS specific surface item for the qml compositor
@@ -476,7 +477,9 @@ public:
         return (!surface || surface->views().isEmpty()) ? nullptr : qobject_cast<WebOSSurfaceItem*>(surface->views().first()->renderObject());
     }
 
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data) override;
+#endif
 
 public slots:
     void updateScreenPosition();
@@ -630,6 +633,7 @@ private:
 
     QWaylandSurface *m_surfaceGrabbed = nullptr;
     bool m_directUpdateOnPlane = false;
+    QWaylandQuickHardwareLayer *m_hardwarelayer = nullptr;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(WebOSSurfaceItem::WindowClass)

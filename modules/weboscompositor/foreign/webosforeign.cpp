@@ -1020,9 +1020,10 @@ void WebOSImported::webos_imported_attach_surface(
     m_childSurfaceItem = WebOSSurfaceItem::getSurfaceItemFromSurface(qwlSurface);
     connect(m_childSurfaceItem->surface(), &QWaylandSurface::surfaceDestroyed, this, &WebOSImported::childSurfaceDestroyed);
     m_childSurfaceItem->setImported(true);
+    m_exported->setParentOf(m_childSurfaceItem);
+    // Applying direct update after the child surface item belongs to a window
     m_childSurfaceItem->setDirectUpdateOnPlane(m_exported->surfaceItem()->directUpdateOnPlane());
     connect(m_exported->surfaceItem(), &WebOSSurfaceItem::directUpdateOnPlaneChanged, m_childSurfaceItem, &WebOSSurfaceItem::updateDirectUpdateOnPlane);
-    m_exported->setParentOf(m_childSurfaceItem);
     m_childSurfaceItem->setZ(m_exported->m_exportedItem->z()+m_z_index);
     updateGeometry();  //Resize texture if needed.
     if (m_importedType == WebOSForeign::WebOSExportedType::VideoObject)
