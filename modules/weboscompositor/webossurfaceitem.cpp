@@ -268,6 +268,11 @@ bool WebOSSurfaceItem::event(QEvent* ev)
 
 bool WebOSSurfaceItem::tabletEvent(QTabletEvent* event)
 {
+    if (!surface()) {
+        qWarning() << "Ignoring tabletEvent sent to surface item that has no surface" << this;
+        return false;
+    }
+
     if (m_compositor->tabletDevice())
         return m_compositor->tabletDevice()->postTabletEvent(event, surface()->primaryView());
 
@@ -288,6 +293,16 @@ void WebOSSurfaceItem::hoverMoveEvent(QHoverEvent *event)
 
 void WebOSSurfaceItem::mouseMoveEvent(QMouseEvent * event)
 {
+    if (!window()) {
+        qWarning() << "Ignoring mouseMoveEvent sent to surface item that has no window" << this;
+        return;
+    }
+
+    if (!surface()) {
+        qWarning() << "Ignoring mouseMoveEvent sent to surface item that has no surface" << this;
+        return;
+    }
+
     // Make sure client to receive the latest position before the mouse event
     updateScreenPosition();
 
@@ -301,80 +316,106 @@ void WebOSSurfaceItem::mouseMoveEvent(QMouseEvent * event)
 
 void WebOSSurfaceItem::mousePressEvent(QMouseEvent *event)
 {
-    if (surface()) {
-        WebOSMouseEvent e(event->type(), event->localPos().toPoint(),
-                      event->button(), event->buttons(), event->modifiers(), window());
-
-        WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
-#ifdef MULTIINPUT_SUPPORT
-        QWaylandSeat *inputDevice = getInputDevice(&e);
-        QWaylandSeat *keyboardDevice = inputDevice;
-#else
-        QWaylandSeat *inputDevice = w->inputDevice();
-        QWaylandSeat *keyboardDevice = getInputDevice();
-#endif
-        if (inputDevice && keyboardDevice) {
-            if (inputDevice->mouseFocus() != view())
-                inputDevice->setMouseFocus(view());
-
-            if (inputDevice->mouseFocus()
-                    && inputDevice->mouseFocus()->surface() != keyboardDevice->keyboardFocus()
-                    && m_grabKeyboardFocusOnClick) {
-                takeWlKeyboardFocus();
-                m_hasKeyboardFocus = true;
-                emit hasKeyboardFocusChanged();
-            }
-
-            if (!w->accessible()) {
-                // Send extra mouse move event as otherwise the client
-                // will handle the button event in the incorrect coordinate
-                // in case the surface size is changed.
-                mouseMoveEvent(&e);
-                inputDevice->sendMousePressEvent(e.button());
-            } else {
-                // In accessibility mode there should be no extra mouse move event sent.
-                inputDevice->setMouseFocus(view());
-                inputDevice->sendMousePressEvent(e.button());
-            }
-        } else {
-            qWarning() << "no input device for this event";
-        }
+    if (!window()) {
+        qWarning() << "Ignoring mousePressEvent sent to surface item that has no window" << this;
+        return;
     }
-}
 
-void WebOSSurfaceItem::mouseReleaseEvent(QMouseEvent *event)
-{
-    if (surface()) {
-        WebOSMouseEvent e(event->type(), event->localPos().toPoint(),
-                      event->button(), event->buttons(), event->modifiers(), window());
+    if (!surface()) {
+        qWarning() << "Ignoring mousePressEvent sent to surface item that has no surface" << this;
+        return;
+    }
 
-        WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
+    WebOSMouseEvent e(event->type(), event->localPos().toPoint(),
+                  event->button(), event->buttons(), event->modifiers(), window());
+
+    WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
 #ifdef MULTIINPUT_SUPPORT
-        QWaylandSeat *inputDevice = getInputDevice(&e);
+    QWaylandSeat *inputDevice = getInputDevice(&e);
+    QWaylandSeat *keyboardDevice = inputDevice;
 #else
-        QWaylandSeat *inputDevice = w->inputDevice();
+    QWaylandSeat *inputDevice = w->inputDevice();
+    QWaylandSeat *keyboardDevice = getInputDevice();
 #endif
+    if (inputDevice && keyboardDevice) {
+        if (inputDevice->mouseFocus() != view())
+            inputDevice->setMouseFocus(view());
+
+        if (inputDevice->mouseFocus()
+                && inputDevice->mouseFocus()->surface() != keyboardDevice->keyboardFocus()
+                && m_grabKeyboardFocusOnClick) {
+            takeWlKeyboardFocus();
+            m_hasKeyboardFocus = true;
+            emit hasKeyboardFocusChanged();
+        }
 
         if (!w->accessible()) {
             // Send extra mouse move event as otherwise the client
             // will handle the button event in the incorrect coordinate
             // in case the surface size is changed.
             mouseMoveEvent(&e);
-            QWaylandQuickItem::mouseReleaseEvent(&e);
+            inputDevice->sendMousePressEvent(e.button());
         } else {
             // In accessibility mode there should be no extra mouse move event sent.
-            if (inputDevice) {
-                inputDevice->setMouseFocus(view());
-                inputDevice->sendMouseReleaseEvent(e.button());
-            } else {
-                qWarning() << "no input device for this event";
-            }
+            inputDevice->setMouseFocus(view());
+            inputDevice->sendMousePressEvent(e.button());
+        }
+    } else {
+        qWarning() << "no input device for this event";
+    }
+}
+
+void WebOSSurfaceItem::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (!window()) {
+        qWarning() << "Ignoring mouseReleaseEvent sent to surface item that has no window" << this;
+        return;
+    }
+
+    if (!surface()) {
+        qWarning() << "Ignoring mouseReleaseEvent sent to surface item that has no surface" << this;
+        return;
+    }
+
+    WebOSMouseEvent e(event->type(), event->localPos().toPoint(),
+                  event->button(), event->buttons(), event->modifiers(), window());
+
+    WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
+#ifdef MULTIINPUT_SUPPORT
+    QWaylandSeat *inputDevice = getInputDevice(&e);
+#else
+    QWaylandSeat *inputDevice = w->inputDevice();
+#endif
+
+    if (!w->accessible()) {
+        // Send extra mouse move event as otherwise the client
+        // will handle the button event in the incorrect coordinate
+        // in case the surface size is changed.
+        mouseMoveEvent(&e);
+        QWaylandQuickItem::mouseReleaseEvent(&e);
+    } else {
+        // In accessibility mode there should be no extra mouse move event sent.
+        if (inputDevice) {
+            inputDevice->setMouseFocus(view());
+            inputDevice->sendMouseReleaseEvent(e.button());
+        } else {
+            qWarning() << "no input device for this event";
         }
     }
 }
 
 void WebOSSurfaceItem::wheelEvent(QWheelEvent *event)
 {
+    if (!window()) {
+        qWarning() << "Ignoring wheelEvent sent to surface item that has no window" << this;
+        return;
+    }
+
+    if (!surface()) {
+        qWarning() << "Ignoring wheelEvent sent to surface item that has no surface" << this;
+        return;
+    }
+
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
     WebOSWheelEvent e(event->position(), event->globalPosition(), event->pixelDelta(), event->angleDelta(),
             event->buttons(), event->modifiers(), event->phase(), window(),
@@ -385,31 +426,39 @@ void WebOSSurfaceItem::wheelEvent(QWheelEvent *event)
             event->buttons(), event->modifiers(), event->phase(), window());
 #endif
 
-    if (surface()) {
 #ifdef MULTIINPUT_SUPPORT
-        QWaylandSeat *inputDevice = getInputDevice(&e);
+    QWaylandSeat *inputDevice = getInputDevice(&e);
 #else
-        QWaylandSeat *inputDevice = static_cast<WebOSCompositorWindow *>(window())->inputDevice();
+    QWaylandSeat *inputDevice = static_cast<WebOSCompositorWindow *>(window())->inputDevice();
 #endif
-        if (inputDevice && inputDevice->mouseFocus() != view())
-            inputDevice->setMouseFocus(view());
+    if (inputDevice && inputDevice->mouseFocus() != view())
+        inputDevice->setMouseFocus(view());
 
-        // Send extra mouse move event as otherwise the client
-        // will handle the wheel event in the incorrect coordinate
-        // in case the surface size is changed.
+    // Send extra mouse move event as otherwise the client
+    // will handle the wheel event in the incorrect coordinate
+    // in case the surface size is changed.
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
-        QMouseEvent ee(QEvent::MouseMove, event->position(), Qt::NoButton, Qt::NoButton, event->modifiers());
+    QMouseEvent ee(QEvent::MouseMove, event->position(), Qt::NoButton, Qt::NoButton, event->modifiers());
 #else
-        QMouseEvent ee(QEvent::MouseMove, event->pos(), Qt::NoButton, Qt::NoButton, event->modifiers());
+    QMouseEvent ee(QEvent::MouseMove, event->pos(), Qt::NoButton, Qt::NoButton, event->modifiers());
 #endif
-        mouseMoveEvent(&ee);
-    }
+    mouseMoveEvent(&ee);
 
     QWaylandQuickItem::wheelEvent(&e);
 }
 
 void WebOSSurfaceItem::touchEvent(QTouchEvent *event)
 {
+    if (!window()) {
+        qWarning() << "Ignoring touchEvent sent to surface item that has no window" << this;
+        return;
+    }
+
+    if (!surface()) {
+        qWarning() << "Ignoring touchEvent sent to surface item that has no surface" << this;
+        return;
+    }
+
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
     QTouchEvent e(event->type(), event->pointingDevice(), event->modifiers(), event->touchPointStates(), mapToTarget(event->touchPoints()));
 #else
@@ -425,7 +474,7 @@ void WebOSSurfaceItem::touchEvent(QTouchEvent *event)
         e.setWindow(window());
 #endif
 
-    if (surface() && inputEventsEnabled() && touchEventsEnabled()) {
+    if (inputEventsEnabled() && touchEventsEnabled()) {
         WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
 
 #ifdef MULTIINPUT_SUPPORT
@@ -459,7 +508,17 @@ void WebOSSurfaceItem::touchEvent(QTouchEvent *event)
 
 void WebOSSurfaceItem::hoverEnterEvent(QHoverEvent *event)
 {
-    if (acceptHoverEvents() && surface()) {
+    if (!window()) {
+        qWarning() << "Ignoring hoverEnterEvent sent to surface item that has no window" << this;
+        return;
+    }
+
+    if (!surface()) {
+        qWarning() << "Ignoring hoverEnterEvent sent to surface item that has no surface" << this;
+        return;
+    }
+
+    if (acceptHoverEvents()) {
         WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
 #ifdef MULTIINPUT_SUPPORT
         QWaylandSeat *inputDevice = m_compositor->seatFor(event);
@@ -480,14 +539,23 @@ void WebOSSurfaceItem::hoverEnterEvent(QHoverEvent *event)
             qWarning() << "no input device for this event";
         }
     }
-    m_compositor->notifyPointerEnteredSurface(this->surface());
+    m_compositor->notifyPointerEnteredSurface(surface());
     QWaylandQuickItem::hoverEnterEvent(event);
 }
 
 void WebOSSurfaceItem::hoverLeaveEvent(QHoverEvent *event)
 {
+    if (!window()) {
+        qWarning() << "Ignoring hoverLeaveEvent sent to surface item that has no window" << this;
+        return;
+    }
 
-    if (acceptHoverEvents() && surface()) {
+    if (!surface()) {
+        qWarning() << "Ignoring hoverLeaveEvent sent to surface item that has no surface" << this;
+        return;
+    }
+
+    if (acceptHoverEvents()) {
 #ifdef MULTIINPUT_SUPPORT
         m_compositor->resetMouseFocus(surface());
 #else
@@ -498,7 +566,7 @@ void WebOSSurfaceItem::hoverLeaveEvent(QHoverEvent *event)
             qWarning() << "no input device for this event";
 #endif
     }
-    m_compositor->notifyPointerLeavedSurface(this->surface());
+    m_compositor->notifyPointerLeavedSurface(surface());
     QWaylandQuickItem::hoverLeaveEvent(event);
 }
 
@@ -543,8 +611,10 @@ void WebOSSurfaceItem::mouseUngrabEvent()
 
 void WebOSSurfaceItem::processKeyEvent(QKeyEvent *event)
 {
-    if (!surface())
+    if (!surface()) {
+        qWarning() << "Ignoring key event sent to surface item that has no surface" << this;
         return;
+    }
 
     QWaylandSeat *inputDevice = getInputDevice(event);
     if (!inputDevice) {
