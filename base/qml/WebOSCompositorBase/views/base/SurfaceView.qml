@@ -99,10 +99,12 @@ FocusableView {
                 console.log("Skipping swapAnimation for " + root);
                 root.handleSurfaceAdded();
             }
+            Utils.pmLog.info("NL_VSC", {"app_id": item.appId, "visible":true, "window_type":item.type});
         }
 
         function onSurfaceRemoved(item) {
             console.log("Removing item " + item + " from " + root);
+            Utils.pmLog.info("NL_VSC", {"app_id": item.appId, "visible":false, "window_type":item.type});
             root.surfaceRemoved(item);
             root.contentChanged();
             console.log("Item removed from " + root + ", currentItem: " + currentItem);
