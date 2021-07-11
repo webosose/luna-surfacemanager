@@ -859,34 +859,54 @@ void WebOSImported::destroyResource()
 
 void WebOSImported::setSurfaceItemSize()
 {
-    if (m_childSurfaceItem && m_exported && m_exported->m_exportedItem) {
-        qInfo() << "set surface item's width : " << m_exported->m_exportedItem->width();
-        qInfo() << "set surface item's height : " << m_exported->m_exportedItem->height();
+    if (m_childSurfaceItem && m_childDisplayItem && m_exported && m_exported->m_exportedItem) {
+        if (m_textureAlign != WebOSImported::surface_alignment::surface_alignment_crop ||
+                !m_exported->m_originalInputRect.isValid()) {
+            qInfo() << "set surface item's width : " << m_exported->m_exportedItem->width() << this;
+            qInfo() << "set surface item's height : " << m_exported->m_exportedItem->height() << this;
 
-        m_childSurfaceItem->setWidth(m_exported->m_exportedItem->width());
-        m_childSurfaceItem->setHeight(m_exported->m_exportedItem->height());
+            m_childDisplayItem->setWidth(m_exported->m_exportedItem->width());
+            m_childDisplayItem->setHeight(m_exported->m_exportedItem->height());
+
+            m_childSurfaceItem->setWidth(m_childDisplayItem->width());
+            m_childSurfaceItem->setHeight(m_childDisplayItem->height());
+            m_childSurfaceItem->setX(0);
+            m_childSurfaceItem->setY(0);
+        } else {
+            double widthRatio = double(m_exported->m_destinationRect.width()) / double(m_exported->m_sourceRect.width());
+            double heightRatio = double(m_exported->m_destinationRect.height()) / double(m_exported->m_sourceRect.height());
+
+            qInfo() << "Crop surface item's destination : "
+                            << m_exported->m_destinationRect.width() << "x"
+                            << m_exported->m_destinationRect.height() << this;
+            qInfo() << "Crop surface item's coord : "
+                            << (int)((m_exported->m_originalInputRect.x() - m_exported->m_sourceRect.x()) * widthRatio) << ","
+                            << (int)((m_exported->m_originalInputRect.y() - m_exported->m_sourceRect.y()) * heightRatio) << ","
+                            << (int)(m_exported->m_originalInputRect.width() * widthRatio) << "x"
+                            << (int)(m_exported->m_originalInputRect.height() * heightRatio) << widthRatio << heightRatio << this;
+
+            m_childDisplayItem->setWidth(m_exported->m_destinationRect.width());
+            m_childDisplayItem->setHeight(m_exported->m_destinationRect.height());
+
+            m_childSurfaceItem->setWidth((int)(m_exported->m_originalInputRect.width() * widthRatio));
+            m_childSurfaceItem->setHeight((int)(m_exported->m_originalInputRect.height() * heightRatio));
+            m_childSurfaceItem->setX((int)((m_exported->m_originalInputRect.x() - m_exported->m_sourceRect.x()) * widthRatio));
+            m_childSurfaceItem->setY((int)((m_exported->m_originalInputRect.y() - m_exported->m_sourceRect.y()) * heightRatio));
+        }
+        //TODO: handle other cases.
     }
 }
 
 void WebOSImported::updateGeometry()
 {
     if (m_childSurfaceItem) {
-        switch (m_textureAlign) {
-        case WebOSImported::surface_alignment::surface_alignment_stretch:
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
             connect(m_childSurfaceItem->surface(), &QWaylandSurface::bufferSizeChanged, this, &WebOSImported::setSurfaceItemSize);
 #else
-            connect(m_childSurfaceItem->surface(), &QWaylandSurface::sizeChanged, this, &WebOSImported::setSurfaceItemSize);
+            connect(m_childSurfaceItem->surface(), &QWaylandSurface::sizeChanged, this, &WebOSImported::setSurfaceItemSize, Qt::UniqueConnection);
 #endif
-            if (m_exported && m_exported->m_exportedItem) {
-                qInfo() << m_childSurfaceItem << "fits to" << m_exported->m_exportedItem;
-                m_childSurfaceItem->setWidth(m_exported->m_exportedItem->width());
-                m_childSurfaceItem->setHeight(m_exported->m_exportedItem->height());
-            }
-            break;
-        }
-        //TODO: handle other cases.
     }
+    setSurfaceItemSize();
 
     if (m_exported && m_exported->m_exportedItem) {
         send_destination_region_changed(m_exported->m_exportedItem->width(),
@@ -1015,6 +1035,10 @@ void WebOSImported::childSurfaceDestroyed()
     qInfo() << "childSurfaceDestroyed is called on " << this;
     if (m_childSurfaceItem)
         m_childSurfaceItem = nullptr;
+    if (m_childDisplayItem) {
+        delete m_childDisplayItem;
+        m_childDisplayItem = nullptr;
+    }
 }
 
 void WebOSImported::webos_imported_attach_surface(
@@ -1031,13 +1055,17 @@ void WebOSImported::webos_imported_attach_surface(
     qInfo() << qwlSurface << "from" << surface;
 
     m_childSurfaceItem = WebOSSurfaceItem::getSurfaceItemFromSurface(qwlSurface);
+    if (!m_childDisplayItem) {
+        m_childDisplayItem = new QQuickItem(m_exported->m_exportedItem);
+    }
+    m_childDisplayItem->setClip(true);
     connect(m_childSurfaceItem->surface(), &QWaylandSurface::surfaceDestroyed, this, &WebOSImported::childSurfaceDestroyed);
     m_childSurfaceItem->setImported(true);
-    m_exported->setParentOf(m_childSurfaceItem);
     // Applying direct update after the child surface item belongs to a window
     m_childSurfaceItem->setDirectUpdateOnPlane(m_exported->surfaceItem()->directUpdateOnPlane());
     connect(m_exported->surfaceItem(), &WebOSSurfaceItem::directUpdateOnPlaneChanged, m_childSurfaceItem, &WebOSSurfaceItem::updateDirectUpdateOnPlane);
-    m_childSurfaceItem->setZ(m_exported->m_exportedItem->z()+m_z_index);
+    m_childSurfaceItem->setParentItem(m_childDisplayItem);
+    m_childDisplayItem->setZ(m_exported->m_exportedItem->z()+m_z_index);
     updateGeometry();  //Resize texture if needed.
     if (m_importedType == WebOSForeign::WebOSExportedType::VideoObject)
         VideoOutputdCommunicator::instance()->setProperty("videoTexture", "on", NULL);
@@ -1059,6 +1087,7 @@ void WebOSImported::webos_imported_detach_surface(
         VideoOutputdCommunicator::instance()->setProperty("videoTexture", "off", NULL);
     disconnect(m_childSurfaceItem->surface(), &QWaylandSurface::surfaceDestroyed, this, &WebOSImported::childSurfaceDestroyed);
     m_childSurfaceItem->setParentItem(nullptr);
+    m_childDisplayItem->setParentItem(nullptr);
     send_surface_detached(m_childSurfaceItem->surface()->resource());
     childSurfaceDestroyed();
 }
@@ -1070,5 +1099,16 @@ void WebOSImported::webos_imported_set_z_index(
     if (m_z_index != z_index) {
         m_z_index = z_index;
         qInfo() << "z_index of WebOSImported (" << this << " ) is changed to " << z_index;
+    }
+}
+
+void WebOSImported::webos_imported_set_surface_alignment(
+        Resource * resource,
+        uint32_t surface_alignment)
+{
+    if (m_textureAlign != (WebOSImported::surface_alignment)surface_alignment) {
+        m_textureAlign = (WebOSImported::surface_alignment)surface_alignment;
+        qInfo() << "m_textureAlign of WebOSImported (" << this << " ) is changed to " << surface_alignment;
+        setSurfaceItemSize();
     }
 }
