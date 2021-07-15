@@ -936,6 +936,19 @@ void WebOSCompositorWindow::reportSurfaceDamaged(WebOSSurfaceItem* const item)
 bool WebOSCompositorWindow::event(QEvent *e)
 {
     PMTRACE_FUNCTION;
+
+    // When the remaining time of QTimer is 0, it means that the timer has
+    // expired but is being delayed due to other events and we need to
+    // take actions needed right away.
+    if (m_adaptiveUpdate && m_updateTimer.remainingTime() == 0) {
+        m_updateTimer.stop();
+        deliverUpdateRequest();
+    }
+    if (m_adaptiveFrame && m_frameTimer.remainingTime() == 0) {
+        m_frameTimer.stop();
+        sendFrame();
+    }
+
     switch (e->type()) {
     case QEvent::UpdateRequest:
         if (m_adaptiveUpdate) {
