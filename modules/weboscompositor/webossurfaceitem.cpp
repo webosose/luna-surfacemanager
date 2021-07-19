@@ -113,6 +113,8 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
     connect(this, &QQuickItem::windowChanged, this, &WebOSSurfaceItem::handleWindowChanged);
 
     setObjectName(QStringLiteral("surfaceItem_default"));
+    if (surface)
+        surface->setObjectName(QStringLiteral("surface_default"));
 
     setSmooth(true);
 }
@@ -784,6 +786,8 @@ void WebOSSurfaceItem::setAppId(const QString& appId, bool updateProperty)
     if (m_appId != appId) {
         m_appId = appId;
         setObjectName(QString("surfaceItem_%1%2").arg(m_appId).arg(type()));
+        if (surface())
+            surface()->setObjectName(QString("surface_%1%2").arg(m_appId).arg(type()));
         emit appIdChanged();
         if (updateProperty)
             setWindowProperty(QLatin1String("appId"), m_appId);
@@ -796,6 +800,8 @@ void WebOSSurfaceItem::setType(const QString& type, bool updateProperty)
     if (m_type != type) {
         m_type = type;
         setObjectName(QString("surfaceItem_%1%2").arg(appId()).arg(m_type));
+        if (surface())
+            surface()->setObjectName(QString("surface_%1%2").arg(appId()).arg(m_type));
         emit typeChanged();
         if (updateProperty)
             setWindowProperty(QLatin1String("_WEBOS_WINDOW_TYPE"), m_type);
@@ -1426,6 +1432,8 @@ WebOSSurfaceItem *WebOSSurfaceItem::createMirrorItem()
     mirror->m_isMirrorItem = true;
     mirror->m_mirrorSource = this;
     mirror->setObjectName(QString("mirrorItem_%1%2").arg(m_appId).arg(type()));
+    if (mirror->surface())
+        mirror->surface()->setObjectName(QString("mirrorSurface_%1%2").arg(m_appId).arg(type()));
 
     // Default setting for mirror item
     mirror->setEnabled(false);
