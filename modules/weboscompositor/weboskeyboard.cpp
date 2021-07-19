@@ -37,11 +37,10 @@ void WebOSKeyboard::setFocus(QWaylandSurface *surface)
             m_pendingFocusDestroyListener.listenForDestruction(surface->resource());
     }
 
-    if (m_grab) {
+    if (m_grab)
         m_grab->focused(surface);
-    }
-    else
-        QWaylandKeyboard::setFocus(surface);
+
+    QWaylandKeyboard::setFocus(surface);
 }
 
 void WebOSKeyboard::updateModifierState(uint code, uint32_t state, bool repeat)
