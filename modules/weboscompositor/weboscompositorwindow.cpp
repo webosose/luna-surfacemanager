@@ -248,9 +248,6 @@ QList<WebOSCompositorWindow *> WebOSCompositorWindow::initializeExtraWindows(Web
             extraWindow = new WebOSCompositorWindow(outputName, geometryString);
         }
         if (extraWindow) {
-            // FIXME: Consider adding below if we need to call registerWindow
-            // for an extra window
-            //extraWindow->installEventFilter(new EventFilter(compositor));
             compositor->registerWindow(extraWindow, outputName);
             extraWindow->setCompositor(compositor);
             QUrl source = outputConfig.value(QStringLiteral("source")).toString();
