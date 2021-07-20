@@ -259,5 +259,6 @@ private:
     bool m_waitForFlip = false;
     QTimer m_frameTimer;
     int m_frameTimerInterval = 0;
+    QElapsedTimer m_sinceSurfaceDamaged;
 };
 #endif // WEBOSCOMPOSITORWINDOW_H

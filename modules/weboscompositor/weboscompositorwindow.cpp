@@ -917,6 +917,14 @@ void WebOSCompositorWindow::sendFrame()
         }
         m_sinceSendFrame.start();
         m_output->sendFrameCallbacks();
+
+        if (m_sinceSurfaceDamaged.isValid()) {
+            qint64 damageToSendFrameInterval = m_sinceSurfaceDamaged.elapsed();
+            if (damageToSendFrameInterval > m_vsyncInterval * 2)
+                qWarning() << "Elapsed since surface damaged until sending a frame callback:" << damageToSendFrameInterval << "ms";
+
+            m_sinceSurfaceDamaged.invalidate();
+        }
     }
 }
 
@@ -930,6 +938,8 @@ void WebOSCompositorWindow::reportSurfaceDamaged(WebOSSurfaceItem* const item)
         m_frameTimerInterval = nextFrameTime <= m_frameTimerInterval
             ? nextFrameTime : m_frameTimerInterval + 1;
         m_sinceSendFrame.invalidate();
+
+        m_sinceSurfaceDamaged.start();
     }
 }
 
