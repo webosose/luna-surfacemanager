@@ -155,6 +155,8 @@ protected:
     bool handleTabletEvent(QQuickItem* item, QTabletEvent *);
     bool translateTabletToMouse(QTabletEvent* event, QQuickItem* item);
 
+    WebOSCoreCompositor *compositor() const { return m_compositor; }
+
 signals:
     void outputGeometryChanged();
     void outputRotationChanged();
