@@ -1054,7 +1054,8 @@ void WebOSCoreCompositor::setMouseFocus(QWaylandSurface* surface)
 {
     PMTRACE_FUNCTION;
     if (!surface) {
-        static_cast<WebOSCompositorWindow *>(window())->setDefaultCursor();
+        foreach (WebOSCompositorWindow *w, m_windows)
+            static_cast<WebOSCompositorWindow *>(w)->setDefaultCursor();
         return;
     }
 
@@ -1159,7 +1160,8 @@ void WebOSCoreCompositor::setCursorVisible(bool visibility)
     if (m_cursorVisible != visibility) {
         m_cursorVisible = visibility;
         emit cursorVisibleChanged();
-        static_cast<WebOSCompositorWindow *>(window())->setCursorVisible(visibility);
+        foreach (WebOSCompositorWindow *w, m_windows)
+            static_cast<WebOSCompositorWindow *>(w)->setCursorVisible(visibility);
     }
 }
 
@@ -1177,11 +1179,13 @@ void WebOSCoreCompositor::updateCursorFocus()
 {
     PMTRACE_FUNCTION;
 
+    foreach (WebOSCompositorWindow *w, m_windows) {
 #ifdef MULTIINPUT_SUPPORT
-    static_cast<WebOSCompositorWindow *>(window())->updateCursorFocus((Qt::KeyboardModifiers)m_lastMouseEventFrom);
+        static_cast<WebOSCompositorWindow *>(w)->updateCursorFocus((Qt::KeyboardModifiers)m_lastMouseEventFrom);
 #else
-    static_cast<WebOSCompositorWindow *>(window())->updateCursorFocus();
+        static_cast<WebOSCompositorWindow *>(w)->updateCursorFocus();
 #endif
+    }
 }
 
 void WebOSCoreCompositor::setMouseEventEnabled(bool enable)
