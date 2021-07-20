@@ -33,104 +33,6 @@
 const char* EGLFS_CURSOR_DESCRIPTION = WEBOS_INSTALL_DATADIR "/icons/webos/cursors/cursor.json";
 #endif
 
-class EventFilter : public QObject {
-
-    Q_OBJECT
-
-public:
-    EventFilter(WebOSCoreCompositor *compositor)
-        : m_compositor(compositor)
-        , m_cursorTimer(0)
-    {
-        m_hideCursor = WebOSCompositorConfig::instance()->cursorHide();
-        // This keeps the cursor invisible but doesn't disable mount events
-        if (m_hideCursor) {
-            qDebug("Set cursor visibility off by config");
-            m_compositor->setCursorVisible(false);
-        } else {
-            // Set up the cursor timer if the timeout value is given
-            m_cursorTimeout = WebOSCompositorConfig::instance()->cursorTimeout();
-            if (m_cursorTimeout > 0) {
-                m_cursorTimer = new QTimer(this);
-                connect(m_cursorTimer, &QTimer::timeout, this, &EventFilter::onCursorTimerExpired);
-                qDebug("Cursor timeout is set as %d", m_cursorTimeout);
-                m_cursorTimer->start(m_cursorTimeout);
-            }
-        }
-    }
-
-    bool eventFilter(QObject *object, QEvent *event)
-    {
-        Q_UNUSED(object);
-
-        // NOTE:
-        // This cursor visiblity control refers to what libim has.
-        // In case libim changes its behavior we have to follow it.
-        if (!m_hideCursor) {
-            switch (event->type()) {
-            case QEvent::KeyPress:
-                switch ((static_cast<QKeyEvent *>(event))->key()) {
-                case Qt::Key_Left:
-                case Qt::Key_Up:
-                case Qt::Key_Right:
-                case Qt::Key_Down:
-                    hideCursor();
-                    break;
-                default:
-                    break;
-                }
-                break;
-
-            case QEvent::MouseButtonPress:
-            case QEvent::MouseButtonRelease:
-            case QEvent::MouseMove:
-            case QEvent::Wheel:
-                showCursor();
-                break;
-            default:
-                break;
-            }
-        }
-
-        return false;
-    }
-
-private slots:
-    void onCursorTimerExpired()
-    {
-        if (m_hideCursor)
-            return;
-
-        qDebug("Cursor timeout expired");
-        m_compositor->setCursorVisible(false);
-        hideCursor();
-    }
-
-private:
-    void showCursor()
-    {
-        if (m_hideCursor)
-            return;
-        m_compositor->setCursorVisible(true);
-        if (m_cursorTimer)
-            m_cursorTimer->start(m_cursorTimeout);
-    }
-
-    void hideCursor()
-    {
-        if (m_hideCursor)
-            return;
-        if (m_cursorTimer)
-            m_cursorTimer->stop();
-        m_compositor->setCursorVisible(false);
-    }
-
-    WebOSCoreCompositor *m_compositor;
-    bool m_hideCursor = false;
-    QTimer *m_cursorTimer;
-    int m_cursorTimeout = 0;
-};
-
 static gboolean deferredDeleter(gpointer data)
 {
     Q_UNUSED(data)
@@ -191,16 +93,6 @@ int main(int argc, char *argv[])
         compositor = new WebOSCoreCompositor(WebOSCoreCompositor::WebOSForeignExtension);
     }
 
-    /* https://doc.qt.io/qt-5/qobject.html#installEventFilter
-       - "If multiple event filters are installed on a single object,
-          the filter that was installed last is activated first."
-       If there is an extended compositor, it can have event filters.
-       Considering inheritance, the extended event filters should be called first,
-       so that they can decide consume or pass events to base's event filter.
-       For that, the base's event filter should be installed prior to 'registerWindow'
-       where extended compositor installs filters. */
-    compositorWindow->installEventFilter(new EventFilter(compositor));
-
     compositor->create();
     compositor->registerWindow(compositorWindow, WebOSCompositorConfig::instance()->primaryScreen());
     compositor->registerTypes();
@@ -254,5 +146,3 @@ int main(int argc, char *argv[])
 
     return app.exec();
 }
-
-#include "main.moc"
