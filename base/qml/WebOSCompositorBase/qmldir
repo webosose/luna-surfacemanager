@@ -9,6 +9,7 @@ singleton Utils 1.0 global/Utils.qml
 DefaultSettings 1.0 DefaultSettings.qml
 LocalSettingsFiles 1.0 LocalSettingsFiles.qml
 LunaServiceSubscriptions 1.0 LunaServiceSubscriptions.qml
+Controllers 1.0 Controllers.qml
 AccessControlPolicy 1.0 controllers/AccessControlPolicy.qml
 KeyController 1.0 controllers/KeyController.qml
 VideoController 1.0 controllers/VideoController.qml

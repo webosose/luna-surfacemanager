@@ -23,11 +23,13 @@ Item {
     id: root
 
     property var views
+    property var controllers
 
     BaseLunaServiceAPI {
         id: baseService
         appId: LS.appId
         views: root.views
+        controllers: root.controllers
     }
 
     ExtendedLunaServiceAPI {

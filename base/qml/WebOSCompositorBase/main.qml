@@ -42,5 +42,6 @@ FocusScope {
     Services {
         id: servicesId
         views: viewsId.views
+        controllers: controllersId
     }
 }
