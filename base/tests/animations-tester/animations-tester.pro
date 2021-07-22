@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021 LG Electronics, Inc.
+# Copyright (c) 2021 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,12 +14,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-TEMPLATE = subdirs
+TEMPLATE = aux
 
-SUBDIRS = \
-    acg-test \
-    animations-tester \
-    compositor \
-    native \
-    qml \
-    test-sysbus
+animationtests.files = *.qml animations resources
+animationtests.path = $$WEBOS_INSTALL_TESTSDIR/luna-surfacemanager/animations-tester
+
+INSTALLS += animationtests
