@@ -270,6 +270,7 @@ void WebOSShellSurface::set_key_mask(struct wl_client *client, struct wl_resourc
     }
 
     if (that->m_keyMask != newKeyMasks) {
+        qInfo() << "key mask changed. newKeyMasks = " << newKeyMasks << ", client : " << (client ? client : nullptr);
         that->m_keyMask = newKeyMasks;
         emit that->keyMaskChanged();
     }

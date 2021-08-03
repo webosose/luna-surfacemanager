@@ -559,13 +559,29 @@ WebOSSurfaceItem* WebOSSurfaceGroup::findKeyFocusedItem()
         topIndex = m_keyOrderedItems.size() -1;
         qInfo() << "topIndex: " << topIndex << " in m_keyOrderedItems: " << m_keyOrderedItems.size();
         if (topIndex >= 0)
-            returnItem = qobject_cast<WebOSSurfaceItem *>(m_keyOrderedItems[topIndex].first);
+            for (int i = topIndex; i >=0; i--) {
+                WebOSSurfaceItem* item = qobject_cast<WebOSSurfaceItem *>(m_keyOrderedItems[i].first);
+                if (item && item->state() == Qt::WindowFullScreen) {
+                    returnItem = item;
+                    break;
+                } else {
+                    qWarning() << item << " is not fullscreen state. Find next key order item";
+                }
+            }
     } else {
         if (!m_zOrderedSurfaceLayoutInfoList.isEmpty()) {
             topIndex = m_zOrderedSurfaceLayoutInfoList.size() - 1;
             qInfo() << "topIndex: " << topIndex << " in m_zOrderedSurfaceLayoutInfoList: " << m_zOrderedSurfaceLayoutInfoList.size();
             if (topIndex >= 0)
-                returnItem = qobject_cast<WebOSSurfaceItem *>(m_zOrderedSurfaceLayoutInfoList[topIndex].first);
+                for (int i = topIndex; i >=0; i--) {
+                    WebOSSurfaceItem* item = qobject_cast<WebOSSurfaceItem *>(m_zOrderedSurfaceLayoutInfoList[i].first);
+                    if (item && item->state() == Qt::WindowFullScreen) {
+                        returnItem = item;
+                        break;
+                    } else {
+                        qWarning() << item << "is not fullscreen state. Find next z ordered surface item";
+                    }
+                }
         }
     }
 
