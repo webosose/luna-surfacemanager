@@ -450,8 +450,14 @@ void WebOSExported::updateVideoWindowList(QString contextId, QRect videoDisplayR
     if (needRemove || !m_exportedItem) {
         VideoWindowInformer::instance()->removeVideoWindowList(contextId);
     } else {
-         if (!m_contextId.isNull() && m_exportedItem->isVisible()) {
-            VideoWindowInformer::instance()->insertVideoWindowList(contextId, videoDisplayRect, m_windowId);
+         if(!m_contextId.isNull() && m_exportedItem->isVisible() && m_surfaceItem) {
+             QString appId = m_surfaceItem ? m_surfaceItem->appId() : "";
+             QRect appWindow = QRect(
+                m_surfaceItem->x(),
+                m_surfaceItem->y(),
+                m_surfaceItem->width()*m_surfaceItem->scale(),
+                m_surfaceItem->height()*m_surfaceItem->scale());
+            VideoWindowInformer::instance()->insertVideoWindowList(contextId, videoDisplayRect, m_windowId, appId, appWindow);
          }
     }
 }
