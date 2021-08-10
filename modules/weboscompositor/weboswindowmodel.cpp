@@ -27,6 +27,7 @@ WebOSWindowModel::WebOSWindowModel()
     setDynamicSortFilter(true);
     QSortFilterProxyModel::sort(0);
     connect(this, SIGNAL(rowsAboutToBeRemoved(const QModelIndex&, int, int)), this, SLOT(emitSurfacesRemoved(const QModelIndex &, int, int)));
+    connect(this, SIGNAL(rowsRemoved(const QModelIndex&, int, int)), this, SLOT(emitSurfacesRemovalFinished(const QModelIndex &, int, int)));
     connect(this, SIGNAL(rowsInserted(const QModelIndex&, int, int)), this, SLOT(emitSurfacesAdded(const QModelIndex&, int, int)));
 
     connect(this, SIGNAL(rowsInserted(const QModelIndex&, int, int)), this, SIGNAL(countChanged()));
@@ -163,6 +164,12 @@ void WebOSWindowModel::emitSurfacesRemoved(const QModelIndex& parent, int start,
         WebOSSurfaceItem* item = data(index(row, 0, parent)).value<WebOSSurfaceItem*>();
         emit const_cast<WebOSWindowModel*>(this)->surfaceRemoved(item);
     }
+}
+
+void WebOSWindowModel::emitSurfacesRemovalFinished(const QModelIndex& parent, int start, int end)
+{
+    PMTRACE_FUNCTION;
+    emit surfaceRemovalFinished();
 }
 
 // these indices are inclusive

@@ -75,6 +75,7 @@ signals:
     void acceptFunctionChanged();
     void surfaceAdded(WebOSSurfaceItem* item);
     void surfaceRemoved(WebOSSurfaceItem* item);
+    void surfaceRemovalFinished();
     void countChanged();
     void lockedChanged();
     void deferredInvalidate();
@@ -87,6 +88,7 @@ protected:
 
 protected slots:
     void emitSurfacesRemoved(const QModelIndex & parent, int start, int end);
+    void emitSurfacesRemovalFinished(const QModelIndex & parent, int start, int end);
     void emitSurfacesAdded(const QModelIndex & parent, int start, int end);
     virtual void handleInvalidate();
 
