@@ -561,11 +561,11 @@ WebOSSurfaceItem* WebOSSurfaceGroup::findKeyFocusedItem()
         if (topIndex >= 0)
             for (int i = topIndex; i >=0; i--) {
                 WebOSSurfaceItem* item = qobject_cast<WebOSSurfaceItem *>(m_keyOrderedItems[i].first);
-                if (item && item->state() == Qt::WindowFullScreen) {
+                if (item && item->isMapped()) {
                     returnItem = item;
                     break;
                 } else {
-                    qWarning() << item << " is not fullscreen state. Find next key order item";
+                    qWarning() << "[GROUP]" << item << " is not mapped. Find next key order item";
                 }
             }
     } else {
@@ -575,11 +575,11 @@ WebOSSurfaceItem* WebOSSurfaceGroup::findKeyFocusedItem()
             if (topIndex >= 0)
                 for (int i = topIndex; i >=0; i--) {
                     WebOSSurfaceItem* item = qobject_cast<WebOSSurfaceItem *>(m_zOrderedSurfaceLayoutInfoList[i].first);
-                    if (item && item->state() == Qt::WindowFullScreen) {
+                    if (item && item->isMapped()) {
                         returnItem = item;
                         break;
                     } else {
-                        qWarning() << item << "is not fullscreen state. Find next z ordered surface item";
+                        qWarning() << "[GROUP]" << item << "is not mapped. Find next z ordered surface item";
                     }
                 }
         }
