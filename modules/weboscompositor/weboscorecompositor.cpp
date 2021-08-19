@@ -611,6 +611,7 @@ void WebOSCoreCompositor::onSurfaceUnmapped(QWaylandSurface *surface, WebOSSurfa
             m_surfaceModel->surfaceUnmapped(item);
             emit surfaceUnmapped(item);
             m_surfaces.removeOne(item);
+            m_surfacesOnUpdate.removeOne(item);
         } else {
             processSurfaceItem(item, WebOSSurfaceItem::ItemStateHidden);
         }
@@ -619,6 +620,7 @@ void WebOSCoreCompositor::onSurfaceUnmapped(QWaylandSurface *surface, WebOSSurfa
             m_surfaceModel->surfaceUnmapped(item);
             emit surfaceUnmapped(item);
             m_surfaces.removeOne(item);
+            m_surfacesOnUpdate.removeOne(item);
         } else {
             emit surfaceUnmapped(item); //We have to notify qml even for proxy item
         }
@@ -643,7 +645,6 @@ void WebOSCoreCompositor::onSurfaceDestroyed(QWaylandSurface *surface, WebOSSurf
         }
     } else {
         if (item->itemState() != WebOSSurfaceItem::ItemStateProxy) {
-            m_surfacesOnUpdate.removeOne(item);
             removeSurfaceItem(item, true);
         } else {
             emit surfaceDestroyed(item); //We have to notify qml even for proxy item
@@ -752,6 +753,7 @@ void WebOSCoreCompositor::removeSurfaceItem(WebOSSurfaceItem* item, bool emitSur
     if (emitSurfaceDestroyed)
         emit surfaceDestroyed(item);
     m_surfaces.removeOne(item);
+    m_surfacesOnUpdate.removeOne(item);
     delete item;
 }
 
