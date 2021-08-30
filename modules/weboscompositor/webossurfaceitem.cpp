@@ -1397,9 +1397,6 @@ void WebOSSurfaceItem::setCursorSurface(QWaylandSurface *surface, int hotSpotX, 
         } else if (surface) {
             qDebug() << "Cursor: set a live cursor with cursor surface" << surface << "static:" << staticCursor;
             connect(surface, SIGNAL(redraw()), this, SLOT(updateCursor()), Qt::UniqueConnection);
-
-            if (surface->hasContent())
-                updateCursor();
         }
     }
 }
@@ -1410,7 +1407,7 @@ void WebOSSurfaceItem::updateCursor()
     QImage image = m_cursorView.currentBuffer().image().copy();
     if (!image.isNull()) {
         if (m_cursorHotSpotX >= 0 && m_cursorHotSpotX <= image.size().width() &&
-            m_cursorHotSpotY >= 0 && m_cursorHotSpotY <= image.height()) {
+            m_cursorHotSpotY >= 0 && m_cursorHotSpotY <= image.size().height()) {
             qDebug() << "Cursor: live updating cursor with surface" << m_cursorView.surface() << m_cursorHotSpotX << m_cursorHotSpotY;
             QCursor c(QPixmap::fromImage(image), m_cursorHotSpotX, m_cursorHotSpotY);
             setCursor(c);
