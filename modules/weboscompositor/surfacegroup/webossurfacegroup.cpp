@@ -63,8 +63,12 @@ void WebOSSurfaceGroup::webos_surface_group_destroy_resource(Resource *resource)
         qInfo("Group '%s' owner destroyed", qPrintable(m_name));
         if (m_groupCompositor)
             m_groupCompositor->removeGroup(this);
-        if (m_root)
+        if (m_root) {
             m_root->setSurfaceGroup(NULL);
+            //m_root->disconnect(this);
+            m_zOrderedSurfaceLayoutInfoList.clear();
+            m_keyOrderedItems.clear();
+        }
 
         m_owner = NULL;
         m_root = NULL;
