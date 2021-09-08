@@ -21,7 +21,8 @@ WebOSWindow {
         {"name":"Scroll_page", "url":"scrollpage.qml"},
         {"name":"Slide_animation_page", "url":"slideanimationpage.qml"},
         {"name":"Wiper_page", "url":"wiperpage.qml"},
-        {"name":"Mirroring_animation", "url":"mirroranimation.qml"}
+        {"name":"Mirroring_animation", "url":"mirroranimation.qml"},
+        {"name":"Rotate_mulitple_rects", "url":"rotatemultiplerect.qml"}
     ]
 
     ListModel {
@@ -51,24 +52,36 @@ WebOSWindow {
 
         Text {
             id: animationSelectorTitle
-            anchors.top: parent.top
-            anchors.right: parent.right
-            anchors.topMargin: 25
-            anchors.rightMargin: 500
+            anchors.top: animationSelector.top
+            anchors.topMargin: 10
+            anchors.right: animationSelector.left
+            anchors.rightMargin: 30
             horizontalAlignment: Text.AlignRight
             width: 400
-            font.pixelSize: 48
+            font.pixelSize: 24
             text: "Select Animation"
         }
 
         ComboBox {
             id: animationSelector
-            anchors.right: background.right
-            anchors.rightMargin: 100
+            anchors.top: parent.top
+            anchors.topMargin: 25
+            anchors.right: parent.right
+            anchors.rightMargin: 20
             model: animationModel
             mustHighlight: true
-            headerText: "Select Animation"
             focus: true
+            Component.onCompleted: {
+                // Override styles
+                style.comboWidth = 400;
+                style.comboItemHeight = 46;
+                style.comboVerticalMargin = 0;
+                style.comboHorizontalMargin = 20;
+                style.comboCornerRadius = 10;
+                style.comboHeaderFontSize = 24;
+                style.comboHeaderHeight = 46;
+                style.comboItemFontSize = 24;
+            }
             onSelectedIndexChanged: {
                 if (selectedIndex > 0 && selectedIndex <= animationList.length) {
                     animationsAllStop();
