@@ -727,6 +727,9 @@ void WebOSCoreCompositor::surfaceCreated(QWaylandSurface *surface) {
     connect(surface, &QWaylandSurface::destroyed, [this, surface, item] {
         this->onSurfaceDestroyed(surface, item);
     });
+
+    qInfo() << surface << item << "client info:" << (item ? item->processId() : "")
+        << ((surface && surface->client()) ? surface->client()->client() : nullptr);
 }
 
 WebOSSurfaceItem* WebOSCoreCompositor::createProxyItem(const QString& appId, const QString& title, const QString& subtitle, const QString& snapshotPath)

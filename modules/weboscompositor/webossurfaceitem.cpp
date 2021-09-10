@@ -679,10 +679,10 @@ void WebOSSurfaceItem::processKeyEvent(QKeyEvent *event)
         keyboard->currentGrab()) {
 
         if (hasFocus()) {
-            qInfo() << "Focused none-group nor grabbed item: " << this << event->key();
+            qInfo() << "Focused surface is not a group member and not a current keyboard grab: " << this << event->key();
             inputDevice->sendFullKeyEvent(event);
         } else {
-            qInfo() << "Not focused none-group nor grabbed item: " << this << event->key();
+            qInfo() << "Surface is not focused and not a current keyboard grab. Do not send key: " << this << event->key();
         }
         return;
     }
@@ -828,6 +828,7 @@ void WebOSSurfaceItem::setAppId(const QString& appId, bool updateProperty)
         emit appIdChanged();
         if (updateProperty)
             setWindowProperty(QLatin1String("appId"), m_appId);
+        qInfo() << "appIdChanged:" << surface() << this;
     }
 }
 
@@ -842,6 +843,7 @@ void WebOSSurfaceItem::setType(const QString& type, bool updateProperty)
         emit typeChanged();
         if (updateProperty)
             setWindowProperty(QLatin1String("_WEBOS_WINDOW_TYPE"), m_type);
+        qInfo() << "typeChanged:" << surface() << this;
     }
 }
 

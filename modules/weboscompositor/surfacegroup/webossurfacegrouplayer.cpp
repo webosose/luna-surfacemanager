@@ -46,7 +46,7 @@ void WebOSSurfaceGroupLayer::webos_surface_group_layer_set_z_index(Resource *res
 {
     Q_UNUSED(resource);
     setZ(z_index);
-    qInfo() << "layer(" << m_name << ") z index :" << z() << "and key index(" << m_keyIndex << ")";
+    qInfo() << "layer(" << m_name << ") z index :" << z() << "and key index(" << m_keyIndex << ") - attached:" << m_attached;
     if (m_attached) {
         emit m_attached->zOrderChanged(z());
     }
@@ -56,7 +56,7 @@ void WebOSSurfaceGroupLayer::webos_surface_group_layer_set_key_index(Resource *r
 {
     Q_UNUSED(resource);
     setKeyIndex(key_index);
-    qInfo() << "layer(" << m_name << ") key index :" << m_keyIndex << "at z(" << z() << ")";
+    qInfo() << "layer(" << m_name << ") key index :" << m_keyIndex << "at z(" << z() << ") - attached:" << m_attached;
     emit layerKeyIndexChanged(m_name);
 }
 
