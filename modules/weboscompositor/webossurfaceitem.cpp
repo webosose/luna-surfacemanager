@@ -88,6 +88,7 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
         , m_closePolicy(QVariantMap())
         , m_itemStateReason(QString())
         , m_launchLastApp(false)
+        , m_coverState(CoverStateNormal)
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
     setAcceptTouchEvents(true);
@@ -1071,6 +1072,15 @@ void WebOSSurfaceItem::setClosePolicy(QVariantMap &policy)
         m_closePolicy = policy;
 
         emit closePolicyChanged();
+    }
+}
+
+void WebOSSurfaceItem::setCoverState(CoverState coverState)
+{
+    if (m_coverState != coverState) {
+        m_coverState = coverState;
+
+        emit coverStateChanged();
     }
 }
 

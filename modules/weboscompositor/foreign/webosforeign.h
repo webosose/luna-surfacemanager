@@ -94,6 +94,7 @@ public:
     void setPunchThrough(bool needPunch);
     void assignWindowId(QString windowId);
     void setParentOf(QQuickItem *surfaceItem);
+    void updateCoverState();
     void registerMuteOwner(const QString& contextId);
     void unregisterMuteOwner();
     void setVideoDisplayWindow();
@@ -151,6 +152,7 @@ protected:
     QMap<QString, QString> m_properties;
     bool m_isSurfaceItemFullscreen;
     bool m_directVideoScalingMode = false; // If this mode is enabled, do not call setDisplayWindow and setCropRegion of videooutputd
+    bool m_coverVideo;
     double m_videoDispRatio = 1.0;
     double m_exportedWindowRatio = 1.0;
 

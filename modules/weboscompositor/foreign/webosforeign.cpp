@@ -253,6 +253,7 @@ WebOSExported::WebOSExported(
     , m_surfaceItem(static_cast<WebOSSurfaceItem *>(surfaceItem))
     , m_exportedItem(new QQuickItem(surfaceItem))
     , m_exportedType(exportedType)
+    , m_coverVideo(false)
 {
     qInfo() << this << "is created";
     m_exportedItem->setClip(true);
@@ -275,6 +276,9 @@ WebOSExported::WebOSExported(
     connect(m_surfaceItem, &QWaylandQuickItem::surfaceDestroyed, this, &WebOSExported::onSurfaceDestroyed);
     connect(m_surfaceItem, &WebOSSurfaceItem::itemAboutToBeDestroyed, this, &WebOSExported::onSurfaceDestroyed);
     connect(m_surfaceItem, &WebOSSurfaceItem::windowChanged, this, &WebOSExported::updateCompositorWindow);
+    connect(m_surfaceItem, &WebOSSurfaceItem::coverStateChanged, this, &WebOSExported::updateCoverState);
+
+    updateCoverState();
 
     calculateAll();
 
@@ -411,6 +415,26 @@ void WebOSExported::updateWindowState()
         calculateAll();
 }
 
+void WebOSExported::updateCoverState()
+{
+    if (!m_surfaceItem) {
+        qWarning() << "WebOSSurfaceItem for " << m_windowId << "is already destroyed";
+        return;
+    }
+
+    bool coverVideo = false;
+    if (m_surfaceItem->coverState() == WebOSSurfaceItem::CoverStateHidden) {
+        coverVideo = true;
+    }
+
+    if (m_coverVideo != coverVideo) {
+        qInfo() << "cover state is changed = " << coverVideo << " for WebOSExported (" << m_windowId << ")";
+        m_coverVideo = coverVideo;
+        calculateVideoDispRatio();
+    }
+
+}
+
 void WebOSExported::updateVisible()
 {
     if (!m_exportedItem) {
@@ -492,7 +516,15 @@ void WebOSExported::updateExportedItemSize()
 
 void WebOSExported::setVideoDisplayWindow()
 {
+    QRect videoDisplayRect;
     if (m_foreign->m_compositor->window() && !m_contextId.isNull()) {
+        if (m_coverVideo) {
+            qInfo() << "cover video state. set video display rect = (0, 0, 0, 0)";
+            videoDisplayRect = QRect(0, 0, 0, 0);
+        } else {
+            qDebug() << "Not cover state. Keep video display rect";
+            videoDisplayRect = m_videoDisplayRect;
+        }
         if (m_directVideoScalingMode) {
             qDebug() << "Direct video scaling mode is enabled. Do not call setDisplayWindow.";
         } else {
@@ -506,7 +538,7 @@ void WebOSExported::setVideoDisplayWindow()
     }
 
     if (!m_contextId.isNull())
-        updateVideoWindowList(m_contextId, m_videoDisplayRect, false);
+        updateVideoWindowList(m_contextId, videoDisplayRect, false);
 }
 
 void WebOSExported::setDestinationRegion(struct::wl_resource *destination_region)
