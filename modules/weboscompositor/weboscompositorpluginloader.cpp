@@ -20,11 +20,14 @@
 #include <QDir>
 #include <QJsonArray>
 
-WebOSCompositorPluginLoader::WebOSCompositorPluginLoader(const QString &pluginName)
+WebOSCompositorPluginLoader::WebOSCompositorPluginLoader(const QString &pluginName, const QString &pluginDir)
     : m_pluginName(pluginName)
+    , m_pluginDir(pluginDir)
     , m_compositor(nullptr)
     , m_compositorPlugin(nullptr)
 {
+    if (m_pluginDir.isEmpty())
+        m_pluginDir = QString::fromUtf8(WEBOS_INSTALL_QTPLUGINSDIR "/compositor");
     m_pluginLoader = load(m_pluginName);
 }
 
@@ -41,7 +44,7 @@ QPluginLoader *WebOSCompositorPluginLoader::load(const QString &pluginName)
     //  - Filename: lib<pluginname>.so
     //  - IID and Keys in the plugin metadata should match.
 
-    QDir pluginDir(QString::fromUtf8(WEBOS_INSTALL_QTPLUGINSDIR "/compositor"));
+    QDir pluginDir(m_pluginDir);
     if (!pluginDir.exists()) {
         qWarning() << "WebOSCompositorPluginLoader: Compositor plugins directory does not exist. Plugins directory path:" << pluginDir.path();
         return NULL;

@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2020 LG Electronics, Inc.
+// Copyright (c) 2018-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
 class WEBOS_COMPOSITOR_EXPORT WebOSCompositorPluginLoader: public QObject
 {
 public:
-    explicit WebOSCompositorPluginLoader(const QString &pluginName);
+    explicit WebOSCompositorPluginLoader(const QString &pluginName, const QString &pluginDir = QString());
     ~WebOSCompositorPluginLoader();
 
     WebOSCoreCompositor *compositor();
@@ -37,6 +37,7 @@ private:
     bool unload(QPluginLoader *pluginLoader);
 
     QString m_pluginName;
+    QString m_pluginDir;
     QPluginLoader *m_pluginLoader;
     WebOSCompositorInterface *m_compositorPlugin;
     WebOSCoreCompositor *m_compositor;
