@@ -435,6 +435,9 @@ void WebOSExported::onSurfaceDestroyed()
     updateCompositorWindow(nullptr);
 
     if (m_exportedItem) {
+        foreach(WebOSImported* imported, m_importList) {
+            imported->updateExportedItem(nullptr);
+        }
         delete m_exportedItem;
         m_exportedItem = nullptr;
     }
@@ -940,7 +943,7 @@ void WebOSImported::detach()
 
 void WebOSImported::updateExported(WebOSExported * exported)
 {
-    qInfo() << "WebOSImported::detach is called " << this;
+    qInfo() << "WebOSImported::updateExported is called " << this;
 
     if (m_exported == exported)
         return;
@@ -949,6 +952,22 @@ void WebOSImported::updateExported(WebOSExported * exported)
         detach();
 
     m_exported = exported;
+}
+
+void WebOSImported::updateExportedItem(QQuickItem * exportedItem)
+{
+    qInfo() << "WebOSImported::updateExportedItem is called " << this;
+
+    if (!m_exported)
+        return;
+
+    if (m_exported->m_exportedItem == exportedItem)
+        return;
+
+    if (exportedItem == nullptr)
+        destroyChildDisplay();
+
+     m_exported->m_exportedItem = exportedItem;
 }
 
 void WebOSImported::webos_imported_attach_punchthrough(Resource* r)
@@ -1036,15 +1055,21 @@ void WebOSImported::webos_imported_destroy_resource(Resource* r)
     delete this;
 }
 
+void WebOSImported::destroyChildDisplay()
+{
+    qInfo() << "destroyChildDisplay is called on " << this;
+    if (m_childDisplayItem) {
+        delete m_childDisplayItem;
+        m_childDisplayItem = nullptr;
+    }
+}
+
 void WebOSImported::childSurfaceDestroyed()
 {
     qInfo() << "childSurfaceDestroyed is called on " << this;
     if (m_childSurfaceItem)
         m_childSurfaceItem = nullptr;
-    if (m_childDisplayItem) {
-        delete m_childDisplayItem;
-        m_childDisplayItem = nullptr;
-    }
+    destroyChildDisplay();
 }
 
 void WebOSImported::webos_imported_attach_surface(
@@ -1082,7 +1107,7 @@ void WebOSImported::webos_imported_detach_surface(
         Resource * resource,
         struct ::  wl_resource *surface)
 {
-    qInfo() <<"detach_surface is called : " << surface << " on " << this ;
+    qInfo() <<"detach_surface is called : " << surface << " on " << this;
 
     if (!m_childSurfaceItem || m_childSurfaceItem->surface()->resource() != surface) {
         qWarning() << "surface is not the attached surface";
@@ -1093,7 +1118,8 @@ void WebOSImported::webos_imported_detach_surface(
         VideoOutputdCommunicator::instance()->setProperty("videoTexture", "off", NULL);
     disconnect(m_childSurfaceItem->surface(), &QWaylandSurface::surfaceDestroyed, this, &WebOSImported::childSurfaceDestroyed);
     m_childSurfaceItem->setParentItem(nullptr);
-    m_childDisplayItem->setParentItem(nullptr);
+    if (m_childDisplayItem)
+        m_childDisplayItem->setParentItem(nullptr);
     send_surface_detached(m_childSurfaceItem->surface()->resource());
     childSurfaceDestroyed();
 }

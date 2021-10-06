@@ -165,11 +165,13 @@ class WEBOS_COMPOSITOR_EXPORT WebOSImported :
 public:
     WebOSImported() = delete;
     ~WebOSImported();
+    void destroyChildDisplay();
     void childSurfaceDestroyed();
     void destroyResource();
     void detach();
     void setSurfaceItemSize();
     void updateExported(WebOSExported * exported);
+    void updateExportedItem(QQuickItem * exportedItem);
     void updateGeometry();
 
 protected:
