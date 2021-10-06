@@ -32,6 +32,7 @@
 #include <QScreen>
 #include <QJsonArray>
 #include <QWaylandQuickOutput>
+#include <QPointer>
 
 #include "weboscorecompositor.h"
 #include "weboscompositorwindow.h"
@@ -713,19 +714,18 @@ void WebOSCoreCompositor::surfaceCreated(QWaylandSurface *surface) {
         qWarning()  << "[WebOSSurfaceItem] Invalid pointer, "
                     << "surface :" << surface;
     }
+    QPointer<QWaylandSurface> pSurface(surface);
+    QPointer<WebOSSurfaceItem> pItem(item);
 
-    connect(surface, &QWaylandSurface::hasContentChanged, [this, surface, item] {
-        if (surface->hasContent()) {
-            this->onSurfaceMapped(surface, item);
-        } else if (item->surface() && !item->isBufferLocked()) {
-            // If the buffer is locked, surfaceUnmapped for that item should be
-            // handled later once the buffer gets unlocked (by handleSurfaceUnmapped)
-            this->onSurfaceUnmapped(surface, item);
-        }
+    connect(pSurface, &QWaylandSurface::hasContentChanged, this, [this, pSurface, pItem] {
+        if (pSurface && pSurface->hasContent())
+            this->onSurfaceMapped(pSurface, pItem);
+        else if (pItem->surface()) // Avoid onSurfaceUnmapped when the surface is about to be destroyed
+            this->onSurfaceUnmapped(pSurface, pItem);
     });
 
-    connect(surface, &QWaylandSurface::destroyed, [this, surface, item] {
-        this->onSurfaceDestroyed(surface, item);
+    connect(pSurface, &QWaylandSurface::destroyed, this, [this, pSurface, pItem] {
+        this->onSurfaceDestroyed(pSurface, pItem);
     });
 
     qInfo() << surface << item << "client info:" << (item ? item->processId() : "")
