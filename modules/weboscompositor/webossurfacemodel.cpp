@@ -38,21 +38,21 @@ WebOSSurfaceModel::~WebOSSurfaceModel()
     clear();
 }
 
-QHash<int, QByteArray> WebOSSurfaceModel::roleNames () const
+QHash<int, QByteArray> WebOSSurfaceModel::roleNames() const
 {
     return roles;
 }
 
 int WebOSSurfaceModel::rowCount(const QModelIndex &parent) const
 {
-  Q_UNUSED(parent);
-  return m_list.size();
+    Q_UNUSED(parent);
+    return m_list.size();
 }
 
 QVariant WebOSSurfaceModel::data(const QModelIndex &index, int role) const
 {
     Q_UNUSED(role)
-    if(index.row() < 0 || index.row() >= m_list.size())
+    if (index.row() < 0 || index.row() >= m_list.size())
         return QVariant();
 
     // surfaceItem is our only role for now. we might have something like a title, enabled state etc here.
@@ -69,8 +69,8 @@ void WebOSSurfaceModel::appendRow(WebOSSurfaceItem *item)
 void WebOSSurfaceModel::appendRows(const QList<WebOSSurfaceItem *> &items)
 {
     PMTRACE_FUNCTION;
-    beginInsertRows(QModelIndex(), rowCount(), rowCount()+items.size()-1);
-    foreach(WebOSSurfaceItem *item, items) {
+    beginInsertRows(QModelIndex(), rowCount(), rowCount() + items.size() - 1);
+    foreach (WebOSSurfaceItem *item, items) {
         connect(item, SIGNAL(dataChanged()), SLOT(handleItemChange()));
         connect(item, SIGNAL(windowClassChanged()), SLOT(handleItemChange()));
         m_list.append(item);
@@ -91,9 +91,9 @@ bool WebOSSurfaceModel::removeRow(int row, const QModelIndex &parent)
 {
     PMTRACE_FUNCTION;
     Q_UNUSED(parent);
-    if(row < 0 || row >= m_list.size()) return false;
+    if (row < 0 || row >= m_list.size())
+        return false;
     beginRemoveRows(QModelIndex(), row, row);
-    qDebug() << "SHOULD NEVER HAPPEN !!!!!: " << m_list.at(row);
     delete m_list.takeAt(row);
     endRemoveRows();
     return true;
@@ -103,12 +103,11 @@ bool WebOSSurfaceModel::removeRows(int row, int count, const QModelIndex &parent
 {
     PMTRACE_FUNCTION;
     Q_UNUSED(parent);
-    if(row < 0 || (row+count) >= m_list.size()) return false;
-    beginRemoveRows(QModelIndex(), row, row+count-1);
-    for(int i = 0; i < count; ++i) {
-        qDebug() << "SHOULD NEVER HAPPEN!!!!!: " << m_list.at(row);
+    if (row < 0 || (row + count) >= m_list.size())
+        return false;
+    beginRemoveRows(QModelIndex(), row, row + count - 1);
+    for (int i = 0; i < count; ++i)
         delete m_list.takeAt(row);
-    }
     endRemoveRows();
     return true;
 }
@@ -126,8 +125,9 @@ QModelIndex WebOSSurfaceModel::indexFromItem(const WebOSSurfaceItem *item) const
 {
     PMTRACE_FUNCTION;
     Q_ASSERT(item);
-    for(int row = 0; row < m_list.size(); ++row) {
-        if(m_list.at(row) == item) return index(row);
+    for (int row = 0; row < m_list.size(); ++row) {
+        if (m_list.at(row) == item)
+            return index(row);
     }
     return QModelIndex();
 }
@@ -135,11 +135,10 @@ QModelIndex WebOSSurfaceModel::indexFromItem(const WebOSSurfaceItem *item) const
 WebOSSurfaceItem* WebOSSurfaceModel::surfaceItemForAppId(const QString& appId)
 {
     PMTRACE_FUNCTION;
-    for(int row = 0; row < m_list.size(); ++row) {
+    for (int row = 0; row < m_list.size(); ++row) {
         WebOSSurfaceItem* item = static_cast<WebOSSurfaceItem*>(m_list.at(row));
-        if (item->appId() == appId) {
+        if (item->appId() == appId)
             return item;
-        }
     }
     return NULL;
 }
@@ -156,26 +155,21 @@ WebOSSurfaceItem* WebOSSurfaceModel::surfaceItemForIndex(int index)
 WebOSSurfaceItem* WebOSSurfaceModel::getLastRecentItem()
 {
     PMTRACE_FUNCTION;
-    for(int row = 0; row < m_list.size(); ++row)
-    {
+    for (int row = 0; row < m_list.size(); ++row) {
         WebOSSurfaceItem* item = static_cast<WebOSSurfaceItem*>(m_list.at(row));
         QVariantMap windowProperties = item->windowProperties();
         QString surfaceType = windowProperties.value(QLatin1String("_WEBOS_WINDOW_TYPE")).toString();
-        if((surfaceType.isEmpty() || // This is for plain Qt apps that do not set window type.
-                surfaceType == QLatin1String("_WEBOS_WINDOW_TYPE_CARD")))
-        {
+        if ((surfaceType.isEmpty() || // This is for plain Qt apps that do not set window type.
+             surfaceType == QLatin1String("_WEBOS_WINDOW_TYPE_CARD")))
             return item;
-        }
     }
     return NULL;
 }
 
 void WebOSSurfaceModel::clear()
 {
-    qDebug() << "SHOULD NEVER HAPPEN !!!";
     qDeleteAll(m_list);
     m_list.clear();
-    qDebug() << "Items in surface model: " <<  getItems();
 }
 
 void WebOSSurfaceModel::handleItemChange()
@@ -183,7 +177,7 @@ void WebOSSurfaceModel::handleItemChange()
     PMTRACE_FUNCTION;
     WebOSSurfaceItem* item = static_cast<WebOSSurfaceItem*>(sender());
     QModelIndex index = indexFromItem(item);
-    if(index.isValid()) {
+    if (index.isValid()) {
         if (m_dataDirty) {
             if (index.row() < m_firstDirtyIndex)
                 m_firstDirtyIndex = index.row();
@@ -215,9 +209,8 @@ void WebOSSurfaceModel::surfaceUnmapped(WebOSSurfaceItem *item)
     PMTRACE_FUNCTION;
     Q_ASSERT(item);
     QModelIndex index = indexFromItem(item);
-    if (index.isValid()) {
+    if (index.isValid())
         takeRow(index.row());
-    }
 }
 
 void WebOSSurfaceModel::surfaceMapped(WebOSSurfaceItem *item)
@@ -236,7 +229,6 @@ void WebOSSurfaceModel::surfaceDestroyed(WebOSSurfaceItem *item)
     PMTRACE_FUNCTION;
     Q_ASSERT(item);
     QModelIndex index = indexFromItem(item);
-    if (index.isValid()) {
+    if (index.isValid())
         takeRow(index.row());
-    }
 }

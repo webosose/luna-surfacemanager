@@ -24,7 +24,8 @@
 class WebOSSurfaceItem;
 class WebOSSurfaceItem;
 
-class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceModel: public QAbstractListModel {
+class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceModel: public QAbstractListModel
+{
     Q_OBJECT
 
 public:
@@ -39,7 +40,7 @@ public:
     void clear();
 
     // Hidden from QAbstractListModel
-    QHash<int, QByteArray> roleNames () const override;
+    QHash<int, QByteArray> roleNames() const override;
     bool removeRow(int row, const QModelIndex &parent = QModelIndex());
 
     // Reimplemented from QAbstractListModel
@@ -50,8 +51,6 @@ public:
     WebOSSurfaceItem* surfaceItemForAppId(const QString& appId);
     WebOSSurfaceItem* surfaceItemForIndex(int index);
     WebOSSurfaceItem* getLastRecentItem();
-    // For debug purposes, remove when not needed
-    const QList<WebOSSurfaceItem*>& getItems() const { return m_list; }
 
 public slots:
     void surfaceMapped(WebOSSurfaceItem* surface);
