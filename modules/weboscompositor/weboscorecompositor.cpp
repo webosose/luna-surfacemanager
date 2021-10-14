@@ -344,7 +344,8 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
         if (wmExtension != nullptr)
             wmExtension->setShowIsFullScreen(true);
 
-        m_foreign->registeredWindow();
+        if (m_foreign)
+            m_foreign->registeredWindow();
 
         emit surfaceModelChanged();
         emit windowChanged();
