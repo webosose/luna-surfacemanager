@@ -69,7 +69,8 @@ HEADERS += \
     weboswaylandseat.h \
     webossurface.h \
     compositorextensionfactory.h \
-    unixsignalhandler.h
+    unixsignalhandler.h \
+    updatescheduler.h
 
 SOURCES += \
     weboswindowmodel.cpp \
@@ -89,7 +90,8 @@ SOURCES += \
     weboswaylandseat.cpp \
     webossurface.cpp \
     compositorextensionfactory.cpp \
-    unixsignalhandler.cpp
+    unixsignalhandler.cpp \
+    updatescheduler.cpp
 
 !no_multi_input {
     # Multiple input support

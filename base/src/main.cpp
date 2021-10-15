@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 LG Electronics, Inc.
+// Copyright (c) 2017-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -122,8 +122,6 @@ int main(int argc, char *argv[])
         // Focus the main window
         compositorWindow->requestActivate();
     }
-
-    compositorWindow->setPageFlipNotifier();
 
     // Optional post initialization after the compositor and compositor windows get initialized
     compositor->postInit();

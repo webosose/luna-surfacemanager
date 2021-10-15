@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2021 LG Electronics, Inc.
+// Copyright (c) 2014-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@
 #include <QUrl>
 #include <QQuickItem>
 #include <QPointer>
-#include <QElapsedTimer>
 
 #include <QWaylandQuickOutput>
 
@@ -35,6 +34,7 @@ class QWaylandSeat;
 class WebOSCoreCompositor;
 class WebOSSurfaceItem;
 class WebOSCompositorPluginLoader;
+class UpdateScheduler;
 
 class WEBOS_COMPOSITOR_EXPORT WebOSCompositorWindow : public QQuickView {
 
@@ -80,7 +80,6 @@ public:
     void setCompositor(WebOSCoreCompositor* compositor);
     bool setCompositorMain(const QUrl& main, const QString& importPath = QString());
 
-    virtual void setPageFlipNotifier() {};
     Q_INVOKABLE void showWindow();
 
     int displayId() const { return m_displayId; }
@@ -137,15 +136,14 @@ public:
 
     bool hasSecuredContent();
 
-    void setNextUpdate();
-    void setNextUpdateWithDefaultNotifier();
+    UpdateScheduler *updateScheduler() { return m_updateScheduler; }
+    void initUpdateScheduler();
+
     void deliverUpdateRequest();
     void reportSurfaceDamaged(WebOSSurfaceItem* const item);
+    bool hasPageFlipNotifier() const { return m_hasPageFlipNotifier; }
 
 private:
-    void checkAdaptiveUpdate();
-    void sendFrame();
-
     int stopAppMirroringInternal(WebOSSurfaceItem *source, WebOSSurfaceItem *mirror);
 
 protected:
@@ -179,7 +177,7 @@ signals:
     void clusterSizeChanged();
     void positionInClusterChanged();
 
-    void pageFlipped();
+    void frameProfileUpdated(int sinceUpdateRequest, int flipInterval); //in us
 
 private:
     // classes
@@ -208,10 +206,6 @@ private slots:
     void onOutputGeometryPendingExpired();
     void onAppMirroringItemChanged(WebOSSurfaceItem *oldItem);
     void onQmlError(const QList<QQmlError> &errors);
-    void onBeforeSynchronizing();
-    void onBeforeRendering();
-    void onAfterRendering();
-    void onPageFlipped();
 
 private:
     // variables
@@ -250,20 +244,6 @@ private:
     QSize m_clusterSize;
     QPoint m_positionInCluster;
 
-    qreal m_vsyncInterval = 1.0 / 60 * 1000;
-
-    bool m_adaptiveUpdate = false;
-    QTimer m_updateTimer;
-    bool m_hasUnhandledUpdateRequest = false;
-    int m_updateTimerInterval = 0;
-
-    bool m_adaptiveFrame = false;
-    QElapsedTimer m_sinceSendFrame;
-    QElapsedTimer m_sinceSyncStart;
-    int m_timeSpentForRendering;
-    bool m_waitForFlip = false;
-    QTimer m_frameTimer;
-    int m_frameTimerInterval = 0;
-    QElapsedTimer m_sinceSurfaceDamaged;
+    UpdateScheduler *m_updateScheduler = nullptr;
 };
 #endif // WEBOSCOMPOSITORWINDOW_H

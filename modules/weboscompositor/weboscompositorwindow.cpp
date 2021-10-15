@@ -39,21 +39,9 @@
 #include "weboscompositorpluginloader.h"
 #include "weboscompositorconfig.h"
 #include "weboscompositortracer.h"
+#include "updatescheduler.h"
 
 static int s_displays = 0;
-
-static constexpr int RENDER_FLUCTUATION_BUFFER_TIME = 4;
-static constexpr int STATIC_SWAP_BUFFER_TIME        = 2;
-
-inline __attribute__((always_inline)) static int calculateUpdateTimerInterval(
-    int timeSinceRenderingToSwapBuffer, qreal vsyncInterval, int updateTimerInterval)
-{
-    int nextInterval = vsyncInterval - (timeSinceRenderingToSwapBuffer + RENDER_FLUCTUATION_BUFFER_TIME);
-    nextInterval = nextInterval > 0 ? nextInterval : updateTimerInterval;
-    updateTimerInterval = updateTimerInterval >= nextInterval ?
-        nextInterval : updateTimerInterval + 1;
-    return updateTimerInterval;
-}
 
 WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometryString, QSurfaceFormat *surfaceFormat)
     : QQuickView()
@@ -74,7 +62,6 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
     , m_inputDevice(nullptr)
     , m_mouseGrabberItem(nullptr)
     , m_viewsRoot(nullptr)
-    , m_timeSpentForRendering(0)
 {
     if (screenName.isEmpty()) {
         setScreen(QGuiApplication::primaryScreen());
@@ -165,59 +152,6 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
 
     // Start with cursor invisible
     invalidateCursor();
-
-    // Get VSync interval
-    m_vsyncInterval = 1.0 / screen()->refreshRate() * 1000;
-}
-
-void WebOSCompositorWindow::checkAdaptiveUpdate()
-{
-    static int defaultUpdateInterval = []() {
-        bool ok = false;
-        int customUpdateInterval = qEnvironmentVariableIntValue("QT_QPA_UPDATE_IDLE_TIME", &ok);
-        return ok ? customUpdateInterval : 5;
-    }();
-
-    m_adaptiveUpdate = (qgetenv("WEBOS_COMPOSITOR_ADAPTIVE_UPDATE").toInt() == 1);
-    m_adaptiveFrame = (qgetenv("WEBOS_COMPOSITOR_ADAPTIVE_FRAME_CALLBACK").toInt() == 1);
-
-    // Adaptive frame callback requires adaptive update
-    if (m_adaptiveFrame && !m_adaptiveUpdate)
-        m_adaptiveFrame = false;
-
-    m_output->setAutomaticFrameCallback(!m_adaptiveFrame);
-
-    if (m_adaptiveUpdate) {
-        qInfo() << "Adaptive update interval for window" << this << "vsyncInterval:" << m_vsyncInterval;
-        if (defaultUpdateInterval != 0)
-            qWarning() << "QT_QPA_UPDATE_IDLE_TIME is not 0 but" << defaultUpdateInterval;
-        m_updateTimerInterval = m_vsyncInterval / 2; // changes adaptively per every frame
-        m_updateTimer.setTimerType(Qt::PreciseTimer);
-        m_updateTimer.setSingleShot(true);
-
-        connect(this, &QQuickWindow::beforeSynchronizing, this, &WebOSCompositorWindow::onBeforeSynchronizing);
-        connect(this, &QQuickWindow::beforeRendering, this, &WebOSCompositorWindow::onBeforeRendering);
-        if (!m_hasPageFlipNotifier) {
-            connect(this, &QQuickWindow::afterRendering, this, &WebOSCompositorWindow::onAfterRendering);
-            connect(this, &QQuickWindow::frameSwapped, this, &WebOSCompositorWindow::setNextUpdateWithDefaultNotifier);
-        } else {
-            connect(this, &QQuickWindow::frameSwapped, this, &WebOSCompositorWindow::setNextUpdate);
-        }
-        connect(this, &WebOSCompositorWindow::pageFlipped, this, &WebOSCompositorWindow::onPageFlipped);
-        connect(&m_updateTimer, &QTimer::timeout, this, &WebOSCompositorWindow::deliverUpdateRequest);
-
-        if (m_adaptiveFrame) {
-            qInfo() << "Adaptive frame callback for window" << this;
-            m_frameTimerInterval = m_vsyncInterval / 3; // changes adaptively per every frame
-            m_frameTimer.setTimerType(Qt::PreciseTimer);
-            m_frameTimer.setSingleShot(true);
-            connect(&m_frameTimer, &QTimer::timeout, this, &WebOSCompositorWindow::sendFrame);
-        } else {
-            qInfo() << "Default frame callback for window" << this;
-        }
-    } else {
-        qInfo() << "Default update interval" << defaultUpdateInterval << "for window" << this << "vsyncInterval:" << m_vsyncInterval;
-    }
 }
 
 WebOSCompositorWindow::~WebOSCompositorWindow()
@@ -355,8 +289,6 @@ bool WebOSCompositorWindow::setCompositorMain(const QUrl& main, const QString& i
 
 void WebOSCompositorWindow::showWindow()
 {
-    checkAdaptiveUpdate();
-
     if (!source().isValid() && m_main.isValid()) {
         qInfo() << "Try to load main QML again" << m_main << "for window" << this;
         setSource(m_main);
@@ -853,135 +785,42 @@ bool WebOSCompositorWindow::hasSecuredContent()
     return false;
 }
 
-void WebOSCompositorWindow::onBeforeSynchronizing()
+// Should be called in compositor implementation after having page flip notifier
+void WebOSCompositorWindow::initUpdateScheduler()
 {
-    PMTRACE_FUNCTION;
-    m_sinceSyncStart.start();
+    if (!m_hasPageFlipNotifier)
+        return;
+
+    m_updateScheduler = new UpdateScheduler(this);
 }
 
-void WebOSCompositorWindow::onBeforeRendering()
-{
-    PMTRACE_FUNCTION;
-    m_waitForFlip = true;
-}
-
-void WebOSCompositorWindow::onAfterRendering()
-{
-    PMTRACE_FUNCTION;
-    m_timeSpentForRendering = m_sinceSyncStart.elapsed();
-}
-
-void WebOSCompositorWindow::setNextUpdate()
-{
-    PMTRACE_FUNCTION;
-    int timeSinceRenderingToSwapBuffer = m_sinceSyncStart.elapsed();
-    m_updateTimerInterval =
-        calculateUpdateTimerInterval(timeSinceRenderingToSwapBuffer,
-                                     m_vsyncInterval, m_updateTimerInterval);
-}
-
-void WebOSCompositorWindow::setNextUpdateWithDefaultNotifier()
-{
-    PMTRACE_FUNCTION;
-    // Assume that page flip happens just after the swapbuffer with the constant time
-    int timeSinceRenderingToSwapBuffer = m_timeSpentForRendering + STATIC_SWAP_BUFFER_TIME;
-    m_updateTimerInterval =
-        calculateUpdateTimerInterval(timeSinceRenderingToSwapBuffer,
-                                     m_vsyncInterval, m_updateTimerInterval);
-    emit pageFlipped();
-}
-
-void WebOSCompositorWindow::onPageFlipped()
-{
-    PMTRACE_FUNCTION;
-    m_updateTimer.start(m_updateTimerInterval);
-    m_waitForFlip = false;
-    if (m_adaptiveFrame)
-        m_frameTimer.start(m_frameTimerInterval);
-}
-
+// handle UpdateRequest immediately
 void WebOSCompositorWindow::deliverUpdateRequest()
 {
     PMTRACE_FUNCTION;
-    if (m_adaptiveUpdate) {
-        // Send any unhandled UpdateRequest
-        if (m_hasUnhandledUpdateRequest) {
-            QEvent request(QEvent::UpdateRequest);
-            static_cast<void>(QQuickWindow::event(&request));
-            m_hasUnhandledUpdateRequest = false;
-        }
-    } else {
-        qWarning() << "deliverUpdateRequest is called for" << this << "while adaptiveUpdate is NOT set!";
-    }
+    QEvent request(QEvent::UpdateRequest);
+    static_cast<void>(QQuickWindow::event(&request));
 }
 
-void WebOSCompositorWindow::sendFrame()
-{
-    PMTRACE_FUNCTION;
-    if (m_adaptiveFrame && m_output) {
-        if (m_sinceSendFrame.isValid()) {
-            // No reportSurfaceDamaged called since the last frame.
-            // It means that rendering time on client exceeds the vsync interval.
-            m_frameTimerInterval = 0;
-        }
-        m_sinceSendFrame.start();
-        m_output->sendFrameCallbacks();
-
-        if (m_sinceSurfaceDamaged.isValid()) {
-            qint64 damageToSendFrameInterval = m_sinceSurfaceDamaged.elapsed();
-            if (damageToSendFrameInterval > m_vsyncInterval * 2)
-                qWarning() << "Elapsed since surface damaged until sending a frame callback:" << damageToSendFrameInterval << "ms";
-
-            m_sinceSurfaceDamaged.invalidate();
-        }
-    }
-}
-
+//TODO: consider for multiple items
 void WebOSCompositorWindow::reportSurfaceDamaged(WebOSSurfaceItem* const item)
 {
     Q_UNUSED(item);
-    if (m_adaptiveFrame && m_sinceSendFrame.isValid()) {
-        int nextFrameTime = (m_updateTimerInterval) - (m_sinceSendFrame.elapsed() + RENDER_FLUCTUATION_BUFFER_TIME);
-        nextFrameTime = nextFrameTime < 0 ? 0 : nextFrameTime;
-        // Decrease it immediately or increase it by 1
-        m_frameTimerInterval = nextFrameTime <= m_frameTimerInterval
-            ? nextFrameTime : m_frameTimerInterval + 1;
-        m_sinceSendFrame.invalidate();
-
-        m_sinceSurfaceDamaged.start();
-    }
+    if (m_updateScheduler)
+        m_updateScheduler->surfaceDamaged();
 }
 
 bool WebOSCompositorWindow::event(QEvent *e)
 {
     PMTRACE_FUNCTION;
 
-    // When the remaining time of QTimer is 0, it means that the timer has
-    // expired but is being delayed due to other events and we need to
-    // take actions needed right away.
-    if (m_adaptiveUpdate && m_updateTimer.remainingTime() == 0) {
-        m_updateTimer.stop();
-        deliverUpdateRequest();
-    }
-    if (m_adaptiveFrame && m_frameTimer.remainingTime() == 0) {
-        m_frameTimer.stop();
-        sendFrame();
-    }
+    if (m_updateScheduler)
+        m_updateScheduler->checkTimeout();
 
     switch (e->type()) {
     case QEvent::UpdateRequest:
-        if (m_adaptiveUpdate) {
-            if (m_updateTimer.isActive() || m_waitForFlip) {
-                m_hasUnhandledUpdateRequest = true;
-                // The update timer may not be running in case there was no page flip
-                // since the last update. So start the timer in that case as fallback
-                // with the interval of two vsync cycles considering the worst case.
-                if (!m_updateTimer.isActive())
-                    m_updateTimer.start(m_vsyncInterval * 2);
-                return true;
-            }
-            // First UpdateRequest, just fall through to start sync
-        }
+        if (m_updateScheduler && m_updateScheduler->updateRequested())
+            return true;
         break;
     case QEvent::TabletPress:
     case QEvent::TabletMove:
