@@ -57,7 +57,7 @@ private:
     QMap<struct wl_client *, int> m_versionMap;
 };
 
-class WebOSShellSurface : public QObject {
+class WEBOS_COMPOSITOR_EXPORT WebOSShellSurface : public QObject {
 
     Q_OBJECT
 
