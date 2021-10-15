@@ -361,6 +361,7 @@ private:
     bool m_respawned;
     QRect m_outputGeometry;
     QMap<QString, QVector<WebOSCompositorWindow *>> m_clusters;
+    bool m_registered;
 };
 
 #endif // WEBOSCORECOMPOSITOR_H

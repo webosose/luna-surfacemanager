@@ -222,6 +222,7 @@ WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *
     , m_autoStart(true)
     , m_loaded(false)
     , m_respawned(false)
+    , m_registered(false)
 {
     setSocketName(socketName);
 
@@ -291,8 +292,6 @@ void WebOSCoreCompositor::create()
 
 void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
 {
-    static bool firstRegister = true;
-
     QWaylandQuickOutput *output = new QWaylandQuickOutput(this, window);
     if (!output) {
         qCritical() << "Failed to create QWaylandOutput for window" << window << name;
@@ -313,8 +312,8 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
     //TODO: check is it ok just to use primary window to handle activeFocusItem
     connect(window, &QQuickWindow::activeFocusItemChanged, this, &WebOSCoreCompositor::handleActiveFocusItemChanged);
 
-    if (firstRegister) {
-        firstRegister = false;
+    if (!m_registered) {
+        m_registered = true;
 
         setDefaultOutput(output);
 
