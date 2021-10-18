@@ -17,7 +17,6 @@
 pragma Singleton
 
 import QtQuick 2.4
-import AudioService 1.0
 import WebOSServices 1.0
 
 QtObject {
@@ -134,15 +133,5 @@ QtObject {
         }
     }
 
-    readonly property AudioService audioService: AudioService {
-        appId: root.appId + ".audio"
-    }
-
-    Component.onCompleted: {
-        console.info("Constructed a singleton type:", root);
-        console.log("Initial volume: " + audioService.volume +
-                    ", scenario: " + audioService.scenario +
-                    ", muted: " + audioService.muted +
-                    ", disabled: " + audioService.disabled);
-    }
+    Component.onCompleted: console.info("Constructed a singleton type:", root);
 }
