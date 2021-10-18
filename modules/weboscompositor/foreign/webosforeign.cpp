@@ -413,9 +413,10 @@ void WebOSExported::updateWindowState()
 
 void WebOSExported::updateVisible()
 {
-    if (!m_exportedItem)
-        qWarning() << "WebOSSurfaceItem for " << m_windowId << " is  already destroyed ";
-
+    if (!m_exportedItem) {
+        qWarning() << "QWaylandQuickItem for " << m_windowId << " is  already destroyed ";
+        return;
+    }
     if (!m_contextId.isNull()) {
         if (m_exportedItem->isVisible()) {
             qInfo() << "exported item's visible is changed to true on " << m_windowId;
