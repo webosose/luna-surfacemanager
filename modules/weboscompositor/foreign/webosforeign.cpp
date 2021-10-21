@@ -254,6 +254,7 @@ WebOSExported::WebOSExported(
     , m_exportedItem(new QQuickItem(surfaceItem))
     , m_exportedType(exportedType)
     , m_coverVideo(false)
+    , m_activeRegion(QRect(0,0,0,0))
 {
     qInfo() << this << "is created";
     m_exportedItem->setClip(true);
@@ -277,9 +278,10 @@ WebOSExported::WebOSExported(
     connect(m_surfaceItem, &WebOSSurfaceItem::itemAboutToBeDestroyed, this, &WebOSExported::onSurfaceDestroyed);
     connect(m_surfaceItem, &WebOSSurfaceItem::windowChanged, this, &WebOSExported::updateCompositorWindow);
     connect(m_surfaceItem, &WebOSSurfaceItem::coverStateChanged, this, &WebOSExported::updateCoverState);
+    connect(m_surfaceItem, &WebOSSurfaceItem::activeRegionChanged, this, &WebOSExported::updateActiveRegion);
 
     updateCoverState();
-
+    updateActiveRegion();
     calculateAll();
 
 #if 0 // DEBUG
@@ -432,7 +434,23 @@ void WebOSExported::updateCoverState()
         m_coverVideo = coverVideo;
         calculateVideoDispRatio();
     }
+}
 
+void WebOSExported::updateActiveRegion()
+{
+    if (!m_surfaceItem) {
+        qWarning() << "WebOSSurfaceItem for " << m_windowId << "is already destroyed";
+        return;
+    }
+
+    QRect activeRegion = m_surfaceItem->activeRegion();
+
+    if (m_activeRegion != activeRegion) {
+        qInfo() << "active region is changed = " << activeRegion << " for WebOSExported (" << m_windowId << ")";
+        m_activeRegion = activeRegion;
+        if (!m_contextId.isNull())
+            updateVideoWindowList(m_contextId, m_videoDisplayRect, false);
+    }
 }
 
 void WebOSExported::updateVisible()
@@ -479,15 +497,25 @@ void WebOSExported::updateVideoWindowList(QString contextId, QRect videoDisplayR
     if (needRemove || !m_exportedItem) {
         VideoWindowInformer::instance()->removeVideoWindowList(contextId);
     } else {
-         if(!m_contextId.isNull() && m_exportedItem->isVisible() && m_surfaceItem) {
-             QString appId = m_surfaceItem ? m_surfaceItem->appId() : "";
-             QRect appWindow = QRect(
-                m_surfaceItem->x(),
-                m_surfaceItem->y(),
-                m_surfaceItem->width()*m_surfaceItem->scale(),
-                m_surfaceItem->height()*m_surfaceItem->scale());
+        if(!m_contextId.isNull() && m_exportedItem->isVisible() && m_surfaceItem) {
+            QString appId = m_surfaceItem ? m_surfaceItem->appId() : "";
+            qreal scaleFactor = m_surfaceItem->scale();
+            QRect appWindow;
+            if (m_activeRegion.isValid()) {
+                appWindow = QRect(
+                    m_surfaceItem->x() + m_activeRegion.x()*scaleFactor,
+                    m_surfaceItem->y() + m_activeRegion.y()*scaleFactor,
+                    m_activeRegion.width()*scaleFactor,
+                    m_activeRegion.height()*scaleFactor);
+            } else {
+                appWindow = QRect(
+                    m_surfaceItem->x(),
+                    m_surfaceItem->y(),
+                    m_surfaceItem->width()*scaleFactor,
+                    m_surfaceItem->height()*scaleFactor);
+            }
             VideoWindowInformer::instance()->insertVideoWindowList(contextId, videoDisplayRect, m_windowId, appId, appWindow);
-         }
+        }
     }
 }
 

@@ -84,6 +84,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandQuickItem
     Q_PROPERTY(QString itemStateReason READ itemStateReason NOTIFY itemStateReasonChanged)
     Q_PROPERTY(QVariantMap closePolicy READ closePolicy WRITE setClosePolicy NOTIFY closePolicyChanged RESET unsetClosePolicy)
     Q_PROPERTY(CoverState coverState READ coverState WRITE setCoverState NOTIFY coverStateChanged)
+    Q_PROPERTY(QRect activeRegion READ activeRegion WRITE setActiveRegion NOTIFY activeRegionChanged)
 
     Q_PROPERTY(Qt::WindowState state READ state WRITE setState NOTIFY stateChanged)
     Q_PROPERTY(bool notifyPositionToClient READ notifyPositionToClient WRITE setNotifyPositionToClient NOTIFY notifyPositionToClientChanged)
@@ -322,6 +323,16 @@ public:
     void setCoverState(CoverState coverState);
 
     /*!
+     * Convenience function to return the active region for this surface.
+     */
+    QRect activeRegion() { return m_activeRegion; }
+
+    /*!
+     * Function to set active region for this surface.
+     */
+    void setActiveRegion(const QRect & activeRegion);
+
+    /*!
      * Convenience function to return the _WEBOS_LAUNCH_PREV_APP_AFTER_CLOSING for this surface.
      */
     bool launchLastApp() { return m_launchLastApp; }
@@ -553,6 +564,7 @@ signals:
     void closePolicyChanged();
     void positionUpdated();
     void coverStateChanged();
+    void activeRegionChanged();
 
     void surfaceGroupChanged();
 
@@ -641,6 +653,7 @@ private:
 
     QVariantMap m_closePolicy;
     CoverState m_coverState;
+    QRect m_activeRegion;
 
     int m_cursorHotSpotX = -1;
     int m_cursorHotSpotY = -1;

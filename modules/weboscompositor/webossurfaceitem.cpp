@@ -89,6 +89,7 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
         , m_itemStateReason(QString())
         , m_launchLastApp(false)
         , m_coverState(CoverStateNormal)
+        , m_activeRegion(QRect(0,0,0,0))
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
     setAcceptTouchEvents(true);
@@ -1081,6 +1082,15 @@ void WebOSSurfaceItem::setCoverState(CoverState coverState)
         m_coverState = coverState;
 
         emit coverStateChanged();
+    }
+}
+
+void WebOSSurfaceItem::setActiveRegion(const QRect & activeRegion)
+{
+    if (m_activeRegion != activeRegion) {
+        m_activeRegion = activeRegion;
+
+        emit activeRegionChanged();
     }
 }
 
