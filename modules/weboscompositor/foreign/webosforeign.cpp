@@ -255,6 +255,7 @@ WebOSExported::WebOSExported(
     , m_exportedType(exportedType)
     , m_coverVideo(false)
     , m_activeRegion(QRect(0,0,0,0))
+    , m_originalRequestedRegion(QRect(0,0,0,0))
 {
     qInfo() << this << "is created";
     m_exportedItem->setClip(true);
@@ -448,8 +449,17 @@ void WebOSExported::updateActiveRegion()
     if (m_activeRegion != activeRegion) {
         qInfo() << "active region is changed = " << activeRegion << " for WebOSExported (" << m_windowId << ")";
         m_activeRegion = activeRegion;
-        if (!m_contextId.isNull())
-            updateVideoWindowList(m_contextId, m_videoDisplayRect, false);
+        updateDestinationRegionByActiveRegion();
+
+        setDestinationRect();
+        setVideoDisplayRect();
+
+        qInfo() << "exported requested destination region : " << m_requestedRegion << " on " << m_windowId;
+        qInfo() << "exported item region : " << m_destinationRect << ", video display region : " << m_videoDisplayRect;
+        qInfo() << "exported item ratio : " << m_exportedWindowRatio << ", video display ratio :  " << m_videoDispRatio;
+
+        setVideoDisplayWindow();
+        updateExportedItemSize();
     }
 }
 
@@ -570,6 +580,48 @@ void WebOSExported::setVideoDisplayWindow()
         updateVideoWindowList(m_contextId, videoDisplayRect, false);
 }
 
+void WebOSExported::updateDestinationRegionByActiveRegion()
+{
+    bool isSetRegion = false;
+    if (m_activeRegion.isValid()) {
+        if (m_originalRequestedRegion.x() < m_activeRegion.x() || m_originalRequestedRegion.y() < m_activeRegion.y() ||
+                m_originalRequestedRegion.x() + m_originalRequestedRegion.width() > m_activeRegion.x() + m_activeRegion.width() ||
+	            m_originalRequestedRegion.y() + m_originalRequestedRegion.height() > m_activeRegion.y() + m_activeRegion.height()) {
+
+                    if (m_originalRequestedRegion.isValid()) {
+                        double scale = qMin((double)(m_activeRegion.width()) / (double)(m_originalRequestedRegion.width()), (double)(m_activeRegion.height()) / (double)(m_originalRequestedRegion.height()));
+                        qInfo() << "Requested region is out of bounds of active region. scale = " << scale;
+
+                        int x = (int)(m_activeRegion.x() + (m_activeRegion.width() - m_originalRequestedRegion.width()*scale)*0.5);
+                        int y = (int)(m_activeRegion.y() + (m_activeRegion.height() - m_originalRequestedRegion.height()*scale)*0.5);
+                        int width = (int)(m_originalRequestedRegion.width()*scale);
+                        int height = (int)(m_originalRequestedRegion.height()*scale);
+                        m_requestedRegion = QRect(x, y, width, height);
+                        isSetRegion = true;
+                    }
+                }
+	}
+
+    if (isSetRegion == false)
+        m_requestedRegion = m_originalRequestedRegion;
+}
+
+void WebOSExported::setDestinationRect() {
+    m_destinationRect = QRect(
+        (int) (m_requestedRegion.x()*m_exportedWindowRatio),
+        (int) (m_requestedRegion.y()*m_exportedWindowRatio),
+        (int) (m_requestedRegion.width()*m_exportedWindowRatio),
+        (int) (m_requestedRegion.height()*m_exportedWindowRatio));
+}
+
+void WebOSExported::setVideoDisplayRect() {
+    m_videoDisplayRect = QRect(
+        (int) (m_surfaceItem->x() + m_requestedRegion.x()*m_videoDispRatio),
+        (int) (m_surfaceItem->y() + m_requestedRegion.y()*m_videoDispRatio),
+        (int) (m_requestedRegion.width()*m_videoDispRatio),
+        (int) (m_requestedRegion.height()*m_videoDispRatio));
+}
+
 void WebOSExported::setDestinationRegion(struct::wl_resource *destination_region)
 {
     if (destination_region) {
@@ -577,38 +629,27 @@ void WebOSExported::setDestinationRegion(struct::wl_resource *destination_region
             QtWayland::Region::fromResource(
                 destination_region)->region();
         if (qwlDestinationRegion.boundingRect().isValid()) {
-            m_requestedRegion = QRect(
+            m_originalRequestedRegion = QRect(
                 qwlDestinationRegion.boundingRect().x(),
                 qwlDestinationRegion.boundingRect().y(),
                 qwlDestinationRegion.boundingRect().width(),
                 qwlDestinationRegion.boundingRect().height());
         } else {
-            m_requestedRegion = QRect(0, 0, 0, 0);
+            m_originalRequestedRegion = QRect(0, 0, 0, 0);
         }
 
-        m_destinationRect = QRect(
-            (int) (m_requestedRegion.x()*m_exportedWindowRatio),
-            (int) (m_requestedRegion.y()*m_exportedWindowRatio),
-            (int) (m_requestedRegion.width()*m_exportedWindowRatio),
-            (int) (m_requestedRegion.height()*m_exportedWindowRatio));
+        updateDestinationRegionByActiveRegion();
+        setDestinationRect();
+        setVideoDisplayRect();
 
-        QPointF offset(0.0, 0.0);
+        qInfo() << "exported original requested destination region : " << m_originalRequestedRegion << " on " << m_windowId;
+        qInfo() << "exported requested destination region : " << m_requestedRegion << " on " << m_windowId;
+        qInfo() << "exported item region : " << m_destinationRect << ", video display region : " << m_videoDisplayRect;
+        qInfo() << "exported item ratio : " << m_exportedWindowRatio << ", video display ratio :  " << m_videoDispRatio;
 
-        if (m_surfaceItem && m_compositorWindow)
-            offset = m_surfaceItem->mapToItem(m_compositorWindow->viewsRoot(), offset);
-
-        m_videoDisplayRect = QRect(
-            (int) (m_requestedRegion.x()*m_videoDispRatio + offset.x()),
-            (int) (m_requestedRegion.y()*m_videoDispRatio + offset.y()),
-            (int) (m_requestedRegion.width()*m_videoDispRatio),
-            (int) (m_requestedRegion.height()*m_videoDispRatio));
-
-        qInfo() << "exported_window destination region:" << m_destinationRect << "on" << m_windowId;
-        qInfo() << "video display output region:" << m_videoDisplayRect << "at" << offset << "on" << m_windowId;
+        setVideoDisplayWindow();
+        updateExportedItemSize();
     }
-
-    setVideoDisplayWindow();
-    updateExportedItemSize();
 }
 
 void WebOSExported::updateCompositorWindow(QQuickWindow *window)

@@ -101,6 +101,9 @@ public:
     void setVideoDisplayWindow();
     void startImportedMirroring(WebOSSurfaceItem *parent);
     bool hasSecuredContent();
+    void updateDestinationRegionByActiveRegion();
+    void setDestinationRect();
+    void setVideoDisplayRect();
 
     WebOSSurfaceItem *surfaceItem() const { return m_surfaceItem; }
 
@@ -145,6 +148,7 @@ protected:
     QRect m_originalInputRect;
     QRect m_sourceRect;
     QRect m_destinationRect;
+    QRect m_originalRequestedRegion;
     QRect m_requestedRegion;
     QRect m_videoDisplayRect;
     QString m_windowId;
