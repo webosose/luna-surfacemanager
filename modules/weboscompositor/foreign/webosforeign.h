@@ -173,7 +173,6 @@ public:
     void detach();
     void setSurfaceItemSize();
     void updateExported(WebOSExported * exported);
-    void updateExportedItem(QQuickItem * exportedItem);
     void updateGeometry();
 
 protected:

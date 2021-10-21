@@ -461,7 +461,8 @@ void WebOSExported::onSurfaceDestroyed()
 
     if (m_exportedItem) {
         foreach(WebOSImported* imported, m_importList) {
-            imported->updateExportedItem(nullptr);
+            if (imported)
+                imported->childSurfaceDestroyed();
         }
         delete m_exportedItem;
         m_exportedItem = nullptr;
@@ -985,22 +986,6 @@ void WebOSImported::updateExported(WebOSExported * exported)
         detach();
 
     m_exported = exported;
-}
-
-void WebOSImported::updateExportedItem(QQuickItem * exportedItem)
-{
-    qInfo() << "WebOSImported::updateExportedItem is called " << this;
-
-    if (!m_exported)
-        return;
-
-    if (m_exported->m_exportedItem == exportedItem)
-        return;
-
-    if (exportedItem == nullptr)
-        destroyChildDisplay();
-
-     m_exported->m_exportedItem = exportedItem;
 }
 
 void WebOSImported::webos_imported_attach_punchthrough(Resource* r)
