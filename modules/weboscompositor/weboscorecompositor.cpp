@@ -262,6 +262,9 @@ WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *
 
 WebOSCoreCompositor::~WebOSCoreCompositor()
 {
+    QCoreApplication::instance()->removeEventFilter(m_eventPreprocessor);
+    delete m_eventPreprocessor;
+    delete m_wlShell;
 }
 
 void WebOSCoreCompositor::insertToWindows(WebOSCompositorWindow *window)
