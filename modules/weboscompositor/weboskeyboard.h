@@ -16,11 +16,12 @@
 #ifndef __WEBOS_KEYBOARD_H__
 #define __WEBOS_KEYBOARD_H__
 
-#include <QWaylandKeyboard>
-#include <QtWaylandCompositor/private/qwaylandkeyboard_p.h>
+#include <WebOSCoreCompositor/weboscompositorexport.h>
 
-class WebOSKeyboard;
+#include <QWaylandKeyboard>
+
 class QWaylandSurface;
+class QWaylandDestroyListener;
 
 struct KeyboardGrabber
 {
@@ -34,12 +35,13 @@ struct KeyboardGrabber
 };
 
 
-class WebOSKeyboard: public QWaylandKeyboard
+class WEBOS_COMPOSITOR_EXPORT WebOSKeyboard: public QWaylandKeyboard
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(QWaylandKeyboard)
 public:
     WebOSKeyboard(QWaylandSeat *seat);
+    ~WebOSKeyboard() override;
 
     void setFocus(QWaylandSurface *surface) override;
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
@@ -51,7 +53,7 @@ public:
 #endif
     void addClient(QWaylandClient *client, uint32_t id, uint32_t version) override;
 
-    void updateModifierState(uint code, uint32_t state, bool repeat);
+    virtual void updateModifierState(uint code, uint32_t state, bool repeat);
 
     void startGrab(KeyboardGrabber *grab);
     void endGrab();
@@ -63,10 +65,8 @@ private:
 
 private:
     KeyboardGrabber* m_grab = nullptr;
-    QtWaylandServer::wl_keyboard::Resource* m_grabResource = nullptr;
-
     QWaylandSurface *m_pendingFocus = nullptr;
-    QWaylandDestroyListener m_pendingFocusDestroyListener;
+    QWaylandDestroyListener* m_pendingFocusDestroyListener = nullptr;
 
     uint32_t modsDepressed = 0;
     uint32_t modsLatched = 0;

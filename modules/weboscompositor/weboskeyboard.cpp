@@ -15,11 +15,13 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "weboskeyboard.h"
 #include <QWaylandCompositor>
+#include <QtWaylandCompositor/private/qwaylandkeyboard_p.h>
 
 WebOSKeyboard::WebOSKeyboard(QWaylandSeat *seat)
     : QWaylandKeyboard(seat)
 {
-    connect(&m_pendingFocusDestroyListener, &QWaylandDestroyListener::fired, this, &WebOSKeyboard::pendingFocusDestroyed);
+    m_pendingFocusDestroyListener = new QWaylandDestroyListener();
+    connect(m_pendingFocusDestroyListener, &QWaylandDestroyListener::fired, this, &WebOSKeyboard::pendingFocusDestroyed);
 
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
     // In webOS, auto repeat key events are supposed to be handled by input drivers.
@@ -27,14 +29,19 @@ WebOSKeyboard::WebOSKeyboard(QWaylandSeat *seat)
 #endif
 }
 
+WebOSKeyboard::~WebOSKeyboard()
+{
+    delete m_pendingFocusDestroyListener;
+}
+
 void WebOSKeyboard::setFocus(QWaylandSurface *surface)
 {
     if (m_pendingFocus != surface) {
         m_pendingFocus = surface;
-        m_pendingFocusDestroyListener.reset();
+        m_pendingFocusDestroyListener->reset();
 
         if (surface)
-            m_pendingFocusDestroyListener.listenForDestruction(surface->resource());
+            m_pendingFocusDestroyListener->listenForDestruction(surface->resource());
     }
 
     if (m_grab)
@@ -156,7 +163,7 @@ KeyboardGrabber *WebOSKeyboard::currentGrab() const
 void WebOSKeyboard::pendingFocusDestroyed(void *data)
 {
     Q_UNUSED(data)
-    m_pendingFocusDestroyListener.reset();
+    m_pendingFocusDestroyListener->reset();
     m_pendingFocus = nullptr;
 }
 
