@@ -353,15 +353,12 @@ void WebOSExported::calculateVideoDispRatio()
         qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->size() << "m_videoDispRatio:" << m_videoDispRatio;
 #endif
         qInfo() << "Item scale:" << m_surfaceItem->scale() << "item offset:" << offset;
-        if (m_requestedRegion.isValid() && m_videoDisplayRect.isValid()) {
-            m_videoDisplayRect.setX((int) (m_requestedRegion.x()*m_videoDispRatio + offset.x()));
-            m_videoDisplayRect.setY((int) (m_requestedRegion.y()*m_videoDispRatio + offset.y()));
-            m_videoDisplayRect.setWidth((int) (m_requestedRegion.width()*m_videoDispRatio));
-            m_videoDisplayRect.setHeight((int) (m_requestedRegion.height()*m_videoDispRatio));
-
+        if (m_requestedRegion.isValid()) {
+            setVideoDisplayRect();
             qInfo() << "Calculated video display output region:" << m_videoDisplayRect;
-
             setVideoDisplayWindow();
+        } else {
+           qWarning() << "Requested video region is not valid";
         }
     }
 }
@@ -615,11 +612,20 @@ void WebOSExported::setDestinationRect() {
 }
 
 void WebOSExported::setVideoDisplayRect() {
-    m_videoDisplayRect = QRect(
-        (int) (m_surfaceItem->x() + m_requestedRegion.x()*m_videoDispRatio),
-        (int) (m_surfaceItem->y() + m_requestedRegion.y()*m_videoDispRatio),
-        (int) (m_requestedRegion.width()*m_videoDispRatio),
-        (int) (m_requestedRegion.height()*m_videoDispRatio));
+
+    if (m_activeRegion.isValid()) {
+        m_videoDisplayRect = QRect(
+            round(m_surfaceItem->x() + m_requestedRegion.x()*m_videoDispRatio),
+            round(m_surfaceItem->y() + m_requestedRegion.y()*m_videoDispRatio),
+            round(m_requestedRegion.width()*m_videoDispRatio),
+            round(m_requestedRegion.height()*m_videoDispRatio));
+    } else {
+        m_videoDisplayRect = QRect(
+            (int) (m_surfaceItem->x() + m_requestedRegion.x()*m_videoDispRatio),
+            (int) (m_surfaceItem->y() + m_requestedRegion.y()*m_videoDispRatio),
+            (int) (m_requestedRegion.width()*m_videoDispRatio),
+            (int) (m_requestedRegion.height()*m_videoDispRatio));
+    }
 }
 
 void WebOSExported::setDestinationRegion(struct::wl_resource *destination_region)
