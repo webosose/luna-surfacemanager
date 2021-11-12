@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 LG Electronics, Inc.
+// Copyright (c) 2017-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -103,8 +103,8 @@ QtObject {
             }
         }
 
-        onApplicationListChanged: {
-            var res = JSON.parse(applicationList);
+        onJsonApplicationListChanged: {
+            var res = jsonApplicationList;
             if (res.apps) {
                 var newList = [];
                 // Make a hash table by appId

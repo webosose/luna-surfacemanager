@@ -40,7 +40,7 @@ FocusScope {
             Layout.preferredHeight: (parent.height - parent.spacing * 2) / 4
             Layout.fillWidth: true
             font.pixelSize: 25
-            text: "1) ApplicationService: applicationList\n" + root.sessionId + "\n" + JSON.parse(applicationService.applicationList).apps.map((e) => e.id).slice(0, 10).join(", ") + " ..."
+            text: "1) ApplicationService: applicationList\n" + root.sessionId + "\n" + applicationService.jsonApplicationList.apps.map((e) => e.id).slice(0, 10).join(", ") + " ..."
         }
 
         Text {
