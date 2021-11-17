@@ -144,3 +144,10 @@ void WebOSCompositorConfig::dump() const
     qInfo() << "exitOnQmlWarn:" << m_exitOnQmlWarn;
     qInfo() << "=== WebOSCompositorConfig END   ===";
 }
+
+void WebOSCompositorConfig::resetInstance()
+{
+    if (s_instance)
+        delete s_instance;
+    s_instance = nullptr;
+}

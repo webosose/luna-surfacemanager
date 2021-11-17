@@ -296,6 +296,11 @@ bool WebOSCompositorWindow::parseGeometryString(const QString string, QRect &geo
     return false;
 }
 
+void WebOSCompositorWindow::resetDisplayCount()
+{
+    s_displays = 0;
+}
+
 void WebOSCompositorWindow::setCompositor(WebOSCoreCompositor* compositor)
 {
     Q_ASSERT(!m_compositor);

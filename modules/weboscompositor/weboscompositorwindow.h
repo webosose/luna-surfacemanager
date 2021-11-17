@@ -74,6 +74,8 @@ public:
 
     static QList<WebOSCompositorWindow *> initializeExtraWindows(WebOSCoreCompositor* compositor, const int count, WebOSCompositorPluginLoader *pluginLoader = nullptr);
     static bool parseGeometryString(const QString string, QRect &geometry, int &rotation, double &ratio);
+    // Testing purpose only
+    static void resetDisplayCount();
 
     void setCompositor(WebOSCoreCompositor* compositor);
     bool setCompositorMain(const QUrl& main, const QString& importPath = QString());
@@ -148,6 +150,7 @@ private:
 protected:
     virtual bool event(QEvent *) override;
     bool m_hasPageFlipNotifier = false;
+    QString m_displayName;
 
     /* QQuickWindow does not support tablet events yet, so we implement it here.
      * WebOSCompositorWindow should deliver tablet event to a proper item(WebOSSurfaceItem)
@@ -214,7 +217,6 @@ private:
     WebOSCoreCompositor* m_compositor;
 
     int m_displayId;
-    QString m_displayName;
 
     bool m_accessible = false;
 
