@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2020 LG Electronics, Inc.
+// Copyright (c) 2013-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -45,15 +45,17 @@ WebOSInputManager::WebOSInputManager(WebOSCoreCompositor* compositor)
     , m_nativeInterface(QGuiApplication::platformNativeInterface())
 {
     connect(m_compositor, SIGNAL(cursorVisibleChanged()), this, SLOT(advertiseCursorVisibility()));
-    getDeviceInfoFunc = (void(*)(uint32_t, QString&, uint32_t*, uint32_t*))
-                        m_nativeInterface->nativeResourceForScreen("getDeviceInfoFunc",
-                        m_compositor->window()->screen());
-    setGrabStatusFunc = (void(*)(uint32_t, bool))
-                        m_nativeInterface->nativeResourceForScreen("setGrabStatusFunc",
-                        m_compositor->window()->screen());
-    setCursorVisibilityFunc = (void(*)(QScreen*, bool))
-                        m_nativeInterface->nativeResourceForScreen("setCursorVisibilityFunc",
-                        m_compositor->window()->screen());
+    if (m_nativeInterface) {
+        getDeviceInfoFunc = (void(*)(uint32_t, QString&, uint32_t*, uint32_t*))
+                            m_nativeInterface->nativeResourceForScreen("getDeviceInfoFunc",
+                            m_compositor->window()->screen());
+        setGrabStatusFunc = (void(*)(uint32_t, bool))
+                            m_nativeInterface->nativeResourceForScreen("setGrabStatusFunc",
+                            m_compositor->window()->screen());
+        setCursorVisibilityFunc = (void(*)(QScreen*, bool))
+                            m_nativeInterface->nativeResourceForScreen("setCursorVisibilityFunc",
+                            m_compositor->window()->screen());
+    }
 }
 
 WebOSInputDevice* WebOSInputManager::findWebOSInputDevice(struct ::wl_resource *seatWl)
