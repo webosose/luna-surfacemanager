@@ -684,7 +684,7 @@ void WebOSCoreCompositor::surfaceCreated(QWaylandSurface *surface) {
 
     /* Ensure that WebOSSurfaceItem is created after surfaceDestroyed is connected.
        Refer to upper comment about life cycle of surface and surface item. */
-    WebOSSurfaceItem *item = new WebOSSurfaceItem(this, static_cast<QWaylandQuickSurface *>(surface));
+    WebOSSurfaceItem *item = createSurfaceItem(static_cast<QWaylandQuickSurface *>(surface));
 
     connect(surface, &QWaylandSurface::hasContentChanged, [this, surface, item] {
         if (surface->hasContent()) {
@@ -1461,3 +1461,7 @@ void WebOSCoreCompositor::unregisterSeat(QWaylandSeat *seat)
     d->seats.removeOne(seat);
 }
 
+WebOSSurfaceItem* WebOSCoreCompositor::createSurfaceItem(QWaylandQuickSurface *surface)
+{
+    return new WebOSSurfaceItem(this, surface);
+}

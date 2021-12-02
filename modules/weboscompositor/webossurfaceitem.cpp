@@ -1042,6 +1042,7 @@ void WebOSSurfaceItem::updateScreenPosition()
         if (newPos != m_position) {
             m_shellSurface->setPosition(newPos);
             m_position = newPos;
+            emit positionUpdated();
         }
     }
 }

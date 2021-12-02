@@ -532,6 +532,7 @@ signals:
     void launchRequiredChanged();
     void itemStateReasonChanged();
     void closePolicyChanged();
+    void positionUpdated();
 
     void surfaceGroupChanged();
 
