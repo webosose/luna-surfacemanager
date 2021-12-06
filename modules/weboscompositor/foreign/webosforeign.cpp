@@ -355,7 +355,6 @@ void WebOSExported::updateDisplayPosition(bool forceUpdate)
 
     if (globalPosition != m_surfaceGlobalPosition || forceUpdate) {
         qInfo() << "globalPosition : " << globalPosition  << ", previous position : " << m_surfaceGlobalPosition << ", forceUpdate : " << forceUpdate << " on " << m_windowId;
-        m_surfaceGlobalPosition = globalPosition;
         calculateVideoDispRatio();
     }
 }
@@ -374,6 +373,7 @@ void WebOSExported::calculateVideoDispRatio()
     }
 
     QRect outputGeometry = m_compositorWindow->outputGeometry();
+    m_surfaceGlobalPosition = m_surfaceItem->mapToItem(m_compositorWindow->viewsRoot(), QPointF(0.0, 0.0));
 
     if (outputGeometry.isValid() && m_surfaceItem->surface()) {
         //TODO: m_videoDispRatio will be replaced by m_surfaceItem->scale();
