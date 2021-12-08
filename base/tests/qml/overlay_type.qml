@@ -3,17 +3,19 @@ import Eos.Window 0.1
 
 WebOSWindow {
     id: root
-    title: "WEBOS WINDOW TYPE - POPUP"
-    width: 500
-    height: 500
+    title: "WEBOS WINDOW TYPE - OVERLAY"
+    width: 1920
+    height: 1080
     visible: true
     color: "transparent"
-    windowType: "_WEBOS_WINDOW_TYPE_POPUP"
+    windowType: "_WEBOS_WINDOW_TYPE_OVERLAY"
     displayAffinity: params["displayAffinity"]
 
     Rectangle {
-        anchors.fill: parent
-        color: "blue"
+        color: "green"
+        anchors.left: parent.left
+        width: parent.width/2
+        height: 1080
         opacity: 0.5
 
         Text {

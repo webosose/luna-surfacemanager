@@ -3,7 +3,7 @@ import Eos.Window 0.1
 
 WebOSWindow {
     id: root
-    title: "Systemui Type"
+    title: "WEBOS WINDOW TYPE - SYSTEM_UI"
     width: 600
     height: 600
     visible: true
@@ -21,7 +21,7 @@ WebOSWindow {
 
         Text {
             anchors.centerIn: parent
-            text: "WEBOS WINDOW TYPE - SYSTEM_UI"
+            text: root.title
             font.pixelSize: 32
             color: "red"
             Component.onCompleted: forceActiveFocus();
