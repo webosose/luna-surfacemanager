@@ -457,7 +457,7 @@ public:
     bool imported() { return m_imported; }
     void setImported(bool imported) { m_imported = imported; }
 
-    bool hasSecuredContent();
+    virtual bool hasSecuredContent();
 
     QString addon() const;
     Q_INVOKABLE void setAddonStatus(AddonStatus addonStatus);
