@@ -15,7 +15,24 @@ WebOSWindow {
         anchors.fill: parent
 
         MouseArea {
+            id: mouseArea
             anchors.fill: parent
+            hoverEnabled: true
+            onEntered: () => {
+                text3.text = "onEntered";
+            }
+            onExited: () => {
+                text3.text = "onExited";
+            }
+            onPressed: (mouse) => {
+                text4.text = "onPressed";
+            }
+            onReleased: (mouse) => {
+                text4.text = "onReleased";
+            }
+            onPositionChanged: (mouse) => {
+                text5.text = "X = " + mouse.x + ", Y = " + mouseY
+            }
             onClicked: (mouse) => {
                 if (Qt.colorEqual(rect.color, "red"))
                     rect.color = "green";
@@ -43,6 +60,27 @@ WebOSWindow {
             Keys.onPressed: (event) => {
                 text = "KEY: " + event.key;
             }
+        }
+
+        Text {
+            id: text3
+            anchors.centerIn: parent
+            anchors.verticalCenterOffset: 100
+            font.pixelSize: 50
+        }
+
+        Text {
+            id: text4
+            anchors.centerIn: parent
+            anchors.verticalCenterOffset: 150
+            font.pixelSize: 50
+        }
+
+        Text {
+            id: text5
+            anchors.centerIn: parent
+            anchors.verticalCenterOffset: 200
+            font.pixelSize: 50
         }
     }
 }
