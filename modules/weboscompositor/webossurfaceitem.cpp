@@ -542,7 +542,12 @@ void WebOSSurfaceItem::hoverEnterEvent(QHoverEvent *event)
         }
     }
     m_compositor->notifyPointerEnteredSurface(surface());
-    QWaylandQuickItem::hoverEnterEvent(event);
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    WebOSHoverEvent e(event->type(), event->position(), event->oldPos(), event->modifiers(), window());
+#else
+    WebOSHoverEvent e(event->type(), event->pos(), event->oldPos(), event->modifiers(), window());
+#endif
+    QWaylandQuickItem::hoverEnterEvent(&e);
 }
 
 void WebOSSurfaceItem::hoverLeaveEvent(QHoverEvent *event)
@@ -569,7 +574,12 @@ void WebOSSurfaceItem::hoverLeaveEvent(QHoverEvent *event)
 #endif
     }
     m_compositor->notifyPointerLeavedSurface(surface());
-    QWaylandQuickItem::hoverLeaveEvent(event);
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    WebOSHoverEvent e(event->type(), event->position(), event->oldPos(), event->modifiers(), window());
+#else
+    WebOSHoverEvent e(event->type(), event->pos(), event->oldPos(), event->modifiers(), window());
+#endif
+    QWaylandQuickItem::hoverLeaveEvent(&e);
 }
 
 QWaylandSeat* WebOSSurfaceItem::getInputDevice(QInputEvent *event) const

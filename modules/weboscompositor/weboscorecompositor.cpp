@@ -136,6 +136,15 @@ QWaylandSeat *WebOSCoreCompositorPrivate::seatFor(QInputEvent *inputEvent)
             return static_cast<WebOSCompositorWindow *>(wWheel->window())->inputDevice();
     }
 
+    if (type == QEvent::HoverEnter || type == QEvent::HoverLeave) {
+        QHoverEvent *hover = static_cast<QHoverEvent *>(inputEvent);
+        if (hover) {
+            WebOSHoverEvent *wHover = dynamic_cast<WebOSHoverEvent *>(hover);
+            if (wHover && wHover->window())
+                return static_cast<WebOSCompositorWindow *>(wHover->window())->inputDevice();
+        }
+    }
+
     return QWaylandCompositorPrivate::seatFor(inputEvent);
 #endif
 }

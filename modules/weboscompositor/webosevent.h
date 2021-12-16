@@ -71,4 +71,20 @@ private:
 
 };
 
+class WebOSHoverEvent: public QHoverEvent
+{
+public:
+    WebOSHoverEvent(Type type, const QPointF &pos, const QPointF &oldPos,
+            Qt::KeyboardModifiers modifiers, QWindow *window)
+        : QHoverEvent(type, pos, oldPos, modifiers)
+    {
+        m_window = window;
+    }
+
+    QWindow *window() const { return m_window; }
+
+private:
+    QWindow *m_window = nullptr;
+};
+
 #endif
