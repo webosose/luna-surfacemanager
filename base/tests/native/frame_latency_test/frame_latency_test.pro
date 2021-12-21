@@ -1,4 +1,4 @@
-# Copyright (c) 2020 LG Electronics, Inc.
+# Copyright (c) 2021 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,9 +14,20 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-TEMPLATE = subdirs
+TEMPLATE = app
+TARGET = frame_latency_test
 
-SUBDIRS = \
-    tablet_event_test \
-    touch_latency_test \
-    frame_latency_test
+QT += qml quick gui-private
+
+SOURCES += main.cpp
+HEADERS += presentationtime.h
+RESOURCES += resources.qrc
+
+CONFIG += link_pkgconfig
+PKGCONFIG += webos-platform-interface
+
+QMAKE_CLEAN += qrc_*.cpp
+
+target.path = $$$$WEBOS_INSTALL_TESTSDIR/luna-surfacemanager
+
+INSTALLS += target
