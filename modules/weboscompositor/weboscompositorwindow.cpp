@@ -29,6 +29,7 @@
 
 #include <qpa/qplatformscreen.h>
 
+#include <private/qguiapplication_p.h>
 #include <private/qquickitem_p.h>
 #include <private/qquickwindow_p.h>
 
@@ -591,10 +592,16 @@ void WebOSCompositorWindow::setCursorVisible(bool visibility)
  * to restore cursor shape without mouse move */
 void WebOSCompositorWindow::updateCursorFocus(Qt::KeyboardModifiers modifiers)
 {
+    QWindow *currentMouseWindow = QGuiApplicationPrivate::currentMouseWindow;
+    if (currentMouseWindow && currentMouseWindow != static_cast<QWindow *>(this)) {
+        qDebug() << "Cursor: ignore updateCursorFocus because it's not current mouse window:" << this << " current:" << currentMouseWindow;
+        return;
+    }
+
     if (cursorVisible()) {
         qDebug() << "Cursor: update cursor by sending a synthesized mouse event(visible case)";
-        QPointF localPos = QPointF(QCursor::pos());
-        QPointF globalPos = QPointF(mapToGlobal(QCursor::pos()));
+        QPointF localPos = QPointF(mapFromGlobal(QCursor::pos()));
+        QPointF globalPos = QPointF(QCursor::pos());
         QMouseEvent *move = new QMouseEvent(QEvent::MouseMove,
                 localPos, localPos, globalPos,
                 Qt::NoButton, Qt::NoButton, modifiers,

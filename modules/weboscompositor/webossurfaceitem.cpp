@@ -395,6 +395,21 @@ void WebOSSurfaceItem::mouseReleaseEvent(QMouseEvent *event)
         // in case the surface size is changed.
         mouseMoveEvent(&e);
         QWaylandQuickItem::mouseReleaseEvent(&e);
+
+        // Reset mouse focuses to send enter if it's not current mouse window.
+        QWindow *currentMouseWindow = QGuiApplicationPrivate::currentMouseWindow;
+        if (currentMouseWindow && currentMouseWindow != window()) {
+            WebOSCompositorWindow *cmw = static_cast<WebOSCompositorWindow *>(currentMouseWindow);
+            if (cmw) {
+                QWaylandSeat *seat = cmw->inputDevice();
+                if (seat)
+                    seat->setMouseFocus(nullptr);
+            }
+
+            // Also reset mouse focus of this window to handle entering it again.
+            if (inputDevice)
+                inputDevice->setMouseFocus(nullptr);
+        }
     } else {
         // In accessibility mode there should be no extra mouse move event sent.
         if (inputDevice) {
@@ -498,8 +513,13 @@ void WebOSSurfaceItem::touchEvent(QTouchEvent *event)
         if (e.type() == QEvent::TouchBegin && !surface()->inputRegionContains(pointPos))
             return;
 
-        if (seat->mouseFocus() != view())
-            seat->sendMouseMoveEvent(view(), pointPos, mapToScene(pointPos));
+        // To prevent changing mouse focus when cursor is located in another display.
+        QWindow *currentMouseWindow = QGuiApplicationPrivate::currentMouseWindow;
+        if (!currentMouseWindow || window() == currentMouseWindow) {
+            if (seat->mouseFocus() != view())
+                seat->sendMouseMoveEvent(view(), pointPos, mapToScene(pointPos));
+        }
+
         seat->sendFullTouchEvent(surface(), &e);
     } else {
         QWaylandQuickItem::touchEvent(event);
