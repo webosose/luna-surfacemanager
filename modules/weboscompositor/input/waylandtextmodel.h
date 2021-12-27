@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2021 LG Electronics, Inc.
+// Copyright (c) 2013-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,26 @@ class WaylandInputMethodContext;
 class WaylandTextModelFactory;
 class WebOSSurfaceItem;
 
-class WaylandTextModel : public QObject {
+class WEBOS_COMPOSITOR_EXPORT WaylandTextModelDelegate
+{
+public:
+    virtual ~WaylandTextModelDelegate() {}
+    virtual void commitString(wl_resource* resource, uint32_t serial, const char *text);
+    virtual void preEditString(wl_resource *resource, uint32_t serial, const char *text, const char* commit);
+    virtual void preEditStyling(wl_resource *resource, uint32_t serial, uint32_t index, uint32_t length, uint32_t style);
+    virtual void preEditCursor(wl_resource *resource, uint32_t serial, int32_t index);
+    virtual void deleteSurroundingText(wl_resource *resource, uint32_t serial, int32_t index, uint32_t length);
+    virtual void cursorPosition(wl_resource *resource, uint32_t serial, int32_t index, int32_t anchor);
+    virtual void modifiersMap(wl_resource *resource, struct wl_array *map);
+    virtual void keySym(wl_resource *resource, uint32_t serial, uint32_t time, uint32_t sym, uint32_t state, uint32_t modifiers);
+    virtual void sendEntered(wl_resource* resource, wl_resource* surface);
+    virtual void sendLeft(wl_resource* resource);
+    virtual void sendInputPanelState(wl_resource* resource, uint32_t state);
+    virtual void sendInputPanelRect(wl_resource* resource, int32_t x, int32_t y,
+                                    uint32_t width, uint32_t height);
+};
+
+class WEBOS_COMPOSITOR_EXPORT WaylandTextModel : public QObject {
 
     Q_OBJECT
 
@@ -75,6 +94,7 @@ public:
     WaylandInputMethod *inputMethod() const { return m_inputMethod; }
     void setInputMethod(WaylandInputMethod *method, WebOSSurfaceItem *item);
     WaylandTextModelFactory *factory() const { return m_factory; }
+    void setDelegate(WaylandTextModelDelegate *delegate);
 
 public slots:
     void sendInputPanelState(const WaylandInputPanel::InputPanelState state) const;
@@ -106,5 +126,6 @@ private:
     bool m_active;
     WaylandTextModelFactory *m_factory;
     QRect m_preferredPanelRect;
+    QScopedPointer<WaylandTextModelDelegate> m_delegate;
 };
 #endif

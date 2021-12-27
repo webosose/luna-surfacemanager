@@ -331,7 +331,8 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
 
         m_surfaceModel = new WebOSSurfaceModel();
 
-        setInputMethod(new WebOSInputMethod(this));
+        setInputMethod(createInputMethod());
+        m_inputMethod->initialize();
 
         connect(m_unixSignalHandler, &UnixSignalHandler::sighup, this, &WebOSCoreCompositor::reloadConfig);
         connect(m_unixSignalHandler, &UnixSignalHandler::sighup, WebOSCompositorConfig::instance(), &WebOSCompositorConfig::dump);
@@ -1479,4 +1480,9 @@ void WebOSCoreCompositor::unregisterSeat(QWaylandSeat *seat)
 WebOSSurfaceItem* WebOSCoreCompositor::createSurfaceItem(QWaylandQuickSurface *surface)
 {
     return new WebOSSurfaceItem(this, surface);
+}
+
+WebOSInputMethod* WebOSCoreCompositor::createInputMethod()
+{
+    return new WebOSInputMethod(this);
 }

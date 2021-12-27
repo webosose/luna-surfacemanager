@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2021 LG Electronics, Inc.
+// Copyright (c) 2019-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@
 class QQuickItem;
 class QWaylandCompositor;
 class WaylandTextModelFactory;
+class WaylandTextModelFactoryDelegate;
 class WaylandInputPanelFactory;
 class WaylandInputPanel;
 class WaylandInputMethodManager;
@@ -36,7 +37,7 @@ class WaylandInputMethodManager;
  * Talks with the input method sitting in the VKB
  * process.
  */
-class WaylandPrimaryInputMethod : public WaylandInputMethod {
+class WEBOS_COMPOSITOR_EXPORT WaylandPrimaryInputMethod : public WaylandInputMethod {
     Q_OBJECT
 
     // For Qt5.6, Use QList rather than QVector.
@@ -46,6 +47,10 @@ class WaylandPrimaryInputMethod : public WaylandInputMethod {
 public:
     WaylandPrimaryInputMethod(QWaylandCompositor* compositor);
     ~WaylandPrimaryInputMethod();
+
+    void initialize() override;
+
+    virtual WaylandTextModelFactoryDelegate* waylandTextModelFactoryDelegate();
 
     static void bind(struct wl_client *client, void *data, uint32_t version, uint32_t id);
 

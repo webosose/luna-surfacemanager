@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2021 LG Electronics, Inc.
+// Copyright (c) 2013-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -44,6 +44,10 @@ WaylandInputMethod::WaylandInputMethod(QWaylandCompositor* compositor)
     , m_allowed(true)
     , m_displayId(-1)
     , m_targetSurfaceItem(nullptr)
+{
+}
+
+void WaylandInputMethod::initialize()
 {
     m_inputMethodManager = new WaylandInputMethodManager(this);
     connect(this, &WaylandInputMethod::inputMethodBound, m_inputMethodManager, &WaylandInputMethodManager::onInputMethodAvaliable, Qt::QueuedConnection);

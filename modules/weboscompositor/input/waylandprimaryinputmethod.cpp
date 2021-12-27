@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2020 LG Electronics, Inc.
+// Copyright (c) 2019-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,11 +29,16 @@
 WaylandPrimaryInputMethod::WaylandPrimaryInputMethod(QWaylandCompositor* compositor)
     : WaylandInputMethod(compositor)
 {
-    m_factory = new WaylandTextModelFactory(compositor, this);
-    m_panelFactory = new WaylandInputPanelFactory(compositor, this);
+}
+
+void WaylandPrimaryInputMethod::initialize()
+{
+    WaylandInputMethod::initialize();
+    m_factory = new WaylandTextModelFactory(compositor(), this);
+    m_panelFactory = new WaylandInputPanelFactory(compositor(), this);
 
     // The PrimaryInputMethod works like a factory for input_method
-    wl_display_add_global(compositor->display(), &input_method_interface, this, WaylandPrimaryInputMethod::bind);
+    wl_display_add_global(compositor()->display(), &input_method_interface, this, WaylandPrimaryInputMethod::bind);
 }
 
 WaylandPrimaryInputMethod::~WaylandPrimaryInputMethod()
@@ -135,4 +140,9 @@ void WaylandPrimaryInputMethod::panelAdded(WaylandInputPanel *panel)
     }
 
     qWarning() << "Cannot find inputMethod for panel" << panel;
+}
+
+WaylandTextModelFactoryDelegate* WaylandPrimaryInputMethod::waylandTextModelFactoryDelegate()
+{
+    return new WaylandTextModelFactoryDelegate();
 }

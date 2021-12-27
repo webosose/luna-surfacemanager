@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2021 LG Electronics, Inc.
+// Copyright (c) 2013-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,10 +32,23 @@ class WaylandInputMethod;
 class WaylandTextModel;
 class WebOSCoreCompositor;
 
+class WEBOS_COMPOSITOR_EXPORT WaylandInputMethodContextDelegate
+{
+public:
+    virtual ~WaylandInputMethodContextDelegate() {}
+    virtual void sendSurroundingText(wl_resource *resource, const char *text, uint32_t cursor, uint32_t anchor);
+    virtual void sendEnterKeyType(wl_resource *resource, uint32_t enter_key_type);
+    virtual void sendContentType(wl_resource *resource, uint32_t hint, uint32_t purpose);
+    virtual void sendMaxTextLength(wl_resource *resource, uint32_t length);
+    virtual void sendInvokeAction(wl_resource *resource, uint32_t button, uint32_t index);
+    virtual void sendCommit(wl_resource *resource);
+    virtual void sendReset(wl_resource *resource, uint32_t serial);
+};
+
 /*!
  * Implements the compositor side protocol for the input method
  */
-class WaylandInputMethodContext : public QObject, public KeyboardGrabber
+class WEBOS_COMPOSITOR_EXPORT WaylandInputMethodContext : public QObject, public KeyboardGrabber
 {
 
     Q_OBJECT
@@ -69,6 +82,8 @@ public:
     void maybeDestroy();
 
     WaylandTextModel* textModel() const { return m_textModel; }
+
+    void setDelegate(WaylandInputMethodContextDelegate* delegate);
 
 public slots:
     void activateTextModel();
@@ -119,6 +134,7 @@ private:
 #ifdef MULTIINPUT_SUPPORT
     WebOSCoreCompositor *m_compositor = nullptr;
 #endif
+    QScopedPointer<WaylandInputMethodContextDelegate> m_delegate;
 };
 
 #endif //WAYLANDINPUTMETHOD_H

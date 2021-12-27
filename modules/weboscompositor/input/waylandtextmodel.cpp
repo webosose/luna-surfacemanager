@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2021 LG Electronics, Inc.
+// Copyright (c) 2013-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ WaylandTextModel::WaylandTextModel(WaylandTextModelFactory *factory, struct wl_c
     , m_surface(0)
     , m_active(false)
     , m_factory(factory)
+    , m_delegate(new WaylandTextModelDelegate())
 {
     qDebug() << this << client << resource;
     m_resource = wl_client_add_object(client, &text_model_interface, &textModelImplementation, id, this);
@@ -68,65 +69,65 @@ WaylandTextModel::~WaylandTextModel()
 void WaylandTextModel::commitString(uint32_t serial, const char *text)
 {
     qDebug() << QString(text);
-    text_model_send_commit_string(m_resource, serial, text);
+    m_delegate->commitString(m_resource, serial, text);
 }
 
 void WaylandTextModel::preEditString(uint32_t serial, const char *text, const char* commit)
 {
     qDebug() << QString(text) << QString(commit);
-    text_model_send_preedit_string(m_resource, serial, text, commit);
+    m_delegate->preEditString(m_resource, serial, text, commit);
 }
 
 void WaylandTextModel::preEditStyling(uint32_t serial, uint32_t index, uint32_t length, uint32_t style)
 {
-    text_model_send_preedit_styling(m_resource, serial, index, length, style);
+    m_delegate->preEditStyling(m_resource, serial, index, length, style);
 }
 
 void WaylandTextModel::preEditCursor(uint32_t serial, int32_t index)
 {
-    text_model_send_preedit_cursor(m_resource, serial, index);
+    m_delegate->preEditCursor(m_resource, serial, index);
 }
 
 void WaylandTextModel::deleteSurroundingText(uint32_t serial, int32_t index, uint32_t length)
 {
     qDebug() << index << length;
-    text_model_send_delete_surrounding_text(m_resource, serial, index, length);
+    m_delegate->deleteSurroundingText(m_resource, serial, index, length);
 }
 
 void WaylandTextModel::cursorPosition(uint32_t serial, int32_t index, int32_t anchor)
 {
-    text_model_send_cursor_position(m_resource, serial, index, anchor);
+    m_delegate->cursorPosition(m_resource, serial, index, anchor);
 }
 
 void WaylandTextModel::modifiersMap(struct wl_array *map)
 {
-    text_model_send_modifiers_map(m_resource, map);
+    m_delegate->modifiersMap(m_resource, map);
 }
 
 void WaylandTextModel::keySym(uint32_t serial, uint32_t time, uint32_t sym, uint32_t state, uint32_t modifiers)
 {
-    text_model_send_keysym(m_resource, serial, time, sym, state, modifiers);
+    m_delegate->keySym(m_resource, serial, time, sym, state, modifiers);
 }
 
 void WaylandTextModel::sendEntered()
 {
-    text_model_send_enter(m_resource, m_surface);
+    m_delegate->sendEntered(m_resource, m_surface);
 }
 
 void WaylandTextModel::sendLeft()
 {
     m_active = false;
-    text_model_send_leave(m_resource);
+    m_delegate->sendLeft(m_resource);
 }
 
 void WaylandTextModel::sendInputPanelState(const WaylandInputPanel::InputPanelState state) const
 {
-    text_model_send_input_panel_state(m_resource, state);
+    m_delegate->sendInputPanelState(m_resource, state);
 }
 
 void WaylandTextModel::sendInputPanelRect(const QRect& geometry) const
 {
-    text_model_send_input_panel_rect(m_resource, geometry.x(), geometry.y(), geometry.width(), geometry.height());
+    m_delegate->sendInputPanelRect(m_resource, geometry.x(), geometry.y(), geometry.width(), geometry.height());
 }
 
 void WaylandTextModel::textModelSetSurroundingText(struct wl_client *client, struct wl_resource *resource, const char *text, uint32_t cursor, uint32_t anchor)
@@ -324,4 +325,70 @@ void WaylandTextModel::handleActiveFocusChanged()
         qWarning() << "deactivate the current context as the surface item initiated it gets unfocused" << item;
         m_inputMethod->deactivate();
     }
+}
+
+void WaylandTextModel::setDelegate(WaylandTextModelDelegate *delegate)
+{
+    m_delegate.reset(delegate);
+}
+
+void WaylandTextModelDelegate::commitString(wl_resource* resource, uint32_t serial, const char *text)
+{
+    text_model_send_commit_string(resource, serial, text);
+}
+
+void WaylandTextModelDelegate::preEditString(wl_resource *resource, uint32_t serial, const char *text, const char* commit)
+{
+    text_model_send_preedit_string(resource, serial, text, commit);
+}
+
+void WaylandTextModelDelegate::preEditStyling(wl_resource *resource, uint32_t serial, uint32_t index, uint32_t length, uint32_t style)
+{
+    text_model_send_preedit_styling(resource, serial, index, length, style);
+}
+
+void WaylandTextModelDelegate::preEditCursor(wl_resource *resource, uint32_t serial, int32_t index)
+{
+    text_model_send_preedit_cursor(resource, serial, index);
+}
+
+void WaylandTextModelDelegate::deleteSurroundingText(wl_resource *resource, uint32_t serial, int32_t index, uint32_t length)
+{
+    text_model_send_delete_surrounding_text(resource, serial, index, length);
+}
+
+void WaylandTextModelDelegate::cursorPosition(wl_resource *resource, uint32_t serial, int32_t index, int32_t anchor)
+{
+    text_model_send_cursor_position(resource, serial, index, anchor);
+}
+
+void WaylandTextModelDelegate::modifiersMap(wl_resource *resource, struct wl_array *map)
+{
+    text_model_send_modifiers_map(resource, map);
+}
+
+void WaylandTextModelDelegate::keySym(wl_resource *resource, uint32_t serial, uint32_t time, uint32_t sym, uint32_t state, uint32_t modifiers)
+{
+    text_model_send_keysym(resource, serial, time, sym, state, modifiers);
+}
+
+void WaylandTextModelDelegate::sendEntered(wl_resource* resource, wl_resource* surface)
+{
+    text_model_send_enter(resource, surface);
+}
+
+void WaylandTextModelDelegate::sendLeft(wl_resource* resource)
+{
+    text_model_send_leave(resource);
+}
+
+void WaylandTextModelDelegate::sendInputPanelState(wl_resource* resource, uint32_t state)
+{
+    text_model_send_input_panel_state(resource, state);
+}
+
+void WaylandTextModelDelegate::sendInputPanelRect(wl_resource* resource, int32_t x, int32_t y,
+                                                  uint32_t width, uint32_t height)
+{
+    text_model_send_input_panel_rect(resource, x, y, width, height);
 }

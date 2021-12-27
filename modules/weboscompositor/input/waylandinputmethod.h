@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2021 LG Electronics, Inc.
+// Copyright (c) 2013-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ class WebOSSurfaceItem;
  * Talks with the input method sitting in the VKB
  * process.
  */
-class WaylandInputMethod : public QObject {
+class WEBOS_COMPOSITOR_EXPORT WaylandInputMethod : public QObject {
 
     Q_OBJECT
 
@@ -56,6 +56,8 @@ public:
     WaylandInputMethod(QWaylandCompositor* compositor);
     ~WaylandInputMethod();
 
+    virtual void initialize();
+
     static void destroyInputMethod(struct wl_resource* resource);
     static void setDisplayId(struct wl_client *client, struct wl_resource *resource, uint32_t id);
 
@@ -71,6 +73,7 @@ public:
     void setInputPanel(WaylandInputPanel *panel);
     WaylandInputMethodManager* inputMethodManager() const { return m_inputMethodManager; }
     Q_INVOKABLE bool active() const { return m_activeContext != NULL; }
+    WaylandInputMethodContext* activeContext() { return m_activeContext; }
     bool isActiveModel(WaylandTextModel *model) const;
     bool allowed() const { return m_allowed; };
     void setAllowed(bool allowed);

@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,11 +17,23 @@
 #ifndef WAYLANDTEXTMODELFACTORY_H
 #define WAYLANDTEXTMODELFACTORY_H
 
+#include <WebOSCoreCompositor/weboscompositorexport.h>
+
 #include <wayland-server.h>
 #include <wayland-text-server-protocol.h>
 
 class WaylandInputMethod;
 class WaylandPrimaryInputMethod;
+class WaylandTextModelFactory;
+
+class WEBOS_COMPOSITOR_EXPORT WaylandTextModelFactoryDelegate {
+public:
+    virtual ~WaylandTextModelFactoryDelegate() {}
+    virtual void createTextModel(WaylandTextModelFactory *factory,
+                                 struct wl_client *client,
+                                 struct wl_resource *resource,
+                                 uint32_t id);
+};
 
 class WaylandTextModelFactory {
 
@@ -40,6 +52,7 @@ private:
                                 uint32_t id);
 private:
     WaylandPrimaryInputMethod *m_inputMethod;
+    QScopedPointer<WaylandTextModelFactoryDelegate> m_delegate;
 };
 
 #endif //WAYLANDTEXTMODELFACTORY_H

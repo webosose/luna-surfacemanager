@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2020 LG Electronics, Inc.
+// Copyright (c) 2013-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ const struct text_model_factory_interface WaylandTextModelFactory::textModelFact
 
 WaylandTextModelFactory::WaylandTextModelFactory(QWaylandCompositor* compositor, WaylandPrimaryInputMethod* inputMethod)
     : m_inputMethod(inputMethod)
+    , m_delegate(inputMethod->waylandTextModelFactoryDelegate())
 {
     wl_display_add_global(compositor->display(), &text_model_factory_interface, this, WaylandTextModelFactory::wlBindFactory);
 }
@@ -42,9 +43,7 @@ void WaylandTextModelFactory::createTextModel(struct wl_client *client,
                                             uint32_t id)
 {
     WaylandTextModelFactory* that = static_cast<WaylandTextModelFactory*>(resource->data);
-    // The life cycle management of these model object comes from wayland
-    // see destroy methods from respective classes
-    WaylandTextModel* model = new WaylandTextModel(that, client, resource, id);
+    that->m_delegate->createTextModel(that, client, resource, id);
 }
 
 WaylandTextModelFactory::~WaylandTextModelFactory()
@@ -55,4 +54,14 @@ WaylandInputMethod *WaylandTextModelFactory::findInputMethod(int displayId)
 {
     qInfo() << "Trying to findInputMethod" << displayId;
     return m_inputMethod->getInputMethod(displayId);
+}
+
+void WaylandTextModelFactoryDelegate::createTextModel(WaylandTextModelFactory *factory,
+                                                      struct wl_client *client,
+                                                      struct wl_resource *resource,
+                                                      uint32_t id)
+{
+    // The life cycle management of these model object comes from wayland
+    // see destroy methods from respective classes
+    WaylandTextModel* model = new WaylandTextModel(factory, client, resource, id);
 }

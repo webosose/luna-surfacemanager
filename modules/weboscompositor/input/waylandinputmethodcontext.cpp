@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2021 LG Electronics, Inc.
+// Copyright (c) 2013-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -63,6 +63,7 @@ WaylandInputMethodContext::WaylandInputMethodContext(WaylandInputMethod* inputMe
 #ifdef MULTIINPUT_SUPPORT
     , m_compositor(static_cast<WebOSCoreCompositor *>(inputMethod->compositor()))
 #endif
+    , m_delegate(new WaylandInputMethodContextDelegate())
 {
     qDebug() << this;
 
@@ -181,7 +182,7 @@ void WaylandInputMethodContext::keySym(struct wl_client *client, struct wl_resou
     Q_UNUSED(client);
     WaylandInputMethodContext* that = static_cast<WaylandInputMethodContext*>(resource->data);
     if (that->m_textModel)
-        text_model_send_keysym(that->m_textModel->handle(), serial, time, sym, state, modifiers);
+        that->m_textModel->keySym(serial, time, sym, state, modifiers);
 }
 
 
@@ -384,53 +385,37 @@ void WaylandInputMethodContext::destroyTextModel()
 
 void WaylandInputMethodContext::updateContentType(uint32_t hint, uint32_t purpose)
 {
-    if (m_resource) {
-        qDebug() << hint << purpose;
-        input_method_context_send_content_type(m_resource, hint, purpose);
-    }
+    m_delegate->sendContentType(m_resource, hint, purpose);
 }
 
 void WaylandInputMethodContext::updateEnterKeyType(uint32_t enter_key_type)
 {
-    if (m_resource) {
-        qDebug() << enter_key_type;
-        input_method_context_send_enter_key_type(m_resource, enter_key_type);
-    }
+    m_delegate->sendEnterKeyType(m_resource, enter_key_type);
 }
 
 void WaylandInputMethodContext::updateSurroundingText(const QString& text, uint32_t cursor, uint32_t anchor)
 {
-    if (m_resource) {
-        input_method_context_send_surrounding_text(m_resource, text.toUtf8().data(), cursor, anchor);
-    }
+    m_delegate->sendSurroundingText(m_resource, text.toUtf8().data(), cursor, anchor);
 }
 
 void WaylandInputMethodContext::resetContext(uint32_t serial)
 {
-    if (m_resource) {
-        input_method_context_send_reset(m_resource, serial);
-    }
+    m_delegate->sendReset(m_resource, serial);
 }
 
 void WaylandInputMethodContext::commit()
 {
-    if (m_resource) {
-        input_method_context_send_commit(m_resource);
-    }
+    m_delegate->sendCommit(m_resource);
 }
 
 void WaylandInputMethodContext::invokeAction(uint32_t button, uint32_t index)
 {
-    if (m_resource) {
-        input_method_context_send_invoke_action(m_resource, button, index);
-    }
+    m_delegate->sendInvokeAction(m_resource, button, index);
 }
 
 void WaylandInputMethodContext::maxTextLengthTextModel(uint32_t length)
 {
-    if (m_resource) {
-        input_method_context_send_max_text_length(m_resource, length);
-    }
+    m_delegate->sendMaxTextLength(m_resource, length);
 }
 
 void WaylandInputMethodContext::platformDataModel(const QString& text)
@@ -534,4 +519,51 @@ void WaylandInputMethodContext::hideInputPanel()
 {
     if (m_resource && m_inputMethod->handle())
         input_method_send_hide_input_panel(m_inputMethod->handle(), m_resource);
+}
+
+void WaylandInputMethodContext::setDelegate(WaylandInputMethodContextDelegate* delegate)
+{
+    m_delegate.reset(delegate);
+}
+
+void WaylandInputMethodContextDelegate::sendSurroundingText(wl_resource *resource, const char *text, uint32_t cursor, uint32_t anchor)
+{
+    if (resource)
+        input_method_context_send_surrounding_text(resource, text, cursor, anchor);
+}
+
+void WaylandInputMethodContextDelegate::sendEnterKeyType(wl_resource *resource, uint32_t enter_key_type)
+{
+    if (resource)
+        input_method_context_send_enter_key_type(resource, enter_key_type);
+}
+
+void WaylandInputMethodContextDelegate::sendContentType(wl_resource *resource, uint32_t hint, uint32_t purpose)
+{
+    if (resource)
+        input_method_context_send_content_type(resource, hint, purpose);
+}
+
+void WaylandInputMethodContextDelegate::sendMaxTextLength(wl_resource *resource, uint32_t length)
+{
+    if (resource)
+        input_method_context_send_max_text_length(resource, length);
+}
+
+void WaylandInputMethodContextDelegate::sendInvokeAction(wl_resource *resource, uint32_t button, uint32_t index)
+{
+    if (resource)
+        input_method_context_send_invoke_action(resource, button, index);
+}
+
+void WaylandInputMethodContextDelegate::sendCommit(wl_resource *resource)
+{
+    if (resource)
+        input_method_context_send_commit(resource);
+}
+
+void WaylandInputMethodContextDelegate::sendReset(wl_resource *resource, uint32_t serial)
+{
+    if (resource)
+        input_method_context_send_reset(resource, serial);
 }
