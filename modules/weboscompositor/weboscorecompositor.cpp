@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2021 LG Electronics, Inc.
+// Copyright (c) 2014-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -369,6 +369,10 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
         QWaylandSeat *device =
             new WebOSInputDevice(this, QWaylandSeat::Keyboard | QWaylandSeat::Touch | QWaylandSeat::Pointer);
         webosWindow->setInputDevice(device);
+
+        // Install the key filter for secondary windows.
+        if (m_keyFilter)
+            webosWindow->installEventFilter(m_keyFilter);
     }
 }
 
@@ -1106,8 +1110,10 @@ void WebOSCoreCompositor::setKeyFilter(WebOSKeyFilter *filter)
 {
     PMTRACE_FUNCTION;
     if (m_keyFilter != filter) {
-        window()->removeEventFilter(m_keyFilter);
-        window()->installEventFilter(filter);
+        for (int i = 0; i < m_windows.size(); ++i) {
+            m_windows[i]->removeEventFilter(m_keyFilter);
+            m_windows[i]->installEventFilter(filter);
+        }
 
         foreach (CompositorExtension* ext, m_extensions) {
             ext->removeEventFilter(m_keyFilter);
