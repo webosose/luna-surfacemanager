@@ -253,11 +253,14 @@ WebOSExported::WebOSExported(
     , m_surfaceItem(static_cast<WebOSSurfaceItem *>(surfaceItem))
     , m_exportedItem(new QQuickItem(surfaceItem))
     , m_exportedType(exportedType)
+    , m_isSurfaceItemFullscreen(false)
+    , m_surfaceItemWindowType("_WEBOS_WINDOW_TYPE_CARD")
     , m_coverVideo(false)
     , m_activeRegion(QRect(0,0,0,0))
     , m_originalRequestedRegion(QRect(0,0,0,0))
 {
     qInfo() << this << "is created";
+
     m_exportedItem->setClip(true);
     m_exportedItem->setZ(-1);
     m_exportedItem->setEnabled(false);
@@ -280,8 +283,10 @@ WebOSExported::WebOSExported(
     connect(m_surfaceItem, &WebOSSurfaceItem::windowChanged, this, &WebOSExported::updateCompositorWindow);
     connect(m_surfaceItem, &WebOSSurfaceItem::coverStateChanged, this, &WebOSExported::updateCoverState);
     connect(m_surfaceItem, &WebOSSurfaceItem::activeRegionChanged, this, &WebOSExported::updateActiveRegion);
+    connect(m_surfaceItem, &WebOSSurfaceItem::typeChanged, this, &WebOSExported::updateWindowType);
     connect(m_foreign->m_compositor, &WebOSCoreCompositor::surfaceMapped, this, &WebOSExported::onSurfaceItemMapped);
 
+    updateWindowType();
     updateCoverState();
     updateActiveRegion();
     calculateAll();
@@ -409,7 +414,7 @@ void WebOSExported::calculateExportedItemRatio()
 
     QRect outputGeometry = m_compositorWindow->outputGeometry();
 
-    if (m_isSurfaceItemFullscreen && outputGeometry.isValid()) {
+    if (m_surfaceItemWindowType == "_WEBOS_WINDOW_TYPE_CARD" && outputGeometry.isValid()) {
         //TODO: m_exportedWindowRatio will be replaced by m_surfaceItem->scale();
         m_exportedWindowRatio =  m_surfaceItem->scale();
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
@@ -440,12 +445,30 @@ void WebOSExported::updateWindowState()
         return;
     }
     WebOSSurfaceItem *item = qobject_cast<WebOSSurfaceItem*>(m_surfaceItem);
+    bool m_isSurfaceItemFullscreen = item->state() == Qt::WindowFullScreen;
     qInfo() << "update window state : " << item->state() << "for WebOSExported ( " << m_windowId << " ) ";
-    m_isSurfaceItemFullscreen = item->state() == Qt::WindowFullScreen;
     if (m_isSurfaceItemFullscreen) {
         calculateVideoDispRatio();
         calculateExportedItemRatio();
     }
+}
+
+void WebOSExported::updateWindowType()
+{
+    if (!m_surfaceItem) {
+        qWarning() << "QWaylandQuickItem for " << m_windowId << " is already destroyed";
+        return;
+    }
+
+    m_surfaceItemWindowType = m_surfaceItem->type();
+
+    if(m_contextId.isNull())
+        qInfo() << "update window type : " << m_surfaceItem->type() << "for WebOSExported ( " << this << " ) ";
+    else
+        qInfo() << "update window type : " << m_surfaceItem->type() << "for WebOSExported ( " << m_windowId << " ) ";
+
+    calculateExportedItemRatio();
+    calculateVideoDispRatio();
 }
 
 void WebOSExported::updateCoverState()
@@ -586,6 +609,18 @@ void WebOSExported::updateExportedItemSize()
 void WebOSExported::setVideoDisplayWindow()
 {
     QRect videoDisplayRect;
+    if (!m_surfaceItem) {
+        qDebug() << "SurfaceItem  for " << m_windowId << " is already destroyed";
+        return;
+    }
+
+    if ((m_surfaceItemWindowType != "_WEBOS_WINDOW_TYPE_CARD" && !m_surfaceItem->isMapped())) {
+        qInfo() << "Overlaid item (not fullscreen app) is not mapped yet on " << m_windowId;
+        return;
+    } else {
+        qInfo() << "window type : " << m_surfaceItemWindowType << ", window id : " << m_windowId;
+    }
+
     if (m_foreign->m_compositor->window() && !m_contextId.isNull()) {
         if (m_coverVideo) {
             qInfo() << "cover video state. set video display rect = (0, 0, 0, 0)";
