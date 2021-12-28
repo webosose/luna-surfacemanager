@@ -99,6 +99,8 @@ public:
     void registerMuteOwner(const QString& contextId);
     void unregisterMuteOwner();
     void setVideoDisplayWindow();
+    void updateDisplayPosition(bool forceUpdate = false);
+    void onSurfaceItemMapped(WebOSSurfaceItem *mappedItem);
     void startImportedMirroring(WebOSSurfaceItem *parent);
     bool hasSecuredContent();
     void updateDestinationRegionByActiveRegion();
@@ -161,6 +163,7 @@ protected:
     QRect m_activeRegion;
     double m_videoDispRatio = 1.0;
     double m_exportedWindowRatio = 1.0;
+    QRectF m_surfaceGlobalPosition = QRectF(0,0,0,0);
 
     friend class WebOSForeign;
     friend class WebOSImported;

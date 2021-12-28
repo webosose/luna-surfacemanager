@@ -280,6 +280,7 @@ WebOSExported::WebOSExported(
     connect(m_surfaceItem, &WebOSSurfaceItem::windowChanged, this, &WebOSExported::updateCompositorWindow);
     connect(m_surfaceItem, &WebOSSurfaceItem::coverStateChanged, this, &WebOSExported::updateCoverState);
     connect(m_surfaceItem, &WebOSSurfaceItem::activeRegionChanged, this, &WebOSExported::updateActiveRegion);
+    connect(m_foreign->m_compositor, &WebOSCoreCompositor::surfaceMapped, this, &WebOSExported::onSurfaceItemMapped);
 
     updateCoverState();
     updateActiveRegion();
@@ -328,6 +329,48 @@ WebOSExported::~WebOSExported()
         delete m_exportedItem;
 }
 
+void WebOSExported::onSurfaceItemMapped(WebOSSurfaceItem *mappedItem)
+{
+    if (!mappedItem) {
+        qWarning() << "mappedItem is null";
+        return;
+    }
+
+    qDebug() << "mappedItem : " << mappedItem << " on " << m_windowId;
+    if (m_surfaceItem == mappedItem) {
+        qInfo() << "Surface item of exported is mapped on " << m_windowId;
+        updateDisplayPosition(true);
+    }
+}
+
+void WebOSExported::updateDisplayPosition(bool forceUpdate)
+{
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    if (!m_surfaceItem || m_surfaceItem->surface() == nullptr || m_surfaceItem->surface()->bufferSize().isValid() == false) {
+        qDebug() << "SurfaceItem  for " << m_windowId << " is already destroyed";
+        return;
+    }
+
+    QRectF globalPosition = m_surfaceItem->mapRectToScene(QRect(0,0,m_surfaceItem->surface()->bufferSize().width(), m_surfaceItem->surface()->bufferSize().height()));
+#else
+    if (!m_surfaceItem || m_surfaceItem->surface() == nullptr || m_surfaceItem->surface()->size().isValid() == false) {
+        qDebug() << "SurfaceItem  for " << m_windowId << " is already destroyed";
+        return;
+    }
+
+    QRectF globalPosition = m_surfaceItem->mapRectToScene(QRect(0,0,m_surfaceItem->surface()->size().width(), m_surfaceItem->surface()->size().height()));
+#endif
+    qDebug() << "globalPosition : " << globalPosition  << ", previous position : " << m_surfaceGlobalPosition << ", forceUpdate : " << forceUpdate << " on " << m_windowId;
+
+    if (globalPosition != m_surfaceGlobalPosition || forceUpdate) {
+        if (globalPosition.isValid()) {
+            qInfo() << "globalPosition : " << globalPosition  << ", previous position : " << m_surfaceGlobalPosition << ", forceUpdate : " << forceUpdate << " on " << m_windowId;
+            m_surfaceGlobalPosition = globalPosition;
+            calculateVideoDispRatio();
+        }
+    }
+}
+
 void WebOSExported::calculateVideoDispRatio()
 {
     qInfo() << "WebOSExported::calculateVideoDispRatio is called on " << m_windowId;
@@ -343,16 +386,39 @@ void WebOSExported::calculateVideoDispRatio()
 
     QRect outputGeometry = m_compositorWindow->outputGeometry();
 
-    if (m_isSurfaceItemFullscreen && outputGeometry.isValid() && m_surfaceItem->surface()) {
-        QPointF offset = m_surfaceItem->mapToItem(m_compositorWindow->viewsRoot(), QPointF(0.0, 0.0));
+    if (outputGeometry.isValid() && m_surfaceItem->surface()) {
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
-        m_videoDispRatio = (double) outputGeometry.width() / m_surfaceItem->surface()->bufferSize().width() * m_surfaceItem->scale();
-        qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->bufferSize() << "m_videoDispRatio:" << m_videoDispRatio;
+        if (!m_surfaceItem->surface()->bufferSize().isValid() || !m_surfaceGlobalPosition.isValid()) {
+            m_videoDispRatio = 1.0;
+            qInfo() << "video display ratio : " << m_videoDispRatio << ", surface size is not valid yet on " << m_windowId;
+        } else {
+            QRectF m_surfaceGlobalPosition = m_surfaceItem->mapRectToScene(QRect(0,0,m_surfaceItem->surface()->bufferSize().width(), m_surfaceItem->surface()->bufferSize().height()));
+
+            if (!m_isSurfaceItemFullscreen) {
+                m_videoDispRatio = qMin((double) m_surfaceGlobalPosition.width()/m_surfaceItem->surface()->bufferSize().width(), (double) m_surfaceGlobalPosition.height()/m_surfaceItem->surface()->bufferSize().height());
+                qInfo() << "video display ratio : " << m_videoDispRatio << ", (not fullscreen case) surface global position : " << m_surfaceGlobalPosition << ", surface size : " << m_surfaceItem->surface()->bufferSize() << " on " << m_windowId;
+            } else {
+                QPointF offset = m_surfaceItem->mapToItem(m_compositorWindow->viewsRoot(), QPointF(0.0, 0.0));
+                m_videoDispRatio = (double) outputGeometry.width() / m_surfaceItem->surface()->bufferSize().width() * m_surfaceItem->scale();
+                qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->bufferSize() << "m_videoDispRatio:" << m_videoDispRatio;
 #else
-        m_videoDispRatio = (double) outputGeometry.width() / m_surfaceItem->surface()->size().width() * m_surfaceItem->scale();
-        qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->size() << "m_videoDispRatio:" << m_videoDispRatio;
+        if (!m_surfaceItem->surface()->size().isValid() || !m_surfaceGlobalPosition.isValid()) {
+            m_videoDispRatio = 1.0;
+            qInfo() << "video display ratio : " << m_videoDispRatio << ", surface size is not valid yet on " << m_windowId;
+        } else {
+            QRectF m_surfaceGlobalPosition = m_surfaceItem->mapRectToScene(QRect(0,0,m_surfaceItem->surface()->size().width(), m_surfaceItem->surface()->size().height()));
+
+            if (!m_isSurfaceItemFullscreen) {
+                m_videoDispRatio = qMin((double) m_surfaceGlobalPosition.width()/m_surfaceItem->surface()->size().width(), (double) m_surfaceGlobalPosition.height()/m_surfaceItem->surface()->size().height());
+                qInfo() << "video display ratio : " << m_videoDispRatio << ", (not fullscreen case) surface global position : " << m_surfaceGlobalPosition << ", surface size : " << m_surfaceItem->surface()->size() << " on " << m_windowId;
+            } else {
+                QPointF offset = m_surfaceItem->mapToItem(m_compositorWindow->viewsRoot(), QPointF(0.0, 0.0));
+                m_videoDispRatio = (double) outputGeometry.width() / m_surfaceItem->surface()->size().width() * m_surfaceItem->scale();
+                qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->size() << "m_videoDispRatio:" << m_videoDispRatio;
 #endif
-        qInfo() << "Item scale:" << m_surfaceItem->scale() << "item offset:" << offset;
+            }
+        }
+
         if (m_requestedRegion.isValid()) {
             setVideoDisplayRect();
             qInfo() << "Calculated video display output region:" << m_videoDisplayRect;
@@ -398,7 +464,7 @@ void WebOSExported::calculateExportedItemRatio()
 
 void WebOSExported::calculateAll()
 {
-    calculateVideoDispRatio();
+    updateDisplayPosition(true);
     calculateExportedItemRatio();
 }
 
@@ -411,8 +477,10 @@ void WebOSExported::updateWindowState()
     WebOSSurfaceItem *item = qobject_cast<WebOSSurfaceItem*>(m_surfaceItem);
     qInfo() << "update window state : " << item->state() << "for WebOSExported ( " << m_windowId << " ) ";
     m_isSurfaceItemFullscreen = item->state() == Qt::WindowFullScreen;
-    if (m_isSurfaceItemFullscreen)
-        calculateAll();
+    if (m_isSurfaceItemFullscreen) {
+        calculateVideoDispRatio();
+        calculateExportedItemRatio();
+    }
 }
 
 void WebOSExported::updateCoverState()
@@ -510,14 +578,14 @@ void WebOSExported::updateVideoWindowList(QString contextId, QRect videoDisplayR
             QRect appWindow;
             if (m_activeRegion.isValid()) {
                 appWindow = QRect(
-                    m_surfaceItem->x() + m_activeRegion.x()*scaleFactor,
-                    m_surfaceItem->y() + m_activeRegion.y()*scaleFactor,
+                    m_surfaceGlobalPosition.x() + m_activeRegion.x()*scaleFactor,
+                    m_surfaceGlobalPosition.y() + m_activeRegion.y()*scaleFactor,
                     m_activeRegion.width()*scaleFactor,
                     m_activeRegion.height()*scaleFactor);
             } else {
                 appWindow = QRect(
-                    m_surfaceItem->x(),
-                    m_surfaceItem->y(),
+                    m_surfaceGlobalPosition.x(),
+                    m_surfaceGlobalPosition.y(),
                     m_surfaceItem->width()*scaleFactor,
                     m_surfaceItem->height()*scaleFactor);
             }
@@ -615,14 +683,14 @@ void WebOSExported::setVideoDisplayRect() {
 
     if (m_activeRegion.isValid()) {
         m_videoDisplayRect = QRect(
-            round(m_surfaceItem->x() + m_requestedRegion.x()*m_videoDispRatio),
-            round(m_surfaceItem->y() + m_requestedRegion.y()*m_videoDispRatio),
+            round(m_surfaceGlobalPosition.x() + m_requestedRegion.x()*m_videoDispRatio),
+            round(m_surfaceGlobalPosition.y() + m_requestedRegion.y()*m_videoDispRatio),
             round(m_requestedRegion.width()*m_videoDispRatio),
             round(m_requestedRegion.height()*m_videoDispRatio));
     } else {
         m_videoDisplayRect = QRect(
-            (int) (m_surfaceItem->x() + m_requestedRegion.x()*m_videoDispRatio),
-            (int) (m_surfaceItem->y() + m_requestedRegion.y()*m_videoDispRatio),
+            (int) (m_surfaceGlobalPosition.x() + m_requestedRegion.x()*m_videoDispRatio),
+            (int) (m_surfaceGlobalPosition.y() + m_requestedRegion.y()*m_videoDispRatio),
             (int) (m_requestedRegion.width()*m_videoDispRatio),
             (int) (m_requestedRegion.height()*m_videoDispRatio));
     }
@@ -1104,6 +1172,7 @@ void WebOSImported::webos_imported_attach_punchthrough_with_context(Resource* r,
     if (m_exported->m_requestedRegion.isValid())
         m_exported->setVideoDisplayWindow();
 
+    m_exported->updateDisplayPosition(true);
     m_exported->setPunchThrough(true);
     send_punchthrough_attached(contextId);
 }
