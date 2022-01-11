@@ -36,6 +36,8 @@
 #include "webossurfaceitem.h"
 #include "weboscompositorconfig.h"
 
+class WaylandInputMethod;
+class WaylandInputMethodManager;
 class WebOSInputMethod;
 class WebOSSurfaceModel;
 class CompositorExtension;
@@ -218,6 +220,7 @@ public:
     virtual void postInit() {}
     virtual WebOSSurfaceItem* createSurfaceItem(QWaylandQuickSurface *surface);
     virtual WebOSInputMethod* createInputMethod();
+    virtual WaylandInputMethodManager* createInputMethodManager(WaylandInputMethod *inputMethod);
 
 public slots:
     void handleActiveFocusItemChanged();

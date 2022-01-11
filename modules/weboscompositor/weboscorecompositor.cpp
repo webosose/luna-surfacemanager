@@ -58,6 +58,7 @@
 #include "weboskeyfilter.h"
 #include "webosinputmethod.h"
 #include "waylandinputmethod.h"
+#include "waylandinputmethodmanager.h"
 
 #include "weboskeyboard.h"
 #include "webostablet/webostablet.h"
@@ -1485,4 +1486,9 @@ WebOSSurfaceItem* WebOSCoreCompositor::createSurfaceItem(QWaylandQuickSurface *s
 WebOSInputMethod* WebOSCoreCompositor::createInputMethod()
 {
     return new WebOSInputMethod(this);
+}
+
+WaylandInputMethodManager* WebOSCoreCompositor::createInputMethodManager(WaylandInputMethod *inputMethod)
+{
+    return new WaylandInputMethodManager(inputMethod);
 }

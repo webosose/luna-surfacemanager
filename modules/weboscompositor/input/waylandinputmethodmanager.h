@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,18 +18,19 @@
 #define WAYLANDINPUTMETHODMANAGER_H
 
 #include <QObject>
+#include "weboscompositorexport.h"
 
 class WaylandInputMethod;
 /*!
  * Control is IME server started (Currently MaliitServer), and start it if it's needed.
  */
-class WaylandInputMethodManager : public QObject
+class WEBOS_COMPOSITOR_EXPORT WaylandInputMethodManager : public QObject
 {
     Q_OBJECT
 public:
     WaylandInputMethodManager(QObject* parent);
     ~WaylandInputMethodManager();
-    bool requestInputMethod();
+    virtual bool requestInputMethod();
 
 public slots:
     void onInputMethodAvaliable(bool i_avaliable);

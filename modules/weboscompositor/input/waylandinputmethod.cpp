@@ -49,7 +49,7 @@ WaylandInputMethod::WaylandInputMethod(QWaylandCompositor* compositor)
 
 void WaylandInputMethod::initialize()
 {
-    m_inputMethodManager = new WaylandInputMethodManager(this);
+    m_inputMethodManager = static_cast<WebOSCoreCompositor *>(m_compositor)->createInputMethodManager(this);
     connect(this, &WaylandInputMethod::inputMethodBound, m_inputMethodManager, &WaylandInputMethodManager::onInputMethodAvaliable, Qt::QueuedConnection);
 }
 
