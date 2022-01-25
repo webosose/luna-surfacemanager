@@ -1,4 +1,4 @@
-// Copyright (c) 2021 LG Electronics, Inc.
+// Copyright (c) 2021-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -49,6 +49,15 @@ void WebOSWaylandSeat::setCursorSurface(QWaylandSurface *surface, int hotspotX, 
 void WebOSWaylandSeat::setCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY, wl_client *client)
 #endif
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    setCursorSurfaceInternal(surface, hotspotX, hotspotY, qWlClient->client());
+#else
+    setCursorSurfaceInternal(surface, hotspotX, hotspotY, client);
+#endif
+}
+
+void WebOSWaylandSeat::setCursorSurfaceInternal(QWaylandSurface *surface, int hotspotX, int hotspotY, wl_client *client)
+{
     WebOSCoreCompositor *webos_compositor = static_cast<WebOSCoreCompositor *>(compositor());
 
     if (!webos_compositor) {
@@ -56,9 +65,5 @@ void WebOSWaylandSeat::setCursorSurface(QWaylandSurface *surface, int hotspotX, 
         return;
     }
 
-#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
-    webos_compositor->setCursorSurface(surface, hotspotX, hotspotY, qWlClient->client());
-#else
     webos_compositor->setCursorSurface(surface, hotspotX, hotspotY, client);
-#endif
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2021 LG Electronics, Inc.
+// Copyright (c) 2021-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,14 +18,17 @@
 #define WEBOSWAYLANDSEAT_H
 
 #include <QtWaylandCompositor/qwaylandseat.h>
+#include <WebOSCoreCompositor/weboscompositorexport.h>
 
 class WebOSWaylandSeatPrivate;
 class QWaylandCompositor;
 
-class WebOSWaylandSeat : public QWaylandSeat
+class WEBOS_COMPOSITOR_EXPORT WebOSWaylandSeat : public QWaylandSeat
 {
 public:
     WebOSWaylandSeat(QWaylandCompositor *compositor, CapabilityFlags capabilityFlags = DefaultCapabilities);
+
+    virtual void setCursorSurfaceInternal(QWaylandSurface *surface, int hotspotX, int hotspotY, wl_client *client);
 
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
 public slots:
