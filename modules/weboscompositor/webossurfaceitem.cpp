@@ -39,6 +39,10 @@
 
 #include <qweboskeyextension.h>
 
+#if QT_VERSION >= QT_VERSION_CHECK(6,3,0)
+#include <QtGui/private/qeventpoint_p.h>
+#endif
+
 #include <QtQuick/private/qquickwindow_p.h>
 #include <QtQuick/private/qsgrenderer_p.h>
 
@@ -212,7 +216,10 @@ QList<QTouchEvent::TouchPoint> WebOSSurfaceItem::mapToTarget(const QList<QTouchE
 {
     QList<QTouchEvent::TouchPoint> result;
     foreach (QTouchEvent::TouchPoint point, points) {
-#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+#if QT_VERSION >= QT_VERSION_CHECK(6,3,0)
+        QMutableEventPoint::setPosition(point, mapToSurface(point.position()));
+        result.append(point);
+#elif QT_VERSION >= QT_VERSION_CHECK(6,0,0)
         auto &p = QMutableEventPoint::from(point);
         p.setPosition(mapToSurface(point.position()));
         result.append(p);

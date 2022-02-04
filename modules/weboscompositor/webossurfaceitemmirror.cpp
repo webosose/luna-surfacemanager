@@ -240,9 +240,14 @@ void WebOSSurfaceItemMirror::touchEvent(QTouchEvent *event)
     QList<QTouchEvent::TouchPoint> touchPoints;
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
     foreach (QTouchEvent::TouchPoint point, event->points()) {
+#if QT_VERSION >= QT_VERSION_CHECK(6,3,0)
+        QMutableEventPoint::setPosition(point, translatePoint(point.scenePosition()));
+        touchPoints.append(point);
+#else
         auto &p = QMutableEventPoint::from(point);
         p.setPosition(translatePoint(point.scenePosition()));
         touchPoints.append(p);
+#endif
     }
 #else
     foreach (QTouchEvent::TouchPoint point, event->touchPoints()) {
