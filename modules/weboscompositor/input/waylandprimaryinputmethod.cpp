@@ -85,6 +85,7 @@ void WaylandPrimaryInputMethod::bind(struct wl_client *client, void *data, uint3
         if (primary->handle()) {
             qDebug() << "Primary is already bound, trying to bind secondary one";
             method = new WaylandInputMethod(primary->compositor());
+            method->initialize();
         }
 
         method->binding(client, id);
