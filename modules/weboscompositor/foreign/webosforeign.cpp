@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2021 LG Electronics, Inc.
+// Copyright (c) 2018-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -189,6 +189,19 @@ void WebOSForeign::registeredWindow()
     }
 }
 
+WebOSExported* WebOSForeign::createExported(struct wl_client* client,
+                                            uint32_t id, WebOSSurfaceItem* surfaceItem,
+                                            WebOSExportedType exportedType)
+{
+    return new WebOSExported(this, client, id, surfaceItem, exportedType);
+}
+
+WebOSImported* WebOSForeign::createImported(WebOSExported *exported, struct wl_client *client,
+                                            uint32_t id, WebOSExportedType exportedType)
+{
+    return new WebOSImported(exported, client, id, exportedType);
+}
+
 void WebOSForeign::webos_foreign_export_element(Resource *resource,
                                                 uint32_t id,
                                                 struct ::wl_resource *surface,
@@ -199,9 +212,8 @@ void WebOSForeign::webos_foreign_export_element(Resource *resource,
         static_cast<QWaylandQuickSurface*>(qwls);
     WebOSSurfaceItem *surfaceItem = WebOSSurfaceItem::getSurfaceItemFromSurface(quickSurface);
     WebOSExported *pWebOSExported =
-        new WebOSExported(this, resource->client(), id,
-                          surfaceItem,
-                          (WebOSForeign::WebOSExportedType)exported_type);
+        createExported(resource->client(), id, surfaceItem,
+                       static_cast<WebOSForeign::WebOSExportedType>(exported_type));
 
     pWebOSExported->assignWindowId(generateWindowId());
     m_exportedList.append(pWebOSExported);
@@ -215,9 +227,10 @@ void WebOSForeign::webos_foreign_import_element(Resource *resource,
     qInfo() << "webos_foreign_import_element with " << window_id;
     foreach(WebOSExported* exported, m_exportedList) {
         if (exported->m_windowId == window_id) {
-            exported->m_importList.append(
-                new WebOSImported(exported, resource->client(), id,
-                                  (WebOSForeign::WebOSExportedType)exported_type));
+            WebOSImported *imported =
+                createImported(exported, resource->client(), id,
+                               static_cast<WebOSForeign::WebOSExportedType>(exported_type));
+            exported->m_importList.append(imported);
             return;
         }
     }

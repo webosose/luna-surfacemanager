@@ -217,7 +217,6 @@ WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *
     , m_directRendering(false)
     , m_fullscreenTick(0)
     , m_surfaceGroupCompositor(0)
-    , m_foreign(nullptr)
     , m_unixSignalHandler(new UnixSignalHandler(this))
     , m_eventPreprocessor(new EventPreprocessor(this))
     , m_inputMethod(0)
@@ -233,10 +232,9 @@ WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *
     , m_loaded(false)
     , m_respawned(false)
     , m_registered(false)
+    , m_extensionFlags(extensions)
 {
     setSocketName(socketName);
-
-    initializeExtensions(extensions);
 
     connect(this, &QWaylandCompositor::surfaceRequested, this, [this] (QWaylandClient *client, uint id, int version) {
         WebOSSurface *surface = new WebOSSurface();
@@ -299,6 +297,7 @@ void WebOSCoreCompositor::insertToWindows(WebOSCompositorWindow *window)
 
 void WebOSCoreCompositor::create()
 {
+    initializeExtensions(m_extensionFlags);
     QWaylandCompositor::create();
     checkDaemonFiles();
 }
@@ -1364,7 +1363,7 @@ void WebOSCoreCompositor::initializeExtensions(WebOSCoreCompositor::ExtensionFla
     }
 
     if (extensions & WebOSCoreCompositor::WebOSForeignExtension)
-        m_foreign = new WebOSForeign(this);
+        m_foreign.reset(createWebOSForeign());
 }
 
 void WebOSCoreCompositor::initTestPluginLoader()
@@ -1491,4 +1490,9 @@ WebOSInputMethod* WebOSCoreCompositor::createInputMethod()
 WaylandInputMethodManager* WebOSCoreCompositor::createInputMethodManager(WaylandInputMethod *inputMethod)
 {
     return new WaylandInputMethodManager(inputMethod);
+}
+
+WebOSForeign* WebOSCoreCompositor::createWebOSForeign()
+{
+    return new WebOSForeign(this);
 }

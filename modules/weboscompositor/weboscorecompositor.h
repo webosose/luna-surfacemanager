@@ -221,6 +221,7 @@ public:
     virtual WebOSSurfaceItem* createSurfaceItem(QWaylandQuickSurface *surface);
     virtual WebOSInputMethod* createInputMethod();
     virtual WaylandInputMethodManager* createInputMethodManager(WaylandInputMethod *inputMethod);
+    virtual WebOSForeign* createWebOSForeign();
 
 public slots:
     void handleActiveFocusItemChanged();
@@ -353,7 +354,7 @@ private:
 
     WebOSSurfaceGroupCompositor* m_surfaceGroupCompositor;
 
-    WebOSForeign* m_foreign;
+    QScopedPointer<WebOSForeign> m_foreign;
 
     UnixSignalHandler* m_unixSignalHandler;
 
@@ -367,6 +368,7 @@ private:
     QRect m_outputGeometry;
     QMap<QString, QVector<WebOSCompositorWindow *>> m_clusters;
     bool m_registered;
+    ExtensionFlags m_extensionFlags;
 };
 
 #endif // WEBOSCORECOMPOSITOR_H

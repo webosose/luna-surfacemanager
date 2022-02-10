@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2020 LG Electronics, Inc.
+// Copyright (c) 2018-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -52,6 +52,13 @@ public:
     void registeredWindow();
 
 protected:
+    virtual WebOSExported* createExported(struct wl_client* client,
+                                          uint32_t id, WebOSSurfaceItem* surfaceItem,
+                                          WebOSExportedType exportedType);
+
+    virtual WebOSImported* createImported(WebOSExported *exported, struct wl_client *client,
+                                          uint32_t id, WebOSExportedType exportedType);
+
     virtual void webos_foreign_export_element(Resource *resource,
                                               uint32_t id,
                                               struct ::wl_resource *surface,
@@ -61,7 +68,6 @@ protected:
                                               const QString &window_id,
                                               uint32_t exported_type) override;
 
-private:
     WebOSCoreCompositor* m_compositor = nullptr;
     QList<WebOSExported*> m_exportedList;
 
@@ -120,7 +126,7 @@ private slots:
     void onSurfaceDestroyed();
     void updateCompositorWindow(QQuickWindow *window);
 
-private:
+protected:
     void updateVideoWindowList(QString contextId, QRect videoDisplayRect, bool needRemove);
     void calculateVideoDispRatio();
     void calculateExportedItemRatio();
@@ -180,7 +186,7 @@ protected:
     virtual void webos_imported_set_z_index(Resource *surface,
                                                  int32_t z_index) override;
 
-private:
+protected:
     WebOSImported(WebOSExported* exported, struct wl_client* client, uint32_t id,
                         WebOSForeign::WebOSExportedType exportedType);
     WebOSExported* m_exported = nullptr;
