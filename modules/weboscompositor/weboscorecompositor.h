@@ -222,6 +222,7 @@ public:
     virtual WebOSInputMethod* createInputMethod();
     virtual WaylandInputMethodManager* createInputMethodManager(WaylandInputMethod *inputMethod);
     virtual WebOSForeign* createWebOSForeign();
+    virtual WebOSInputManager* createInputManager();
 
 public slots:
     void handleActiveFocusItemChanged();

@@ -346,7 +346,7 @@ void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
 
         m_shell = new WebOSShell(this);
 
-        m_inputManager = new WebOSInputManager(this);
+        m_inputManager = createInputManager();
 #ifdef MULTIINPUT_SUPPORT
         m_inputDevicePreallocated = new WebOSInputDevice(this);
 #endif
@@ -1495,4 +1495,9 @@ WaylandInputMethodManager* WebOSCoreCompositor::createInputMethodManager(Wayland
 WebOSForeign* WebOSCoreCompositor::createWebOSForeign()
 {
     return new WebOSForeign(this);
+}
+
+WebOSInputManager* WebOSCoreCompositor::createInputManager()
+{
+    return new WebOSInputManager(this);
 }
