@@ -80,6 +80,7 @@ public:
     void setCompositor(WebOSCoreCompositor* compositor);
     bool setCompositorMain(const QUrl& main, const QString& importPath = QString());
 
+    virtual void setPageFlipNotifier() {};
     Q_INVOKABLE void showWindow();
 
     int displayId() const { return m_displayId; }

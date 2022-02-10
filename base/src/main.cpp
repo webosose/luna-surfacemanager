@@ -123,6 +123,8 @@ int main(int argc, char *argv[])
         compositorWindow->requestActivate();
     }
 
+    compositorWindow->setPageFlipNotifier();
+
     // Optional post initialization after the compositor and compositor windows get initialized
     compositor->postInit();
 
