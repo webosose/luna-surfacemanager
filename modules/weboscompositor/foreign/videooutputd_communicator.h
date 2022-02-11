@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2019 LG Electronics, Inc.
+// Copyright (c) 2013-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,12 +20,15 @@
 #include <QObject>
 #include <QRect>
 #include <QString>
+#include <WebOSCoreCompositor/weboscompositorexport.h>
 
-class VideoOutputdCommunicator : public QObject
+class WEBOS_COMPOSITOR_EXPORT VideoOutputdCommunicator : public QObject
 {
     Q_OBJECT
 public:
     static VideoOutputdCommunicator* instance();
+    // Testing purpose only
+    static void resetInstance();
 
     void setDisplayWindow(QRect sourceRectangle, QRect destinationRectangle, QString contextId);
     void setCropRegion(QRect originalRectangle, QRect sourceRectangle, QRect destinationRectangle, QString contextId);

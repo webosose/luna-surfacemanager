@@ -1,4 +1,4 @@
-// Copyright (c) 2019 LG Electronics, Inc.
+// Copyright (c) 2019-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,6 +32,14 @@ VideoWindowInformer* VideoWindowInformer::instance()
         m_instance = new VideoWindowInformer(QCoreApplication::instance());
 
     return m_instance;
+}
+
+void VideoWindowInformer::resetInstance()
+{
+    if (m_instance)
+        delete m_instance;
+
+    m_instance = nullptr;
 }
 
 void VideoWindowInformer::insertVideoWindowList(const QString contextId, const QRect destinationRectangle, const QString windowId)

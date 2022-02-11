@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019 LG Electronics, Inc.
+// Copyright (c) 2018-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,6 +31,14 @@ VideoOutputdCommunicator* VideoOutputdCommunicator::instance()
         m_instance = new VideoOutputdCommunicator(QCoreApplication::instance());
 
     return m_instance;
+}
+
+void VideoOutputdCommunicator::resetInstance()
+{
+    if (m_instance)
+        delete m_instance;
+
+    m_instance = nullptr;
 }
 
 void VideoOutputdCommunicator::setDisplayWindow(QRect sourceRectangle, QRect destinationRectangle, QString contextId)
