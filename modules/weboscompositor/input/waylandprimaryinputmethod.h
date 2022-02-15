@@ -67,8 +67,8 @@ public slots:
     void insert();
 
 private:
-    WaylandTextModelFactory *m_factory;
-    WaylandInputPanelFactory *m_panelFactory;
+    WaylandTextModelFactory *m_factory = nullptr;
+    WaylandInputPanelFactory *m_panelFactory = nullptr;
 
     QVector<QPointer<WaylandInputMethod>> m_methods;
 };
