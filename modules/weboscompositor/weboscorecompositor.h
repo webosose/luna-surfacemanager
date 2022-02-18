@@ -224,6 +224,8 @@ public:
     virtual WebOSForeign* createWebOSForeign();
     virtual WebOSInputManager* createInputManager();
 
+    WebOSSurfaceGroupCompositor *surfaceGroupCompositor() { return m_surfaceGroupCompositor; }
+
 public slots:
     void handleActiveFocusItemChanged();
 

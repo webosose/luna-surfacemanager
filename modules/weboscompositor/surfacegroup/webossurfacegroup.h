@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2021 LG Electronics, Inc.
+// Copyright (c) 2014-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -73,6 +73,8 @@ public:
     Q_INVOKABLE bool allowLayerKeyOrder() const;
     void makeKeyOrderedItems();
     WebOSSurfaceItem* nextKeyOrderedSurfaceGroupItem(WebOSSurfaceItem* currentItem);
+
+    WebOSSurfaceGroupLayer* surfaceGroupLayer(const QString &name) { return m_layers.value(name, nullptr); }
 
 signals:
     void allowAnonymousChanged();

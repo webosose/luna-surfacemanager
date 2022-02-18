@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2021 LG Electronics, Inc.
+// Copyright (c) 2014-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@ public:
     void removeGroup(WebOSSurfaceGroup* group);
 
     WebOSCoreCompositor* compositor() { return m_compositor; }
+
+    WebOSSurfaceGroup* surfaceGroup(const QString &name) { return m_groups.value(name, nullptr); }
 
 protected:
     void webos_surface_group_compositor_create_surface_group(Resource *resource, uint32_t id,
