@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2021 LG Electronics, Inc.
+// Copyright (c) 2014-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1073,12 +1073,12 @@ bool WebOSCompositorWindow::handleTabletEvent(QQuickItem* item, QTabletEvent* ev
         ev.accept();
         if (!m_mouseGrabberItem && QCoreApplication::sendEvent(item, &ev)) {
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
-            if (event->pointerType() == QPointingDevice::PointerType::Pen && event->type() == QEvent::TabletRelease && event->pressure() != 0)
+            if (event->pointerType() == QPointingDevice::PointerType::Pen && event->type() == QEvent::TabletRelease && !qFuzzyIsNull(event->pressure()))
                 m_tabletGrabberItem = item;
             else if (event->type() == QEvent::TabletPress)
                 m_tabletGrabberItem = item;
 #else
-            if (event->pointerType() == QTabletEvent::Pen && event->type() == QEvent::TabletRelease && event->pressure() != 0)
+            if (event->pointerType() == QTabletEvent::Pen && event->type() == QEvent::TabletRelease && !qFuzzyIsNull(event->pressure()))
                 m_tabletGrabberItem = item;
             else if (event->type() == QEvent::TabletPress)
                 m_tabletGrabberItem = item;
