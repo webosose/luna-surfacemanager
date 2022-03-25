@@ -1,4 +1,4 @@
-// Copyright (c) 2021 LG Electronics, Inc.
+// Copyright (c) 2021-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,9 +30,9 @@ Rectangle {
 
     Repeater {
         model: [
-           {"ms": 16, "color": "blue", "fontSize": 18},
-           {"ms": 50, "color": "green", "fontSize": 18},
-           {"ms": 100, "color": "yellow", "fontSize": 18},
+           {"ms": 16, "color": "blue", "fontSize": 15},
+           {"ms": 32, "color": "green", "fontSize": 15},
+           {"ms": 48, "color": "yellow", "fontSize": 15},
         ]
         Rectangle {
             height: 1
