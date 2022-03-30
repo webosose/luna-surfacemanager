@@ -93,7 +93,7 @@ public:
     void setDestinationRegion(struct::wl_resource *destination_region);
     void setPunchThrough(bool needPunch);
     void assignWindowId(QString windowId);
-    void setParentOf(QQuickItem *surfaceItem);
+    void setParentOf(QQuickItem *surfaceItem, QQuickItem *childDisplay);
     void updateCoverState();
     void updateActiveRegion();
     void registerMuteOwner(const QString& contextId);

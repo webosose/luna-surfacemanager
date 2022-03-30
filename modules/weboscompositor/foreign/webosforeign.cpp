@@ -882,14 +882,16 @@ void WebOSExported::assignWindowId(QString windowId)
 
 WebOSSurfaceItem *WebOSExported::getImportedItem()
 {
-    if (!m_exportedItem || m_exportedItem->childItems().isEmpty())
+    QQuickItem *childDisplayItem = m_exportedItem && !m_exportedItem->childItems().isEmpty() ? m_exportedItem->childItems().first() : nullptr;
+
+    if (!childDisplayItem || childDisplayItem->childItems().isEmpty())
         return nullptr;
 
-    if (m_exportedItem->childItems().size() > 1)
+    if (childDisplayItem->childItems().size() > 1)
         qWarning() << "more than one imported item for WebOSExported" << m_surfaceItem;
 
     // Imported surface item
-    return static_cast<WebOSSurfaceItem *>(m_exportedItem->childItems().first());
+    return static_cast<WebOSSurfaceItem *>(childDisplayItem->childItems().first());
 }
 
 bool WebOSExported::hasSecuredContent()
@@ -908,14 +910,14 @@ bool WebOSExported::hasSecuredContent()
     return false;
 }
 
-void WebOSExported::setParentOf(QQuickItem *item)
+void WebOSExported::setParentOf(QQuickItem *item, QQuickItem *childDisplayItem)
 {
     if (!m_surfaceItem || !m_exportedItem) {
         qWarning() << "unexpected null reference" << m_surfaceItem << m_exportedItem;
         return;
     }
 
-    item->setParentItem(m_exportedItem);
+    item->setParentItem(childDisplayItem);
 
     // mirrored items
     foreach(WebOSSurfaceItem *parent, m_surfaceItem->mirrorItems())
@@ -1257,7 +1259,7 @@ void WebOSImported::webos_imported_attach_surface(
     // Applying direct update after the child surface item belongs to a window
     m_childSurfaceItem->setDirectUpdateOnPlane(m_exported->surfaceItem()->directUpdateOnPlane());
     connect(m_exported->surfaceItem(), &WebOSSurfaceItem::directUpdateOnPlaneChanged, m_childSurfaceItem, &WebOSSurfaceItem::updateDirectUpdateOnPlane);
-    m_childSurfaceItem->setParentItem(m_childDisplayItem);
+    m_exported->setParentOf(m_childSurfaceItem, m_childDisplayItem);
     m_childDisplayItem->setZ(m_exported->m_exportedItem->z()+m_z_index);
     updateGeometry();  //Resize texture if needed.
     if (m_importedType == WebOSForeign::WebOSExportedType::VideoObject)
