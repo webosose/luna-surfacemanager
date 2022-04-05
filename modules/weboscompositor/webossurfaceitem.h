@@ -80,6 +80,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandQuickItem
 #endif
     Q_PROPERTY(LocationHints locationHint READ locationHint NOTIFY locationHintChanged)
     Q_PROPERTY(KeyMasks keyMask READ keyMask NOTIFY keyMaskChanged)
+    // NOTE: Be careful to set itemState directly from qml, keeping the item consistent with native part
     Q_PROPERTY(ItemState itemState READ itemState WRITE setItemState NOTIFY itemStateChanged)
     Q_PROPERTY(QString itemStateReason READ itemStateReason NOTIFY itemStateReasonChanged)
     Q_PROPERTY(QVariantMap closePolicy READ closePolicy WRITE setClosePolicy NOTIFY closePolicyChanged RESET unsetClosePolicy)

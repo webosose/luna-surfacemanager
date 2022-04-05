@@ -749,6 +749,7 @@ WebOSSurfaceItem* WebOSCoreCompositor::createProxyItem(const QString& appId, con
     item->setSubtitle(subtitle);
     item->setCardSnapShotFilePath(snapshotPath);
 
+    // NOTE: Use setProxyFor if there is no dependency for the call order
     item->setItemState(WebOSSurfaceItem::ItemStateProxy);
     /* To be in recent model */
     item->setLastFullscreenTick(getFullscreenTick());
@@ -758,6 +759,23 @@ WebOSSurfaceItem* WebOSCoreCompositor::createProxyItem(const QString& appId, con
     m_surfaces << item;
 
     return item;
+}
+
+/* Consider following cases for proxy item to keep it in m_surfaces.
+   1) Created -> Mapped -> Destroyed : Already in m_surfaces.
+   2) Created -> Mapped -> UnMapped -> Destroyed : Put the item into m_surfaces again.
+   3) Created -> Destroyed : Put the item into m_surfaces.
+   And delete the old proxy item if it's not deleted while hasn't Mapped. */
+void WebOSCoreCompositor::setProxyFor(WebOSSurfaceItem *item)
+{
+    // delete duplicated proxy item
+    deleteProxyFor(item);
+
+    item->setItemState(WebOSSurfaceItem::ItemStateProxy, item->itemStateReason());
+
+    // Proxy item should be in the list
+    if (!m_surfaces.contains(item))
+        m_surfaces << item;
 }
 
 void WebOSCoreCompositor::deleteProxyFor(WebOSSurfaceItem* newItem)
@@ -893,7 +911,7 @@ void WebOSCoreCompositor::closeWindowKeepItem(QVariant window)
     } else {
         // Set as proxy unless marked as closing
         if (item->itemState() != WebOSSurfaceItem::ItemStateClosing)
-            item->setItemState(WebOSSurfaceItem::ItemStateProxy);
+            setProxyFor(item);
         if (item->surface() && item->surface()->client())
             item->close();
     }
@@ -915,6 +933,8 @@ bool WebOSCoreCompositor::checkSurfaceItemClosePolicy(const QString &reason, Web
     return m_surfaceItemClosePolicy.value(reason).toBool();
 }
 
+/* NOTE: If some surfaces are not mapped yet, m_surfaces can have multiple items with same appId.
+   Mostly, they might be proxy items. */
 WebOSSurfaceItem* WebOSCoreCompositor::getSurfaceItemByAppId(const QString& appId)
 {
     QMutableListIterator<WebOSSurfaceItem*> si(m_surfaces);
@@ -1022,11 +1042,11 @@ void WebOSCoreCompositor::processSurfaceItem(WebOSSurfaceItem* item, WebOSSurfac
             case WebOSSurfaceItem::ItemStateHidden:
                 if (!item->itemStateReason().isEmpty() && checkSurfaceItemClosePolicy(item->itemStateReason(), item)) {
                     qInfo() << "transitioning to ItemStateProxy and ItemStateClosing for" << item << item->itemState() << item->itemStateReason();
-                    item->setItemState(WebOSSurfaceItem::ItemStateProxy, item->itemStateReason());
+                    setProxyFor(item);
                     processSurfaceItem(item, WebOSSurfaceItem::ItemStateClosing);
                 } else {
                     qInfo() << "transitioning to ItemStateProxy for" << item << item->itemState() << item->itemStateReason();
-                    item->setItemState(WebOSSurfaceItem::ItemStateProxy, item->itemStateReason());
+                    setProxyFor(item);
                     emit surfaceDestroyed(item);
                     // reset state reason to re-use
                     item->unsetItemStateReason();

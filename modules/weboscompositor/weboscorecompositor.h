@@ -300,6 +300,7 @@ private:
     // methods
     void checkDaemonFiles();
 
+    void setProxyFor(WebOSSurfaceItem *item);
     void deleteProxyFor(WebOSSurfaceItem* item);
     void initializeExtensions(WebOSCoreCompositor::ExtensionFlags extensions);
 
