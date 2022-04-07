@@ -15,6 +15,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import QtQuick 2.0
+import Eos.Controls 0.1
 import WebOS.DeveloperTools 1.0
 import PresentationTime 1.0
 
@@ -62,15 +63,87 @@ Rectangle {
     }
 
     Rectangle {
-        width: 50
-        height: 50
-        color:"red"
-        anchors.right: parent.right
-        RotationAnimation on rotation {
-            from: 0; to: 360;
-            duration: 10000
-            loops: Animation.Infinite
+        id: background
+        color: "transparent"
+        anchors.fill: parent
+        z: 1
+
+        Text {
+            id: animationSelectorTitle
+            anchors.top: animationSelector.top
+            anchors.topMargin: 10
+            anchors.right: animationSelector.left
+            anchors.rightMargin: 30
+            horizontalAlignment: Text.AlignRight
+            width: 400
+            font.pixelSize: 24
+            text: "Select Animation"
         }
+
+        ComboBox {
+            id: animationSelector
+            anchors.top: parent.top
+            anchors.topMargin: 25
+            anchors.right: parent.right
+            anchors.rightMargin: 20
+            model: animationModel
+            mustHighlight: true
+            focus: true
+            Component.onCompleted: {
+                // Override styles
+                style.comboWidth = 400;
+                style.comboItemHeight = 46;
+                style.comboVerticalMargin = 0;
+                style.comboHorizontalMargin = 20;
+                style.comboCornerRadius = 10;
+                style.comboHeaderFontSize = 24;
+                style.comboHeaderHeight = 46;
+                style.comboItemFontSize = 24;
+            }
+            onSelectedIndexChanged: {
+                if (selectedIndex >= 0 && selectedIndex < animationList.length) {
+                    animationsAllStop();
+                    animationLoader.source = Qt.resolvedUrl("./animations/") + animationList[selectedIndex].url;
+                } else {
+                    console.warn("selectedIndex is out of bounds:", selectedIndex);
+                }
+            }
+        }
+    }
+
+    readonly property var animationList: [
+        {"name":"Rotate_rect", "url":"rotate_rect.qml"},
+        {"name":"Marquee_text", "url":"marquee_text.qml"},
+    ]
+
+    ListModel {
+        id: animationModel
+    }
+
+    Loader {
+        id: animationLoader
+        anchors.fill: animationArea
+    }
+
+    Rectangle {
+        id: animationArea
+        width: root.width
+        height: root.height * 2 / 3
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.topMargin: 100
+        color: "transparent"
+    }
+
+    Component.onCompleted: {
+        animationModel.clear();
+        for (var i = 0; i < animationList.length; i++)
+            animationModel.append({"text": (i + 1) + ". " + animationList[i].name});
+        animationSelector.selectedIndex = 0;
+    }
+
+    function animationsAllStop() {
+        animationLoader.source = "";
     }
 }
 

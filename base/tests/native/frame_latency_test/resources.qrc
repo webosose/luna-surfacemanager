@@ -2,5 +2,7 @@
 <RCC version="1.0">
 <qresource prefix="/">
     <file>frame_latency_test.qml</file>
+    <file>animations/rotate_rect.qml</file>
+    <file>animations/marquee_text.qml</file>
 </qresource>
 </RCC>
