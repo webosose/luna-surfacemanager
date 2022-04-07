@@ -57,6 +57,7 @@ signals:
 private slots:
     void frameFinished();
     void profileFrame(quint32, quint32, quint32);
+    void onFrameSwapped();
     void onFrameMissed();
 
     void deliverUpdateRequest();

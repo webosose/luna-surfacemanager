@@ -27,7 +27,7 @@
 #include <QtMath>
 #endif
 
-Q_LOGGING_CATEGORY(updateScheduler, "webos.surfacemanager.updatescheduler")
+Q_LOGGING_CATEGORY(updateScheduler, "webos.surfacemanager.updatescheduler", QtInfoMsg)
 
 static constexpr int STATIC_SWAP_BUFFER_TIME = 2;
 
@@ -135,6 +135,7 @@ void UpdateScheduler::init()
         // scheduling next update in frameFinished
         connect(this, &UpdateScheduler::pageFlipped, this, &UpdateScheduler::frameFinished);
         connect(this, &UpdateScheduler::frameMissed, this, &UpdateScheduler::onFrameMissed);
+        connect(m_window, &QQuickWindow::frameSwapped, this, &UpdateScheduler::onFrameSwapped);
         // Debugging purpose
         //connect(this, &UpdateScheduler::pageFlipped, this, &UpdateScheduler::profileFrame);
     }
@@ -147,13 +148,6 @@ bool UpdateScheduler::updateRequested()
 
     if (m_updateTimer.isActive() || m_framesOnUpdate != 0) {
         m_hasUnhandledUpdateRequest = true;
-        // The update timer may not be running in case there was no page flip
-        // since the last update. So start the timer in that case as fallback
-        // with the interval of two vsync cycles considering the worst case.
-        if (!m_updateTimer.isActive()) {
-            m_updateTimer.start(m_vsyncInterval * 2);
-            qWarning() << "UpdateScheduler is not Active. Please check when this case happens";
-        }
         return true;
     }
     // First UpdateRequest, just fall through to start sync
@@ -169,10 +163,14 @@ void UpdateScheduler::deliverUpdateRequest()
     if (m_adaptiveUpdate) {
         // Send any unhandled UpdateRequest
         if (m_hasUnhandledUpdateRequest) {
-            qCDebug(updateScheduler) << "deliverUpdateRequest with updateTimer";
+            m_hasUnhandledUpdateRequest = false;
+
+            struct timespec ts;
+            clock_gettime(CLOCK_MONOTONIC, &ts);
+
+            qCDebug(updateScheduler) << "deliverUpdateRequest with updateTimer" << ts.tv_sec << ts.tv_nsec / 1000;
             // Start to keep track the frame
             frameStarted();
-            m_hasUnhandledUpdateRequest = false;
             m_window->deliverUpdateRequest();
         } else {
             qCDebug(updateScheduler) << "no update since framecallback" << m_sinceSendFrame.elapsed();
@@ -326,6 +324,14 @@ void UpdateScheduler::frameStarted()
     m_frameTimerQueue << timer;
 
     m_framesOnUpdate++;
+}
+
+void UpdateScheduler::onFrameSwapped()
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+
+    qCDebug(updateScheduler) << "onFrameSwapped" << ts.tv_sec << ts.tv_nsec / 1000;
 }
 
 /* If there is page_flip_notifier, then the finish of the frame is regarded as on-screen presentation. */
