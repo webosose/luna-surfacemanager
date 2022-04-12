@@ -52,8 +52,8 @@ void UpdateScheduler::pageFlipNotifier(WebOSCompositorWindow* win, unsigned int 
     UpdateScheduler *upsched = win ? win->updateScheduler() : nullptr;
 
     qCDebug(updateScheduler) << "UpdateScheduler::pageFlipNotifier" << upsched << seq << tv_sec << tv_usec;
-    if (upsched && seq != 0) {
-        if (seq != last_sequence + 1)
+    if (upsched) {
+        if (seq > 0 && seq != last_sequence + 1)
             emit upsched->frameMissed();
 
         emit upsched->pageFlipped(seq, tv_sec, tv_usec*1000);
