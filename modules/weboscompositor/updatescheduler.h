@@ -52,9 +52,9 @@ public:
 signals:
     void frameMissed();
     void pageFlipped(quint32, quint32, quint32);
+    void legacyPageFlipped();
 
 private slots:
-    // Schedule next update
     void frameFinished();
     void profileFrame(quint32, quint32, quint32);
     void onFrameMissed();
@@ -62,6 +62,11 @@ private slots:
     void deliverUpdateRequest();
 
     void scheduleFrameCallback();
+
+    void setNextUpdateWithDefaultNotifier();
+    void onBeforeSynchronizing();
+    void onAfterRendering();
+    void onLegacyPageFlipped();
 
 private:
     WebOSCompositorWindow *m_window = nullptr;
@@ -88,6 +93,10 @@ private:
     QElapsedTimer m_vsyncElapsedTimer;
 
     int m_vsyncNsecsInterval = 1000000000 / 60;
+
+    // Legacy adaptive update
+    QElapsedTimer m_sinceSyncStart;
+    int m_timeSpentForRendering;
 };
 
 #endif // UPDATESCHEDULER_H

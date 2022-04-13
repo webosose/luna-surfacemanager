@@ -29,6 +29,8 @@
 
 Q_LOGGING_CATEGORY(updateScheduler, "webos.surfacemanager.updatescheduler")
 
+static constexpr int STATIC_SWAP_BUFFER_TIME = 2;
+
 /* Increasing this value, frame_callback is sent earlier,
    so that client starts to update earlier. Eventually,
    frame latency will be increased as the amount of the time.
@@ -52,8 +54,9 @@ void UpdateScheduler::pageFlipNotifier(WebOSCompositorWindow* win, unsigned int 
     UpdateScheduler *upsched = win ? win->updateScheduler() : nullptr;
 
     qCDebug(updateScheduler) << "UpdateScheduler::pageFlipNotifier" << upsched << seq << tv_sec << tv_usec;
-    if (upsched) {
-        if (seq > 0 && seq != last_sequence + 1)
+
+    if (upsched && seq != 0) {
+        if (seq != last_sequence + 1)
             emit upsched->frameMissed();
 
         emit upsched->pageFlipped(seq, tv_sec, tv_usec*1000);
@@ -101,6 +104,7 @@ void UpdateScheduler::init()
 
     if (defaultUpdateInterval != 0)
         qWarning() << "QT_QPA_UPDATE_IDLE_TIME is not 0 but" << defaultUpdateInterval;
+
     m_updateTimerInterval = s_default_update_idle_time; // changes adaptively per every frame
     m_updateTimer.setTimerType(Qt::PreciseTimer);
     m_updateTimer.setSingleShot(true);
@@ -120,10 +124,20 @@ void UpdateScheduler::init()
     }
 
     qInfo() << "Adaptive update with pageflip notifier" << hasPageFlipNotifier;
-    // scheduling next update in frameFinished
-    connect(this, &UpdateScheduler::pageFlipped, this, &UpdateScheduler::frameFinished);
-    connect(this, &UpdateScheduler::pageFlipped, this, &UpdateScheduler::profileFrame);
-    connect(this, &UpdateScheduler::frameMissed, this, &UpdateScheduler::onFrameMissed);
+
+    // For legacy adaptive update
+    if (!hasPageFlipNotifier) {
+        connect(m_window, &QQuickWindow::beforeSynchronizing, this, &UpdateScheduler::onBeforeSynchronizing);
+        connect(m_window, &QQuickWindow::afterRendering, this, &UpdateScheduler::onAfterRendering);
+        connect(m_window, &QQuickWindow::frameSwapped, this, &UpdateScheduler::setNextUpdateWithDefaultNotifier);
+        connect(this, &UpdateScheduler::legacyPageFlipped, this, &UpdateScheduler::onLegacyPageFlipped);
+    } else {
+        // scheduling next update in frameFinished
+        connect(this, &UpdateScheduler::pageFlipped, this, &UpdateScheduler::frameFinished);
+        connect(this, &UpdateScheduler::frameMissed, this, &UpdateScheduler::onFrameMissed);
+        // Debugging purpose
+        //connect(this, &UpdateScheduler::pageFlipped, this, &UpdateScheduler::profileFrame);
+    }
 }
 
 bool UpdateScheduler::updateRequested()
@@ -136,9 +150,10 @@ bool UpdateScheduler::updateRequested()
         // The update timer may not be running in case there was no page flip
         // since the last update. So start the timer in that case as fallback
         // with the interval of two vsync cycles considering the worst case.
-        //TODO: Not revised yet. Need more investigation for the reason.
-        if (!m_updateTimer.isActive())
+        if (!m_updateTimer.isActive()) {
             m_updateTimer.start(m_vsyncInterval * 2);
+            qWarning() << "UpdateScheduler is not Active. Please check when this case happens";
+        }
         return true;
     }
     // First UpdateRequest, just fall through to start sync
@@ -243,6 +258,54 @@ void UpdateScheduler::scheduleFrameCallback()
     if (m_adaptiveFrame)
         m_frameTimer.start(m_frameTimerInterval);
 }
+
+// Legacy adaptive update
+inline __attribute__((always_inline)) static int calculateUpdateTimerInterval(
+    int timeSinceRenderingToSwapBuffer, qreal vsyncInterval, int updateTimerInterval)
+{
+    int nextInterval = vsyncInterval - (timeSinceRenderingToSwapBuffer + RENDER_FLUCTUATION_BUFFER_TIME);
+    nextInterval = nextInterval > 0 ? nextInterval : updateTimerInterval;
+    updateTimerInterval = updateTimerInterval >= nextInterval ?
+        nextInterval : updateTimerInterval + 1;
+    return updateTimerInterval;
+}
+
+void UpdateScheduler::onBeforeSynchronizing()
+{
+    PMTRACE_FUNCTION;
+    m_sinceSyncStart.start();
+}
+
+void UpdateScheduler::onAfterRendering()
+{
+    PMTRACE_FUNCTION;
+    m_timeSpentForRendering = m_sinceSyncStart.elapsed();
+}
+
+void UpdateScheduler::setNextUpdateWithDefaultNotifier()
+{
+    PMTRACE_FUNCTION;
+    // Assume that page flip happens just after the swapbuffer with the constant time
+    int timeSinceRenderingToSwapBuffer = m_timeSpentForRendering + STATIC_SWAP_BUFFER_TIME;
+    m_updateTimerInterval =
+        calculateUpdateTimerInterval(timeSinceRenderingToSwapBuffer,
+                                     m_vsyncInterval, m_updateTimerInterval);
+    emit legacyPageFlipped();
+}
+
+void UpdateScheduler::onLegacyPageFlipped()
+{
+    if (Q_LIKELY(m_framesOnUpdate > 0))
+        m_framesOnUpdate--;
+
+    if (m_adaptiveUpdate) {
+        m_updateTimer.start(m_updateTimerInterval);
+    }
+
+    if (m_adaptiveFrame)
+        m_frameTimer.start(m_frameTimerInterval);
+}
+// Legacy adaptive update
 
 void UpdateScheduler::onFrameMissed()
 {

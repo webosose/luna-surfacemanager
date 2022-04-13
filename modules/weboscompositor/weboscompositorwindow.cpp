@@ -786,11 +786,9 @@ bool WebOSCompositorWindow::hasSecuredContent()
 }
 
 // Should be called in compositor implementation after having page flip notifier
+// Legacy adaptive update will be used unless having page flip notifier
 void WebOSCompositorWindow::initUpdateScheduler()
 {
-    if (!m_hasPageFlipNotifier)
-        return;
-
     m_updateScheduler = new UpdateScheduler(this);
 }
 
