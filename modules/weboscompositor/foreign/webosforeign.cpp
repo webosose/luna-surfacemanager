@@ -277,7 +277,8 @@ WebOSExported::WebOSExported(
     connect(m_surfaceItem, &QWaylandQuickItem::yChanged, this, &WebOSExported::calculateAll);
     connect(m_surfaceItem, &QWaylandQuickItem::widthChanged, this, &WebOSExported::calculateAll);
     connect(m_surfaceItem, &QWaylandQuickItem::heightChanged, this, &WebOSExported::calculateAll);
-    connect(m_surfaceItem, &QWaylandQuickItem::scaleChanged, this, &WebOSExported::calculateAll);
+    // 2022.05.04. fix transient issue.
+    //connect(m_surfaceItem, &QWaylandQuickItem::scaleChanged, this, &WebOSExported::calculateAll);
     connect(m_surfaceItem, &QWaylandQuickItem::surfaceDestroyed, this, &WebOSExported::onSurfaceDestroyed);
     connect(m_surfaceItem, &WebOSSurfaceItem::itemAboutToBeDestroyed, this, &WebOSExported::onSurfaceDestroyed);
     connect(m_surfaceItem, &WebOSSurfaceItem::windowChanged, this, &WebOSExported::updateCompositorWindow);
@@ -341,6 +342,12 @@ void WebOSExported::updateOrientation()
     if (!m_surfaceItem) {
         qWarning() << "surfaceItem for " << m_windowId << " is null";
         return;
+    }
+
+    if (m_isRotationChanging == false) {
+        qInfo() << "start to change rotation for WebOSExported (" << m_windowId << ")";
+        m_isRotationChanging = true;
+        setVideoDisplayWindow();
     }
 
     Qt::ScreenOrientation orientationInfo = m_surfaceItem->orientationInfo();
@@ -646,8 +653,8 @@ void WebOSExported::setVideoDisplayWindow()
     }
 
     if (m_foreign->m_compositor->window() && !m_contextId.isNull()) {
-        if (m_coverVideo) {
-            qInfo() << "cover video state. set video display rect = (0, 0, 0, 0)";
+        if (m_coverVideo || m_isRotationChanging) {
+            qInfo() << "cover video state (" << m_coverVideo << ") or rotation changing (" << m_isRotationChanging << "). set video display rect = (0, 0, 0, 0)";
             videoDisplayRect = QRect(0, 0, 0, 0);
         } else {
             qDebug() << "Not cover state. Keep video display rect";
@@ -770,6 +777,7 @@ void WebOSExported::webos_exported_set_exported_window(
     m_originalInputRect = QRect(0, 0, 0, 0);
     m_sourceRect = QRect(0, 0, 0, 0);
 
+    m_isRotationChanging = false;
     setDestinationRegion(destination_region);
 }
 
@@ -810,6 +818,7 @@ void WebOSExported::webos_exported_set_crop_region(
     qInfo() << "crop_region original rect : " << m_originalInputRect << "on " << m_windowId;
     qInfo() << "crop_region source rect : " << m_sourceRect << "on " << m_windowId;
 
+    m_isRotationChanging = false;
     setDestinationRegion(destination_region);
 }
 

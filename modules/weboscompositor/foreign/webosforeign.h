@@ -164,6 +164,7 @@ protected:
     bool m_directVideoScalingMode = false; // If this mode is enabled, do not call setDisplayWindow and setCropRegion of videooutputd
     QString m_surfaceItemWindowType;
     bool m_coverVideo;
+    bool m_isRotationChanging = false;
     QRect m_activeRegion;
     double m_videoDispRatio = 1.0;
     double m_exportedWindowRatio = 1.0;
