@@ -387,37 +387,13 @@ void WebOSExported::calculateVideoDispRatio()
     QRect outputGeometry = m_compositorWindow->outputGeometry();
 
     if (outputGeometry.isValid() && m_surfaceItem->surface()) {
+        //TODO: m_videoDispRatio will be replaced by m_surfaceItem->scale();
+        m_videoDispRatio = m_surfaceItem->scale();
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
-        if (!m_surfaceItem->surface()->bufferSize().isValid() || !m_surfaceGlobalPosition.isValid()) {
-            m_videoDispRatio = 1.0;
-            qInfo() << "video display ratio : " << m_videoDispRatio << ", surface size is not valid yet on " << m_windowId;
-        } else {
-            QRectF m_surfaceGlobalPosition = m_surfaceItem->mapRectToScene(QRect(0,0,m_surfaceItem->surface()->bufferSize().width(), m_surfaceItem->surface()->bufferSize().height()));
-
-            if (!m_isSurfaceItemFullscreen) {
-                m_videoDispRatio = qMin((double) m_surfaceGlobalPosition.width()/m_surfaceItem->surface()->bufferSize().width(), (double) m_surfaceGlobalPosition.height()/m_surfaceItem->surface()->bufferSize().height());
-                qInfo() << "video display ratio : " << m_videoDispRatio << ", (not fullscreen case) surface global position : " << m_surfaceGlobalPosition << ", surface size : " << m_surfaceItem->surface()->bufferSize() << " on " << m_windowId;
-            } else {
-                QPointF offset = m_surfaceItem->mapToItem(m_compositorWindow->viewsRoot(), QPointF(0.0, 0.0));
-                m_videoDispRatio = (double) outputGeometry.width() / m_surfaceItem->surface()->bufferSize().width();
-                qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->bufferSize() << "m_videoDispRatio:" << m_videoDispRatio;
+        qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->bufferSize() << "m_videoDispRatio:" << m_videoDispRatio;
 #else
-        if (!m_surfaceItem->surface()->size().isValid() || !m_surfaceGlobalPosition.isValid()) {
-            m_videoDispRatio = 1.0;
-            qInfo() << "video display ratio : " << m_videoDispRatio << ", surface size is not valid yet on " << m_windowId;
-        } else {
-            QRectF m_surfaceGlobalPosition = m_surfaceItem->mapRectToScene(QRect(0,0,m_surfaceItem->surface()->size().width(), m_surfaceItem->surface()->size().height()));
-
-            if (!m_isSurfaceItemFullscreen) {
-                m_videoDispRatio = qMin((double) m_surfaceGlobalPosition.width()/m_surfaceItem->surface()->size().width(), (double) m_surfaceGlobalPosition.height()/m_surfaceItem->surface()->size().height());
-                qInfo() << "video display ratio : " << m_videoDispRatio << ", (not fullscreen case) surface global position : " << m_surfaceGlobalPosition << ", surface size : " << m_surfaceItem->surface()->size() << " on " << m_windowId;
-            } else {
-                QPointF offset = m_surfaceItem->mapToItem(m_compositorWindow->viewsRoot(), QPointF(0.0, 0.0));
-                m_videoDispRatio = (double) outputGeometry.width() / m_surfaceItem->surface()->size().width();
-                qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->size() << "m_videoDispRatio:" << m_videoDispRatio;
+        qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->size() << "m_videoDispRatio:" << m_videoDispRatio;
 #endif
-            }
-        }
 
         if (m_requestedRegion.isValid()) {
             setVideoDisplayRect();
@@ -445,11 +421,11 @@ void WebOSExported::calculateExportedItemRatio()
     QRect outputGeometry = m_compositorWindow->outputGeometry();
 
     if (m_isSurfaceItemFullscreen && outputGeometry.isValid()) {
+        //TODO: m_exportedWindowRatio will be replaced by m_surfaceItem->scale();
+        m_exportedWindowRatio =  m_surfaceItem->scale();
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
-        m_exportedWindowRatio = (double) m_surfaceItem->width() / m_surfaceItem->surface()->bufferSize().width() * m_surfaceItem->scale();
         qInfo() << "surface size: " << m_surfaceItem->surface()->bufferSize() << "item size:" << m_surfaceItem->size() << "m_exportedWindowRatio:" << m_exportedWindowRatio;
 #else
-        m_exportedWindowRatio = (double) m_surfaceItem->width() / m_surfaceItem->surface()->size().width() * m_surfaceItem->scale();
         qInfo() << "surface size: " << m_surfaceItem->surface()->size() << "item size:" << m_surfaceItem->size() << "m_exportedWindowRatio:" << m_exportedWindowRatio;
 #endif
         if (m_requestedRegion.isValid()) {
@@ -683,16 +659,16 @@ void WebOSExported::setVideoDisplayRect() {
 
     if (m_activeRegion.isValid()) {
         m_videoDisplayRect = QRect(
-            round(m_surfaceGlobalPosition.x() + m_requestedRegion.x() * m_surfaceItem->scale()),
-            round(m_surfaceGlobalPosition.y() + m_requestedRegion.y() * m_surfaceItem->scale()),
-            round(m_requestedRegion.width() * m_surfaceItem->scale()),
-            round(m_requestedRegion.height() * m_surfaceItem->scale()));
+            round(m_surfaceGlobalPosition.x() + m_requestedRegion.x() * m_videoDispRatio),
+            round(m_surfaceGlobalPosition.y() + m_requestedRegion.y() * m_videoDispRatio),
+            round(m_requestedRegion.width() * m_videoDispRatio),
+            round(m_requestedRegion.height() * m_videoDispRatio));
     } else {
         m_videoDisplayRect = QRect(
-            (int) (m_surfaceGlobalPosition.x() + m_requestedRegion.x() * m_surfaceItem->scale()),
-            (int) (m_surfaceGlobalPosition.y() + m_requestedRegion.y() * m_surfaceItem->scale()),
-            (int) (m_requestedRegion.width() * m_surfaceItem->scale()),
-            (int) (m_requestedRegion.height() * m_surfaceItem->scale()));
+            (int) (m_surfaceGlobalPosition.x() + m_requestedRegion.x() * m_videoDispRatio),
+            (int) (m_surfaceGlobalPosition.y() + m_requestedRegion.y() * m_videoDispRatio),
+            (int) (m_requestedRegion.width() * m_videoDispRatio),
+            (int) (m_requestedRegion.height() * m_videoDispRatio));
     }
 }
 
