@@ -30,6 +30,7 @@
 #include <qpa/qplatformscreen.h>
 
 #include <private/qguiapplication_p.h>
+#include <private/qhighdpiscaling_p.h>
 #include <private/qquickitem_p.h>
 #include <private/qquickwindow_p.h>
 
@@ -103,7 +104,7 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
     create();
 
     QSize screenSize = screen() ? screen()->size() : QSize();
-    qreal dpr = devicePixelRatio();
+    qreal dpr = QHighDpiScaling::isActive() ? 1.0 : devicePixelRatio();
 
     // Fallback if invalid
     if (!screenSize.isValid()) {
