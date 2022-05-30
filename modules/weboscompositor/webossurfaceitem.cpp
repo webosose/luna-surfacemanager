@@ -504,12 +504,19 @@ void WebOSSurfaceItem::touchEvent(QTouchEvent *event)
 
     if (inputEventsEnabled() && touchEventsEnabled()) {
         WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());
+        QWaylandSeat *seat = nullptr;
 
 #ifdef MULTIINPUT_SUPPORT
-        QWaylandSeat *seat = getInputDevice(&e);
+        seat = getInputDevice(&e);
 #else
-        QWaylandSeat *seat = w->inputDevice();
+        if (w)
+            seat = w->inputDevice();
 #endif
+        if (seat == nullptr) {
+            qWarning("no input device for this event");
+            event->ignore();
+            return;
+        }
 
         QPoint pointPos;
         const QList<QTouchEvent::TouchPoint> &points = e.touchPoints();
@@ -521,14 +528,28 @@ void WebOSSurfaceItem::touchEvent(QTouchEvent *event)
             pointPos = points.at(0).pos().toPoint();
 #endif
 
-        if (e.type() == QEvent::TouchBegin && !surface()->inputRegionContains(pointPos))
+        if (e.type() == QEvent::TouchBegin && !surface()->inputRegionContains(pointPos)) {
+            event->ignore();
             return;
+        }
 
+        event->accept();
         // To prevent changing mouse focus when cursor is located in another display.
         QWindow *currentMouseWindow = QGuiApplicationPrivate::currentMouseWindow;
         if (!currentMouseWindow || window() == currentMouseWindow) {
             if (seat->mouseFocus() != view())
                 seat->sendMouseMoveEvent(view(), pointPos, mapToScene(pointPos));
+        }
+
+        if (e.type() == QEvent::TouchBegin) {
+            if (seat->mouseFocus() &&
+                seat->mouseFocus()->surface() != seat->keyboardFocus() &&
+                m_grabKeyboardFocusOnClick) {
+                /* set keyboard focus for all devices */
+                takeWlKeyboardFocus();
+                m_hasKeyboardFocus = true;
+                emit hasKeyboardFocusChanged();
+            }
         }
 
         seat->sendFullTouchEvent(surface(), &e);
