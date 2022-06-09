@@ -732,7 +732,7 @@ void WebOSCoreCompositor::surfaceCreated(QWaylandSurface *surface) {
         << ((surface && surface->client()) ? surface->client()->client() : nullptr);
 }
 
-WebOSSurfaceItem* WebOSCoreCompositor::createProxyItem(const QString& appId, const QString& title, const QString& subtitle, const QString& snapshotPath)
+WebOSSurfaceItem* WebOSCoreCompositor::createProxyItem(const QString& appId, const QString& title, const QString& subtitle, const QString& cardSnapshotPath)
 {
     WebOSSurfaceItem *item = new WebOSSurfaceItem(this, NULL);
     if (item == nullptr) {
@@ -740,14 +740,14 @@ WebOSSurfaceItem* WebOSCoreCompositor::createProxyItem(const QString& appId, con
                     << "appId :" << appId
                     << "title :" << title
                     << "subtitle :" << subtitle
-                    << "snapshotPath :" << snapshotPath;
+                    << "cardSnapshotPath :" << cardSnapshotPath;
         return nullptr;
     }
 
     item->setAppId(appId);
     item->setTitle(title);
     item->setSubtitle(subtitle);
-    item->setCardSnapShotFilePath(snapshotPath);
+    item->setCardSnapShotFilePath(cardSnapshotPath);
 
     // NOTE: Use setProxyFor if there is no dependency for the call order
     item->setItemState(WebOSSurfaceItem::ItemStateProxy);

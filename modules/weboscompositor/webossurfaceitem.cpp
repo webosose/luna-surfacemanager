@@ -887,6 +887,7 @@ void WebOSSurfaceItem::setTitle(const QString& title, bool updateProperty)
 {
     PMTRACE_FUNCTION;
     if (m_title != title) {
+        qInfo() << "titleChanged from" << m_title << " to" << title;
         m_title = title;
         emit titleChanged();
         if (updateProperty)
@@ -976,6 +977,11 @@ void WebOSSurfaceItem::deleteSnapShot()
         filepath == backgroundImageFilePath()) {
         return;
     }
+
+    qInfo() << "[WebOSSurfaceItem:CARDSNAPSHOT] delete_card_snapshot_file" << ", "
+            << "app_id:" << m_appId << ", "
+            << "file_path:" << filepath << ", "
+            << "where: deleteSnapShot";
 
     QFile oldFile(filepath);
     if (oldFile.exists()) {

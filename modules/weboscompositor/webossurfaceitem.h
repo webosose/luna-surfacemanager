@@ -379,24 +379,24 @@ public:
     void setLastFullscreenTick(quint32 tick) { m_lastFullscreenTick = tick; }
 
     /*!
-     * Function to set path to snapshot.
+     * Function to set path to card snapshot.
      */
     Q_INVOKABLE void setCardSnapShotFilePath(const QString& fPath);
 
     /*!
-     * Function to return path to snapshot.
+     * Function to return path to card snapshot.
      */
     QString cardSnapShotFilePath()    { return m_cardSnapShotFilePath; }
     QString getCardSnapShotFilePath() { return cardSnapShotFilePath(); }
 
     /*!
-     * Function to get/set custom image path to snapshot.
+     * Function to get/set custom image path to card snapshot.
      */
     QString customImageFilePath() { return  m_customImageFilePath;}
     void setCustomImageFilePath(QString filePath);
 
     /*!
-     * Function to get/set background image path to snapshot.
+     * Function to get/set background image path to card snapshot.
      */
     QString backgroundImageFilePath() { return  m_backgroundImageFilePath;}
     void setBackgroundImageFilePath(QString filePath);
@@ -416,7 +416,7 @@ public:
     }
 
     /*!
-     * Function to delete snapshot.
+     * Function to delete card snapshot.
      */
     void deleteSnapShot();
 
