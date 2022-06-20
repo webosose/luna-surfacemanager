@@ -109,6 +109,11 @@ int main(int argc, char *argv[])
 
     // Extra windows
     int displays = WebOSCompositorConfig::instance()->displayCount();
+    int actualDisplays = QGuiApplication::screens().count();
+    if (actualDisplays < displays) {
+        qWarning() << "Actual screens count " << actualDisplays << " less than requested " << displays << ", skipping unavailable screens";
+        displays = actualDisplays;
+    }
     if (displays > 1) {
         qInfo() << "Initializing extra windows, expected" << displays - 1;
         QList<WebOSCompositorWindow *> extraWindows = WebOSCompositorWindow::initializeExtraWindows(compositor, displays - 1, usePlugin ? compositorPluginLoader : nullptr);
