@@ -80,10 +80,11 @@ void UpdateScheduler::init()
         int customUpdateInterval = qEnvironmentVariableIntValue("QT_QPA_UPDATE_IDLE_TIME", &ok);
         return ok ? customUpdateInterval : 5;
     }();
-    bool hasPageFlipNotifier = m_window->hasPageFlipNotifier();
 
     if (!m_window)
         return;
+
+    bool hasPageFlipNotifier = m_window->hasPageFlipNotifier();
 
     // Get VSync interval
     m_vsyncInterval = 1.0 / m_window->screen()->refreshRate() * 1000;
