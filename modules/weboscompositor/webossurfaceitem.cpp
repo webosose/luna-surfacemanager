@@ -771,7 +771,7 @@ QVariantMap WebOSSurfaceItem::windowProperties()
     }
 
     QVariantMap res;
-    for (auto name: surface()->dynamicPropertyNames())
+    for (auto &name: surface()->dynamicPropertyNames())
         res[name] = surface()->property(name.constData());
 
     return res;
