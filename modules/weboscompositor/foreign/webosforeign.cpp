@@ -663,11 +663,24 @@ void WebOSExported::setVideoDisplayWindow()
         if (m_directVideoScalingMode) {
             qDebug() << "Direct video scaling mode is enabled. Do not call setDisplayWindow.";
         } else {
-            if (m_originalInputRect.isValid())
-               VideoOutputdCommunicator::instance()->setCropRegion(m_originalInputRect, m_sourceRect, m_videoDisplayRect, m_contextId);
-            else
-               VideoOutputdCommunicator::instance()->setDisplayWindow(m_sourceRect, m_videoDisplayRect, m_contextId);
+            if (m_originalInputRect.isValid()) {
+                // When a horizontal scrolling scenario is added, similar implementations for x and width should be added.
+                QRect cropedVideoDisplayRect = videoDisplayRect & m_surfaceGlobalPosition.toRect();
+                QRect cropedSourceRect = m_sourceRect;
+                if (videoDisplayRect.y() < m_surfaceGlobalPosition.toRect().y()) {
+                    cropedSourceRect.setY((int) ((cropedVideoDisplayRect.y() - videoDisplayRect.y())/m_videoDispRatio));
+                    cropedSourceRect.setHeight((int) (m_sourceRect.height() - (videoDisplayRect.height() - cropedVideoDisplayRect.height())/m_videoDispRatio));
+                } else if (videoDisplayRect.bottom() > m_surfaceGlobalPosition.toRect().bottom()) {
+                    cropedSourceRect.setHeight((int) (cropedVideoDisplayRect.height()/m_videoDispRatio));
+                }
+                qInfo() << "Call setCropRegion with original input rect : " << m_originalInputRect << " , source rect: " << cropedSourceRect << " , video display rect : " << cropedVideoDisplayRect << " , m_contextId : " << m_contextId;
+                VideoOutputdCommunicator::instance()->setCropRegion(m_originalInputRect, cropedSourceRect, cropedVideoDisplayRect, m_contextId);
+            } else {
+                qInfo() << " Call setDisplayWindow with video display rect : " << videoDisplayRect << " , contextid : " << m_contextId;
+                VideoOutputdCommunicator::instance()->setDisplayWindow(m_sourceRect, videoDisplayRect, m_contextId);
+            }
         }
+        updateVideoWindowList(m_contextId, videoDisplayRect, false);
     } else {
         qInfo() << "Do not call setDisplayWindow. Punch through is not working";
     }
