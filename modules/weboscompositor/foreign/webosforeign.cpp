@@ -788,7 +788,22 @@ void WebOSExported::webos_exported_set_exported_window(
     Q_UNUSED(source_region);
 
     m_originalInputRect = QRect(0, 0, 0, 0);
-    m_sourceRect = QRect(0, 0, 0, 0);
+    if (source_region) {
+        const QRegion qwlSourceRegion =
+            QtWayland::Region::fromResource(source_region)->region();
+
+        if (qwlSourceRegion.boundingRect().isValid()) {
+            m_sourceRect = QRect(
+                qwlSourceRegion.boundingRect().x(),
+                qwlSourceRegion.boundingRect().y(),
+                qwlSourceRegion.boundingRect().width(),
+                qwlSourceRegion.boundingRect().height());
+        } else {
+            m_sourceRect = QRect(0, 0, 0, 0);
+        }
+    }
+
+    qInfo() << "exported_window source rect : " << m_sourceRect << "on " << m_windowId;
 
     m_isRotationChanging = false;
     setDestinationRegion(destination_region);
@@ -1094,19 +1109,28 @@ void WebOSImported::destroyResource()
 void WebOSImported::setSurfaceItemSize()
 {
     if (m_childSurfaceItem && m_childDisplayItem && m_exported && m_exported->m_exportedItem) {
-        if (m_textureAlign != WebOSImported::surface_alignment::surface_alignment_crop ||
-                !m_exported->m_originalInputRect.isValid()) {
-            qInfo() << "set surface item's width : " << m_exported->m_exportedItem->width() << this;
-            qInfo() << "set surface item's height : " << m_exported->m_exportedItem->height() << this;
+        if (m_textureAlign == WebOSImported::surface_alignment::surface_alignment_fit &&
+                m_exported->m_sourceRect.isValid()) {
+            double ratio = qMin((double) m_exported->m_destinationRect.width() / m_exported->m_sourceRect.width(), (double) m_exported->m_destinationRect.height() / m_exported->m_sourceRect.height());
+
+            qInfo() << "Fit surface item's source : " << m_exported->m_sourceRect << this;
+            qInfo() << "Fit surface item's destination : " << m_exported->m_destinationRect << this;
+            qInfo() << "Fit surface item's coord : "
+                            << (int)((m_exported->m_destinationRect.width() - (m_exported->m_sourceRect.width() * ratio)) / 2) << ","
+                            << (int)((m_exported->m_destinationRect.height() - (m_exported->m_sourceRect.height() * ratio)) / 2) << ","
+                            << (int)(m_exported->m_sourceRect.width() * ratio) << "x"
+                            << (int)(m_exported->m_sourceRect.height() * ratio) << ratio << this;
 
             m_childDisplayItem->setWidth(m_exported->m_exportedItem->width());
             m_childDisplayItem->setHeight(m_exported->m_exportedItem->height());
 
-            m_childSurfaceItem->setWidth(m_childDisplayItem->width());
-            m_childSurfaceItem->setHeight(m_childDisplayItem->height());
-            m_childSurfaceItem->setX(0);
-            m_childSurfaceItem->setY(0);
-        } else {
+            m_childSurfaceItem->setWidth((int)(m_exported->m_sourceRect.width() * ratio));
+            m_childSurfaceItem->setHeight((int)(m_exported->m_sourceRect.height() * ratio));
+            m_childSurfaceItem->setX((int)((m_exported->m_destinationRect.width() - (m_exported->m_sourceRect.width() * ratio)) / 2));
+            m_childSurfaceItem->setY((int)((m_exported->m_destinationRect.height() - (m_exported->m_sourceRect.height() * ratio)) / 2));
+        } else if (m_textureAlign == WebOSImported::surface_alignment::surface_alignment_crop &&
+                m_exported->m_originalInputRect.isValid() &&
+                m_exported->m_sourceRect.isValid()) {
             double widthRatio = double(m_exported->m_destinationRect.width()) / double(m_exported->m_sourceRect.width());
             double heightRatio = double(m_exported->m_destinationRect.height()) / double(m_exported->m_sourceRect.height());
 
@@ -1126,6 +1150,17 @@ void WebOSImported::setSurfaceItemSize()
             m_childSurfaceItem->setHeight((int)(m_exported->m_originalInputRect.height() * heightRatio));
             m_childSurfaceItem->setX((int)((m_exported->m_originalInputRect.x() - m_exported->m_sourceRect.x()) * widthRatio));
             m_childSurfaceItem->setY((int)((m_exported->m_originalInputRect.y() - m_exported->m_sourceRect.y()) * heightRatio));
+        } else { // stretch
+            qInfo() << "set surface item's width : " << m_exported->m_exportedItem->width() << this;
+            qInfo() << "set surface item's height : " << m_exported->m_exportedItem->height() << this;
+
+            m_childDisplayItem->setWidth(m_exported->m_exportedItem->width());
+            m_childDisplayItem->setHeight(m_exported->m_exportedItem->height());
+
+            m_childSurfaceItem->setWidth(m_childDisplayItem->width());
+            m_childSurfaceItem->setHeight(m_childDisplayItem->height());
+            m_childSurfaceItem->setX(0);
+            m_childSurfaceItem->setY(0);
         }
         //TODO: handle other cases.
     }
