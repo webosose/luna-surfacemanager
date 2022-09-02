@@ -163,7 +163,7 @@ protected:
     QRect m_activeRegion;
     double m_videoDispRatio = 1.0;
     double m_exportedWindowRatio = 1.0;
-    QRectF m_surfaceGlobalPosition = QRectF(0,0,0,0);
+    QPointF m_surfaceGlobalPosition = QPointF(0.0,0.0);
 
     friend class WebOSForeign;
     friend class WebOSImported;

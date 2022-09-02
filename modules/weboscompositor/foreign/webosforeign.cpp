@@ -345,29 +345,18 @@ void WebOSExported::onSurfaceItemMapped(WebOSSurfaceItem *mappedItem)
 
 void WebOSExported::updateDisplayPosition(bool forceUpdate)
 {
-#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
-    if (!m_surfaceItem || m_surfaceItem->surface() == nullptr || m_surfaceItem->surface()->bufferSize().isValid() == false) {
+    if (m_compositorWindow == nullptr || !m_surfaceItem || m_surfaceItem->surface() == nullptr) {
         qDebug() << "SurfaceItem  for " << m_windowId << " is already destroyed";
         return;
     }
 
-    QRectF globalPosition = m_surfaceItem->mapRectToScene(QRect(0,0,m_surfaceItem->surface()->bufferSize().width(), m_surfaceItem->surface()->bufferSize().height()));
-#else
-    if (!m_surfaceItem || m_surfaceItem->surface() == nullptr || m_surfaceItem->surface()->size().isValid() == false) {
-        qDebug() << "SurfaceItem  for " << m_windowId << " is already destroyed";
-        return;
-    }
-
-    QRectF globalPosition = m_surfaceItem->mapRectToScene(QRect(0,0,m_surfaceItem->surface()->size().width(), m_surfaceItem->surface()->size().height()));
-#endif
+    QPointF globalPosition = m_surfaceItem->mapToItem(m_compositorWindow->viewsRoot(), QPointF(0.0, 0.0));
     qDebug() << "globalPosition : " << globalPosition  << ", previous position : " << m_surfaceGlobalPosition << ", forceUpdate : " << forceUpdate << " on " << m_windowId;
 
     if (globalPosition != m_surfaceGlobalPosition || forceUpdate) {
-        if (globalPosition.isValid()) {
-            qInfo() << "globalPosition : " << globalPosition  << ", previous position : " << m_surfaceGlobalPosition << ", forceUpdate : " << forceUpdate << " on " << m_windowId;
-            m_surfaceGlobalPosition = globalPosition;
-            calculateVideoDispRatio();
-        }
+        qInfo() << "globalPosition : " << globalPosition  << ", previous position : " << m_surfaceGlobalPosition << ", forceUpdate : " << forceUpdate << " on " << m_windowId;
+        m_surfaceGlobalPosition = globalPosition;
+        calculateVideoDispRatio();
     }
 }
 
