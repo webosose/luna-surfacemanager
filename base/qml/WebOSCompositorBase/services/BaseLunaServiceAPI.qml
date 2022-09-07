@@ -29,31 +29,7 @@ Service {
     property var views
     property var controllers
 
-    readonly property var defaultMethods: ["closeByAppId", "getForegroundAppInfo", "captureCompositorOutput"]
-
-    function closeByAppId(param) {
-        var ret = {};
-
-        console.info("LS2 method handler is called with param: " + JSON.stringify(param));
-
-        // There is no clear spec defined for a case
-        // where given item is not a fullscreen surface.
-        // Historically however, it is expected to behave the same
-        // to com.webos.applicationManager/closeByAppId.
-        var item = Utils.surfaceForApplication(param.id);
-        if (item && !item.fullscreen) {
-            LS.adhoc.call("luna://com.webos.applicationManager", "/closeByAppId",
-                "{\"id\":\"" + param.id + "\"}");
-        } else if (item && !item.isProxy()) {
-            compositor.closeWindowKeepItem(item);
-        } else {
-            ret.errorCode = 1;
-            ret.errorText = "\"" + param.id + "\" is not running";
-            console.warn("errorCode: " + ret.errorCode + ", errorText: " + ret.errorText);
-        }
-
-        return JSON.stringify(ret);
-    }
+    readonly property var defaultMethods: ["getForegroundAppInfo", "captureCompositorOutput"]
 
     readonly property ForegroundAppInfoMgr foregroundAppInfoMgr: ForegroundAppInfoMgr {}
 

@@ -2,9 +2,6 @@
     "surfacemanager.devutility": [
         "com.webos.surfacemanager/captureCompositorOutput"
     ],
-    "surfacemanager.operation": [
-        "com.webos.surfacemanager/closeByAppId"
-    ],
     "surfacemanager.query": [
         "com.webos.surfacemanager/getForegroundAppInfo"
     ]

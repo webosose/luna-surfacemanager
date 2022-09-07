@@ -56,7 +56,7 @@ WebOSWindow {
         anchors.leftMargin: 10
         color: "black"
         font.pixelSize: 24
-        text: "2) Call response from com.webos.surfacemanager/closeByAppId:"
+        text: "2) Call response from com.webos.surfacemanager/captureCompositorOutput:"
     }
 
     Text {
@@ -67,18 +67,7 @@ WebOSWindow {
         anchors.leftMargin: 10
         color: "black"
         font.pixelSize: 24
-        text: "3) Call response from com.webos.surfacemanager/captureCompositorOutput:"
-    }
-
-    Text {
-        id: result4
-        anchors.top: result3.bottom
-        anchors.left: parent.left
-        anchors.topMargin: 10
-        anchors.leftMargin: 10
-        color: "black"
-        font.pixelSize: 24
-        text: "4) Call response from com.webos.surfacemanager/getForegroundAppInfo:"
+        text: "3) Call response from com.webos.surfacemanager/getForegroundAppInfo:"
     }
 
     property Service myService: Service {
@@ -86,12 +75,10 @@ WebOSWindow {
         onResponse: (method, payload, token) => {
             if (method == "/signal/registerServerStatus")
                 result1.text = "1) registerServerStatus for com.webos.surfacemanager: Received";
-            else if (method == "/closeByAppId")
-                result2.text = "2) Call response from com.webos.surfacemanager/closeByAppId: Received";
             else if (method == "/captureCompositorOutput")
-                result3.text = "3) Call response from com.webos.surfacemanager/captureCompositorOutput: Received";
+                result2.text = "2) Call response from com.webos.surfacemanager/captureCompositorOutput: Received";
             else if (method == "/getForegroundAppInfo")
-                result4.text = "4) Call response from com.webos.surfacemanager/getForegroundAppInfo: Received";
+                result3.text = "3) Call response from com.webos.surfacemanager/getForegroundAppInfo: Received";
         }
     }
 
@@ -99,9 +86,6 @@ WebOSWindow {
         var param;
 
         myService.registerServerStatus("com.webos.surfacemanager");
-
-        param = {"id":"bareapp-nonexistent"}
-        myService.call("luna://com.webos.surfacemanager", "/closeByAppId", JSON.stringify(param));
 
         param = {"output":"/tmp/screenshot.png", "format":"PNG"}
         myService.call("luna://com.webos.surfacemanager", "/captureCompositorOutput", JSON.stringify(param));
