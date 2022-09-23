@@ -921,6 +921,7 @@ void WebOSSurfaceItem::setLaunchLastApp(const bool& launchLastApp, bool updatePr
 {
     PMTRACE_FUNCTION;
     if (m_launchLastApp != launchLastApp) {
+        qInfo() << "setLaunchLastApp : " << launchLastApp;
         m_launchLastApp = launchLastApp;
         emit launchLastAppChanged();
         if (updateProperty)

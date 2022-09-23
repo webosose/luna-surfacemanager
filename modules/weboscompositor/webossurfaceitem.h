@@ -63,7 +63,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandQuickItem
     Q_PROPERTY(QString appId READ appId NOTIFY appIdChanged)
     Q_PROPERTY(QString type READ type NOTIFY typeChanged)
     Q_PROPERTY(WindowClass windowClass READ windowClass WRITE setWindowClass NOTIFY windowClassChanged)
-    Q_PROPERTY(bool launchLastApp READ launchLastApp NOTIFY launchLastAppChanged)
+    Q_PROPERTY(bool launchLastApp READ launchLastApp WRITE setLaunchLastApp NOTIFY launchLastAppChanged)
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)
     Q_PROPERTY(QString subtitle READ subtitle WRITE setSubtitle NOTIFY subtitleChanged)
     Q_PROPERTY(QString params READ params NOTIFY paramsChanged)
