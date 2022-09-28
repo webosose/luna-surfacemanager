@@ -88,6 +88,7 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
         , m_closePolicy(QVariantMap())
         , m_itemStateReason(QString())
         , m_launchLastApp(false)
+        , m_launchLastInputApp(false)
         , m_coverState(CoverStateNormal)
         , m_activeRegion(QRect(0,0,0,0))
         , m_orientation(Qt::LandscapeOrientation)
@@ -835,6 +836,8 @@ void WebOSSurfaceItem::updateProperties(const QVariantMap &properties, const QSt
         setParams(value.toString());
     } else if (name == QLatin1String("_WEBOS_LAUNCH_PREV_APP_AFTER_CLOSING")) {
         setLaunchLastApp(value.toBool());
+    } else if (name == QLatin1String("_WEBOS_LAUNCH_LAST_INPUT_APP_AFTER_CLOSING")) {
+        setLaunchLastInputApp(value.toBool());
     } else if (name == QLatin1String("displayAffinity")) {
         setDisplayAffinity(value.toInt());
     }
@@ -926,6 +929,18 @@ void WebOSSurfaceItem::setLaunchLastApp(const bool& launchLastApp, bool updatePr
         emit launchLastAppChanged();
         if (updateProperty)
             setWindowProperty(QLatin1String("_WEBOS_LAUNCH_PREV_APP_AFTER_CLOSING"), m_launchLastApp);
+    }
+}
+
+void WebOSSurfaceItem::setLaunchLastInputApp(const bool& launchLastInputApp, bool updateProperty)
+{
+    PMTRACE_FUNCTION;
+    if (m_launchLastInputApp != launchLastInputApp) {
+        qInfo() << "setLaunchLastInputApp : " << launchLastInputApp;
+        m_launchLastInputApp = launchLastInputApp;
+        emit launchLastInputAppChanged();
+        if (updateProperty)
+            setWindowProperty(QLatin1String("_WEBOS_LAUNCH_LAST_INPUT_APP_AFTER_CLOSING"), m_launchLastInputApp);
     }
 }
 

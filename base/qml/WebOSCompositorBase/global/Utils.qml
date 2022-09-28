@@ -54,8 +54,10 @@ Item {
     }
 
     function surfaceForApplication(appId, displayId /* optional */) {
-        var i, item;
+        console.assert(compositor);
+        console.assert(compositor.surfaceModel);
 
+        var i, item;
         for (i = compositor.surfaceModel.rowCount() - 1; i >= 0; i--) {
             item = compositor.surfaceModel.data(compositor.surfaceModel.index(i, 0));
             if (item.appId === appId) {

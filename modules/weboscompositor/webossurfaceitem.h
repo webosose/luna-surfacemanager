@@ -64,6 +64,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandQuickItem
     Q_PROPERTY(QString type READ type NOTIFY typeChanged)
     Q_PROPERTY(WindowClass windowClass READ windowClass WRITE setWindowClass NOTIFY windowClassChanged)
     Q_PROPERTY(bool launchLastApp READ launchLastApp WRITE setLaunchLastApp NOTIFY launchLastAppChanged)
+    Q_PROPERTY(bool launchLastInputApp READ launchLastInputApp WRITE setLaunchLastInputApp NOTIFY launchLastInputAppChanged)
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)
     Q_PROPERTY(QString subtitle READ subtitle WRITE setSubtitle NOTIFY subtitleChanged)
     Q_PROPERTY(QString params READ params NOTIFY paramsChanged)
@@ -345,6 +346,16 @@ public:
     void setLaunchLastApp(const bool& launchLastApp, bool updateProperty = true);
 
     /*!
+     * Convenience function to return the _WEBOS_LAUNCH_LAST_INPUT_APP_AFTER_CLOSING for this surface.
+     */
+    bool launchLastInputApp() { return m_launchLastInputApp; }
+
+    /*!
+     * Function to set launch last input app flag for an item.
+     */
+    void setLaunchLastInputApp(const bool& launchLastInputApp, bool updateProperty = true);
+
+    /*!
      * Convenience function to return the additional params(json text) for this surface.
      */
     QString params() { return m_params; }
@@ -548,6 +559,7 @@ signals:
     void appIdChanged();
     void windowClassChanged();
     void launchLastAppChanged();
+    void launchLastInputAppChanged();
     void titleChanged();
     void subtitleChanged();
     void paramsChanged();
@@ -653,6 +665,7 @@ private:
     QString m_subtitle;
     QString m_params;
     bool m_launchLastApp;
+    bool m_launchLastInputApp;
     Qt::ScreenOrientation m_orientation;
 
     QString m_processId;
