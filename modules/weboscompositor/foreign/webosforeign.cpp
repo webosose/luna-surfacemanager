@@ -665,19 +665,37 @@ void WebOSExported::setVideoDisplayWindow()
         } else {
             if (m_originalInputRect.isValid()) {
                 // When a horizontal scrolling scenario is added, similar implementations for x and width should be added.
-                QRect cropedVideoDisplayRect = videoDisplayRect & m_surfaceGlobalPosition.toRect();
+                QRect cropedVideoDisplayRect = videoDisplayRect;
                 QRect cropedSourceRect = m_sourceRect;
-                if (videoDisplayRect.y() < m_surfaceGlobalPosition.toRect().y()) {
-                    cropedSourceRect.setY((int) ((cropedVideoDisplayRect.y() - videoDisplayRect.y())/m_videoDispRatio));
-                    cropedSourceRect.setHeight((int) (m_sourceRect.height() - (videoDisplayRect.height() - cropedVideoDisplayRect.height())/m_videoDispRatio));
-                } else if (videoDisplayRect.bottom() > m_surfaceGlobalPosition.toRect().bottom()) {
-                    cropedSourceRect.setHeight((int) (cropedVideoDisplayRect.height()/m_videoDispRatio));
+
+                double ratio = qMin((double) m_requestedRegion.width() / m_sourceRect.width(), (double) m_requestedRegion.height() / m_sourceRect.height());
+
+                qInfo() << "surfaceGlobalPosition : " << m_surfaceGlobalPosition.toRect() << ", videoDisplayRect : " << videoDisplayRect;
+                qInfo() << "source rect : " << m_sourceRect << ", requestedRegion : " << m_requestedRegion << ", ratio : " << ratio;
+
+                if (videoDisplayRect.isValid() && m_sourceRect.isValid()) {
+                    if (videoDisplayRect.y() < m_surfaceGlobalPosition.toRect().y()) {
+                        cropedSourceRect.setY((double) ((m_surfaceGlobalPosition.toRect().y() - videoDisplayRect.y())/m_videoDispRatio)/ratio);
+                        cropedVideoDisplayRect.setY(m_surfaceGlobalPosition.toRect().y());
+                    }
+                    if (videoDisplayRect.x() < m_surfaceGlobalPosition.toRect().x()) {
+                        cropedSourceRect.setX((double) ((m_surfaceGlobalPosition.toRect().x() - videoDisplayRect.x())/m_videoDispRatio)/ratio);
+                        cropedVideoDisplayRect.setX(m_surfaceGlobalPosition.toRect().x());
+                    }
+                    if (videoDisplayRect.bottom() > m_surfaceGlobalPosition.toRect().bottom()) {
+                        cropedSourceRect.setHeight(cropedSourceRect.height() - (double) ((videoDisplayRect.bottom() - m_surfaceGlobalPosition.toRect().bottom())/m_videoDispRatio)/ratio);
+                        cropedVideoDisplayRect.setBottom(m_surfaceGlobalPosition.toRect().bottom());
+                    }
+                    if (videoDisplayRect.right() > m_surfaceGlobalPosition.toRect().right()) {
+                        cropedSourceRect.setWidth(cropedSourceRect.width() - (double) ((videoDisplayRect.right() - m_surfaceGlobalPosition.toRect().right())/m_videoDispRatio)/ratio);
+                        cropedVideoDisplayRect.setRight(m_surfaceGlobalPosition.toRect().right());
+                    }
                 }
-                qInfo() << "Call setCropRegion with original input rect : " << m_originalInputRect << " , source rect: " << cropedSourceRect << " , video display rect : " << cropedVideoDisplayRect << " , m_contextId : " << m_contextId;
+                qInfo() << " Call setCropRegion with original input rect : " << m_originalInputRect << " , source rect: " << cropedSourceRect << " , video display rect : " << cropedVideoDisplayRect << " , m_contextId : " << m_contextId;
                 VideoOutputdCommunicator::instance()->setCropRegion(m_originalInputRect, cropedSourceRect, cropedVideoDisplayRect, m_contextId);
             } else {
-                qInfo() << " Call setDisplayWindow with video display rect : " << videoDisplayRect << " , contextid : " << m_contextId;
-                VideoOutputdCommunicator::instance()->setDisplayWindow(m_sourceRect, videoDisplayRect, m_contextId);
+                    qInfo() << " Call setDisplayWindow with video display rect : " << videoDisplayRect << " , contextid : " << m_contextId;
+                    VideoOutputdCommunicator::instance()->setDisplayWindow(m_sourceRect, videoDisplayRect, m_contextId);
             }
         }
         updateVideoWindowList(m_contextId, videoDisplayRect, false);
