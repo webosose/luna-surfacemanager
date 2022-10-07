@@ -156,7 +156,7 @@ WebOSShellSurface::~WebOSShellSurface()
 {
     m_surface->resetShellSurface(this);
     if (m_shellSurface != nullptr) {
-        qDebug() << this << "for wl_surface@" << m_owner->object.id << "m_shellSurface:" << m_shellSurface;
+        qDebug() << this << "m_shellSurface:" << m_shellSurface;
         wl_resource_destroy(m_shellSurface);
     } else {
         qWarning() << "[wl_resource] Invalid pointer";

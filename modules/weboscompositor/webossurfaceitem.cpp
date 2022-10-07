@@ -1238,6 +1238,8 @@ void WebOSSurfaceItem::setSurfaceGroup(WebOSSurfaceGroup* group)
             if (m_groupedWindowModel) {
                 emit m_groupedWindowModel->surfaceRemoved(this);
             }
+        } else {
+            connect(m_surfaceGroup, &QObject::destroyed, this, [this] { this->setSurfaceGroup(nullptr); });
         }
 
         emit surfaceGroupChanged();
