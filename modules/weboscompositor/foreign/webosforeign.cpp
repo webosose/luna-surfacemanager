@@ -482,6 +482,9 @@ void WebOSExported::updateWindowState()
         calculateVideoDispRatio();
         calculateExportedItemRatio();
     }
+    if (m_surfaceItem->state() == Qt::WindowMinimized) {
+        setVideoDisplayWindow();
+    }
 }
 
 void WebOSExported::updateWindowType()
@@ -656,6 +659,8 @@ void WebOSExported::setVideoDisplayWindow()
         if (m_coverVideo || m_isRotationChanging) {
             qInfo() << "cover video state (" << m_coverVideo << ") or rotation changing (" << m_isRotationChanging << "). set video display rect = (0, 0, 0, 0)";
             videoDisplayRect = QRect(0, 0, 0, 0);
+        } else if (m_surfaceItem->state() == Qt::WindowMinimized) {
+            qInfo() << "SurfaceItem is minimized. set video display rect = (0, 0, 0, 0)";
         } else {
             qDebug() << "Not cover state. Keep video display rect";
             videoDisplayRect = m_videoDisplayRect;
