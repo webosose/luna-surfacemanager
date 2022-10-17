@@ -663,7 +663,8 @@ void WebOSSurfaceItem::mouseUngrabEvent()
         for (int i = 1; i < m_compositor->inputDevices().size(); i++) {
             QWaylandSeat *dev = m_compositor->inputDevices().at(i);
             if (!surface()->views().isEmpty() && dev && dev->mouseFocus() == surface()->views().first()) {
-                e.reset(new QTouchEvent(QEvent::TouchCancel, Q_NULLPTR, (Qt::KeyboardModifiers)(static_cast<WebOSInputDevice*>(dev)->id())));
+                if(dynamic_cast<WebOSInputDevice*>(dev))
+                    e.reset(new QTouchEvent(QEvent::TouchCancel, Q_NULLPTR, (Qt::KeyboardModifiers)(static_cast<WebOSInputDevice*>(dev)->id())));
                 break;
             }
         }

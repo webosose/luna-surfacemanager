@@ -467,6 +467,10 @@ void WaylandInputMethodContext::grabKeyboardImpl()
         if (p_keyboard) {
             p_keyboard->startGrab(this);
 
+            if(dynamic_cast<WebOSInputDevice*>(device) == nullptr) {
+                continue;
+            }
+
             int devId = static_cast<WebOSInputDevice*>(device)->id();
             m_compositor->inputManager()->setGrabStatus(devId, true);
         }
@@ -494,6 +498,10 @@ void WaylandInputMethodContext::releaseGrabImpl()
         auto p_keyboard = static_cast<WebOSKeyboard*>(device->keyboard());
         if (p_keyboard) {
             p_keyboard->endGrab();
+
+            if(dynamic_cast<WebOSInputDevice*>(device) == nullptr) {
+                continue;
+            }
 
             int devId = static_cast<WebOSInputDevice*>(device)->id();
             m_compositor->inputManager()->setGrabStatus(devId, false);
