@@ -536,7 +536,7 @@ void WebOSExported::updateActiveRegion()
     if (m_activeRegion != activeRegion) {
         qInfo() << "active region is changed = " << activeRegion << " for WebOSExported (" << m_windowId << ")";
         m_activeRegion = activeRegion;
-        updateDestinationRegionByActiveRegion();
+        updateDestinationRegion();
 
         setDestinationRect();
         setVideoDisplayRect();
@@ -669,35 +669,8 @@ void WebOSExported::setVideoDisplayWindow()
             qDebug() << "Direct video scaling mode is enabled. Do not call setDisplayWindow.";
         } else {
             if (m_originalInputRect.isValid()) {
-                // When a horizontal scrolling scenario is added, similar implementations for x and width should be added.
-                QRect cropedVideoDisplayRect = videoDisplayRect;
-                QRect cropedSourceRect = m_sourceRect;
-
-                double ratio = qMin((double) m_requestedRegion.width() / m_sourceRect.width(), (double) m_requestedRegion.height() / m_sourceRect.height());
-
-                qInfo() << "surfaceGlobalPosition : " << m_surfaceGlobalPosition.toRect() << ", videoDisplayRect : " << videoDisplayRect;
-                qInfo() << "source rect : " << m_sourceRect << ", requestedRegion : " << m_requestedRegion << ", ratio : " << ratio;
-
-                if (videoDisplayRect.isValid() && m_sourceRect.isValid()) {
-                    if (videoDisplayRect.y() < m_surfaceGlobalPosition.toRect().y()) {
-                        cropedSourceRect.setY((double) ((m_surfaceGlobalPosition.toRect().y() - videoDisplayRect.y())/m_videoDispRatio)/ratio);
-                        cropedVideoDisplayRect.setY(m_surfaceGlobalPosition.toRect().y());
-                    }
-                    if (videoDisplayRect.x() < m_surfaceGlobalPosition.toRect().x()) {
-                        cropedSourceRect.setX((double) ((m_surfaceGlobalPosition.toRect().x() - videoDisplayRect.x())/m_videoDispRatio)/ratio);
-                        cropedVideoDisplayRect.setX(m_surfaceGlobalPosition.toRect().x());
-                    }
-                    if (videoDisplayRect.bottom() > m_surfaceGlobalPosition.toRect().bottom()) {
-                        cropedSourceRect.setHeight(cropedSourceRect.height() - (double) ((videoDisplayRect.bottom() - m_surfaceGlobalPosition.toRect().bottom())/m_videoDispRatio)/ratio);
-                        cropedVideoDisplayRect.setBottom(m_surfaceGlobalPosition.toRect().bottom());
-                    }
-                    if (videoDisplayRect.right() > m_surfaceGlobalPosition.toRect().right()) {
-                        cropedSourceRect.setWidth(cropedSourceRect.width() - (double) ((videoDisplayRect.right() - m_surfaceGlobalPosition.toRect().right())/m_videoDispRatio)/ratio);
-                        cropedVideoDisplayRect.setRight(m_surfaceGlobalPosition.toRect().right());
-                    }
-                }
-                qInfo() << " Call setCropRegion with original input rect : " << m_originalInputRect << " , source rect: " << cropedSourceRect << " , video display rect : " << cropedVideoDisplayRect << " , m_contextId : " << m_contextId;
-                VideoOutputdCommunicator::instance()->setCropRegion(m_originalInputRect, cropedSourceRect, cropedVideoDisplayRect, m_contextId);
+                qInfo() << "Call setCropRegion with original input rect : " << m_originalInputRect << " , source rect: " << m_sourceRect << " , video display rect : " << videoDisplayRect << " , m_contextId : " << m_contextId;
+                VideoOutputdCommunicator::instance()->setCropRegion(m_originalInputRect, m_sourceRect, videoDisplayRect, m_contextId);
             } else {
                     qInfo() << " Call setDisplayWindow with video display rect : " << videoDisplayRect << " , contextid : " << m_contextId;
                     VideoOutputdCommunicator::instance()->setDisplayWindow(m_sourceRect, videoDisplayRect, m_contextId);
@@ -712,9 +685,9 @@ void WebOSExported::setVideoDisplayWindow()
         updateVideoWindowList(m_contextId, videoDisplayRect, false);
 }
 
-void WebOSExported::updateDestinationRegionByActiveRegion()
+void WebOSExported::updateDestinationRegion()
 {
-    bool isSetRegion = false;
+    m_requestedRegion = m_originalRequestedRegion;
     if (m_activeRegion.isValid()) {
         if (m_originalRequestedRegion.x() < m_activeRegion.x() || m_originalRequestedRegion.y() < m_activeRegion.y() ||
                 m_originalRequestedRegion.x() + m_originalRequestedRegion.width() > m_activeRegion.x() + m_activeRegion.width() ||
@@ -729,13 +702,67 @@ void WebOSExported::updateDestinationRegionByActiveRegion()
                         int width = (int)(m_originalRequestedRegion.width()*scale);
                         int height = (int)(m_originalRequestedRegion.height()*scale);
                         m_requestedRegion = QRect(x, y, width, height);
-                        isSetRegion = true;
                     }
                 }
-	}
+	} else if (m_originalInputRect.isValid() && m_sourceRect.isValid()) {
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        if (m_originalRequestedRegion.x() < 0 || m_originalRequestedRegion.y() < 0 ||
+                m_originalRequestedRegion.x() + m_originalRequestedRegion.width() > m_surfaceItem->surface()->bufferSize().width() ||
+	            m_originalRequestedRegion.y() + m_originalRequestedRegion.height() > m_surfaceItem->surface()->bufferSize().height()) {
 
-    if (isSetRegion == false)
-        m_requestedRegion = m_originalRequestedRegion;
+            double ratio = qMin((double) m_requestedRegion.width() / m_sourceRect.width(), (double) m_requestedRegion.height() / m_sourceRect.height());
+
+            qInfo() << "Requested region is out of bounds of surface. original requested region : " << m_originalRequestedRegion << ", surface size : " << m_surfaceItem->surface()->bufferSize();
+            qInfo() << "Requested region by source rect ratio : " << ratio;
+
+            if (m_originalRequestedRegion.x() < 0) {
+                m_sourceRect.setX((0 - m_originalRequestedRegion.x()) / ratio);
+                m_requestedRegion.setX(0);
+            }
+            if (m_originalRequestedRegion.y() < 0) {
+                m_sourceRect.setY((0 - m_originalRequestedRegion.y()) / ratio);
+                m_requestedRegion.setY(0);
+            }
+            if (m_originalRequestedRegion.right() > m_surfaceItem->surface()->bufferSize().width()) {
+                m_sourceRect.setWidth(m_sourceRect.width() - (m_originalRequestedRegion.right() - m_surfaceItem->surface()->bufferSize().width()) / ratio);
+                m_requestedRegion.setWidth(m_surfaceItem->surface()->bufferSize().width() - m_requestedRegion.x());
+            }
+            if (m_originalRequestedRegion.bottom() > m_surfaceItem->surface()->bufferSize().height()) {
+                m_sourceRect.setHeight(m_sourceRect.height() - (m_originalRequestedRegion.bottom() - m_surfaceItem->surface()->bufferSize().height()) / ratio);
+                m_requestedRegion.setHeight(m_surfaceItem->surface()->bufferSize().height() - m_requestedRegion.y());
+            }
+            qInfo() << "Changed requested region : " << m_requestedRegion << ", source rect : " << m_sourceRect;
+        }
+#else
+        if (m_originalRequestedRegion.x() < 0 || m_originalRequestedRegion.y() < 0 ||
+                m_originalRequestedRegion.x() + m_originalRequestedRegion.width() > m_surfaceItem->surface()->size().width() ||
+	            m_originalRequestedRegion.y() + m_originalRequestedRegion.height() > m_surfaceItem->surface()->size().height()) {
+
+            double ratio = qMin((double) m_requestedRegion.width() / m_sourceRect.width(), (double) m_requestedRegion.height() / m_sourceRect.height());
+
+            qInfo() << "Requested region is out of bounds of surface. original requested region : " << m_originalRequestedRegion << ", surface size : " << m_surfaceItem->surface()->size();
+            qInfo() << "Requested region by source rect ratio : " << ratio;
+
+            if (m_originalRequestedRegion.x() < 0) {
+                m_sourceRect.setX((0 - m_originalRequestedRegion.x()) / ratio);
+                m_requestedRegion.setX(0);
+            }
+            if (m_originalRequestedRegion.y() < 0) {
+                m_sourceRect.setY((0 - m_originalRequestedRegion.y()) / ratio);
+                m_requestedRegion.setY(0);
+            }
+            if (m_originalRequestedRegion.right() > m_surfaceItem->surface()->size().width()) {
+                m_sourceRect.setWidth(m_sourceRect.width() - (m_originalRequestedRegion.right() - m_surfaceItem->surface()->size().width()) / ratio);
+                m_requestedRegion.setWidth(m_surfaceItem->surface()->size().width() - m_requestedRegion.x());
+            }
+            if (m_originalRequestedRegion.bottom() > m_surfaceItem->surface()->size().height()) {
+                m_sourceRect.setHeight(m_sourceRect.height() - (m_originalRequestedRegion.bottom() - m_surfaceItem->surface()->size().height()) / ratio);
+                m_requestedRegion.setHeight(m_surfaceItem->surface()->size().height() - m_requestedRegion.y());
+            }
+            qInfo() << "Changed requested region : " << m_requestedRegion << ", source rect : " << m_sourceRect;
+        }
+#endif
+    }
 }
 
 void WebOSExported::setDestinationRect() {
@@ -779,7 +806,7 @@ void WebOSExported::setDestinationRegion(struct::wl_resource *destination_region
             m_originalRequestedRegion = QRect(0, 0, 0, 0);
         }
 
-        updateDestinationRegionByActiveRegion();
+        updateDestinationRegion();
         setDestinationRect();
         setVideoDisplayRect();
 

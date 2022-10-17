@@ -105,7 +105,7 @@ public:
     void onSurfaceItemMapped(WebOSSurfaceItem *mappedItem);
     void startImportedMirroring(WebOSSurfaceItem *parent);
     bool hasSecuredContent();
-    void updateDestinationRegionByActiveRegion();
+    void updateDestinationRegion();
     void setDestinationRect();
     void setVideoDisplayRect();
 
