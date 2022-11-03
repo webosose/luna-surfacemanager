@@ -88,6 +88,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandQuickItem
     Q_PROPERTY(CoverState coverState READ coverState WRITE setCoverState NOTIFY coverStateChanged)
     Q_PROPERTY(QRect activeRegion READ activeRegion WRITE setActiveRegion NOTIFY activeRegionChanged)
     Q_PROPERTY(Qt::ScreenOrientation orientation READ orientationInfo NOTIFY orientationChanged)
+    Q_PROPERTY(bool containsMouse READ containsMouse NOTIFY containsMouseChanged)
 
     Q_PROPERTY(Qt::WindowState state READ state WRITE setState NOTIFY stateChanged)
     Q_PROPERTY(bool notifyPositionToClient READ notifyPositionToClient WRITE setNotifyPositionToClient NOTIFY notifyPositionToClientChanged)
@@ -427,6 +428,11 @@ public:
     }
 
     /*!
+     * Convenience function to return the active region for this surface.
+     */
+    bool containsMouse() { return m_containsMouse; }
+
+    /*!
      * Function to delete card snapshot.
      */
     void deleteSnapShot();
@@ -537,6 +543,7 @@ public slots:
     void updateProperties(const QVariantMap &properties, const QString &name, const QVariant &value);
     void updateCursor();
     void updateDirectUpdateOnPlane();
+    void updateContainsMouse();
     void contentOrientationChanged();
 
 signals:
@@ -563,6 +570,7 @@ signals:
     void titleChanged();
     void subtitleChanged();
     void paramsChanged();
+    void containsMouseChanged();
 
     void processIdChanged();
     void userIdChanged();
@@ -667,6 +675,8 @@ private:
     bool m_launchLastApp;
     bool m_launchLastInputApp;
     Qt::ScreenOrientation m_orientation;
+    bool m_containsMouse;
+    bool m_hovered;
 
     QString m_processId;
     QString m_userId;

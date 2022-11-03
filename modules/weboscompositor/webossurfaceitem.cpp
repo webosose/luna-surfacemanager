@@ -92,6 +92,8 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
         , m_coverState(CoverStateNormal)
         , m_activeRegion(QRect(0,0,0,0))
         , m_orientation(Qt::LandscapeOrientation)
+        , m_containsMouse(false)
+        , m_hovered(false)
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
     setAcceptTouchEvents(true);
@@ -121,6 +123,7 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
     connect(this, &QQuickItem::windowChanged, this, &WebOSSurfaceItem::handleWindowChanged);
     connect(surface, &QWaylandSurface::contentOrientationChanged, this, &WebOSSurfaceItem::contentOrientationChanged);
 
+    connect(m_compositor, SIGNAL(cursorVisibleChanged()), this, SLOT(updateContainsMouse()));
     setObjectName(QStringLiteral("surfaceItem_default"));
     if (surface)
         surface->setObjectName(QStringLiteral("surface_default"));
@@ -594,6 +597,9 @@ void WebOSSurfaceItem::hoverEnterEvent(QHoverEvent *event)
             qWarning() << "no input device for this event";
         }
     }
+    m_hovered = true;
+    updateContainsMouse();
+
     m_compositor->notifyPointerEnteredSurface(surface());
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
     WebOSHoverEvent e(event->type(), event->position(), event->oldPos(), event->modifiers(), window());
@@ -626,6 +632,9 @@ void WebOSSurfaceItem::hoverLeaveEvent(QHoverEvent *event)
             qWarning() << "no input device for this event";
 #endif
     }
+    m_hovered = false;
+    updateContainsMouse();
+
     m_compositor->notifyPointerLeavedSurface(surface());
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
     WebOSHoverEvent e(event->type(), event->position(), event->oldPos(), event->modifiers(), window());
@@ -633,6 +642,15 @@ void WebOSSurfaceItem::hoverLeaveEvent(QHoverEvent *event)
     WebOSHoverEvent e(event->type(), event->pos(), event->oldPos(), event->modifiers(), window());
 #endif
     QWaylandQuickItem::hoverLeaveEvent(&e);
+}
+
+void WebOSSurfaceItem::updateContainsMouse()
+{
+    if (m_hovered)
+        m_containsMouse = m_compositor->cursorVisible();
+    else
+        m_containsMouse = false;
+    emit containsMouseChanged();
 }
 
 QWaylandSeat* WebOSSurfaceItem::getInputDevice(QInputEvent *event) const
