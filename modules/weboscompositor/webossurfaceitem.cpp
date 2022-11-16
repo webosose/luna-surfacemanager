@@ -1205,8 +1205,10 @@ void WebOSSurfaceItem::onSurfaceDamaged(const QRegion &region)
        to call frameFinished. It will release previous front buffer
        of the surface. Otherwise, the surface will be stuck to wait for
        available buffer. */
-    if (!window() && surface())
+    if (!window() && surface()) {
+        surface()->frameStarted();
         surface()->sendFrameCallbacks();
+    }
 }
 
 void WebOSSurfaceItem::setNotifyPositionToClient(bool notify)
