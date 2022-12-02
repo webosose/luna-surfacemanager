@@ -24,8 +24,6 @@
 #include <QElapsedTimer>
 #include <QLoggingCategory>
 
-Q_DECLARE_LOGGING_CATEGORY(updateScheduler)
-
 class WebOSCompositorWindow;
 
 class WEBOS_COMPOSITOR_EXPORT UpdateScheduler : public QObject{
@@ -81,19 +79,21 @@ private:
     int m_updateTimerInterval = 0;
 
     bool m_adaptiveFrame = false;
-    QElapsedTimer m_sinceSendFrame;
     QTimer m_frameTimer;
     int m_frameTimerInterval = 0;
-    QElapsedTimer m_sinceSurfaceDamaged;
 
     quint32 m_frameCount = 0;
     quint32 m_framesOnUpdate = 0;
-    QQueue<QElapsedTimer> m_frameTimerQueue;
 
     int m_frameToDamaged = 0;
-    QElapsedTimer m_vsyncElapsedTimer;
 
     int m_vsyncNsecsInterval = 1000000000 / 60;
+
+    //Debug Timers
+    QElapsedTimer m_sinceSendFrame;
+    QElapsedTimer m_sinceSurfaceDamaged;
+    QElapsedTimer m_vsyncElapsedTimer;
+    QQueue<QElapsedTimer> m_frameTimerQueue;
 
     // Legacy adaptive update
     QElapsedTimer m_sinceSyncStart;

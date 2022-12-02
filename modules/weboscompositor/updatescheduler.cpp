@@ -27,8 +27,6 @@
 #include <QtMath>
 #endif
 
-Q_LOGGING_CATEGORY(updateScheduler, "webos.surfacemanager.updatescheduler", QtInfoMsg)
-
 static constexpr int STATIC_SWAP_BUFFER_TIME = 2;
 
 /* Increasing this value, frame_callback is sent earlier,
@@ -44,6 +42,7 @@ static constexpr int RENDER_FLUCTUATION_BUFFER_TIME = 4;
    So the default idle time is 16.6 - 8ms ~= 8ms
    It can be tunnable for each backend. */
 static int s_default_update_idle_time = qgetenv("WEBOS_UPDATE_IDLE_TIME").toInt();
+static bool debug_render = qgetenv("WEBOS_UPDATE_DEBUG").toInt() == 1;
 
 /* This is from another thread which handles drm event */
 void UpdateScheduler::pageFlipNotifier(WebOSCompositorWindow* win, unsigned int seq, unsigned int tv_sec, unsigned int tv_usec)
@@ -53,8 +52,14 @@ void UpdateScheduler::pageFlipNotifier(WebOSCompositorWindow* win, unsigned int 
     static unsigned int last_usec = 0;
     UpdateScheduler *upsched = win ? win->updateScheduler() : nullptr;
 
-    qCDebug(updateScheduler) << "UpdateScheduler::pageFlipNotifier" << upsched << seq << tv_sec << tv_usec;
+    if (debug_render) {
+        struct timespec ts;
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        qDebug() << "timestamp" << ts.tv_sec << ts.tv_nsec / 1000 << "us";
+        qDebug() << upsched << "seq" << seq << "Backend timestamp" << tv_sec << tv_usec << "us";
+    }
 
+    // NOTE: To be optimized for each backend
     if (upsched && seq != 0) {
         if (seq != last_sequence + 1)
             emit upsched->frameMissed();
@@ -97,14 +102,14 @@ void UpdateScheduler::init()
         m_adaptiveFrame = false;
 
     if (!m_adaptiveUpdate) {
-        qCDebug(updateScheduler) << "Default update interval" << defaultUpdateInterval << "for window" << m_window << "vsyncInterval:" << m_vsyncInterval;
+        qInfo() << "Default update interval" << defaultUpdateInterval << "for window" << m_window << "vsyncInterval:" << m_vsyncInterval;
         return;
     }
 
-    qCDebug(updateScheduler) << "Adaptive update interval for window" << m_window << "vsyncInterval:" << m_vsyncInterval;
+    qInfo() << "Adaptive update interval for window" << m_window << "vsyncInterval:" << m_vsyncInterval;
 
     if (defaultUpdateInterval != 0)
-        qWarning() << "QT_QPA_UPDATE_IDLE_TIME is not 0 but" << defaultUpdateInterval;
+        qWarning() << "QT_QPA_UPDATE_IDLE_TIME should be 0 but" << defaultUpdateInterval;
 
     m_updateTimerInterval = s_default_update_idle_time; // changes adaptively per every frame
     m_updateTimer.setTimerType(Qt::PreciseTimer);
@@ -115,13 +120,13 @@ void UpdateScheduler::init()
     m_window->output()->setAutomaticFrameCallback(!m_adaptiveFrame);
 
     if (m_adaptiveFrame) {
-        qCDebug(updateScheduler) << "Adaptive frame callback for window" << m_window;
         m_frameTimerInterval = m_vsyncInterval / 3; // changes adaptively per every frame
         m_frameTimer.setTimerType(Qt::PreciseTimer);
         m_frameTimer.setSingleShot(true);
 
         connect(&m_frameTimer, &QTimer::timeout, this, &UpdateScheduler::sendFrame);
         connect(m_window, &QQuickWindow::afterRendering, this, &UpdateScheduler::scheduleFrameCallback);
+        qInfo() << "Adaptive frame callback for window" << m_window << m_frameTimerInterval;
     }
 
     qInfo() << "Adaptive update with pageflip notifier" << hasPageFlipNotifier;
@@ -138,7 +143,8 @@ void UpdateScheduler::init()
         connect(this, &UpdateScheduler::frameMissed, this, &UpdateScheduler::onFrameMissed);
         connect(m_window, &QQuickWindow::frameSwapped, this, &UpdateScheduler::onFrameSwapped);
         // Debugging purpose
-        //connect(this, &UpdateScheduler::pageFlipped, this, &UpdateScheduler::profileFrame);
+        if (debug_render)
+            connect(this, &UpdateScheduler::pageFlipped, this, &UpdateScheduler::profileFrame);
     }
 }
 
@@ -148,12 +154,19 @@ bool UpdateScheduler::updateRequested()
         return false;
 
     if (m_updateTimer.isActive() || m_framesOnUpdate != 0) {
+        if (debug_render) {
+            struct timespec ts;
+            clock_gettime(CLOCK_MONOTONIC, &ts);
+            qDebug() << "sinceDamaged:" << m_sinceSurfaceDamaged.elapsed() << "ms" << "framesOnUpdate" << m_framesOnUpdate << "timestamp" << ts.tv_sec << ts.tv_nsec / 1000 << "us";
+        }
+
         m_hasUnhandledUpdateRequest = true;
         return true;
     }
     // First UpdateRequest, just fall through to start sync
 
-    qCDebug(updateScheduler) << "updateRequested without timer" << m_sinceSurfaceDamaged.elapsed();
+    if (debug_render)
+        qDebug() << "updateRequested without timer." << "sinceDamaged:" << m_sinceSurfaceDamaged.elapsed() << "ms";
     // This path will immediately handle UpdateRequest, so start to track the frame
     frameStarted();
     return false;
@@ -166,15 +179,14 @@ void UpdateScheduler::deliverUpdateRequest()
         if (m_hasUnhandledUpdateRequest) {
             m_hasUnhandledUpdateRequest = false;
 
+           // Start to keep track the frame
+            frameStarted();
+            m_window->deliverUpdateRequest();
+        } else if (debug_render) {
             struct timespec ts;
             clock_gettime(CLOCK_MONOTONIC, &ts);
 
-            qCDebug(updateScheduler) << "deliverUpdateRequest with updateTimer" << ts.tv_sec << ts.tv_nsec / 1000;
-            // Start to keep track the frame
-            frameStarted();
-            m_window->deliverUpdateRequest();
-        } else {
-            qCDebug(updateScheduler) << "no update since framecallback" << m_sinceSendFrame.elapsed();
+            qDebug() << "no update since framecallback. timestamp" << ts.tv_sec << ts.tv_nsec / 1000 << "us";
         }
     } else {
         qWarning() << "deliverUpdateRequest is called for" << m_window << "while adaptiveUpdate is NOT set!";
@@ -188,13 +200,15 @@ void UpdateScheduler::checkTimeout()
     // expired but is being delayed due to other events and we need to
     // take actions needed right away.
     if (m_adaptiveUpdate && m_updateTimer.remainingTime() == 0) {
-        qCDebug(updateScheduler) << "Timeout for updateTimer";
+        if (debug_render)
+            qDebug() << "Timeout for updateTimer";
         m_updateTimer.stop();
         deliverUpdateRequest();
     }
 
     if (m_adaptiveFrame && m_frameTimer.remainingTime() == 0) {
-        qCDebug(updateScheduler) << "Timeout for frameTimer";
+        if (debug_render)
+            qDebug() << "Timeout for frameTimer";
         m_frameTimer.stop();
         sendFrame();
     }
@@ -208,8 +222,10 @@ void UpdateScheduler::surfaceDamaged()
         m_frameToDamaged = m_sinceSendFrame.elapsed();
 
         m_sinceSendFrame.invalidate();
-
         m_sinceSurfaceDamaged.start();
+
+        if (debug_render)
+            qDebug() << "frameToDamaged" << m_frameToDamaged << "ms";
     }
     damagedInterval.start();
 }
@@ -221,7 +237,7 @@ void UpdateScheduler::sendFrame()
     QWaylandOutput *output = m_window->output();
     if (m_adaptiveFrame && output) {
         if (m_sinceSendFrame.isValid()) {
-            // No reportSurfaceDamaged called since the last frame.
+            // No surfaceDamaged called since the last frame.
             // It means that rendering time on client exceeds the vsync interval.
             m_frameTimerInterval = 0;
         }
@@ -229,10 +245,11 @@ void UpdateScheduler::sendFrame()
         output->sendFrameCallbacks();
 
         if (m_sinceSurfaceDamaged.isValid()) {
-            qint64 damageToSendFrameInterval = m_sinceSurfaceDamaged.elapsed();
-            qCDebug(updateScheduler) << "sinceDamaged" << damageToSendFrameInterval << "frame interval" << frameInterval.elapsed() << "timer" << m_frameTimerInterval;
-            if (damageToSendFrameInterval > m_vsyncInterval * 2)
-                qCWarning(updateScheduler) << "Elapsed since surface damaged until sending a frame callback:" << damageToSendFrameInterval << "ms";
+            qint64 damageToFrame = m_sinceSurfaceDamaged.elapsed();
+            if (debug_render)
+                qDebug() << "vsyncElapsed" << m_vsyncElapsedTimer.elapsed() << "ms" << "frame interval" << frameInterval.elapsed() << "timer" << m_frameTimerInterval;
+            if (damageToFrame > m_vsyncInterval * 2 && debug_render)
+                qDebug() << "Elapsed since surface damaged until sending a frame callback:" << damageToFrame << "ms";
 
             m_sinceSurfaceDamaged.invalidate();
         }
@@ -242,9 +259,9 @@ void UpdateScheduler::sendFrame()
 
 void UpdateScheduler::scheduleFrameCallback()
 {
-    //TODO: Need more action?
     if (!m_vsyncElapsedTimer.isValid())
         return;
+    // How long takes from last vsync
     int elapsed = (m_vsyncElapsedTimer.nsecsElapsed() % m_vsyncNsecsInterval) / 1000000;
     int remain = m_vsyncInterval - elapsed;
     int nextFrameTime = remain + m_updateTimerInterval - (m_frameToDamaged + RENDER_FLUCTUATION_BUFFER_TIME);
@@ -252,7 +269,8 @@ void UpdateScheduler::scheduleFrameCallback()
     m_frameTimerInterval = nextFrameTime <= m_frameTimerInterval
         ? nextFrameTime : m_frameTimerInterval + 1;
 
-    qCDebug(updateScheduler) << "m_frameToDamaged" << m_frameToDamaged << "next" << nextFrameTime << "timer" << m_frameTimerInterval;
+    if (debug_render)
+        qDebug() << "sinceVsync" << elapsed << "m_frameToDamaged" << m_frameToDamaged << "next" << nextFrameTime << "timer" << m_frameTimerInterval;
 
     if (m_adaptiveFrame)
         m_frameTimer.start(m_frameTimerInterval);
@@ -308,7 +326,8 @@ void UpdateScheduler::onLegacyPageFlipped()
 
 void UpdateScheduler::onFrameMissed()
 {
-    qCDebug(updateScheduler) << "FrameMissed";
+    if (debug_render)
+        qDebug() << "FrameMissed";
     m_updateTimerInterval--;
 
     if (m_updateTimerInterval < 0)
@@ -322,17 +341,30 @@ void UpdateScheduler::frameStarted()
     QElapsedTimer timer;
     timer.start();
 
-    m_frameTimerQueue << timer;
-
     m_framesOnUpdate++;
+
+    if (debug_render) {
+        struct timespec ts;
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        qDebug() << "sinceDamaged:" << m_sinceSurfaceDamaged.elapsed() << "ms" << "sinceVsync" << m_vsyncElapsedTimer.elapsed() << "ms" << "timestamp" << ts.tv_sec << ts.tv_nsec / 1000 << "us";
+        m_frameTimerQueue << timer;
+    }
 }
 
 void UpdateScheduler::onFrameSwapped()
 {
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
+    if (debug_render) {
+        int updateRequestToSwap = 0;
+        struct timespec ts;
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        qDebug() << "timestamp" << ts.tv_sec << ts.tv_nsec / 1000 << "us";
 
-    qCDebug(updateScheduler) << "onFrameSwapped" << ts.tv_sec << ts.tv_nsec / 1000;
+        if (Q_LIKELY(!m_frameTimerQueue.isEmpty())) {
+            QElapsedTimer timer = m_frameTimerQueue.head();
+            updateRequestToSwap = timer.nsecsElapsed()/1000;
+            qDebug() << "updateRequestToSwap" << updateRequestToSwap << "us";
+        }
+    }
 }
 
 /* If there is page_flip_notifier, then the finish of the frame is regarded as on-screen presentation. */
@@ -358,7 +390,8 @@ void UpdateScheduler::frameFinished()
         m_updateTimer.start(m_updateTimerInterval);
     }
 
-    qCDebug(updateScheduler) << "m_framesOnUpdate" << m_framesOnUpdate << "m_updateTimerInterval" << m_updateTimerInterval << "m_frameTimerInterval" << m_frameTimerInterval;
+    if (debug_render)
+        qDebug() << "m_framesOnUpdate" << m_framesOnUpdate << "m_updateTimerInterval" << m_updateTimerInterval << "m_frameTimerInterval" << m_frameTimerInterval;
 
     m_vsyncElapsedTimer.start();
 }
@@ -366,17 +399,17 @@ void UpdateScheduler::frameFinished()
 void UpdateScheduler::profileFrame(quint32 seq, quint32 tv_sec, quint32 tv_nsec)
 {
     static QElapsedTimer frameIntervalTimer;
-    int frameTime = 0; // how long takes from update request to finish of frame.
+    int updateRequestToFlip = 0; // how long takes from update request to finish of frame.
 
     if (Q_LIKELY(!m_frameTimerQueue.isEmpty())) {
         QElapsedTimer timer = m_frameTimerQueue.dequeue();
-        frameTime = timer.nsecsElapsed()/1000;
+        updateRequestToFlip = timer.nsecsElapsed()/1000;
     }
 
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
 
-    qCDebug(updateScheduler) << "profileFrame" << frameTime << frameIntervalTimer.nsecsElapsed()/1000000.0 << ts.tv_nsec/1000;
-    emit m_window->frameProfileUpdated(frameTime, frameIntervalTimer.nsecsElapsed()/1000);
+    qDebug() << "updateRequestToFlip" << updateRequestToFlip << "us framesInterval" << frameIntervalTimer.nsecsElapsed()/1000000.0 << "timestamp" << ts.tv_sec << ts.tv_nsec/1000 << "us";
+    emit m_window->frameProfileUpdated(updateRequestToFlip, frameIntervalTimer.nsecsElapsed()/1000);
     frameIntervalTimer.start();
 }
