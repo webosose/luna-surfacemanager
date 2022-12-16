@@ -335,8 +335,10 @@ void WaylandInputMethodContext::activateTextModel()
         m_inputMethod->deactivate();
     }
 
-    m_resourceCount++;
     m_resource = (wl_resource*)calloc(1, sizeof(wl_resource));
+    if (!m_resource)
+        return;
+    m_resourceCount++;
     m_resource->destroy = WaylandInputMethodContext::destroyInputMethodContext;
     m_resource->object.id = 0;
     m_resource->object.interface = &input_method_context_interface;

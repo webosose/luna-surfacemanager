@@ -1381,6 +1381,8 @@ void WebOSImported::webos_imported_attach_surface(
     qInfo() << qwlSurface << "from" << surface;
 
     m_childSurfaceItem = WebOSSurfaceItem::getSurfaceItemFromSurface(qwlSurface);
+    if (!m_childSurfaceItem)
+        return;
     if (!m_childDisplayItem) {
         m_childDisplayItem = new QQuickItem(m_exported->m_exportedItem);
     }
@@ -1388,8 +1390,10 @@ void WebOSImported::webos_imported_attach_surface(
     connect(m_childSurfaceItem->surface(), &QWaylandSurface::surfaceDestroyed, this, &WebOSImported::childSurfaceDestroyed);
     m_childSurfaceItem->setImported(true);
     // Applying direct update after the child surface item belongs to a window
-    m_childSurfaceItem->setDirectUpdateOnPlane(m_exported->surfaceItem()->directUpdateOnPlane());
-    connect(m_exported->surfaceItem(), &WebOSSurfaceItem::directUpdateOnPlaneChanged, m_childSurfaceItem, &WebOSSurfaceItem::updateDirectUpdateOnPlane);
+    if (m_exported->surfaceItem()) {
+        m_childSurfaceItem->setDirectUpdateOnPlane(m_exported->surfaceItem()->directUpdateOnPlane());
+        connect(m_exported->surfaceItem(), &WebOSSurfaceItem::directUpdateOnPlaneChanged, m_childSurfaceItem, &WebOSSurfaceItem::updateDirectUpdateOnPlane);
+    }
     m_exported->setParentOf(m_childSurfaceItem, m_childDisplayItem);
     m_childDisplayItem->setZ(m_exported->m_exportedItem->z()+m_z_index);
     updateGeometry();  //Resize texture if needed.

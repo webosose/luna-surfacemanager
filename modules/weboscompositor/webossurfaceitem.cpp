@@ -707,6 +707,10 @@ void WebOSSurfaceItem::processKeyEvent(QKeyEvent *event)
     }
 
     auto keyboard = static_cast<WebOSKeyboard*>(inputDevice->keyboard());
+    if (!keyboard) {
+        qWarning() << "no keyboard for this event";
+        return;
+    }
 
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
     // Make "autoRepeat" to "false" so that the event is handled

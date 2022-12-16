@@ -36,7 +36,7 @@ WebOSInputDevice::WebOSInputDevice(QWaylandCompositor *compositor)
     setKeyboardFocus(wcompositor->defaultSeat()->keyboardFocus());
 
     /* If the other input devices have been grabbed, grab this one too */
-    if (wkeyboard->currentGrab() && wkeyboard != wkeyboard->currentGrab()->m_keyboardPublic) {
+    if (wkeyboard && wkeyboard->currentGrab() && wkeyboard != wkeyboard->currentGrab()->m_keyboardPublic) {
         WebOSKeyboard *this_wkeyboard = static_cast<WebOSKeyboard *>(keyboard());
         this_wkeyboard->startGrab(wkeyboard->currentGrab());
     }
