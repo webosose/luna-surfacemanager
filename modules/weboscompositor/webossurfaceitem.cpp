@@ -175,9 +175,13 @@ void WebOSSurfaceItem::handleWindowChanged()
 
     setDisplayId(window() ? static_cast<WebOSCompositorWindow *>(window())->displayId() : -1);
 
-    // Unset direct update whenever it gets removed from the scene
-    if (!window())
+    if (!window()) {
+        // Unset direct update whenever it gets removed from the scene
         setDirectUpdateOnPlane(false);
+
+        m_hovered = false;
+        updateContainsMouse();
+    }
 }
 
 void WebOSSurfaceItem::requestMinimize()
@@ -596,9 +600,11 @@ void WebOSSurfaceItem::hoverEnterEvent(QHoverEvent *event)
         } else {
             qWarning() << "no input device for this event";
         }
+        if (!m_hovered) {
+            m_hovered = true;
+            updateContainsMouse();
+        }
     }
-    m_hovered = true;
-    updateContainsMouse();
 
     m_compositor->notifyPointerEnteredSurface(surface());
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
@@ -631,9 +637,11 @@ void WebOSSurfaceItem::hoverLeaveEvent(QHoverEvent *event)
         else
             qWarning() << "no input device for this event";
 #endif
+        if (m_hovered) {
+            m_hovered = false;
+            updateContainsMouse();
+        }
     }
-    m_hovered = false;
-    updateContainsMouse();
 
     m_compositor->notifyPointerLeavedSurface(surface());
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
