@@ -776,15 +776,14 @@ void WebOSExported::setDestinationRect() {
 }
 
 void WebOSExported::setVideoDisplayRect() {
-
-    double x = m_surfaceGlobalPosition.x() + m_requestedRegion.x()*m_videoDispRatio;
-    double y = m_surfaceGlobalPosition.y() + m_requestedRegion.y()*m_videoDispRatio;
-    double width = m_requestedRegion.width()*m_videoDispRatio;
-    double height = m_requestedRegion.height()*m_videoDispRatio;
-    double right = x + width;
-    double bottom = y + height;
-
     if (m_activeRegion.isValid()) {
+        double x = m_surfaceGlobalPosition.x() + m_requestedRegion.x()*m_videoDispRatio;
+        double y = m_surfaceGlobalPosition.y() + m_requestedRegion.y()*m_videoDispRatio;
+        double width = m_requestedRegion.width()*m_videoDispRatio;
+        double height = m_requestedRegion.height()*m_videoDispRatio;
+        double right = x + width;
+        double bottom = y + height;
+
         int x_r = round(x);
         int y_r = round(y);
         int w_r = round(width);
@@ -798,15 +797,11 @@ void WebOSExported::setVideoDisplayRect() {
         }
         m_videoDisplayRect = QRect(x_r, y_r, w_r, h_r);
     } else {
-        int x_f = floor(x);
-        int y_f = floor(y);
-        int w_c = ceil(right) - x_f;
-        int h_c = ceil(bottom) - y_f;
-
-        w_c = (int)qMin(ceil(right), m_surfaceGlobalPosition.x() + m_surfaceGlobalPosition.width()) - x_f;
-        h_c = (int)qMin(ceil(bottom), m_surfaceGlobalPosition.y() + m_surfaceGlobalPosition.height()) - y_f;
-
-        m_videoDisplayRect = QRect(x_f, y_f, w_c, h_c);
+        m_videoDisplayRect = QRect(
+            (int) (m_surfaceGlobalPosition.x() + m_requestedRegion.x()*m_videoDispRatio),
+            (int) (m_surfaceGlobalPosition.y() + m_requestedRegion.y()*m_videoDispRatio),
+            (int) (m_requestedRegion.width()*m_videoDispRatio),
+            (int) (m_requestedRegion.height()*m_videoDispRatio));
     }
 }
 
