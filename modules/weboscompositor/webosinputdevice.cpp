@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2021 LG Electronics, Inc.
+// Copyright (c) 2013-2023 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,7 +38,8 @@ WebOSInputDevice::WebOSInputDevice(QWaylandCompositor *compositor)
     /* If the other input devices have been grabbed, grab this one too */
     if (wkeyboard && wkeyboard->currentGrab() && wkeyboard != wkeyboard->currentGrab()->m_keyboardPublic) {
         WebOSKeyboard *this_wkeyboard = static_cast<WebOSKeyboard *>(keyboard());
-        this_wkeyboard->startGrab(wkeyboard->currentGrab());
+        if (this_wkeyboard)
+            this_wkeyboard->startGrab(wkeyboard->currentGrab());
     }
 #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     /* We use multiple keyboard device but use same modifier state */
