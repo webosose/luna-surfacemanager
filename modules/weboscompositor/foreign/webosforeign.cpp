@@ -713,8 +713,8 @@ void WebOSExported::setVideoDisplayWindow()
         return;
     }
 
-    if ((m_surfaceItemWindowType != "_WEBOS_WINDOW_TYPE_CARD" && !m_surfaceItem->isMapped())) {
-        qInfo() << "Overlaid item (not fullscreen app) is not mapped yet on " << m_windowId;
+    if (!m_surfaceItem->isMapped()) {
+        qInfo() << "item " << m_surfaceItem << " is not mapped yet on " << m_windowId;
         return;
     } else {
         qInfo() << "window type : " << m_surfaceItemWindowType << ", window id : " << m_windowId;
