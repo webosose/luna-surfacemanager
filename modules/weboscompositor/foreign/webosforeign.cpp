@@ -878,11 +878,20 @@ void WebOSExported::setVideoDisplayRect() {
         double y = (m_compositorWindow->outputGeometry().height() - height) / 2 + m_compositorWindow->outputGeometry().y();
         m_videoDisplayRect = QRect((int) x, (int) y, (int) width, (int) height);
     } else {
+        double x = m_surfaceGlobalPosition.x() + m_requestedRegion.x()*m_videoDispRatio;
+        double y = m_surfaceGlobalPosition.y() + m_requestedRegion.y()*m_videoDispRatio;
+        double x_p = x - int(x);
+        double y_p = y - int(y);
+        double w = m_requestedRegion.width()*m_videoDispRatio + x_p;
+        double h = m_requestedRegion.height()*m_videoDispRatio + y_p;
+        double w_p = w - int(w);
+        double h_p = h - int(h);
+
         m_videoDisplayRect = QRect(
-            double2int(m_surfaceGlobalPosition.x() + m_requestedRegion.x()*m_videoDispRatio),
-            double2int(m_surfaceGlobalPosition.y() + m_requestedRegion.y()*m_videoDispRatio),
-            double2int(m_requestedRegion.width()*m_videoDispRatio),
-            double2int(m_requestedRegion.height()*m_videoDispRatio));
+            (int(x)),
+            (int(y)),
+            (w_p <= 0.5 ? int(w) : int(w)+1),
+            (h_p <= 0.5 ? int(h) : int(h)+1));
     }
 }
 
