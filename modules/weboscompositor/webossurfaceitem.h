@@ -96,6 +96,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandQuickItem
     Q_PROPERTY(bool hasKeyboardFocus READ hasKeyboardFocus NOTIFY hasKeyboardFocusChanged)
     Q_PROPERTY(bool grabKeyboardFocusOnClick READ grabKeyboardFocusOnClick WRITE setGrabKeyboardFocusOnClick NOTIFY grabKeyboardFocusOnClickChanged)
     Q_PROPERTY(bool launchRequired READ isLaunchRequired WRITE setLaunchRequired NOTIFY launchRequiredChanged)
+    Q_PROPERTY(bool hasKeyPressedEvent READ hasKeyPressedEvent WRITE updateHasKeyPressedEvent NOTIFY hasKeyPressedEventChanged)
 
     Q_PROPERTY(WebOSSurfaceGroup* surfaceGroup READ surfaceGroup NOTIFY surfaceGroupChanged)
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
@@ -548,6 +549,9 @@ public:
     bool isVideoPlaying();
     bool isWideVideo();
 
+    bool hasKeyPressedEvent(){ return m_hasKeyPressedEvent;}
+    void updateHasKeyPressedEvent(bool status);
+
 public slots:
     void updateScreenPosition();
     void updateProperties(const QVariantMap &properties, const QString &name, const QVariant &value);
@@ -622,6 +626,8 @@ signals:
     void fullscreenVideoModeChanged();
     void isVideoPlayingChanged();
     void isWideVideoChanged();
+
+    void hasKeyPressedEventChanged();
 
 protected:
     void processKeyEvent(QKeyEvent *event);
@@ -721,6 +727,8 @@ private:
     QWaylandQuickHardwareLayer *m_hardwarelayer = nullptr;
 
     QString m_fullscreenVideoMode;
+
+    bool m_hasKeyPressedEvent = false;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(WebOSSurfaceItem::WindowClass)

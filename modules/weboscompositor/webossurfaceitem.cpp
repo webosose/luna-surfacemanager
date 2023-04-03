@@ -95,6 +95,7 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
         , m_containsMouse(false)
         , m_hovered(false)
         , m_fullscreenVideoMode("default")
+        , m_hasKeyPressedEvent(false)
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
     setAcceptTouchEvents(true);
@@ -743,6 +744,7 @@ void WebOSSurfaceItem::processKeyEvent(QKeyEvent *event)
 
         if (hasFocus()) {
             qInfo() << this << event << inputDevice;
+            updateHasKeyPressedEvent(true);
             inputDevice->sendFullKeyEvent(event);
         } else {
             qInfo() << "Surface is not focused and not a current keyboard grab. Do not send key: " << this << event->key();
@@ -754,6 +756,7 @@ void WebOSSurfaceItem::processKeyEvent(QKeyEvent *event)
     if (acceptsKeyEvent(event)) {
         qInfo() << this << "surface group case" << event << inputDevice;
         inputDevice->setKeyboardFocus(surface());
+        updateHasKeyPressedEvent(true);
         inputDevice->sendFullKeyEvent(event);
     } else if (m_surfaceGroup) {
         WebOSSurfaceItem *nextItem = NULL;
@@ -786,6 +789,13 @@ void WebOSSurfaceItem::keyReleaseEvent(QKeyEvent *event)
 {
     PMTRACE_FUNCTION;
     processKeyEvent(event);
+}
+
+void WebOSSurfaceItem::updateHasKeyPressedEvent(bool status)
+{
+    m_hasKeyPressedEvent = status;
+    qDebug() << "HasKeyPressedEvent: " << m_hasKeyPressedEvent;
+    emit hasKeyPressedEventChanged();
 }
 
 void WebOSSurfaceItem::focusInEvent(QFocusEvent *event)
