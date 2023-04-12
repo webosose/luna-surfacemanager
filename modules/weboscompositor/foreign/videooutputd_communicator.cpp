@@ -41,14 +41,14 @@ void VideoOutputdCommunicator::resetInstance()
     m_instance = nullptr;
 }
 
-void VideoOutputdCommunicator::setDisplayWindow(QRect sourceRectangle, QRect destinationRectangle, QString contextId)
+void VideoOutputdCommunicator::setDisplayWindow(QRect sourceRectangle, QRect destinationRectangle, QRect appOutput, QString contextId)
 {
-    emit setVideoDisplayWindowRequested(sourceRectangle, destinationRectangle, contextId);
+    emit setVideoDisplayWindowRequested(sourceRectangle, destinationRectangle, appOutput, contextId);
 }
 
-void VideoOutputdCommunicator::setCropRegion(QRect originalRectangle, QRect sourceRectangle, QRect destinationRectangle, QString contextId)
+void VideoOutputdCommunicator::setCropRegion(QRect originalRectangle, QRect sourceRectangle, QRect destinationRectangle, QRect appOutput, QString contextId)
 {
-    emit setVideoCropRegionRequested(originalRectangle, sourceRectangle, destinationRectangle, contextId);
+    emit setVideoCropRegionRequested(originalRectangle, sourceRectangle, destinationRectangle, appOutput, contextId);
 }
 
 void VideoOutputdCommunicator::setProperty(QString name, QString value, QString contextId)

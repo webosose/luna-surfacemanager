@@ -733,14 +733,15 @@ void WebOSExported::setVideoDisplayWindow()
         if (m_directVideoScalingMode) {
             qDebug() << "Direct video scaling mode is enabled. Do not call setDisplayWindow.";
         } else {
+            QRect appOutput = getAppWindow();
             setVideoPlaying(true);
             updateWideVideo();
             if (m_originalInputRect.isValid()) {
-                qInfo() << "Call setCropRegion with original input rect : " << m_originalInputRect << " , source rect: " << m_sourceRect << " , video display rect : " << videoDisplayRect << " , m_contextId : " << m_contextId;
-                VideoOutputdCommunicator::instance()->setCropRegion(m_originalInputRect, m_sourceRect, videoDisplayRect, m_contextId);
+                qInfo() << "Call setCropRegion with original input rect : " << m_originalInputRect << " , source rect: " << m_sourceRect << " , video display rect : " << videoDisplayRect << ", appOutput : " << appOutput << " , m_contextId : " << m_contextId;
+                VideoOutputdCommunicator::instance()->setCropRegion(m_originalInputRect, m_sourceRect, videoDisplayRect, appOutput, m_contextId);
             } else {
-                qInfo() << " Call setDisplayWindow with video display rect : " << videoDisplayRect << " , contextid : " << m_contextId;
-                VideoOutputdCommunicator::instance()->setDisplayWindow(m_sourceRect, videoDisplayRect, m_contextId);
+                qInfo() << " Call setDisplayWindow with video display rect : " << videoDisplayRect << ", appOutput : " << appOutput << " , contextid : " << m_contextId;
+                VideoOutputdCommunicator::instance()->setDisplayWindow(m_sourceRect, videoDisplayRect, appOutput, m_contextId);
             }
         }
         updateVideoWindowList(m_contextId, videoDisplayRect, false);
@@ -893,6 +894,26 @@ void WebOSExported::setVideoDisplayRect() {
             (w_p <= 0.5 ? int(w) : int(w)+1),
             (h_p <= 0.5 ? int(h) : int(h)+1));
     }
+}
+
+QRect WebOSExported::getAppWindow() {
+    QString appId = m_surfaceItem->appId();
+    qreal scaleFactor = m_surfaceItem->scale();
+    QRect appWindow;
+    if (m_activeRegion.isValid()) {
+        appWindow = QRect(
+                m_surfaceGlobalPosition.x() + m_activeRegion.x()*scaleFactor,
+                m_surfaceGlobalPosition.y() + m_activeRegion.y()*scaleFactor,
+                m_activeRegion.width()*scaleFactor,
+                m_activeRegion.height()*scaleFactor);
+    } else {
+        appWindow = QRect(
+                m_surfaceGlobalPosition.x(),
+                m_surfaceGlobalPosition.y(),
+                m_surfaceItem->width()*scaleFactor,
+                m_surfaceItem->height()*scaleFactor);
+    }
+    return appWindow;
 }
 
 void WebOSExported::setDestinationRegion(struct::wl_resource *destination_region)

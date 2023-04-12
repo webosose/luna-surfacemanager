@@ -130,6 +130,8 @@ public:
 
     WebOSSurfaceItem *surfaceItem() const { return m_surfaceItem; }
 
+    QRect getAppWindow();
+
 signals:
     void geometryChanged();
     void videoPlayingChanged();
