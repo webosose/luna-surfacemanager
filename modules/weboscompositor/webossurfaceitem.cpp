@@ -95,7 +95,8 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
         , m_containsMouse(false)
         , m_hovered(false)
         , m_fullscreenVideoMode("default")
-        , m_hasKeyPressedEvent(false)
+        , m_requestKeyEventStatus(false)
+        , m_hasKeyEvent(false)
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
     setAcceptTouchEvents(true);
@@ -744,7 +745,11 @@ void WebOSSurfaceItem::processKeyEvent(QKeyEvent *event)
 
         if (hasFocus()) {
             qInfo() << this << event << inputDevice;
-            updateHasKeyPressedEvent(true);
+            if (event->type() == QEvent::KeyPress) {
+                updateHasKeyEvent(true);
+            } else if (event->type() == QEvent::KeyRelease) {
+                updateHasKeyEvent(false);
+            }
             inputDevice->sendFullKeyEvent(event);
         } else {
             qInfo() << "Surface is not focused and not a current keyboard grab. Do not send key: " << this << event->key();
@@ -756,7 +761,11 @@ void WebOSSurfaceItem::processKeyEvent(QKeyEvent *event)
     if (acceptsKeyEvent(event)) {
         qInfo() << this << "surface group case" << event << inputDevice;
         inputDevice->setKeyboardFocus(surface());
-        updateHasKeyPressedEvent(true);
+        if (event->type() == QEvent::KeyPress) {
+            updateHasKeyEvent(true);
+        } else if (event->type() == QEvent::KeyRelease) {
+            updateHasKeyEvent(false);
+        }
         inputDevice->sendFullKeyEvent(event);
     } else if (m_surfaceGroup) {
         WebOSSurfaceItem *nextItem = NULL;
@@ -791,11 +800,19 @@ void WebOSSurfaceItem::keyReleaseEvent(QKeyEvent *event)
     processKeyEvent(event);
 }
 
-void WebOSSurfaceItem::updateHasKeyPressedEvent(bool status)
+void WebOSSurfaceItem::requestKeyEventStatus(bool status)
 {
-    m_hasKeyPressedEvent = status;
-    qDebug() << "HasKeyPressedEvent: " << m_hasKeyPressedEvent;
-    emit hasKeyPressedEventChanged();
+    qInfo() << status;
+    m_requestKeyEventStatus = status;
+}
+
+void WebOSSurfaceItem::updateHasKeyEvent(bool status)
+{
+    m_hasKeyEvent = status;
+    if(m_requestKeyEventStatus) {
+        qInfo() << "emit hasKeyEvent: " << m_hasKeyEvent;
+        emit hasKeyEventChanged();
+    }
 }
 
 void WebOSSurfaceItem::focusInEvent(QFocusEvent *event)

@@ -96,7 +96,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandQuickItem
     Q_PROPERTY(bool hasKeyboardFocus READ hasKeyboardFocus NOTIFY hasKeyboardFocusChanged)
     Q_PROPERTY(bool grabKeyboardFocusOnClick READ grabKeyboardFocusOnClick WRITE setGrabKeyboardFocusOnClick NOTIFY grabKeyboardFocusOnClickChanged)
     Q_PROPERTY(bool launchRequired READ isLaunchRequired WRITE setLaunchRequired NOTIFY launchRequiredChanged)
-    Q_PROPERTY(bool hasKeyPressedEvent READ hasKeyPressedEvent WRITE updateHasKeyPressedEvent NOTIFY hasKeyPressedEventChanged)
+    Q_PROPERTY(bool hasKeyEvent READ hasKeyEvent WRITE updateHasKeyEvent NOTIFY hasKeyEventChanged)
 
     Q_PROPERTY(WebOSSurfaceGroup* surfaceGroup READ surfaceGroup NOTIFY surfaceGroupChanged)
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
@@ -222,6 +222,11 @@ public:
     Q_INVOKABLE bool isClosing() const { return m_itemState == ItemStateClosing; }
 
     void setFullscreenVideo(QString fullscreenVideoMode);
+
+    /*!
+     * Function to notify that key input
+     */
+    Q_INVOKABLE void requestKeyEventStatus(bool status);
 
     /*!
      * Returns whether the surface is made fullscreen.
@@ -549,8 +554,8 @@ public:
     bool isVideoPlaying();
     bool isWideVideo();
 
-    bool hasKeyPressedEvent(){ return m_hasKeyPressedEvent;}
-    void updateHasKeyPressedEvent(bool status);
+    bool hasKeyEvent(){ return m_hasKeyEvent;}
+    void updateHasKeyEvent(bool status);
 
 public slots:
     void updateScreenPosition();
@@ -627,7 +632,7 @@ signals:
     void isVideoPlayingChanged();
     void isWideVideoChanged();
 
-    void hasKeyPressedEventChanged();
+    void hasKeyEventChanged();
 
 protected:
     void processKeyEvent(QKeyEvent *event);
@@ -728,7 +733,8 @@ private:
 
     QString m_fullscreenVideoMode;
 
-    bool m_hasKeyPressedEvent = false;
+    bool m_requestKeyEventStatus = false;
+    bool m_hasKeyEvent = false;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(WebOSSurfaceItem::WindowClass)
