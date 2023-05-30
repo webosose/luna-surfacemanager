@@ -100,6 +100,7 @@ QtObject {
             if (connected) {
                 subscribeAppLifeEvents();
                 subscribeApplicationList();
+                subscribeLaunchPointsList();
             }
         }
 
