@@ -265,6 +265,7 @@ WebOSExported::WebOSExported(
     , m_surfaceItemWindowType("_WEBOS_WINDOW_TYPE_CARD")
     , m_coverVideo(false)
     , m_activeRegion(QRect(0,0,0,0))
+    , m_pipSub(false)
     , m_originalRequestedRegion(QRect(0,0,0,0))
     , m_fullscreenVideoMode(FullscreenVideoMode::Default)
     , m_isVideoPlaying(false)
@@ -296,6 +297,7 @@ WebOSExported::WebOSExported(
     connect(m_surfaceItem, &WebOSSurfaceItem::windowChanged, this, &WebOSExported::updateCompositorWindow);
     connect(m_surfaceItem, &WebOSSurfaceItem::coverStateChanged, this, &WebOSExported::updateCoverState);
     connect(m_surfaceItem, &WebOSSurfaceItem::activeRegionChanged, this, &WebOSExported::updateActiveRegion);
+    connect(m_surfaceItem, &WebOSSurfaceItem::pipSubChanged, this, &WebOSExported::updatePipSub);
     connect(m_surfaceItem, &WebOSSurfaceItem::typeChanged, this, &WebOSExported::updateWindowType);
     connect(m_surfaceItem, &WebOSSurfaceItem::orientationChanged, this, &WebOSExported::updateOrientation);
     connect(m_foreign->m_compositor, &WebOSCoreCompositor::surfaceMapped, this, &WebOSExported::onSurfaceItemMapped);
@@ -609,6 +611,17 @@ void WebOSExported::updateActiveRegion()
         setVideoDisplayWindow();
         updateExportedItemSize();
     }
+}
+
+void WebOSExported::updatePipSub()
+{
+    if (!m_surfaceItem) {
+        qWarning() << "WebOSSurfaceItem for " << m_windowId << "is already destroyed";
+        return;
+    }
+
+    m_pipSub = m_surfaceItem->pipSub();
+    qInfo() << "pipSub is changed = " << m_pipSub << " for WebOSExported (" << m_windowId << ")";
 }
 
 void WebOSExported::updateVisible()
@@ -1120,7 +1133,7 @@ void WebOSExported::webos_exported_set_property(
 void WebOSExported::setPunchThrough(bool needPunch)
 {
     if (needPunch && m_exportedItem) {
-        if (!m_punchThroughItem && m_exportedType != WebOSForeign::TransparentObject) {
+        if (!m_punchThroughItem && (m_exportedType != WebOSForeign::TransparentObject || m_pipSub == true)) {
             PunchThroughItem* punchThroughNativeItem =
                 new PunchThroughItem();
             punchThroughNativeItem->setParentItem(m_exportedItem);

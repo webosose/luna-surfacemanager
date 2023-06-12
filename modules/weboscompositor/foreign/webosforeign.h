@@ -110,6 +110,7 @@ public:
     void updateWindowType();
     void updateCoverState();
     void updateActiveRegion();
+    void updatePipSub();
     void registerMuteOwner(const QString& contextId);
     void unregisterMuteOwner();
     void setVideoDisplayWindow();
@@ -189,6 +190,7 @@ protected:
     bool m_coverVideo;
     bool m_isRotationChanging = false;
     QRect m_activeRegion;
+    bool m_pipSub;
     double m_videoDispRatio = 1.0;
     double m_exportedWindowRatio = 1.0;
     QPointF m_surfaceGlobalPosition = QPointF(0.0,0.0);

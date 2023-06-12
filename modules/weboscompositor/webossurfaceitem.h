@@ -87,6 +87,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandQuickItem
     Q_PROPERTY(QVariantMap closePolicy READ closePolicy WRITE setClosePolicy NOTIFY closePolicyChanged RESET unsetClosePolicy)
     Q_PROPERTY(CoverState coverState READ coverState WRITE setCoverState NOTIFY coverStateChanged)
     Q_PROPERTY(QRect activeRegion READ activeRegion WRITE setActiveRegion NOTIFY activeRegionChanged)
+    Q_PROPERTY(bool pipSub READ pipSub WRITE setPipSub NOTIFY pipSubChanged)
     Q_PROPERTY(Qt::ScreenOrientation orientation READ orientationInfo NOTIFY orientationChanged)
     Q_PROPERTY(bool containsMouse READ containsMouse NOTIFY containsMouseChanged)
 
@@ -347,6 +348,16 @@ public:
      * Function to set active region for this surface.
      */
     void setActiveRegion(const QRect & activeRegion);
+
+    /*!
+     * Convenience function to return the pipSub for this surface.
+     */
+    bool pipSub() { return m_pipSub; }
+
+    /*!
+     * Function to set pipSub for this surface.
+     */
+    void setPipSub(const bool & pipSub);
 
     /*!
      * Convenience function to return the _WEBOS_LAUNCH_PREV_APP_AFTER_CLOSING for this surface.
@@ -615,6 +626,7 @@ signals:
     void positionUpdated();
     void coverStateChanged();
     void activeRegionChanged();
+    void pipSubChanged();
 
     void surfaceGroupChanged();
 
@@ -715,6 +727,7 @@ private:
     QVariantMap m_closePolicy;
     CoverState m_coverState;
     QRect m_activeRegion;
+    bool m_pipSub;
 
     int m_cursorHotSpotX = -1;
     int m_cursorHotSpotY = -1;

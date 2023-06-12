@@ -91,6 +91,7 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
         , m_launchLastInputApp(false)
         , m_coverState(CoverStateNormal)
         , m_activeRegion(QRect(0,0,0,0))
+        , m_pipSub(false)
         , m_orientation(Qt::LandscapeOrientation)
         , m_containsMouse(false)
         , m_hovered(false)
@@ -1201,6 +1202,15 @@ void WebOSSurfaceItem::setActiveRegion(const QRect & activeRegion)
         m_activeRegion = activeRegion;
 
         emit activeRegionChanged();
+    }
+}
+
+void WebOSSurfaceItem::setPipSub(const bool & pipSub)
+{
+    if (m_pipSub != pipSub) {
+        m_pipSub = pipSub;
+
+        emit pipSubChanged();
     }
 }
 
