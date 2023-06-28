@@ -913,6 +913,11 @@ QRect WebOSExported::getAppWindow() {
     QString appId = m_surfaceItem->appId();
     qreal scaleFactor = m_surfaceItem->scale();
     QRect appWindow;
+
+    if (m_surfaceItemWindowType != "_WEBOS_WINDOW_TYPE_CARD") {
+        return appWindow;
+    }
+
     if (m_activeRegion.isValid()) {
         appWindow = QRect(
                 m_surfaceGlobalPosition.x() + m_activeRegion.x()*scaleFactor,
