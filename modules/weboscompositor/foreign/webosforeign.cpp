@@ -907,6 +907,22 @@ void WebOSExported::setVideoDisplayRect() {
             (w_p <= 0.5 ? int(w) : int(w)+1),
             (h_p <= 0.5 ? int(h) : int(h)+1));
     }
+
+    double epsilon = 1e-10;
+    if (((double) m_requestedRegion.width() - m_surfaceItem->width()) < epsilon &&
+        ((double) m_requestedRegion.height() - m_surfaceItem->height()) < epsilon) {
+        // App requested fullscreen video.
+        // If videoDisplayRect is not same to surface item, do center align.
+        QRect appOutput = getAppWindow();
+
+        if (appOutput.isValid() &&
+            m_videoDisplayRect.topLeft() == appOutput.topLeft() &&
+            m_videoDisplayRect.size() != appOutput.size()) {
+            qInfo() << "align center videoDisplayRect(" << m_videoDisplayRect << ") -> appOutput(" << appOutput << ") on " << m_windowId;
+            m_videoDisplayRect.moveLeft(m_videoDisplayRect.x() + round((appOutput.width() - m_videoDisplayRect.width()) / 2));
+            m_videoDisplayRect.moveTop(m_videoDisplayRect.y() + round((appOutput.height() - m_videoDisplayRect.height()) / 2));
+        }
+    }
 }
 
 QRect WebOSExported::getAppWindow() {
