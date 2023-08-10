@@ -622,6 +622,13 @@ void WebOSExported::updatePipSub()
 
     m_pipSub = m_surfaceItem->pipSub();
     qInfo() << "pipSub is changed = " << m_pipSub << " for WebOSExported (" << m_windowId << ")";
+    if (m_exportedType == WebOSForeign::TransparentObject) {
+        if (m_pipSub) {
+            setPunchThrough(true);
+        } else {
+            setPunchThrough(false);
+        }
+    }
 }
 
 void WebOSExported::updateVisible()
