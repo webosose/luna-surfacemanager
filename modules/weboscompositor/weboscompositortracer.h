@@ -70,7 +70,7 @@
 #define PMTRACE_FUNCTION_EXIT(label) \
     tracepoint(pmtrace_surfacemanager, function_exit, label)
 #define PMTRACE_FUNCTION \
-    PmTraceFunction traceFunction(const_cast<char*>(Q_FUNC_INFO))
+    PmTraceFunction traceFunction(Q_FUNC_INFO)
 
 class PmTraceScope {
 public:
@@ -99,7 +99,7 @@ private:
 
 class PmTraceFunction {
 public:
-    PmTraceFunction(char* label)
+    PmTraceFunction(const char* label)
         : fnLabel(label)
     {
         PMTRACE_FUNCTION_ENTRY(fnLabel);
@@ -119,7 +119,7 @@ private:
     PmTraceFunction& operator=(const PmTraceFunction&);
 
     // variables
-    char* fnLabel;
+    const char* fnLabel;
 };
 
 #else // HAS_LTNG

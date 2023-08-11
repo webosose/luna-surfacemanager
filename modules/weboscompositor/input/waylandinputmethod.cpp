@@ -69,7 +69,7 @@ void WaylandInputMethod::binding(struct wl_client *client, uint32_t id, wl_resou
 
 void WaylandInputMethod::unbinding()
 {
-    setDisplayId(-1);
+    m_displayId = -1;
     setHandle(nullptr);
     setClient(nullptr);
     deactivate();

@@ -1207,7 +1207,7 @@ void WebOSSurfaceItem::onSurfaceDamaged(const QRegion &region)
 {
     PMTRACE_FUNCTION;
     Q_UNUSED(region);
-    PMTRACE_KEY_VALUE_LOG("appFirstFrame", (char *)appId().toStdString().c_str());
+    PMTRACE_KEY_VALUE_LOG("appFirstFrame", appId().toStdString().c_str());
 
     if (window()) {
         WebOSCompositorWindow *w = static_cast<WebOSCompositorWindow *>(window());

@@ -28,12 +28,17 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QWaylandCompositor>
+#include <limits>
 
 #include <qpa/qplatformnativeinterface.h>
 
 static QString generateWindowId()
 {
     static quint32 window_count = 0;
+    if(window_count == UINT_MAX) {
+        qDebug() << "Cannot generate Id for window greater than " << UINT_MAX;
+        window_count = 0;
+    }
     return QString("_Window_Id_%1").arg(++window_count);
 }
 

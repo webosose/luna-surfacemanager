@@ -39,7 +39,7 @@ TRACEPOINT_EVENT(
 TRACEPOINT_EVENT(
     pmtrace_surfacemanager,
     keyValue,
-    TP_ARGS(char*, eventType, char*, contextData),
+    TP_ARGS(const char*, eventType,const char*, contextData),
     TP_FIELDS(ctf_string(key, eventType) ctf_string(value, contextData)))
 /* "position" tracepoint records a message and two integer parameters */
 TRACEPOINT_EVENT(
@@ -93,12 +93,12 @@ TRACEPOINT_EVENT(
 TRACEPOINT_EVENT(
     pmtrace_surfacemanager,
     function_entry,
-    TP_ARGS(char*, text),
+    TP_ARGS(const char*, text),
     TP_FIELDS(ctf_string(scope, text)))
 TRACEPOINT_EVENT(
     pmtrace_surfacemanager,
     function_exit,
-    TP_ARGS(char*, text),
+    TP_ARGS(const char*, text),
     TP_FIELDS(ctf_string(scope, text)))
 
 #endif /* _PMTRACE_SURFACEMANAGER_PROVIDER_H */

@@ -74,7 +74,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandQuickItem
     Q_PROPERTY(QString backgroundColor READ backgroundColor WRITE setBackgroundColor)
     Q_PROPERTY(QString processId READ processId NOTIFY processIdChanged)
     Q_PROPERTY(QString userId READ userId NOTIFY userIdChanged)
-    Q_PROPERTY(qint32 lastFullscreenTick READ lastFullscreenTick NOTIFY lastFullscreenTickChanged)
+    Q_PROPERTY(quint32 lastFullscreenTick READ lastFullscreenTick NOTIFY lastFullscreenTickChanged)
     Q_PROPERTY(WebOSGroupedWindowModel* groupedWindowModel READ groupedWindowModel WRITE setGroupedWindowModel NOTIFY groupedWindowModelChanged)
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
     Q_MOC_INCLUDE("webosgroupedwindowmodel.h")
@@ -383,7 +383,7 @@ public:
     /*!
      * Convenience function to return the time since the last fullscreen mode for this surface.
      */
-    qint32 lastFullscreenTick() const { return m_lastFullscreenTick; }
+    quint32 lastFullscreenTick() const { return m_lastFullscreenTick; }
 
     /*!
      * Function to set last fullscreen tick for proxy item.
@@ -650,7 +650,7 @@ private:
     // variables
     WebOSCoreCompositor* m_compositor;
     bool m_fullscreen;
-    qint32 m_lastFullscreenTick;
+    quint32 m_lastFullscreenTick;
     WebOSGroupedWindowModel* m_groupedWindowModel;
     QString m_cardSnapShotFilePath;
     QString m_customImageFilePath;

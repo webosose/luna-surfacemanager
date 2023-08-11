@@ -19,6 +19,7 @@
 
 #include <QList>
 #include <QDebug>
+#include <limits>
 
 #include <QWaylandCompositor>
 #include <QWaylandSurface>
@@ -346,7 +347,11 @@ void WaylandInputMethodContext::activateTextModel()
     m_resource->data = this;
     wl_signal_init(&m_resource->destroy_signal);
 
-    static int serial = 0; //TODO
+    static unsigned int serial = 0; //TODO
+    if(serial == UINT_MAX) {
+         qDebug() << "Cannot increase serial greater than " << UINT_MAX;
+         serial = 0;
+    }
     wl_client_add_resource(m_inputMethod->handle()->client, m_resource);
     input_method_send_activate(m_inputMethod->handle(), m_resource, serial++);
 
