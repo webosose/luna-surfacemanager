@@ -187,7 +187,7 @@ protected:
     bool m_isSurfaceItemFullscreen;
     bool m_directVideoScalingMode = false; // If this mode is enabled, do not call setDisplayWindow and setCropRegion of videooutputd
     QString m_surfaceItemWindowType;
-    bool m_coverVideo;
+    WebOSSurfaceItem::CoverState m_coverState;
     bool m_isRotationChanging = false;
     QRect m_activeRegion;
     bool m_pipSub;

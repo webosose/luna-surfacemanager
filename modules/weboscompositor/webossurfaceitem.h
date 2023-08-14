@@ -185,7 +185,8 @@ public:
 
     enum CoverState {
         CoverStateNormal = 1,
-        CoverStateHidden
+        CoverStateHidden,
+        CoverStateChanging
     };
     Q_ENUM(CoverState)
 

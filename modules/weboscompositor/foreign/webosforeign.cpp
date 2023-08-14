@@ -263,7 +263,7 @@ WebOSExported::WebOSExported(
     , m_exportedType(exportedType)
     , m_isSurfaceItemFullscreen(false)
     , m_surfaceItemWindowType("_WEBOS_WINDOW_TYPE_CARD")
-    , m_coverVideo(false)
+    , m_coverState(WebOSSurfaceItem::CoverStateNormal)
     , m_activeRegion(QRect(0,0,0,0))
     , m_pipSub(false)
     , m_originalRequestedRegion(QRect(0,0,0,0))
@@ -575,14 +575,9 @@ void WebOSExported::updateCoverState()
         return;
     }
 
-    bool coverVideo = false;
-    if (m_surfaceItem->coverState() == WebOSSurfaceItem::CoverStateHidden) {
-        coverVideo = true;
-    }
-
-    if (m_coverVideo != coverVideo) {
-        qInfo() << "cover state is changed = " << coverVideo << " for WebOSExported (" << m_windowId << ")";
-        m_coverVideo = coverVideo;
+    if (m_coverState != m_surfaceItem->coverState()) {
+        m_coverState = m_surfaceItem->coverState();
+        qInfo() << "cover state is changed = " << m_coverState << " for WebOSExported (" << m_windowId << ")";
         calculateVideoDispRatio();
     }
 }
@@ -741,8 +736,13 @@ void WebOSExported::setVideoDisplayWindow()
     }
 
     if (m_foreign->m_compositor->window() && !m_contextId.isNull()) {
-        if (m_coverVideo || m_isRotationChanging) {
-            qInfo() << "cover video state (" << m_coverVideo << ") or rotation changing (" << m_isRotationChanging << "). set video display rect = (0, 0, 0, 0)";
+        if (m_coverState == WebOSSurfaceItem::CoverStateChanging) {
+            qInfo() << "cover video state is changing. Do not call setDisplayWindow.";
+            return;
+        }
+
+        if (m_coverState == WebOSSurfaceItem::CoverStateHidden || m_isRotationChanging) {
+            qInfo() << "cover video state (" << m_coverState << ") or rotation changing (" << m_isRotationChanging << "). set video display rect = (0, 0, 0, 0)";
             videoDisplayRect = QRect(0, 0, 0, 0);
         } else if (m_surfaceItem->state() == Qt::WindowMinimized) {
             qInfo() << "SurfaceItem is minimized. set video display rect = (0, 0, 0, 0)";
