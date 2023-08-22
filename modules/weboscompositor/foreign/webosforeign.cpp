@@ -158,7 +158,9 @@ public:
 class PunchThroughMirrorItem : public PunchThroughItem, public MirrorItemHandler {
 };
 
-
+static double roundPoint(double x, int n) {
+    return (double)round(x * (10^(n-1))) / (10^(n-1));
+}
 
 WebOSForeign::WebOSForeign(WebOSCoreCompositor* compositor)
     : QtWaylandServer::wl_webos_foreign(compositor->display(), WEBOSFOREIGN_VERSION)
@@ -873,8 +875,8 @@ void WebOSExported::setDestinationRect() {
 
 void WebOSExported::setVideoDisplayRect() {
     if (m_activeRegion.isValid()) {
-        double x = m_surfaceGlobalPosition.x() + m_requestedRegion.x()*m_videoDispRatio;
-        double y = m_surfaceGlobalPosition.y() + m_requestedRegion.y()*m_videoDispRatio;
+        double x = roundPoint(m_surfaceGlobalPosition.x() + m_requestedRegion.x()*m_videoDispRatio, 3);
+        double y = roundPoint(m_surfaceGlobalPosition.y() + m_requestedRegion.y()*m_videoDispRatio, 3);
         double width = m_requestedRegion.width()*m_videoDispRatio;
         double height = m_requestedRegion.height()*m_videoDispRatio;
         double right = x + width;
@@ -891,6 +893,10 @@ void WebOSExported::setVideoDisplayRect() {
         if (y_r + h_r > bottom) {
             h_r = (int)bottom - y_r;
         }
+
+        qInfo() << "global x:" << m_surfaceGlobalPosition.x() << ", int(x):" << int(m_surfaceGlobalPosition.x()) << ", round x:" << x << ", int(round x):" << int(x);
+        qInfo() << "global y:" << m_surfaceGlobalPosition.y() << ", int(y):" << int(m_surfaceGlobalPosition.y()) << ", round y:" << y << ", int(round y):" << int(y);
+
         m_videoDisplayRect = QRect(x_r, y_r, w_r, h_r);
     } else if (m_fullscreenVideoMode != FullscreenVideoMode::Default) {
         double width = m_requestedRegion.width()*m_videoDispRatio;
@@ -899,14 +905,17 @@ void WebOSExported::setVideoDisplayRect() {
         double y = (m_compositorWindow->outputGeometry().height() - height) / 2 + m_compositorWindow->outputGeometry().y();
         m_videoDisplayRect = QRect((int) x, (int) y, (int) width, (int) height);
     } else {
-        double x = m_surfaceGlobalPosition.x() + m_requestedRegion.x()*m_videoDispRatio;
-        double y = m_surfaceGlobalPosition.y() + m_requestedRegion.y()*m_videoDispRatio;
+        double x = roundPoint(m_surfaceGlobalPosition.x() + m_requestedRegion.x()*m_videoDispRatio, 3);
+        double y = roundPoint(m_surfaceGlobalPosition.y() + m_requestedRegion.y()*m_videoDispRatio, 3);
         double x_p = x - int(x);
         double y_p = y - int(y);
         double w = m_requestedRegion.width()*m_videoDispRatio + x_p;
         double h = m_requestedRegion.height()*m_videoDispRatio + y_p;
         double w_p = w - int(w);
         double h_p = h - int(h);
+
+        qInfo() << "global x:" << m_surfaceGlobalPosition.x() << ", int(x):" << int(m_surfaceGlobalPosition.x()) << ", round x:" << x << ", int(round x):" << int(x);
+        qInfo() << "global y:" << m_surfaceGlobalPosition.y() << ", int(y):" << int(m_surfaceGlobalPosition.y()) << ", round y:" << y << ", int(round y):" << int(y);
 
         m_videoDisplayRect = QRect(
             (int(x)),
