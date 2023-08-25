@@ -41,7 +41,7 @@ class MirrorItemHandler {
 
 public:
     MirrorItemHandler() {}
-    ~MirrorItemHandler() { clearHandler(); }
+    ~MirrorItemHandler() { clearHandler(); qInfo() << "MirrorItemHandler destroyed" << this; }
 
     static inline qreal getParentRatio(QQuickItem *dItem, QQuickItem *nItem, bool isWidth = true) {
         if (dItem && dItem->parentItem() && nItem && nItem->parentItem()) {
@@ -81,7 +81,7 @@ public:
         m_widthConn = QObject::connect(source, &QQuickItem::widthChanged, [item, exportedItem, source]() { item->setWidth(source->width() * getParentRatio(item, exportedItem)); });
         m_heightConn = QObject::connect(source, &QQuickItem::heightChanged, [item, exportedItem, source]() { item->setHeight(source->height() * getParentRatio(item, exportedItem, false)); });
         // Triggered when the parent is deleted.
-        m_parentConn = QObject::connect(item, &QQuickItem::parentChanged, [item]() { delete item; });
+        m_parentConn = QObject::connect(item, &QQuickItem::parentChanged, item, &QObject::deleteLater);
         // Triggered when source imported item is deleted.
         m_sourceConn = QObject::connect(source, &QObject::destroyed, [item]() { delete item; });
         m_parentWidthConn = QObject::connect(item->parentItem(), &QQuickItem::widthChanged, [item, exportedItem, source]() {
@@ -135,6 +135,8 @@ public:
         : WebOSSurfaceItem(compositor, surface)
     {
     }
+
+    ~ImportedMirrorItem() { qInfo() << "ImportedMirrorItem destroyed" << this; }
 
     void initialize(QQuickItem *item, QQuickItem *exportedItem, QQuickItem *source, QQuickItem *parent) override
     {

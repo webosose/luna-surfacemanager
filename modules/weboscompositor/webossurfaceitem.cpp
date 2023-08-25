@@ -133,6 +133,8 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
 
 WebOSSurfaceItem::~WebOSSurfaceItem()
 {
+    qInfo() << this << "m_surfaceGroup" <<  m_surfaceGroup;
+
     emit itemAboutToBeDestroyed();
 
     disconnect(this, &QQuickItem::windowChanged, this, &WebOSSurfaceItem::handleWindowChanged);
