@@ -768,7 +768,15 @@ WebOSSurfaceItem* WebOSCoreCompositor::createProxyItem(const QString& appId, con
     item->setAppId(appId);
     item->setTitle(title);
     item->setSubtitle(subtitle);
-    item->setCardSnapShotFilePath(cardSnapshotPath);
+
+    if(cardSnapshotPath != "") {
+        QFile snapFile(cardSnapshotPath);
+        if (!snapFile.exists()) {
+            item->setCardSnapShotFilePath(NULL);
+        } else{
+            item->setCardSnapShotFilePath(cardSnapshotPath);
+        }
+    }
 
     // NOTE: Use setProxyFor if there is no dependency for the call order
     item->setItemState(WebOSSurfaceItem::ItemStateProxy);
@@ -899,12 +907,20 @@ void WebOSCoreCompositor::closeWindow(QVariant window, QJSValue payload)
         return;
     }
 
-    item->deleteSnapShot();
-    item->setCardSnapShotFilePath(NULL);
+    QJsonObject jsonObject = QJsonObject::fromVariantMap(payload.toVariant().toMap());
+    if (!jsonObject.isEmpty()) {
+        QString reason = jsonObject.find("reason").value().toString();
+        if(reason != "UserAccount"){
+            qInfo() << "closeWindow reason is " << reason << " delete_snapshopt_of_recents";
+            item->deleteSnapShot();
+            item->setCardSnapShotFilePath(NULL);
+        }else{
+            qInfo() << "closeWindow reason is " << reason;
+        }
+    }
 
     if (webOSWindowExtension()) {
-        QJsonObject jsp = QJsonObject::fromVariantMap(payload.toVariant().toMap());
-        webOSWindowExtension()->windowClose()->close(item, jsp);
+        webOSWindowExtension()->windowClose()->close(item, jsonObject);
     } else {
         item->setItemState(WebOSSurfaceItem::ItemStateClosing);
         if (item->surface() && item->surface()->client()) {

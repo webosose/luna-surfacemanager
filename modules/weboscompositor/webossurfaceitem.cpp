@@ -147,7 +147,6 @@ WebOSSurfaceItem::~WebOSSurfaceItem()
     if (isSurfaceGroupRoot())
         m_surfaceGroup->setRootItem(NULL);
     m_surfaceGroup = NULL;
-    deleteSnapShot();
     delete m_shellSurface;
 
     if (m_mirrorItems.size() > 0)
