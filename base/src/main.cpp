@@ -21,6 +21,7 @@
 #include <QDebug>
 #include <QResource>
 #include <QQmlEngine>
+#include <QElapsedTimer>
 
 #include <glib.h>
 
@@ -51,6 +52,8 @@ static gboolean deferredDeleter(gpointer data)
 
 int main(int argc, char *argv[])
 {
+    QElapsedTimer lsm_ready_timer;
+    lsm_ready_timer.start();
 #ifdef CURSOR_THEME
     qputenv("QT_QPA_EGLFS_CURSOR", EGLFS_CURSOR_DESCRIPTION);
 #endif
@@ -130,6 +133,9 @@ int main(int argc, char *argv[])
 
     // Optional post initialization after the compositor and compositor windows get initialized
     compositor->postInit();
+
+    QObject::connect(compositor, &WebOSCoreCompositor::lsmReady,
+        [&lsm_ready_timer](){ qInfo() << "lsm-ready takes" << lsm_ready_timer.restart() << "ms"; });
 
 #ifdef UPSTART_SIGNALING
     if (compositor->autoStart())
