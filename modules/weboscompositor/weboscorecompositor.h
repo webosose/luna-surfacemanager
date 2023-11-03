@@ -270,6 +270,7 @@ signals:
     void autoStartChanged();
     void loadCompleted();
     void respawnedChanged();
+    void lsmReady();
 
 protected:
     virtual void surfaceCreated(QWaylandSurface *surface);

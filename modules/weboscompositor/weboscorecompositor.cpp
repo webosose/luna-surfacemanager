@@ -1322,6 +1322,8 @@ void WebOSCoreCompositor::emitLsmReady()
     emit loadCompleted();
 
     QProcess::startDetached("/sbin/initctl", { "emit", "--no-wait", "lsm-ready" }, "./");
+
+    emit lsmReady();
 }
 
 int WebOSCoreCompositor::prepareOutputUpdate()
