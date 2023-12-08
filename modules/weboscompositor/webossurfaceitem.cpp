@@ -372,6 +372,7 @@ void WebOSSurfaceItem::mousePressEvent(QMouseEvent *event)
             emit hasKeyboardFocusChanged();
         }
 
+        qDebug() << this << &e << inputDevice;
         if (!w->accessible()) {
             // Send extra mouse move event as otherwise the client
             // will handle the button event in the incorrect coordinate
@@ -410,6 +411,7 @@ void WebOSSurfaceItem::mouseReleaseEvent(QMouseEvent *event)
     QWaylandSeat *inputDevice = w->inputDevice();
 #endif
 
+    qDebug() << this << &e << inputDevice;
     if (!w->accessible()) {
         // Send extra mouse move event as otherwise the client
         // will handle the button event in the incorrect coordinate
@@ -562,6 +564,7 @@ void WebOSSurfaceItem::touchEvent(QTouchEvent *event)
             }
         }
 
+        qDebug() << this << &e << seat;
         seat->sendFullTouchEvent(surface(), &e);
     } else {
         QWaylandQuickItem::touchEvent(event);
@@ -738,7 +741,7 @@ void WebOSSurfaceItem::processKeyEvent(QKeyEvent *event)
         keyboard->currentGrab()) {
 
         if (hasFocus()) {
-            qInfo() << "Focused surface is not a group member and not a current keyboard grab: " << this << event->key();
+            qInfo() << this << event << inputDevice;
             inputDevice->sendFullKeyEvent(event);
         } else {
             qInfo() << "Surface is not focused and not a current keyboard grab. Do not send key: " << this << event->key();
@@ -748,6 +751,7 @@ void WebOSSurfaceItem::processKeyEvent(QKeyEvent *event)
 
     // Surface group
     if (acceptsKeyEvent(event)) {
+        qInfo() << this << "surface group case" << event << inputDevice;
         inputDevice->setKeyboardFocus(surface());
         inputDevice->sendFullKeyEvent(event);
     } else if (m_surfaceGroup) {

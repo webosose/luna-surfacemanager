@@ -1492,6 +1492,7 @@ bool WebOSCoreCompositor::EventPreprocessor::eventFilter(QObject *obj, QEvent *e
     if (event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease) {
         QKeyEvent *ke = static_cast<QKeyEvent *>(event);
 
+        qDebug() << ke;
 #ifdef MULTIINPUT_SUPPORT
         // Make sure input device ready before synchronizing modifier state.
         m_compositor->seatFor(ke);
@@ -1508,6 +1509,16 @@ bool WebOSCoreCompositor::EventPreprocessor::eventFilter(QObject *obj, QEvent *e
         if (keyboard)
             keyboard->updateModifierState(ke->nativeScanCode(), (ke->type() == QEvent::KeyPress)? WL_KEYBOARD_KEY_STATE_PRESSED : WL_KEYBOARD_KEY_STATE_RELEASED, ke->isAutoRepeat());
 #endif
+    }
+
+    if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonRelease) {
+        QMouseEvent *me = static_cast<QMouseEvent *>(event);
+        qDebug() << me;
+    }
+
+    if (event->type() == QEvent::TouchBegin || event->type() == QEvent::TouchEnd) {
+        QTouchEvent *te = static_cast<QTouchEvent *>(event);
+        qDebug() << te;
     }
 
 #ifdef MULTIINPUT_SUPPORT
