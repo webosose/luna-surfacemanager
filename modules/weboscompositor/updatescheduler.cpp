@@ -47,6 +47,8 @@ static bool debug_render = qgetenv("WEBOS_UPDATE_DEBUG").toInt() == 1;
 /* This is from another thread which handles drm event */
 void UpdateScheduler::pageFlipNotifier(WebOSCompositorWindow* win, unsigned int seq, unsigned int tv_sec, unsigned int tv_usec)
 {
+    PMTRACE_FUNCTION;
+
     static unsigned int last_sequence = 0;
     static unsigned int last_sec = 0;
     static unsigned int last_usec = 0;
@@ -142,6 +144,12 @@ void UpdateScheduler::init()
         connect(this, &UpdateScheduler::pageFlipped, this, &UpdateScheduler::frameFinished);
         connect(this, &UpdateScheduler::frameMissed, this, &UpdateScheduler::onFrameMissed);
         connect(m_window, &QQuickWindow::frameSwapped, this, &UpdateScheduler::onFrameSwapped);
+
+        connect(m_window, &QQuickWindow::beforeRendering, this, &UpdateScheduler::onBeforeRendering);
+        connect(&m_frameWatcherTimer, &QTimer::timeout, this, &UpdateScheduler::frameTimeout);
+        m_frameWatcherTimer.setTimerType(Qt::PreciseTimer);
+        m_frameWatcherTimer.setSingleShot(true);
+
         // Debugging purpose
         if (debug_render)
             connect(this, &UpdateScheduler::pageFlipped, this, &UpdateScheduler::profileFrame);
@@ -150,6 +158,8 @@ void UpdateScheduler::init()
 
 bool UpdateScheduler::updateRequested()
 {
+    PMTRACE_FUNCTION;
+
     if (!m_adaptiveUpdate)
         return false;
 
@@ -174,6 +184,8 @@ bool UpdateScheduler::updateRequested()
 
 void UpdateScheduler::deliverUpdateRequest()
 {
+    PMTRACE_FUNCTION;
+
     if (m_adaptiveUpdate) {
         // Send any unhandled UpdateRequest
         if (m_hasUnhandledUpdateRequest) {
@@ -196,6 +208,8 @@ void UpdateScheduler::deliverUpdateRequest()
 // It is proper to be called in event() to handle delayed UpdateRequest in first
 void UpdateScheduler::checkTimeout()
 {
+    PMTRACE_FUNCTION;
+
     // When the remaining time of QTimer is 0, it means that the timer has
     // expired but is being delayed due to other events and we need to
     // take actions needed right away.
@@ -216,6 +230,8 @@ void UpdateScheduler::checkTimeout()
 
 void UpdateScheduler::surfaceDamaged()
 {
+    PMTRACE_FUNCTION;
+
     static QElapsedTimer damagedInterval;
 
     if (m_adaptiveFrame && m_sinceSendFrame.isValid()) {
@@ -259,6 +275,8 @@ void UpdateScheduler::sendFrame()
 
 void UpdateScheduler::scheduleFrameCallback()
 {
+    PMTRACE_FUNCTION;
+
     if (!m_vsyncElapsedTimer.isValid())
         return;
     // How long takes from last vsync
@@ -291,6 +309,22 @@ void UpdateScheduler::onBeforeSynchronizing()
 {
     PMTRACE_FUNCTION;
     m_sinceSyncStart.start();
+}
+
+void UpdateScheduler::onBeforeRendering()
+{
+    PMTRACE_FUNCTION;
+    m_frameWatcherTimer.stop();
+}
+
+
+void UpdateScheduler::frameTimeout(){
+    PMTRACE_FUNCTION;
+
+    m_framesOnUpdate = 0;
+    if(m_hasUnhandledUpdateRequest){
+        deliverUpdateRequest();
+    }
 }
 
 void UpdateScheduler::onAfterRendering()
@@ -326,6 +360,8 @@ void UpdateScheduler::onLegacyPageFlipped()
 
 void UpdateScheduler::onFrameMissed()
 {
+    PMTRACE_FUNCTION;
+
     if (debug_render)
         qDebug() << "FrameMissed";
     m_updateTimerInterval--;
@@ -338,6 +374,8 @@ void UpdateScheduler::onFrameMissed()
 
 void UpdateScheduler::frameStarted()
 {
+    PMTRACE_FUNCTION;
+
     QElapsedTimer timer;
     timer.start();
 
@@ -349,10 +387,14 @@ void UpdateScheduler::frameStarted()
         qDebug() << "sinceDamaged:" << m_sinceSurfaceDamaged.elapsed() << "ms" << "sinceVsync" << m_vsyncElapsedTimer.elapsed() << "ms" << "timestamp" << ts.tv_sec << ts.tv_nsec / 1000 << "us";
         m_frameTimerQueue << timer;
     }
+
+    m_frameWatcherTimer.start(10);
 }
 
 void UpdateScheduler::onFrameSwapped()
 {
+    PMTRACE_FUNCTION;
+
     if (debug_render) {
         int updateRequestToSwap = 0;
         struct timespec ts;
