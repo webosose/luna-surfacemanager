@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2022 LG Electronics, Inc.
+// Copyright (c) 2021-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use m_window file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include "updatescheduler.h"
 #include "weboscompositorwindow.h"
 #include "weboscompositortracer.h"
+#include "securecoding.h"
 
 #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
 #include <QGuiApplication>
@@ -122,7 +123,7 @@ void UpdateScheduler::init()
     m_window->output()->setAutomaticFrameCallback(!m_adaptiveFrame);
 
     if (m_adaptiveFrame) {
-        m_frameTimerInterval = m_vsyncInterval / 3; // changes adaptively per every frame
+        m_frameTimerInterval = double2int(m_vsyncInterval / 3); // changes adaptively per every frame
         m_frameTimer.setTimerType(Qt::PreciseTimer);
         m_frameTimer.setSingleShot(true);
 
@@ -281,7 +282,7 @@ void UpdateScheduler::scheduleFrameCallback()
         return;
     // How long takes from last vsync
     int elapsed = (m_vsyncElapsedTimer.nsecsElapsed() % m_vsyncNsecsInterval) / 1000000;
-    int remain = m_vsyncInterval - elapsed;
+    int remain = double2int(m_vsyncInterval - elapsed);
     int nextFrameTime = remain + m_updateTimerInterval - (m_frameToDamaged + RENDER_FLUCTUATION_BUFFER_TIME);
     nextFrameTime = nextFrameTime < 0 ? 0 : nextFrameTime;
     m_frameTimerInterval = nextFrameTime <= m_frameTimerInterval
@@ -298,7 +299,7 @@ void UpdateScheduler::scheduleFrameCallback()
 inline __attribute__((always_inline)) static int calculateUpdateTimerInterval(
     int timeSinceRenderingToSwapBuffer, qreal vsyncInterval, int updateTimerInterval)
 {
-    int nextInterval = vsyncInterval - (timeSinceRenderingToSwapBuffer + RENDER_FLUCTUATION_BUFFER_TIME);
+    int nextInterval = double2int(vsyncInterval - (timeSinceRenderingToSwapBuffer + RENDER_FLUCTUATION_BUFFER_TIME));
     nextInterval = nextInterval > 0 ? nextInterval : updateTimerInterval;
     updateTimerInterval = updateTimerInterval >= nextInterval ?
         nextInterval : updateTimerInterval + 1;

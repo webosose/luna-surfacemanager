@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2021 LG Electronics, Inc.
+// Copyright (c) 2019-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 // SPDX-License-Identifier: Apache-2.0
-#ifndef __WEBOS_KEYBOARD_H__
-#define __WEBOS_KEYBOARD_H__
+#ifndef WEBOS_KEYBOARD_H //
+#define WEBOS_KEYBOARD_H //
 
 #include <WebOSCoreCompositor/weboscompositorexport.h>
 
@@ -74,4 +74,4 @@ private:
     uint32_t group = 0;
 };
 
-#endif//__WEBOS_KEYBOARD_H__
+#endif //WEBOS_KEYBOARD_H

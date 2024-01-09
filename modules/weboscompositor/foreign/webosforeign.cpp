@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022 LG Electronics, Inc.
+// Copyright (c) 2018-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include "weboscompositorwindow.h"
 #include "webosforeign.h"
 #include "videowindow_informer.h"
+#include "securecoding.h"
 
 #include <QDebug>
 #include <QGuiApplication>
@@ -461,10 +462,10 @@ void WebOSExported::calculateExportedItemRatio()
         qInfo() << "surface size: " << m_surfaceItem->surface()->size() << "item size:" << m_surfaceItem->size() << "m_exportedWindowRatio:" << m_exportedWindowRatio;
 #endif
         if (m_requestedRegion.isValid()) {
-            m_destinationRect.setX((int)(m_requestedRegion.x()*m_exportedWindowRatio));
-            m_destinationRect.setY((int)(m_requestedRegion.y()*m_exportedWindowRatio));
-            m_destinationRect.setWidth((int)(m_requestedRegion.width()*m_exportedWindowRatio));
-            m_destinationRect.setHeight((int)(m_requestedRegion.height()*m_exportedWindowRatio));
+            m_destinationRect.setX(double2int(m_requestedRegion.x()*m_exportedWindowRatio));
+            m_destinationRect.setY(double2int(m_requestedRegion.y()*m_exportedWindowRatio));
+            m_destinationRect.setWidth(double2int(m_requestedRegion.width()*m_exportedWindowRatio));
+            m_destinationRect.setHeight(double2int(m_requestedRegion.height()*m_exportedWindowRatio));
         }
         updateExportedItemSize();
     }
@@ -608,16 +609,16 @@ void WebOSExported::updateVideoWindowList(QString contextId, QRect videoDisplayR
             QRect appWindow;
             if (m_activeRegion.isValid()) {
                 appWindow = QRect(
-                    m_surfaceGlobalPosition.x() + m_activeRegion.x()*scaleFactor,
-                    m_surfaceGlobalPosition.y() + m_activeRegion.y()*scaleFactor,
-                    m_activeRegion.width()*scaleFactor,
-                    m_activeRegion.height()*scaleFactor);
+                    double2int(m_surfaceGlobalPosition.x() + m_activeRegion.x()*scaleFactor),
+                    double2int(m_surfaceGlobalPosition.y() + m_activeRegion.y()*scaleFactor),
+                    double2int(m_activeRegion.width()*scaleFactor),
+                    double2int(m_activeRegion.height()*scaleFactor));
             } else {
                 appWindow = QRect(
-                    m_surfaceGlobalPosition.x(),
-                    m_surfaceGlobalPosition.y(),
-                    m_surfaceItem->width()*scaleFactor,
-                    m_surfaceItem->height()*scaleFactor);
+                    m_surfaceGlobalPosition.toPoint().x(),
+                    m_surfaceGlobalPosition.toPoint().y(),
+                    double2int(m_surfaceItem->width()*scaleFactor),
+                    double2int(m_surfaceItem->height()*scaleFactor));
             }
             VideoWindowInformer::instance()->insertVideoWindowList(contextId, videoDisplayRect, m_windowId, appId, appWindow, m_appRotation);
         }
@@ -706,10 +707,10 @@ void WebOSExported::updateDestinationRegion()
                         double scale = qMin((double)(m_activeRegion.width()) / (double)(m_originalRequestedRegion.width()), (double)(m_activeRegion.height()) / (double)(m_originalRequestedRegion.height()));
                         qInfo() << "Requested region is out of bounds of active region. scale = " << scale;
 
-                        int x = (int)(m_activeRegion.x() + (m_activeRegion.width() - m_originalRequestedRegion.width()*scale)*0.5);
-                        int y = (int)(m_activeRegion.y() + (m_activeRegion.height() - m_originalRequestedRegion.height()*scale)*0.5);
-                        int width = (int)(m_originalRequestedRegion.width()*scale);
-                        int height = (int)(m_originalRequestedRegion.height()*scale);
+                        int x = double2int(m_activeRegion.x() + (m_activeRegion.width() - m_originalRequestedRegion.width()*scale)*0.5);
+                        int y = double2int(m_activeRegion.y() + (m_activeRegion.height() - m_originalRequestedRegion.height()*scale)*0.5);
+                        int width = double2int(m_originalRequestedRegion.width()*scale);
+                        int height = double2int(m_originalRequestedRegion.height()*scale);
                         m_requestedRegion = QRect(x, y, width, height);
                     }
                 }
@@ -753,19 +754,19 @@ void WebOSExported::updateDestinationRegion()
             qInfo() << "Requested region by source rect ratio : " << ratio;
 
             if (m_originalRequestedRegion.x() < 0) {
-                m_sourceRect.setX((0 - m_originalRequestedRegion.x()) / ratio);
+                m_sourceRect.setX(double2int((0 - m_originalRequestedRegion.x()) / ratio));
                 m_requestedRegion.setX(0);
             }
             if (m_originalRequestedRegion.y() < 0) {
-                m_sourceRect.setY((0 - m_originalRequestedRegion.y()) / ratio);
+                m_sourceRect.setY(double2int((0 - m_originalRequestedRegion.y()) / ratio));
                 m_requestedRegion.setY(0);
             }
             if (m_originalRequestedRegion.right() > m_surfaceItem->surface()->size().width()) {
-                m_sourceRect.setWidth(m_sourceRect.width() - (m_originalRequestedRegion.right() - m_surfaceItem->surface()->size().width()) / ratio);
+                m_sourceRect.setWidth(double2int(m_sourceRect.width() - (m_originalRequestedRegion.right() - m_surfaceItem->surface()->size().width()) / ratio));
                 m_requestedRegion.setWidth(m_surfaceItem->surface()->size().width() - m_requestedRegion.x());
             }
             if (m_originalRequestedRegion.bottom() > m_surfaceItem->surface()->size().height()) {
-                m_sourceRect.setHeight(m_sourceRect.height() - (m_originalRequestedRegion.bottom() - m_surfaceItem->surface()->size().height()) / ratio);
+                m_sourceRect.setHeight(double2int(m_sourceRect.height() - (m_originalRequestedRegion.bottom() - m_surfaceItem->surface()->size().height()) / ratio));
                 m_requestedRegion.setHeight(m_surfaceItem->surface()->size().height() - m_requestedRegion.y());
             }
             qInfo() << "Changed requested region : " << m_requestedRegion << ", source rect : " << m_sourceRect;
@@ -776,10 +777,10 @@ void WebOSExported::updateDestinationRegion()
 
 void WebOSExported::setDestinationRect() {
     m_destinationRect = QRect(
-        (int) (m_requestedRegion.x()*m_exportedWindowRatio),
-        (int) (m_requestedRegion.y()*m_exportedWindowRatio),
-        (int) (m_requestedRegion.width()*m_exportedWindowRatio),
-        (int) (m_requestedRegion.height()*m_exportedWindowRatio));
+        double2int(m_requestedRegion.x()*m_exportedWindowRatio),
+        double2int(m_requestedRegion.y()*m_exportedWindowRatio),
+        double2int(m_requestedRegion.width()*m_exportedWindowRatio),
+        double2int(m_requestedRegion.height()*m_exportedWindowRatio));
 }
 
 void WebOSExported::setVideoDisplayRect() {
@@ -791,10 +792,10 @@ void WebOSExported::setVideoDisplayRect() {
         double right = x + width;
         double bottom = y + height;
 
-        int x_r = round(x);
-        int y_r = round(y);
-        int w_r = round(width);
-        int h_r = round(height);
+        int x_r = double2int(round(x));
+        int y_r = double2int(round(y));
+        int w_r = double2int(round(width));
+        int h_r = double2int(round(height));
 
         if (x_r + w_r > right) {
             w_r = (int)right - x_r;
@@ -805,10 +806,10 @@ void WebOSExported::setVideoDisplayRect() {
         m_videoDisplayRect = QRect(x_r, y_r, w_r, h_r);
     } else {
         m_videoDisplayRect = QRect(
-            (int) (m_surfaceGlobalPosition.x() + m_requestedRegion.x()*m_videoDispRatio),
-            (int) (m_surfaceGlobalPosition.y() + m_requestedRegion.y()*m_videoDispRatio),
-            (int) (m_requestedRegion.width()*m_videoDispRatio),
-            (int) (m_requestedRegion.height()*m_videoDispRatio));
+            double2int(m_surfaceGlobalPosition.x() + m_requestedRegion.x()*m_videoDispRatio),
+            double2int(m_surfaceGlobalPosition.y() + m_requestedRegion.y()*m_videoDispRatio),
+            double2int(m_requestedRegion.width()*m_videoDispRatio),
+            double2int(m_requestedRegion.height()*m_videoDispRatio));
     }
 }
 
@@ -1184,46 +1185,53 @@ void WebOSImported::setSurfaceItemSize()
         if (m_textureAlign == WebOSImported::surface_alignment::surface_alignment_fit &&
                 m_exported->m_sourceRect.isValid()) {
             double ratio = qMin((double) m_exported->m_destinationRect.width() / m_exported->m_sourceRect.width(), (double) m_exported->m_destinationRect.height() / m_exported->m_sourceRect.height());
-
+            qreal surfaceItemX = (m_exported->m_destinationRect.width() - (m_exported->m_sourceRect.width() * ratio)) / 2;
+            qreal surfaceItemY = (m_exported->m_destinationRect.height() - (m_exported->m_sourceRect.height() * ratio)) / 2;
+            qreal surfaceItemWidth = m_exported->m_sourceRect.width() * ratio;
+            qreal surfaceItemHeight = m_exported->m_sourceRect.height() * ratio;
             qInfo() << "setSurfaceItemSize m_exportedItem: " << m_exported->m_exportedItem;
             qInfo() << "Fit surface item's source : " << m_exported->m_sourceRect << this;
             qInfo() << "Fit surface item's destination : " << m_exported->m_destinationRect << this;
             qInfo() << "Fit surface item's coord : "
-                            << (int)((m_exported->m_destinationRect.width() - (m_exported->m_sourceRect.width() * ratio)) / 2) << ","
-                            << (int)((m_exported->m_destinationRect.height() - (m_exported->m_sourceRect.height() * ratio)) / 2) << ","
-                            << (int)(m_exported->m_sourceRect.width() * ratio) << "x"
-                            << (int)(m_exported->m_sourceRect.height() * ratio) << ratio << this;
+                            << surfaceItemX << ","
+                            << surfaceItemY << ","
+                            << surfaceItemWidth << "x"
+                            << surfaceItemHeight << ratio << this;
 
             m_childDisplayItem->setWidth(m_exported->m_exportedItem->width());
             m_childDisplayItem->setHeight(m_exported->m_exportedItem->height());
 
-            m_childSurfaceItem->setWidth((int)(m_exported->m_sourceRect.width() * ratio));
-            m_childSurfaceItem->setHeight((int)(m_exported->m_sourceRect.height() * ratio));
-            m_childSurfaceItem->setX((int)((m_exported->m_destinationRect.width() - (m_exported->m_sourceRect.width() * ratio)) / 2));
-            m_childSurfaceItem->setY((int)((m_exported->m_destinationRect.height() - (m_exported->m_sourceRect.height() * ratio)) / 2));
+            m_childSurfaceItem->setWidth(surfaceItemWidth);
+            m_childSurfaceItem->setHeight(surfaceItemHeight);
+            m_childSurfaceItem->setX(surfaceItemX);
+            m_childSurfaceItem->setY(surfaceItemY);
         } else if (m_textureAlign == WebOSImported::surface_alignment::surface_alignment_crop &&
                 m_exported->m_originalInputRect.isValid() &&
                 m_exported->m_sourceRect.isValid()) {
             double widthRatio = double(m_exported->m_destinationRect.width()) / double(m_exported->m_sourceRect.width());
             double heightRatio = double(m_exported->m_destinationRect.height()) / double(m_exported->m_sourceRect.height());
+            qreal cropSurfaceItemX = (m_exported->m_originalInputRect.x() - m_exported->m_sourceRect.x()) * widthRatio;
+            qreal cropSurfaceItemY = (m_exported->m_originalInputRect.y() - m_exported->m_sourceRect.y()) * heightRatio;
+            qreal cropSurfaceItemWidth = m_exported->m_originalInputRect.width() * widthRatio;
+            qreal cropSurfaceItemHeight = m_exported->m_originalInputRect.height() * heightRatio;
 
             qInfo() << "setSurfaceItemSize m_exportedItem: " << m_exported->m_exportedItem;
             qInfo() << "Crop surface item's destination : "
                             << m_exported->m_destinationRect.width() << "x"
                             << m_exported->m_destinationRect.height() << this;
             qInfo() << "Crop surface item's coord : "
-                            << (int)((m_exported->m_originalInputRect.x() - m_exported->m_sourceRect.x()) * widthRatio) << ","
-                            << (int)((m_exported->m_originalInputRect.y() - m_exported->m_sourceRect.y()) * heightRatio) << ","
-                            << (int)(m_exported->m_originalInputRect.width() * widthRatio) << "x"
-                            << (int)(m_exported->m_originalInputRect.height() * heightRatio) << widthRatio << heightRatio << this;
+                            << cropSurfaceItemX << ","
+                            << cropSurfaceItemY << ","
+                            << cropSurfaceItemWidth << "x"
+                            << cropSurfaceItemHeight << widthRatio << heightRatio << this;
 
             m_childDisplayItem->setWidth(m_exported->m_destinationRect.width());
             m_childDisplayItem->setHeight(m_exported->m_destinationRect.height());
 
-            m_childSurfaceItem->setWidth((int)(m_exported->m_originalInputRect.width() * widthRatio));
-            m_childSurfaceItem->setHeight((int)(m_exported->m_originalInputRect.height() * heightRatio));
-            m_childSurfaceItem->setX((int)((m_exported->m_originalInputRect.x() - m_exported->m_sourceRect.x()) * widthRatio));
-            m_childSurfaceItem->setY((int)((m_exported->m_originalInputRect.y() - m_exported->m_sourceRect.y()) * heightRatio));
+            m_childSurfaceItem->setWidth(cropSurfaceItemWidth);
+            m_childSurfaceItem->setHeight(cropSurfaceItemHeight);
+            m_childSurfaceItem->setX(cropSurfaceItemX);
+            m_childSurfaceItem->setY(cropSurfaceItemY);
         } else { // stretch
             qInfo() << "setSurfaceItemSize m_exportedItem: " << m_exported->m_exportedItem;
             qInfo() << "set surface item's width : " << m_exported->m_exportedItem->width() << this;
@@ -1254,8 +1262,8 @@ void WebOSImported::updateGeometry()
 
     if (m_exported && m_exported->m_exportedItem) {
         qInfo() << "updateGeometry m_exportedItem: " << m_exported->m_exportedItem;
-        send_destination_region_changed(m_exported->m_exportedItem->width(),
-                                    m_exported->m_exportedItem->height());
+        send_destination_region_changed(double2uint(m_exported->m_exportedItem->width()),
+                                    double2uint(m_exported->m_exportedItem->height()));
     }
 }
 

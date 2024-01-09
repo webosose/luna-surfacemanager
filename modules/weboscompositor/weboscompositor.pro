@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2022 LG Electronics, Inc.
+# Copyright (c) 2014-2024 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -117,6 +117,8 @@ lttng {
     LIBS += -ldl -lurcu-bp -llttng-ust
     MODULE_DEFINES += HAS_LTTNG
 }
+
+INCLUDEPATH += ../utils/
 
 INCLUDEPATH += shell/
 include(shell/shell.pri)

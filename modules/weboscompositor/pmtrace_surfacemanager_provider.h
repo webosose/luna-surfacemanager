@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2022 LG Electronics, Inc.
+// Copyright (c) 2013-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@
 extern "C"{
 #endif /*__cplusplus */
 
-#if !defined(_PMTRACE_SURFACEMANAGER_PROVIDER_H) || defined(TRACEPOINT_HEADER_MULTI_READ)
-#define _PMTRACE_SURFACEMANAGER_PROVIDER_H
+#if !defined(PMTRACE_SURFACEMANAGER_PROVIDER_H) || defined(TRACEPOINT_HEADER_MULTI_READ)
+#define PMTRACE_SURFACEMANAGER_PROVIDER_H
 
 #include <lttng/tracepoint.h>
 
@@ -101,7 +101,7 @@ TRACEPOINT_EVENT(
     TP_ARGS(const char*, text),
     TP_FIELDS(ctf_string(scope, text)))
 
-#endif /* _PMTRACE_SURFACEMANAGER_PROVIDER_H */
+#endif /* PMTRACE_SURFACEMANAGER_PROVIDER_H */
 
 #ifdef __cplusplus
 }

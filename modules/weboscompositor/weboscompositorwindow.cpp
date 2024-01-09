@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2022 LG Electronics, Inc.
+// Copyright (c) 2014-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@
 #include "weboscompositorconfig.h"
 #include "weboscompositortracer.h"
 #include "updatescheduler.h"
+#include "securecoding.h"
 
 static int s_displays = 0;
 
@@ -135,7 +136,7 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
             m_outputRatio = (double) dpr;
         }
     } else {
-        m_outputGeometry.setRect(0, 0, screenSize.width() / dpr, screenSize.height() / dpr);
+        m_outputGeometry.setRect(0, 0, double2int(screenSize.width() / dpr), double2int(screenSize.height() / dpr));
         qWarning() << "OutputGeometry:" << screen() << this << "invalid geometry from geometryString, fallback to" << m_outputGeometry;
     }
 
