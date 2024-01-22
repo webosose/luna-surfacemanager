@@ -135,7 +135,6 @@ QtObject {
         param = {
                 appId: item.appId,
                 displayId: item.displayId,
-                windowId: "",
                 processId: item.processId,
                 windowType: item.type,
                 windowGroup: false,
