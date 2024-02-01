@@ -270,6 +270,7 @@ bool WebOSCompositorWindow::setCompositorMain(const QUrl& main, const QString& i
     QStringList importPaths = engine()->importPathList();
     importPaths.prepend(QStringLiteral("qrc:/"));
     importPaths.prepend(WEBOS_INSTALL_QML "/WebOSCompositorBase/imports");
+    importPaths.prepend(WEBOS_INSTALL_QML "/WebOSCompositor/imports");
     importPaths.prepend(WEBOS_INSTALL_QML);
     if (!importPath.isEmpty())
         importPaths.prepend(importPath);
