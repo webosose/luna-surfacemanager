@@ -273,6 +273,7 @@ WebOSExported::WebOSExported(
     , m_isVideoPlaying(false)
     , m_isWideVideo(false)
     , m_defaultRatio(1.0)
+    , m_fullscreenByApp(false)
 {
     qInfo() << this << "is created";
 
@@ -409,11 +410,17 @@ void WebOSExported::updateDisplayPosition(bool forceUpdate)
         return;
     }
 
-    QPointF globalPosition = m_surfaceItem->mapToItem(m_compositorWindow->viewsRoot(), QPointF(0.0, 0.0));
-    qDebug() << "globalPosition : " << globalPosition  << ", previous position : " << m_surfaceGlobalPosition << ", forceUpdate : " << forceUpdate << " on " << m_windowId;
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    QRectF globalPosition = m_surfaceItem->mapRectToScene(QRect(0,0,m_surfaceItem->surface()->bufferSize().width(), m_surfaceItem->surface()->bufferSize().height()));
+#else
+    QRectF globalPosition = m_surfaceItem->mapRectToScene(QRect(0,0,m_surfaceItem->surface()->size().width(), m_surfaceItem->surface()->size().height()));
+#endif
+    if (m_fullscreenByApp)
+        globalPosition = QRect(0,0, m_foreign->m_compositor->window()->width(), m_foreign->m_compositor->window()->height());
+    qDebug() << "globalPosition : " << globalPosition  << ", previous position : " << m_surfaceGlobalPosition << ", forceUpdate : " << forceUpdate << " on " << m_windowId << ", m_fullscreenByApp : " << m_fullscreenByApp;
 
     if (globalPosition != m_surfaceGlobalPosition || forceUpdate) {
-        qInfo() << "globalPosition : " << globalPosition  << ", previous position : " << m_surfaceGlobalPosition << ", forceUpdate : " << forceUpdate << " on " << m_windowId;
+        qInfo() << "globalPosition : " << globalPosition  << ", previous position : " << m_surfaceGlobalPosition << ", forceUpdate : " << forceUpdate << " on " << m_windowId << ", m_fullscreenByApp : " << m_fullscreenByApp;
         calculateVideoDispRatio();
     }
 }
@@ -432,23 +439,27 @@ void WebOSExported::calculateVideoDispRatio()
     }
 
     QRect outputGeometry = m_compositorWindow->outputGeometry();
-    m_surfaceGlobalPosition = m_surfaceItem->mapToItem(m_compositorWindow->viewsRoot(), QPointF(0.0, 0.0));
+    if (m_fullscreenByApp)
+        m_surfaceGlobalPosition = QRect(0,0, m_foreign->m_compositor->window()->width(), m_foreign->m_compositor->window()->height());
+    else
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        m_surfaceGlobalPosition = m_surfaceItem->mapRectToScene(QRect(0,0,m_surfaceItem->surface()->bufferSize().width(), m_surfaceItem->surface()->bufferSize().height()));
+#else
+        m_surfaceGlobalPosition = m_surfaceItem->mapRectToScene(QRect(0,0,m_surfaceItem->surface()->size().width(), m_surfaceItem->surface()->size().height()));
+#endif
 
     if (outputGeometry.isValid() && m_surfaceItem->surface()) {
         //TODO: m_videoDispRatio will be replaced by m_surfaceItem->scale();
         m_videoDispRatio = m_surfaceItem->scale();
-        switch (m_fullscreenVideoMode) {
-            case FullscreenVideoMode::Wide:
-                m_videoDispRatio = m_videoDispRatio * FULLSCREEN_VIDEO_SCALE_WIDE;
-            break;
-            case FullscreenVideoMode::UltraWide:
-                m_videoDispRatio = m_videoDispRatio * FULLSCREEN_VIDEO_SCALE_ULTRAWIDE;
-            break;
-        }
+        if (m_fullscreenByApp)
+            m_videoDispRatio = m_videoDispRatio * qMin((double)outputGeometry.width()/m_requestedRegion.width(), (double)outputGeometry.height()/m_requestedRegion.height());
+        else if (m_fullscreenVideoMode != FullscreenVideoMode::Default)
+            m_videoDispRatio = m_videoDispRatio * m_fullscreenVideoRatio;
+
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
-        qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->bufferSize()  <<  ", app rotation : " << m_appRotation <<  " on " << "m_videoDispRatio:" << m_videoDispRatio << ", m_surfaceGlobalPosition: " << m_surfaceGlobalPosition << " fullscreenVideoMode: " << m_surfaceItem->fullscreenVideoMode();
+        qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->bufferSize()  <<  ", app rotation : " << m_appRotation << "m_videoDisplayRect: " << m_videoDisplayRect <<  " on " << "m_videoDispRatio:" << m_videoDispRatio << ", m_surfaceGlobalPosition: " << m_surfaceGlobalPosition << "m_fullscreenByApp : " << m_fullscreenByApp << " fullscreenVideoMode: " << m_surfaceItem->fullscreenVideoMode();
 #else
-        qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->size()  <<  ", app rotation :        " << m_appRotation <<  " on " << "m_videoDispRatio:" << m_videoDispRatio << ", m_surfaceGlobalPosition: " << m_surfaceGlobalPosition << " fullscreenVideoMode: " << m_surfaceItem->fullscreenVideoMode();;
+        qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->size()  <<  ", app rotation :        " << m_appRotation << "m_videoDisplayRect: " << m_videoDisplayRect <<  " on " << "m_videoDispRatio:" << m_videoDispRatio << ", m_surfaceGlobalPosition: " << m_surfaceGlobalPosition << "m_fullscreenByApp : " << m_fullscreenByApp << " fullscreenVideoMode: " << m_surfaceItem->fullscreenVideoMode();;
 #endif
 
         /* m_requestedRegion.isValid(0,0,0x0) -> A valid rectangle has a left() <= right() and top() <= bottom().
@@ -489,21 +500,26 @@ void WebOSExported::calculateExportedItemRatio()
         if (m_surfaceItem->surface()->size().isValid())
             m_exportedWindowRatio = (double) m_surfaceItem->width() / m_surfaceItem->surface()->size().width();
 #endif
-        switch (m_fullscreenVideoMode) {
-            case FullscreenVideoMode::Wide:
-                m_exportedWindowRatio = m_exportedWindowRatio * FULLSCREEN_VIDEO_SCALE_WIDE;
-                break;
-            case FullscreenVideoMode::UltraWide:
-                m_exportedWindowRatio = m_exportedWindowRatio * FULLSCREEN_VIDEO_SCALE_ULTRAWIDE;
-                break;
-        }
+
+        if (m_fullscreenByApp)
+            m_exportedWindowRatio = qMin((double)m_sourceRect.width()/m_requestedRegion.width(), (double)m_sourceRect.height()/m_requestedRegion.height());
+        else if (m_fullscreenVideoMode != FullscreenVideoMode::Default)
+            m_exportedWindowRatio = m_exportedWindowRatio * m_fullscreenVideoRatio;
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
-        qInfo() << "surface size: " << m_surfaceItem->surface()->bufferSize() << "item size:" << m_surfaceItem->size() << "m_exportedWindowRatio:" << m_exportedWindowRatio << ", m_fullscreenVideoMode: " << m_fullscreenVideoMode;
+        qInfo() << "surface size: " << m_surfaceItem->surface()->bufferSize() << "item size:" << m_surfaceItem->size() << "m_exportedWindowRatio:" << m_exportedWindowRatio << ", m_fullscreenByApp: " << m_fullscreenByApp << ", m_fullscreenVideoMode: " << m_fullscreenVideoMode;
 #else
-        qInfo() << "surface size: " << m_surfaceItem->surface()->size() << "item size:" << m_surfaceItem->size() << "m_exportedWindowRatio:" << m_exportedWindowRatio << ", m_fullscreenVideoMode: " << m_fullscreenVideoMode;
+        qInfo() << "surface size: " << m_surfaceItem->surface()->size() << "item size:" << m_surfaceItem->size() << "m_exportedWindowRatio:" << m_exportedWindowRatio << ", m_fullscreenByApp: " << m_fullscreenByApp << ", m_fullscreenVideoMode: " << m_fullscreenVideoMode;
 #endif
         if (m_requestedRegion.isValid()) {
-            if (m_fullscreenVideoMode == FullscreenVideoMode::Wide || m_fullscreenVideoMode == FullscreenVideoMode::UltraWide) {
+            if (m_fullscreenByApp) {
+                double m_w = m_originalInputRect.width() / m_exportedWindowRatio;
+                double m_h = m_originalInputRect.height() / m_exportedWindowRatio;
+
+                m_destinationRect.setX(double2int(m_surfaceItem->width()/2 - m_w/2));
+                m_destinationRect.setY(double2int(m_surfaceItem->height()/2 - m_h/2));
+                m_destinationRect.setWidth(double2int(m_w));
+                m_destinationRect.setHeight(double2int(m_h));
+            } else if (m_fullscreenVideoMode == FullscreenVideoMode::Wide || m_fullscreenVideoMode == FullscreenVideoMode::UltraWide) {
                 // In the case of wide or ultra wide, if x and y of requestedRegion are multiplied by m_exportedWindowRatio,
                 // the video is displayed by moving to the bottom right of the screen.
                 // This calculation is designed to center the video on the screen.
@@ -688,8 +704,8 @@ void WebOSExported::updateVideoWindowList(QString contextId, QRect videoDisplayR
                     double2int(m_activeRegion.height()*scaleFactor));
             } else {
                 appWindow = QRect(
-                    m_surfaceGlobalPosition.toPoint().x(),
-                    m_surfaceGlobalPosition.toPoint().y(),
+                    m_surfaceGlobalPosition.x(),
+                    m_surfaceGlobalPosition.y(),
                     double2int(m_surfaceItem->width()*scaleFactor),
                     double2int(m_surfaceItem->height()*scaleFactor));
             }
@@ -797,7 +813,7 @@ void WebOSExported::updateDestinationRegion()
                         m_requestedRegion = QRect(x, y, width, height);
                     }
                 }
-	} else if (m_originalInputRect.isValid() && m_sourceRect.isValid()) {
+    } else if (m_originalInputRect.isValid() && m_sourceRect.isValid() && !m_fullscreenByApp) {
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
         if (m_originalRequestedRegion.x() < 0 || m_originalRequestedRegion.y() < 0 ||
                 m_originalRequestedRegion.x() + m_originalRequestedRegion.width() > m_surfaceItem->surface()->bufferSize().width() ||
@@ -901,6 +917,12 @@ void WebOSExported::setVideoDisplayRect() {
         qInfo() << "global y:" << m_surfaceGlobalPosition.y() << ", int(y):" << int(m_surfaceGlobalPosition.y()) << ", round y:" << y << ", int(round y):" << int(y);
 
         m_videoDisplayRect = QRect(x_r, y_r, w_r, h_r);
+    } else if (m_fullscreenByApp) {
+        double width = m_requestedRegion.width()*m_videoDispRatio;
+        double height = m_requestedRegion.height()*m_videoDispRatio;
+        double x = (m_foreign->m_compositor->window()->width() - width) / 2;
+        double y = (m_foreign->m_compositor->window()->height() - height) / 2;
+        m_videoDisplayRect = QRect((int) x, (int) y, (int) width, (int) height);
     } else if (m_fullscreenVideoMode != FullscreenVideoMode::Default) {
         double width = m_requestedRegion.width()*m_videoDispRatio;
         double height = m_requestedRegion.height()*m_videoDispRatio;
@@ -967,6 +989,7 @@ void WebOSExported::setVideoDisplayRect() {
             m_videoDisplayRect.moveTop(m_videoDisplayRect.y() + round((appOutput.height() - m_videoDisplayRect.height()) / 2));
         }
     }
+    qInfo() << "m_videoDisplayRect: " << m_videoDisplayRect << ", m_videoDispRatio: " << m_videoDispRatio << ", m_fullscreenByApp: " << m_fullscreenByApp << ", m_fullscreenVideoMode: " << m_fullscreenVideoMode;
 }
 
 QRect WebOSExported::getAppWindow() {
@@ -999,6 +1022,7 @@ void WebOSExported::setDestinationRegion(struct::wl_resource *destination_region
     if (m_surfaceItem) {
         m_surfaceItem->setFullscreenVideo("default");
         m_defaultRatio = m_surfaceItem->scale();
+        m_exportedWindowRatio = 1.0;
     }
 
     if (destination_region) {
@@ -1041,6 +1065,14 @@ void WebOSExported::updateCompositorWindow(QQuickWindow *window)
 
 void WebOSExported::setFullscreenVideoMode(QString fullscreenVideoMode)
 {
+    qInfo() << "Reqeuseted fullscreenVideoMode: " << fullscreenVideoMode;
+
+    // It is assumed that setting fullscreenVideoMode by the app has higher priority.
+    if (m_fullscreenByApp) {
+        qWarning() << "The state is in fullscreenVideoMode by app. Prevent fullscreenVideoMode from being updated by user";
+        return;
+    }
+
     if (fullscreenVideoMode.compare("auto") == 0) {
         m_fullscreenVideoMode = FullscreenVideoMode::Auto;
         if (m_compositorWindow && m_requestedRegion.isValid()) {
@@ -1062,8 +1094,6 @@ void WebOSExported::setFullscreenVideoMode(QString fullscreenVideoMode)
         m_surfaceItem->setScale(m_fullscreenVideoRatio);
         calculateAll();
     }
-
-    qInfo() << "FullscreenVideoMode: " << fullscreenVideoMode;
 }
 
 void WebOSExported::webos_exported_set_exported_window(
@@ -1134,6 +1164,11 @@ void WebOSExported::webos_exported_set_crop_region(
 
     m_isRotationChanging = false;
     setDestinationRegion(destination_region);
+
+    if (m_fullscreenByApp) {
+        qInfo() << "The fullscreenmode is enabled by the app.";
+        calculateAll();
+    }
 }
 
 void WebOSExported::webos_exported_set_property(
@@ -1192,6 +1227,14 @@ void WebOSExported::webos_exported_set_property(
                 m_properties.insert("registerMute", "on");
             }
         }
+    }
+
+    // This should be called before set_crop_region
+    if (name == "fullscreen") {
+        if (value == "true")
+            m_fullscreenByApp = true;
+        else
+            m_fullscreenByApp = false;
     }
 
     if (m_foreign->m_compositor->window()) {

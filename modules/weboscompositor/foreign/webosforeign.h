@@ -193,12 +193,13 @@ protected:
     bool m_pipSub;
     double m_videoDispRatio = 1.0;
     double m_exportedWindowRatio = 1.0;
-    QPointF m_surfaceGlobalPosition = QPointF(0.0,0.0);
     bool m_isVideoPlaying;
     bool m_isWideVideo;
     int m_fullscreenVideoMode;
     double m_defaultRatio = 1.0;
     double m_fullscreenVideoRatio = 1.0;
+    QRectF m_surfaceGlobalPosition = QRectF(0,0,0,0);
+    bool m_fullscreenByApp = false;
 
     friend class WebOSForeign;
     friend class WebOSImported;
