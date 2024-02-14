@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2022 LG Electronics, Inc.
+// Copyright (c) 2014-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -224,6 +224,7 @@ WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *
     , m_keyFilter(0)
     , m_cursorVisible(false)
     , m_mouseEventEnabled(true)
+    , m_keepInputActive(false)
     , m_shell(0)
     , m_acquired(false)
     , m_directRendering(false)
@@ -881,7 +882,10 @@ void WebOSCoreCompositor::setFullscreen(WebOSSurfaceItem* item)
     }
 
     if (item != m_fullscreenSurfaceItem) {
-        m_inputMethod->deactivate();
+        qInfo() << "[keepInputActive]:" << m_keepInputActive;
+        if(!m_keepInputActive){
+            m_inputMethod->deactivate();
+        }
         // The notion of the fullscreen surface needs to remain here for now as
         // direct rendering support needs a handle to it
         if (item == NULL) {
@@ -1323,6 +1327,16 @@ void WebOSCoreCompositor::setMouseEventEnabled(bool enable)
     if (m_mouseEventEnabled != enable) {
         m_mouseEventEnabled = enable;
         emit mouseEventEnabledChanged();
+    }
+}
+
+void WebOSCoreCompositor::setKeepInputActive(bool enable)
+{
+    qInfo() << "[keepInputActive] current:" << m_keepInputActive << "/new:" << enable;
+
+    if (m_keepInputActive != enable) {
+        m_keepInputActive = enable;
+        emit keepInputActiveChanged();
     }
 }
 

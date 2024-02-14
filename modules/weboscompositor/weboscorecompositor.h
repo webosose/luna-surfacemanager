@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2022 LG Electronics, Inc.
+// Copyright (c) 2014-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -92,6 +92,8 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCoreCompositor : public QWaylandCompositor
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadCompleted)
     Q_PROPERTY(bool respawned READ respawned NOTIFY respawnedChanged)
 
+    Q_PROPERTY(bool keepInputActive READ keepInputActive WRITE setKeepInputActive NOTIFY keepInputActiveChanged)
+
 public:
     enum ExtensionFlag {
         NoExtensions = 0x00,
@@ -157,6 +159,9 @@ public:
 
     bool mouseEventEnabled() { return m_mouseEventEnabled; }
     void setMouseEventEnabled(bool enable);
+
+    bool keepInputActive() { return m_keepInputActive; }
+    void setKeepInputActive(bool enable);
 
 #ifdef MULTIINPUT_SUPPORT
     QWaylandSeat *queryInputDevice(QInputEvent *inputEvent);
@@ -256,6 +261,8 @@ signals:
     void mouseEventEnabledChanged();
     void surfaceItemClosePolicyChanged();
 
+    void keepInputActiveChanged();
+
     //Unix signals to QT signals;
     void reloadConfig(); //SIGHUP
 
@@ -338,6 +345,7 @@ private:
 
     bool m_cursorVisible; // deprecated
     bool m_mouseEventEnabled;
+    bool m_keepInputActive;
 
     WebOSShell* m_shell;
     WebOSInputManager *m_inputManager;
