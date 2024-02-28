@@ -1,0 +1,5 @@
+module WebOSCompositorExtended
+
+# To make a dummy WebOSCompositorExtended module
+# pointing to a non-existent file on purpose.
+WebOSCompositorExtendedDummy 1.0 WebOSCompositorExtendedDummy.qml

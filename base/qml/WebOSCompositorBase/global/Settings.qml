@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 LG Electronics, Inc.
+// Copyright (c) 2017-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ pragma Singleton
 import QtQuick 2.4
 import WebOS.Global 1.0
 import WebOSCompositorBase 1.0
-
 import WebOSCompositor 1.0
+import WebOSCompositorExtended 1.0
 
 Item {
     id: root
