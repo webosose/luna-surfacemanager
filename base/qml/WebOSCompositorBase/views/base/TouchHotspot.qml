@@ -19,6 +19,7 @@ import QtQuick 2.4
 MouseArea {
     id: root
     hoverEnabled: false
+    cursorShape: undefined
 
     property int threshold: 100
 
