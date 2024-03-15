@@ -62,11 +62,22 @@ WebOSCompositorConfig::WebOSCompositorConfig()
             m_displayCount = 1;
     }
     m_primaryScreen = QString::fromLatin1(qgetenv("WEBOS_COMPOSITOR_PRIMARY_SCREEN"));
-    if (Q_UNLIKELY(m_primaryScreen.isEmpty())) {
+    if (Q_UNLIKELY(m_primaryScreen.isEmpty()))
+    {
         if (m_outputList.size() > 0)
             m_primaryScreen = m_outputList[0];
         if (Q_UNLIKELY(m_primaryScreen.isEmpty()))
-            m_primaryScreen = QGuiApplication::primaryScreen()->name();
+        {
+            QScreen *primaryScreen = QGuiApplication::primaryScreen();
+            if (primaryScreen)
+            {
+                m_primaryScreen = QGuiApplication::primaryScreen()->name();
+            }
+            else
+            {
+                qWarning() << "No primary screen returned from QGuiApplication";
+            }
+        }
     }
     QJsonObject primary = m_outputConfigs.value(m_primaryScreen);
     if (!primary.isEmpty()) {

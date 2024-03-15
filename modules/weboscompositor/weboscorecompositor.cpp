@@ -235,7 +235,7 @@ WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *
     , m_registered(false)
     , m_extensionFlags(extensions)
 {
-    setSocketName(socketName);
+    checkDaemonFiles();
 
     connect(this, &QWaylandCompositor::surfaceRequested, this, [this] (QWaylandClient *client, uint id, int version) {
         WebOSSurface *surface = new WebOSSurface();
@@ -300,7 +300,6 @@ void WebOSCoreCompositor::create()
 {
     initializeExtensions(m_extensionFlags);
     QWaylandCompositor::create();
-    checkDaemonFiles();
 }
 
 void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
@@ -391,11 +390,19 @@ void WebOSCoreCompositor::checkDaemonFiles()
 
     QByteArray name(socketName());
     // Similar logic as in wl_display_add_socket()
-    if (name.isEmpty()) {
-        name = qgetenv("WAYLAND_DISPLAY");
+    if (name.isEmpty())
+    {
+        name = qgetenv("WAYLAND_DISPLAY_LSM");
         if (name.isEmpty())
-            name = "wayland-0";
+        {
+            name = qgetenv("WAYLAND_DISPLAY");
+        }
 
+        if (name.isEmpty())
+        {
+            qWarning() << "Using default wayland display socket wayland-0";
+            name = "wayland-0";
+        }
         setSocketName(name);
     }
 
