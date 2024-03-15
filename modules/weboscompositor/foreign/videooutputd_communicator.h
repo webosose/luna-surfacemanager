@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2022 LG Electronics, Inc.
+// Copyright (c) 2013-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,11 +33,13 @@ public:
     void setDisplayWindow(QRect sourceRectangle, QRect destinationRectangle, QRect appOutput, QString contextId);
     void setCropRegion(QRect originalRectangle, QRect sourceRectangle, QRect destinationRectangle, QRect appOutput, QString contextId);
     void setProperty(QString name, QString value, QString contextId);
+    void setVideoCompositing(QString name, int value, QString contextId);
 
 signals:
     void setVideoDisplayWindowRequested(const QRect sourceRectangle, const QRect destinationRectangle, QRect appOutput, const QString contextId);
     void setVideoCropRegionRequested(const QRect originalRectangle, const QRect sourceRectangle, const QRect destinationRectangle, QRect appOutput, const QString contextId);
     void setVideoPropertyRequested(const QString name, const QString value, const QString contextId);
+    void setVideoCompositingRequested(const QString name, const int value, const QString contextId);
 
 protected:
     VideoOutputdCommunicator(QObject *parent = Q_NULLPTR);

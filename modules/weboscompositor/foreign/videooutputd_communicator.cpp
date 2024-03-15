@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022 LG Electronics, Inc.
+// Copyright (c) 2018-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -54,4 +54,9 @@ void VideoOutputdCommunicator::setCropRegion(QRect originalRectangle, QRect sour
 void VideoOutputdCommunicator::setProperty(QString name, QString value, QString contextId)
 {
     emit setVideoPropertyRequested(name, value, contextId);
+}
+
+void VideoOutputdCommunicator::setVideoCompositing(QString name, int value, QString contextId)
+{
+    emit setVideoCompositingRequested(name, value, contextId);
 }

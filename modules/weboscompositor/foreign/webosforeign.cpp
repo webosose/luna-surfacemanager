@@ -1128,6 +1128,25 @@ void WebOSExported::webos_exported_set_property(
         return;
     }
 
+    // Set video z_order
+    if (name == "z_order") {
+        bool result;
+        int z_order = value.toInt(&result, 10);
+
+        if (!m_contextId.isNull()) {
+            if (result) {
+                qInfo() << "set video z_order to " << z_order << " on " << m_contextId;
+                VideoOutputdCommunicator::instance()->setVideoCompositing("zorder", z_order, m_contextId);
+            } else {
+                qInfo() << "Failed to convert value to integer";
+            }
+        } else {
+            qInfo() << "Do not set video z_order. contextId is null";
+        }
+
+        return;
+    }
+
     if (name == "directVideoScalingMode") {
         if (value == "on")
             m_directVideoScalingMode = true;
