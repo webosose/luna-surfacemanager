@@ -538,7 +538,7 @@ void WebOSCoreCompositor::onSurfaceMapped(QWaylandSurface *surface, WebOSSurface
 
         qDebug() << item << "Items in compositor: " <<  getItems();
         emit surfaceMapped(item);
-    }        
+    }
 }
 
 WebOSSurfaceItem* WebOSCoreCompositor::activeSurface()

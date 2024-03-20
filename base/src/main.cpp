@@ -21,7 +21,6 @@
 #include <QDebug>
 #include <QResource>
 #include <QQmlEngine>
-#include <QElapsedTimer>
 
 #include <glib.h>
 
@@ -29,6 +28,7 @@
 #include "weboscompositorwindow.h"
 #include "weboscorecompositor.h"
 #include "weboscompositorconfig.h"
+#include "profiler.h"
 
 #ifdef CURSOR_THEME
 const char* EGLFS_CURSOR_DESCRIPTION = WEBOS_INSTALL_DATADIR "/icons/webos/cursors/cursor.json";
@@ -52,8 +52,7 @@ static gboolean deferredDeleter(gpointer data)
 
 int main(int argc, char *argv[])
 {
-    QElapsedTimer lsm_ready_timer;
-    lsm_ready_timer.start();
+    Profiler profiler;
 #ifdef CURSOR_THEME
     qputenv("QT_QPA_EGLFS_CURSOR", EGLFS_CURSOR_DESCRIPTION);
 #endif
@@ -96,6 +95,9 @@ int main(int argc, char *argv[])
         compositor = new WebOSCoreCompositor(WebOSCoreCompositor::WebOSForeignExtension);
     }
 
+    // Profile LSM boot-up timestamps
+    profiler.init(compositor, compositorWindow);
+
     compositor->create();
     compositor->registerWindow(compositorWindow, WebOSCompositorConfig::instance()->primaryScreen());
     compositor->registerTypes();
@@ -134,9 +136,6 @@ int main(int argc, char *argv[])
     // Optional post initialization after the compositor and compositor windows get initialized
     compositor->postInit();
 
-    QObject::connect(compositor, &WebOSCoreCompositor::lsmReady,
-        [&lsm_ready_timer](){ qInfo() << "lsm-ready takes" << lsm_ready_timer.restart() << "ms"; });
-
 #ifdef UPSTART_SIGNALING
     if (compositor->autoStart())
         compositor->emitLsmReady();
@@ -154,6 +153,8 @@ int main(int argc, char *argv[])
     }
 
     g_timeout_add(10000, (GSourceFunc)deferredDeleter, NULL);
+
+    emit compositor->eventLoopReady();
 
     return app.exec();
 }
