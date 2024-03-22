@@ -60,6 +60,8 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCompositorWindow : public QQuickView {
     Q_PROPERTY(QSize clusterSize READ clusterSize NOTIFY clusterSizeChanged)
     Q_PROPERTY(QPoint positionInCluster READ positionInCluster NOTIFY positionInClusterChanged)
 
+    Q_PROPERTY(QString geometryConfig READ geometryConfig WRITE setGeometryConfig NOTIFY geometryConfigChanged)
+
 public:
     enum AppMirroringState {
         AppMirroringStateInactive = 1,
@@ -132,6 +134,9 @@ public:
     QPoint positionInCluster() const { return m_positionInCluster; }
     void setPositionInCluster(QPoint position);
 
+    QString geometryConfig() const { return m_geometryConfig; }
+    void setGeometryConfig(QString &config);
+
     QString modelString();
 
     bool hasSecuredContent();
@@ -177,6 +182,8 @@ signals:
     void clusterSizeChanged();
     void positionInClusterChanged();
 
+    void geometryConfigChanged();
+
     void frameProfileUpdated(int sinceUpdateRequest, int flipInterval); //in us
 
 private:
@@ -196,6 +203,8 @@ private:
     void setNewOutputGeometry(QRect& outputGeometry, int outputRotation);
     void sendOutputGeometry() const;
     void applyOutputGeometry();
+
+    void setOutputGeometryFromString(QString &string);
 
     // Keeps track of the item currently receiving mouse events
     QQuickItem *m_mouseGrabberItem;
@@ -243,6 +252,8 @@ private:
     QString m_clusterName;
     QSize m_clusterSize;
     QPoint m_positionInCluster;
+
+    QString m_geometryConfig;
 
     UpdateScheduler *m_updateScheduler = nullptr;
 };

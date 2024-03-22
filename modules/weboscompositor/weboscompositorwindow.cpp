@@ -104,48 +104,9 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
     // We need a platform window right now
     create();
 
-    QSize screenSize = screen() ? screen()->size() : QSize();
-    qreal dpr = QHighDpiScaling::isActive() ? 1.0 : devicePixelRatio();
-
-    // Fallback if invalid
-    if (!screenSize.isValid()) {
-        screenSize.setWidth(1920);
-        screenSize.setHeight(1080);
-        qWarning() << "OutputGeometry:" << screen() << this << "screen size unset, use default" << screenSize;
-    }
-    if (dpr <= 0) {
-        dpr = 1.0;
-        qWarning() << "OutputGeometry:" << screen() << this << "device pixel ratio unset, use default" << dpr;
-    }
-
-    if (!geometryString.isEmpty()) {
-        qInfo() << "OutputGeometry:" << screen() << "using geometryString" << geometryString;
-    } else {
-        // Refer to geometryString of the primary display
-        geometryString = WebOSCompositorConfig::instance()->geometryString();
-        qInfo() << "OutputGeometry:" << screen() << "using geometryString of primary display from config" << geometryString;
-    }
-
-    if (parseGeometryString(geometryString, m_outputGeometry, m_outputRotation, m_outputRatio)) {
-        if (m_outputRotation % 90) {
-            qWarning() << "OutputGeometry:" << screen() << this << "invalid output rotation from geometryString" << m_outputRotation << "fallback to 0";
-            m_outputRotation = 0;
-        }
-        if (m_outputRatio <= 0) {
-            qWarning() << "OutputGeometry:" << screen() << this << "invalid output ratio from geometryString" << m_outputRatio << "fallback to devicePixelRatio";
-            m_outputRatio = (double) dpr;
-        }
-    } else {
-        m_outputGeometry.setRect(0, 0, double2int(screenSize.width() / dpr), double2int(screenSize.height() / dpr));
-        qWarning() << "OutputGeometry:" << screen() << this << "invalid geometry from geometryString, fallback to" << m_outputGeometry;
-    }
-
     setResizeMode(QQuickView::SizeRootObjectToView);
-    resize(screenSize / dpr);
 
-    qInfo() << "OutputGeometry:" << screen() << this << "outputGeometry:" << m_outputGeometry << "outputRotation:" << m_outputRotation << "outputRatio:" << m_outputRatio;
-    // More info
-    qDebug() << "OutputGeometry:" << screen() << this << "screen size and dpr:" << screenSize << dpr;
+    setOutputGeometryFromString(geometryString);
 
     m_outputGeometryPendingTimer.setSingleShot(true);
     connect(&m_outputGeometryPendingTimer, &QTimer::timeout, this, &WebOSCompositorWindow::onOutputGeometryPendingExpired);
@@ -206,6 +167,55 @@ QList<WebOSCompositorWindow *> WebOSCompositorWindow::initializeExtraWindows(Web
     }
 
     return list;
+}
+
+void WebOSCompositorWindow::setOutputGeometryFromString(QString &geometryString)
+{
+    QSize screenSize = screen() ? screen()->size() : QSize();
+    qreal dpr = QHighDpiScaling::isActive() ? 1.0 : devicePixelRatio();
+
+    // Fallback if invalid
+    if (!screenSize.isValid()) {
+        screenSize.setWidth(1920);
+        screenSize.setHeight(1080);
+        qWarning() << "OutputGeometry:" << screen() << this << "screen size unset, use default" << screenSize;
+    }
+    if (dpr <= 0) {
+        dpr = 1.0;
+        qWarning() << "OutputGeometry:" << screen() << this << "device pixel ratio unset, use default" << dpr;
+    }
+
+    if (!geometryString.isEmpty()) {
+        qInfo() << "OutputGeometry:" << screen() << "using geometryString" << geometryString;
+    } else {
+        // Refer to geometryString of the primary display
+        geometryString = WebOSCompositorConfig::instance()->geometryString();
+        qInfo() << "OutputGeometry:" << screen() << "using geometryString of primary display from config" << geometryString;
+    }
+
+    if (parseGeometryString(geometryString, m_outputGeometry, m_outputRotation, m_outputRatio)) {
+        if (m_outputRotation % 90) {
+            qWarning() << "OutputGeometry:" << screen() << this << "invalid output rotation from geometryString" << m_outputRotation << "fallback to 0";
+            m_outputRotation = 0;
+        }
+        if (m_outputRatio <= 0) {
+            qWarning() << "OutputGeometry:" << screen() << this << "invalid output ratio from geometryString" << m_outputRatio << "fallback to devicePixelRatio";
+            m_outputRatio = (double) dpr;
+        }
+    } else {
+        m_outputGeometry.setRect(0, 0, double2int(screenSize.width() / dpr), double2int(screenSize.height() / dpr));
+        qWarning() << "OutputGeometry:" << screen() << this << "invalid geometry from geometryString, fallback to" << m_outputGeometry;
+    }
+
+    // These might be set by parseGeometryString
+    emit outputGeometryChanged();
+    emit outputRotationChanged();
+
+    resize(screenSize / dpr);
+
+    qInfo() << "OutputGeometry:" << screen() << this << "outputGeometry:" << m_outputGeometry << "outputRotation:" << m_outputRotation << "outputRatio:" << m_outputRatio;
+    // More info
+    qDebug() << "OutputGeometry:" << screen() << this << "screen size and dpr:" << screenSize << dpr;
 }
 
 bool WebOSCompositorWindow::parseGeometryString(const QString string, QRect &geometry, int &rotation, double &ratio)
@@ -759,6 +769,17 @@ void WebOSCompositorWindow::setPositionInCluster(QPoint position)
         qDebug() << "Position in cluster change for" << this << ":" << m_positionInCluster << "->" << position;
         m_positionInCluster = position;
         emit positionInClusterChanged();
+    }
+}
+
+void WebOSCompositorWindow::setGeometryConfig(QString &config)
+{
+    if (config != m_geometryConfig) {
+        m_geometryConfig = config;
+
+        setOutputGeometryFromString(m_geometryConfig);
+        setBaseGeometry(m_outputGeometry, m_outputRotation, m_outputRatio);
+        emit geometryConfigChanged();
     }
 }
 
