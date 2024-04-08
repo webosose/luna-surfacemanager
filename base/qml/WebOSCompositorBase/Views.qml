@@ -17,6 +17,7 @@
 import QtQuick 2.4
 import WebOSCompositorBase 1.0
 import WebOSCompositor 1.0
+import WebOSCompositorExtended 1.0
 
 FocusScope {
     id: root
