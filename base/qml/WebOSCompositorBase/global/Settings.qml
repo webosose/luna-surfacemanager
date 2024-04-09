@@ -32,6 +32,7 @@ Item {
     readonly property alias local: localSettings.settings
     readonly property alias system: systemSettings.settings
     readonly property alias l10n: systemSettings.l10n
+    readonly property alias currentLocale: systemSettings.currentLocale
 
     function subscribe(type, method, key, returnRaw, sessionId) {
         if (typeof returnRaw != "boolean")
