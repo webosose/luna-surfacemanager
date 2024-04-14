@@ -409,8 +409,9 @@ void WebOSCoreCompositor::checkDaemonFiles()
     QFileInfo sInfo(QString("%1/%2").arg(xdgDir.constData()).arg(name.data()));
     QFileInfo dInfo(sInfo.absoluteDir().absolutePath());
     if (QFile::setPermissions(sInfo.absoluteFilePath(),
-                QFileDevice::ReadOwner | QFileDevice::WriteOwner |
-                QFileDevice::ReadGroup | QFileDevice::WriteGroup)) {
+                QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner |
+                QFileDevice::ReadGroup | QFileDevice::WriteGroup | QFileDevice::ExeGroup |
+                QFileDevice::ReadOther | QFileDevice::WriteOther | QFileDevice::ExeOther)) {
         // TODO: Qt doesn't provide a method to chown at the moment
         qDebug() << "Setting ownership of" << sInfo.absoluteFilePath() << "using /bin/chown";
         QProcess::startDetached("/bin/chown", { QString("%1:%2").arg(dInfo.owner()).arg(dInfo.group()), sInfo.absoluteFilePath() }, "./");
@@ -545,7 +546,7 @@ void WebOSCoreCompositor::onSurfaceMapped(QWaylandSurface *surface, WebOSSurface
 
         qDebug() << item << "Items in compositor: " <<  getItems();
         emit surfaceMapped(item);
-    }        
+    }
 }
 
 WebOSSurfaceItem* WebOSCoreCompositor::activeSurface()
