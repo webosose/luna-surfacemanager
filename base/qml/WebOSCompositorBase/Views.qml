@@ -28,13 +28,26 @@ FocusScope {
         id: compositorRoot
         focus: true
 
-        anchors.centerIn: parent
-        anchors.horizontalCenterOffset: compositorWindow.outputGeometry.x
-        anchors.verticalCenterOffset: compositorWindow.outputGeometry.y
+        x: compositorWindow.outputGeometry.x
+        y: compositorWindow.outputGeometry.y
         width: compositorWindow.outputGeometry.width
         height: compositorWindow.outputGeometry.height
         rotation: compositorWindow.outputRotation
         clip: compositorWindow.outputClip
+
+        property var compositorGeometryConfig: Settings.subscribe("com.webos.service.config", "getConfigs", {"configNames":["com.webos.surfacemanager.compositorGeometry"]})
+        onCompositorGeometryConfigChanged: {
+            console.info("compositorGeometryConfig", compositorGeometryConfig);
+            if (compositorGeometryConfig) {
+                console.info("Set compositorWindow's geometryConfig to ", compositorGeometryConfig);
+                compositorWindow.geometryConfig = compositorGeometryConfig
+            }
+        }
+
+        Behavior on x { PropertyAnimation { duration: 1500 } }
+        Behavior on y { PropertyAnimation { duration: 1500 } }
+        Behavior on width { PropertyAnimation { duration: 1500 } }
+        Behavior on height { PropertyAnimation { duration: 1500 } }
 
         ViewsRoot {
             id: viewsRoot
