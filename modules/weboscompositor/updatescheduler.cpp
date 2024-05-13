@@ -291,8 +291,13 @@ void UpdateScheduler::scheduleFrameCallback()
     if (debug_render)
         qDebug() << "sinceVsync" << elapsed << "m_frameToDamaged" << m_frameToDamaged << "next" << nextFrameTime << "timer" << m_frameTimerInterval;
 
-    if (m_adaptiveFrame)
+    if (m_adaptiveFrame) {
+        if (m_frameTimer.isActive()) {
+            qDebug() << "frameTimer is still active, skipped";
+            return;
+        }
         m_frameTimer.start(m_frameTimerInterval);
+    }
 }
 
 // Legacy adaptive update
