@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2020 LG Electronics, Inc.
+// Copyright (c) 2017-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,6 +27,10 @@ FocusScope {
     FocusScope {
         id: compositorRoot
         focus: true
+
+        // x, y offset will not work when anchors.centerIn is active
+        // Namely, in rotation case, the x,y offset will be ignored.
+        anchors.centerIn: rotation != 0 ? parent : undefined
 
         x: compositorWindow.outputGeometry.x
         y: compositorWindow.outputGeometry.y
