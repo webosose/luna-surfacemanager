@@ -48,10 +48,25 @@ FocusScope {
             }
         }
 
-        Behavior on x { PropertyAnimation { duration: 1500 } }
-        Behavior on y { PropertyAnimation { duration: 1500 } }
-        Behavior on width { PropertyAnimation { duration: 1500 } }
-        Behavior on height { PropertyAnimation { duration: 1500 } }
+        property var geometryAnimationConfig: Settings.subscribe("com.webos.service.config", "getConfigs", {"configNames":["com.webos.surfacemanager.enableGeometryAnimation"]})
+        property bool geometryAnimationEnabled: (typeof(geometryAnimationConfig) !== 'undefined' && geometryAnimationConfig == true) ? true : false
+
+        Behavior on x {
+            enabled: compositorRoot.geometryAnimationEnabled
+            PropertyAnimation { duration: 1500 }
+        }
+        Behavior on y {
+            enabled: compositorRoot.geometryAnimationEnabled
+            PropertyAnimation { duration: 1500 }
+        }
+        Behavior on width {
+            enabled: compositorRoot.geometryAnimationEnabled
+            PropertyAnimation { duration: 1500 }
+        }
+        Behavior on height {
+            enabled: compositorRoot.geometryAnimationEnabled
+            PropertyAnimation { duration: 1500 }
+        }
 
         ViewsRoot {
             id: viewsRoot
