@@ -917,6 +917,30 @@ void WebOSExported::setVideoDisplayRect() {
         qInfo() << "global x:" << m_surfaceGlobalPosition.x() << ", int(x):" << int(m_surfaceGlobalPosition.x()) << ", round x:" << x << ", int(round x):" << int(x);
         qInfo() << "global y:" << m_surfaceGlobalPosition.y() << ", int(y):" << int(m_surfaceGlobalPosition.y()) << ", round y:" << y << ", int(round y):" << int(y);
 
+        /* TVWBS_24-53699 : If different aspect ration video playing in PIP then small transparent line is displayed in one of the corner of video.
+         * Suspecting this is due to surfaceItem follows QRectF and other display rect in foreign class follows QRect.
+         * So increase the boundary of videoDisplayRect in case of video with different aspect ratio.
+         * It means below code execute only when requested region is different from corresponding surfaceItem region
+         * */
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        if (m_requestedRegion.width() != m_surfaceItem->surface()->bufferSize().width())
+#else
+        if (m_requestedRegion.width() != m_surfaceItem->surface()->size().width())
+#endif
+        {
+            x = x - 1;
+            w = w + 2;
+        }
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        if (m_requestedRegion.height() != m_surfaceItem->surface()->bufferSize().height())
+#else
+        if (m_requestedRegion.height() != m_surfaceItem->surface()->size().height())
+#endif
+        {
+            y = y - 1;
+            h = h + 2;
+        }
+
         m_videoDisplayRect = QRect(
             (int(x)),
             (int(y)),
