@@ -990,3 +990,10 @@ void WebOSCompositorWindow::onQmlError(const QList<QQmlError> &errors)
     qWarning("=========================================");
     QCoreApplication::exit(1);
 }
+
+bool WebOSCompositorWindow::isWideOutputGeometry()
+{
+    if ((double) m_outputGeometry.width()/m_outputGeometry.height() > 2)
+        return true;
+    return false;
+}

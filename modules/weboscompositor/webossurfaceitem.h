@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2022 LG Electronics, Inc.
+// Copyright (c) 2013-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -105,6 +105,10 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandQuickItem
     // Filter function that evaluates acceptance of the addon
     Q_PROPERTY(QJSValue addonFilter READ addonFilter WRITE setAddonFilter NOTIFY addonFilterChanged)
     Q_PROPERTY(bool directUpdateOnPlane READ directUpdateOnPlane WRITE setDirectUpdateOnPlane NOTIFY directUpdateOnPlaneChanged)
+
+    Q_PROPERTY(QString fullscreenVideoMode READ fullscreenVideoMode WRITE setFullscreenVideo NOTIFY fullscreenVideoModeChanged)
+    Q_PROPERTY(bool isVideoPlaying READ isVideoPlaying NOTIFY isVideoPlayingChanged)
+    Q_PROPERTY(bool isWideVideo READ isWideVideo NOTIFY isWideVideoChanged)
 
 public:
 
@@ -215,6 +219,8 @@ public:
      * Return whether the item is closing or not.
      */
     Q_INVOKABLE bool isClosing() const { return m_itemState == ItemStateClosing; }
+
+    void setFullscreenVideo(QString fullscreenVideoMode);
 
     /*!
      * Returns whether the surface is made fullscreen.
@@ -538,6 +544,10 @@ public:
 
     WebOSSurfaceItem* currentKeyFocusedItem();
 
+    QString fullscreenVideoMode() { return m_fullscreenVideoMode; }
+    bool isVideoPlaying();
+    bool isWideVideo();
+
 public slots:
     void updateScreenPosition();
     void updateProperties(const QVariantMap &properties, const QString &name, const QVariant &value);
@@ -608,6 +618,10 @@ signals:
     void addonChanged();
     void addonFilterChanged();
     void directUpdateOnPlaneChanged();
+
+    void fullscreenVideoModeChanged();
+    void isVideoPlayingChanged();
+    void isWideVideoChanged();
 
 protected:
     void processKeyEvent(QKeyEvent *event);
@@ -705,6 +719,8 @@ private:
     QWaylandSurface *m_surfaceGrabbed = nullptr;
     bool m_directUpdateOnPlane = false;
     QWaylandQuickHardwareLayer *m_hardwarelayer = nullptr;
+
+    QString m_fullscreenVideoMode;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(WebOSSurfaceItem::WindowClass)

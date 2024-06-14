@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022 LG Electronics, Inc.
+// Copyright (c) 2018-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,6 +31,12 @@
 #define WEBOSFOREIGN_VERSION 1
 #define WEBOSEXPORTED_VERSION 2
 #define WEBOSIMPORTED_VERSION 2
+
+#define FULLSCREEN_VIDEO_SCALE_DEFAULT     1
+#define FULLSCREEN_VIDEO_SCALE_WIDE        1.3125
+#define FULLSCREEN_VIDEO_SCALE_ULTRAWIDE   1.5
+
+#define WIDE_VIDEO_RATIO 2
 
 class WebOSCoreCompositor;
 class WebOSCompositorWindow;
@@ -86,6 +92,13 @@ public:
     };
     Q_DECLARE_FLAGS(ExportStates, ExportState)
 
+    enum FullscreenVideoMode {
+        Default = 0,
+        Auto,
+        Wide,
+        UltraWide
+    };
+
     WebOSExported(WebOSForeign* foreign, struct wl_client* client,
                   uint32_t id, WebOSSurfaceItem* surfaceItem,
                   WebOSForeign::WebOSExportedType exportedType);
@@ -106,13 +119,21 @@ public:
     void startImportedMirroring(WebOSSurfaceItem *parent);
     bool hasSecuredContent();
     void updateDestinationRegion();
+    void updateWideVideo();
     void setDestinationRect();
     void setVideoDisplayRect();
+    void setFullscreenVideoMode(QString fullscreenVideoMode);
+    void setVideoPlaying(bool isVideoPlaying);
+    void setWideVideo(bool isWideVideo);
+    bool isVideoPlaying() { return m_isVideoPlaying; }
+    bool isWideVideo() { return m_isWideVideo; }
 
     WebOSSurfaceItem *surfaceItem() const { return m_surfaceItem; }
 
 signals:
     void geometryChanged();
+    void videoPlayingChanged();
+    void wideVideoChanged();
 
 protected:
     virtual void webos_exported_destroy(Resource *) override;
@@ -169,6 +190,11 @@ protected:
     double m_videoDispRatio = 1.0;
     double m_exportedWindowRatio = 1.0;
     QPointF m_surfaceGlobalPosition = QPointF(0.0,0.0);
+    bool m_isVideoPlaying;
+    bool m_isWideVideo;
+    int m_fullscreenVideoMode;
+    double m_defaultRatio = 1.0;
+    double m_fullscreenVideoRatio = 1.0;
 
     friend class WebOSForeign;
     friend class WebOSImported;

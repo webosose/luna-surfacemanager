@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2022 LG Electronics, Inc.
+// Copyright (c) 2013-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -94,6 +94,7 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
         , m_orientation(Qt::LandscapeOrientation)
         , m_containsMouse(false)
         , m_hovered(false)
+        , m_fullscreenVideoMode("default")
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
     setAcceptTouchEvents(true);
@@ -1831,4 +1832,33 @@ WebOSSurfaceItem* WebOSSurfaceItem::currentKeyFocusedItem()
         qInfo() << "Item does not have surfaceGroup";
         return NULL;
     }
+}
+
+void WebOSSurfaceItem::setFullscreenVideo(QString fullscreenVideoMode)
+{
+    if (m_fullscreenVideoMode != fullscreenVideoMode) {
+        m_fullscreenVideoMode = fullscreenVideoMode;
+        qInfo() << "Set FullscreenVideo " << fullscreenVideoMode;
+        foreach (WebOSExported *exported, m_exportedElements)
+            exported->setFullscreenVideoMode(m_fullscreenVideoMode);
+        emit fullscreenVideoModeChanged();
+    }
+}
+
+bool WebOSSurfaceItem::isVideoPlaying()
+{
+    foreach (WebOSExported *exported, m_exportedElements) {
+        if (exported->isVideoPlaying())
+           return true;
+    }
+    return false;
+}
+
+bool WebOSSurfaceItem::isWideVideo()
+{
+    foreach (WebOSExported *exported, m_exportedElements) {
+        if (exported->isWideVideo())
+            return true;
+    }
+    return false;
 }

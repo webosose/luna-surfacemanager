@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2022 LG Electronics, Inc.
+// Copyright (c) 2014-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCompositorWindow : public QQuickView {
     Q_PROPERTY(QPoint positionInCluster READ positionInCluster NOTIFY positionInClusterChanged)
 
     Q_PROPERTY(QString geometryConfig READ geometryConfig WRITE setGeometryConfig NOTIFY geometryConfigChanged)
+    Q_PROPERTY(bool isWideOutputGeometry READ isWideOutputGeometry NOTIFY outputGeometryChanged)
 
 public:
     enum AppMirroringState {
@@ -147,6 +148,8 @@ public:
     void deliverUpdateRequest();
     void reportSurfaceDamaged(WebOSSurfaceItem* const item);
     bool hasPageFlipNotifier() const { return m_hasPageFlipNotifier; }
+
+    bool isWideOutputGeometry();
 
 private:
     int stopAppMirroringInternal(WebOSSurfaceItem *source, WebOSSurfaceItem *mirror);
