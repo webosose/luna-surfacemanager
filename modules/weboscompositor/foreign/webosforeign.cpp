@@ -922,25 +922,26 @@ void WebOSExported::setVideoDisplayRect() {
          * So increase the boundary of videoDisplayRect in case of video with different aspect ratio.
          * It means below code execute only when requested region is different from corresponding surfaceItem region
          * */
+        if (m_surfaceItem && m_surfaceItem->surface() != nullptr) {
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
-        if (m_requestedRegion.width() != m_surfaceItem->surface()->bufferSize().width())
+            if (m_requestedRegion.width() != m_surfaceItem->surface()->bufferSize().width())
 #else
-        if (m_requestedRegion.width() != m_surfaceItem->surface()->size().width())
+            if (m_requestedRegion.width() != m_surfaceItem->surface()->size().width())
 #endif
-        {
-            x = x - 1;
-            w = w + 2;
-        }
+            {
+                x = x - 1;
+                w = w + 2;
+            }
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
-        if (m_requestedRegion.height() != m_surfaceItem->surface()->bufferSize().height())
+            if (m_requestedRegion.height() != m_surfaceItem->surface()->bufferSize().height())
 #else
-        if (m_requestedRegion.height() != m_surfaceItem->surface()->size().height())
+            if (m_requestedRegion.height() != m_surfaceItem->surface()->size().height())
 #endif
-        {
-            y = y - 1;
-            h = h + 2;
+            {
+                y = y - 1;
+                h = h + 2;
+            }
         }
-
         m_videoDisplayRect = QRect(
             (int(x)),
             (int(y)),
