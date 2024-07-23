@@ -473,27 +473,46 @@ void WebOSExported::calculateExportedItemRatio()
     QRect outputGeometry = m_compositorWindow->outputGeometry();
 
     if (m_surfaceItemWindowType == "_WEBOS_WINDOW_TYPE_CARD" && outputGeometry.isValid()) {
-        //TODO: m_exportedWindowRatio will be replaced by m_surfaceItem->scale();
-        m_exportedWindowRatio = m_surfaceItem->scale();
+        m_exportedWindowRatio = 1.0;
+        // I found that the item's size and the buffer's size are different. ex) The test.fullscreen.differentratio app (Seagull video)
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        if (m_surfaceItem->surface()->bufferSize().isValid())
+            m_exportedWindowRatio = (double) m_surfaceItem->width() / m_surfaceItem->surface()->bufferSize().width();
+#else
+        if (m_surfaceItem->surface()->size().isValid())
+            m_exportedWindowRatio = (double) m_surfaceItem->width() / m_surfaceItem->surface()->size().width();
+#endif
         switch (m_fullscreenVideoMode) {
             case FullscreenVideoMode::Wide:
-                m_exportedWindowRatio = m_surfaceItem->scale() * FULLSCREEN_VIDEO_SCALE_WIDE;
+                m_exportedWindowRatio = m_exportedWindowRatio * FULLSCREEN_VIDEO_SCALE_WIDE;
                 break;
             case FullscreenVideoMode::UltraWide:
-                m_exportedWindowRatio = m_surfaceItem->scale() * FULLSCREEN_VIDEO_SCALE_ULTRAWIDE;
+                m_exportedWindowRatio = m_exportedWindowRatio * FULLSCREEN_VIDEO_SCALE_ULTRAWIDE;
                 break;
         }
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
-        qInfo() << "surface size: " << m_surfaceItem->surface()->bufferSize() << "item size:" << m_surfaceItem->size() << "m_exportedWindowRatio:" << m_exportedWindowRatio;
+        qInfo() << "surface size: " << m_surfaceItem->surface()->bufferSize() << "item size:" << m_surfaceItem->size() << "m_exportedWindowRatio:" << m_exportedWindowRatio << ", m_fullscreenVideoMode: " << m_fullscreenVideoMode;
 #else
-        qInfo() << "surface size: " << m_surfaceItem->surface()->size() << "item size:" << m_surfaceItem->size() << "m_exportedWindowRatio:" << m_exportedWindowRatio;
+        qInfo() << "surface size: " << m_surfaceItem->surface()->size() << "item size:" << m_surfaceItem->size() << "m_exportedWindowRatio:" << m_exportedWindowRatio << ", m_fullscreenVideoMode: " << m_fullscreenVideoMode;
 #endif
         if (m_requestedRegion.isValid()) {
             if (m_fullscreenVideoMode == FullscreenVideoMode::Wide || m_fullscreenVideoMode == FullscreenVideoMode::UltraWide) {
-                m_destinationRect.setX(double2int((m_compositorWindow->outputGeometry().width() - m_requestedRegion.width()*m_exportedWindowRatio)/2) - m_surfaceGlobalPosition.x());
-                m_destinationRect.setY(double2int((m_compositorWindow->outputGeometry().height() - m_requestedRegion.height()*m_exportedWindowRatio)/2) - m_surfaceGlobalPosition.y());
+                // In the case of wide or ultra wide, if x and y of requestedRegion are multiplied by m_exportedWindowRatio,
+                // the video is displayed by moving to the bottom right of the screen.
+                // This calculation is designed to center the video on the screen.
+                // By shifting the x,y coordinate to account for the enlargement of the video,
+                // it can be placed in the center of the screen.
+                m_destinationRect.setX(double2int(m_requestedRegion.x() + ((m_requestedRegion.width()-m_requestedRegion.width()*m_exportedWindowRatio)/2)));
+                m_destinationRect.setY(double2int(m_requestedRegion.y() + ((m_requestedRegion.height()-m_requestedRegion.height()*m_exportedWindowRatio)/2)));
                 m_destinationRect.setWidth(double2int(m_requestedRegion.width()*m_exportedWindowRatio));
                 m_destinationRect.setHeight(double2int(m_requestedRegion.height()*m_exportedWindowRatio));
+            } else if (m_fullscreenVideoMode == FullscreenVideoMode::Auto) {
+                // m_destinationRect only affects texture video type, and when in auto mode, the video and UI are scaled together.
+                // The x and y only need to be calculated to reposition.
+                m_destinationRect.setX(double2int(m_requestedRegion.x() - m_surfaceItem->x()));
+                m_destinationRect.setY(double2int(m_requestedRegion.y() - m_surfaceItem->y()));
+                m_destinationRect.setWidth(m_requestedRegion.width());
+                m_destinationRect.setHeight(m_requestedRegion.height());
             } else {
                 m_destinationRect.setX(double2int(m_requestedRegion.x()*m_exportedWindowRatio));
                 m_destinationRect.setY(double2int(m_requestedRegion.y()*m_exportedWindowRatio));
@@ -665,30 +684,13 @@ void WebOSExported::updateExportedItemSize()
         qWarning() << "WebOSSurfaceItem for " << m_windowId << " is  already destroyed ";
 
     qInfo() << m_exportedItem << "fits to" << m_destinationRect;
-    if (m_fullscreenVideoMode == FullscreenVideoMode::Default) {
-        m_exportedItem->setX(m_requestedRegion.x());
-        m_exportedItem->setY(m_requestedRegion.y());
-        m_exportedItem->setWidth(m_requestedRegion.width());
-        m_exportedItem->setHeight(m_requestedRegion.height());
-    } else if (m_fullscreenVideoMode == FullscreenVideoMode::Auto) {
-        m_exportedItem->setX(m_requestedRegion.x() - m_surfaceItem->x());
-        m_exportedItem->setY(m_requestedRegion.y() - m_surfaceItem->y());
-        m_exportedItem->setWidth(m_requestedRegion.width());
-        m_exportedItem->setHeight(m_requestedRegion.height());
-    } else {
-        if (m_surfaceItem->width() < (m_requestedRegion.width() * m_fullscreenVideoRatio + m_requestedRegion.x()) ||
-                m_surfaceItem->height() < (m_requestedRegion.height() * m_fullscreenVideoRatio + m_requestedRegion.y())) {
-            m_exportedItem->setX(m_requestedRegion.x() + ((m_requestedRegion.width() - m_requestedRegion.width() * m_fullscreenVideoRatio) / 2));
-            m_exportedItem->setY(m_requestedRegion.y() + ((m_requestedRegion.height() - m_requestedRegion.height() * m_fullscreenVideoRatio) / 2));
-            m_exportedItem->setWidth(m_requestedRegion.width() * m_fullscreenVideoRatio);
-            m_exportedItem->setHeight(m_requestedRegion.height() * m_fullscreenVideoRatio);
-        } else {
-            m_exportedItem->setX((m_surfaceItem->width() - m_requestedRegion.width() * m_fullscreenVideoRatio) / 2);
-            m_exportedItem->setY((m_surfaceItem->height() - m_requestedRegion.height() * m_fullscreenVideoRatio) / 2);
-            m_exportedItem->setWidth(m_requestedRegion.width() * m_fullscreenVideoRatio);
-            m_exportedItem->setHeight(m_requestedRegion.height() * m_fullscreenVideoRatio);
-        }
-    }
+    // This is the same as the function calculateExportedItemRatio before the wide screen is applied.
+    // There is no problem with the value of m_destinationRect being correct before entering the updateExportedItemSize function.
+    // So, I think restoring it like this increases the stability of the code.
+    m_exportedItem->setX(m_destinationRect.x());
+    m_exportedItem->setY(m_destinationRect.y());
+    m_exportedItem->setWidth(m_destinationRect.width());
+    m_exportedItem->setHeight(m_destinationRect.height());
 
     qInfo() << "updateExportedItemSize m_exportedItem " << m_exportedItem;
     if (m_punchThroughItem) {
@@ -942,7 +944,7 @@ void WebOSExported::setFullscreenVideoMode(QString fullscreenVideoMode)
         m_fullscreenVideoMode = FullscreenVideoMode::Wide;
         m_fullscreenVideoRatio = FULLSCREEN_VIDEO_SCALE_WIDE;
         calculateAll();
-    } else if (fullscreenVideoMode.compare("24:9") == 0){
+    } else if (fullscreenVideoMode.compare("24:9") == 0) {
         m_fullscreenVideoMode = FullscreenVideoMode::UltraWide;
         m_fullscreenVideoRatio = FULLSCREEN_VIDEO_SCALE_ULTRAWIDE;
         calculateAll();
