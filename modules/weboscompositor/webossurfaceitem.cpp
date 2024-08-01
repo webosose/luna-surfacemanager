@@ -375,7 +375,8 @@ void WebOSSurfaceItem::mousePressEvent(QMouseEvent *event)
             emit hasKeyboardFocusChanged();
         }
 
-        qDebug() << this << &e << inputDevice;
+        qInfo() << this << &e << inputDevice;
+
         if (!w->accessible()) {
             // Send extra mouse move event as otherwise the client
             // will handle the button event in the incorrect coordinate
@@ -414,7 +415,8 @@ void WebOSSurfaceItem::mouseReleaseEvent(QMouseEvent *event)
     QWaylandSeat *inputDevice = w->inputDevice();
 #endif
 
-    qDebug() << this << &e << inputDevice;
+    qInfo() << this << &e << inputDevice;
+
     if (!w->accessible()) {
         // Send extra mouse move event as otherwise the client
         // will handle the button event in the incorrect coordinate
@@ -566,8 +568,9 @@ void WebOSSurfaceItem::touchEvent(QTouchEvent *event)
                 emit hasKeyboardFocusChanged();
             }
         }
+        if (e.type() == QEvent::TouchBegin || e.type() == QEvent::TouchEnd)
+            qInfo() << this << &e << seat;
 
-        qDebug() << this << &e << seat;
         seat->sendFullTouchEvent(surface(), &e);
     } else {
         QWaylandQuickItem::touchEvent(event);
