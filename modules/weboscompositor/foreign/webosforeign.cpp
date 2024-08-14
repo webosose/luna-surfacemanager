@@ -451,7 +451,10 @@ void WebOSExported::calculateVideoDispRatio()
         qInfo() << "Output size:" << outputGeometry.size() << "surface size:" << m_surfaceItem->surface()->size()  <<  ", app rotation :        " << m_appRotation <<  " on " << "m_videoDispRatio:" << m_videoDispRatio << ", m_surfaceGlobalPosition: " << m_surfaceGlobalPosition << " fullscreenVideoMode: " << m_surfaceItem->fullscreenVideoMode();;
 #endif
 
-        if (m_requestedRegion.isValid()) {
+        /* m_requestedRegion.isValid(0,0,0x0) -> A valid rectangle has a left() <= right() and top() <= bottom().
+	(left() <= right(), where right() --> "left() + width() - 1". So (0+0-1 = -1). similarly conditon is for top and bottom
+        So the condition changed from m_requestedRegion.isValid(() to m_requestedRegion.size().isValid()*/
+        if (m_requestedRegion.size().isValid()) {
             setVideoDisplayRect();
             qInfo() << "Calculated video display output region:" << m_videoDisplayRect;
             setVideoDisplayWindow();
