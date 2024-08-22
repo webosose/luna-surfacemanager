@@ -17,6 +17,7 @@
 #include <qwaylandquickitem.h>
 #include <QWaylandSeat>
 #include <QtGui/qpa/qwindowsysteminterface_p.h>
+#include <QtGui/qpa/qplatformnativeinterface.h>
 #include <QtWaylandCompositor/private/qwaylandkeyboard_p.h>
 #include <QtWaylandCompositor/private/qwaylandseat_p.h>
 #include <QtWaylandCompositor/private/qwaylandcompositor_p.h>
@@ -75,6 +76,16 @@
 #ifdef USE_PMLOGLIB
 #include <PmLogLib.h>
 #endif
+
+static void updateCursorCallback()
+{
+    // This function should be called by the main thread, not other threads.
+    for (QWindow *w : qGuiApp->topLevelWindows()) {
+        WebOSCompositorWindow* window = static_cast<WebOSCompositorWindow*>(w);
+
+        window->update();
+    }
+}
 
 class WebOSCoreCompositorPrivate : public QWaylandCompositorPrivate
 {
@@ -267,6 +278,16 @@ WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *
     if (QWindowSystemInterfacePrivate::eventHandler)
         QWindowSystemInterfacePrivate::removeWindowSystemEventhandler(QWindowSystemInterfacePrivate::eventHandler);
 #endif
+
+    // connect cursor with detecting dirty signal
+    typedef void(**pFn)();
+    void* addr =
+        QGuiApplication::platformNativeInterface()->nativeResourceForIntegration("notifyupdatecursor");
+    if (addr)
+    {
+        std::atomic<pFn> pWindowUpdateByCursor((pFn)addr);
+        *pWindowUpdateByCursor = &::updateCursorCallback;
+    }
 }
 
 WebOSCoreCompositor::~WebOSCoreCompositor()
