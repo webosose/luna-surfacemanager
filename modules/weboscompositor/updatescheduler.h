@@ -64,10 +64,11 @@ private slots:
 
     void setNextUpdateWithDefaultNotifier();
     void onBeforeSynchronizing();
+    void onAfterSynchronizing();
     void onBeforeRendering();
     void onAfterRendering();
     void onLegacyPageFlipped();
-    void frameTimeout();
+    void renderingAborted();
 
 private:
     WebOSCompositorWindow *m_window = nullptr;
@@ -90,8 +91,6 @@ private:
     int m_frameToDamaged = 0;
 
     int m_vsyncNsecsInterval = 1000000000 / 60;
-
-    QTimer m_frameWatcherTimer;
 
     //Debug Timers
     QElapsedTimer m_sinceSendFrame;

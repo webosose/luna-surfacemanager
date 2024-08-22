@@ -45,6 +45,23 @@ static constexpr int RENDER_FLUCTUATION_BUFFER_TIME = 4;
 static int s_default_update_idle_time = qgetenv("WEBOS_UPDATE_IDLE_TIME").toInt();
 static bool debug_render = qgetenv("WEBOS_UPDATE_DEBUG").toInt() == 1;
 
+namespace {
+    enum STATUS_SYNC {
+        SYNC_NONE,
+        SYNC_BEFORE,
+        SYNC_AFTER
+    };
+
+    enum STATUS_RENDER {
+        RENDER_BEFORE,
+        RENDER_AFTER,
+        RENDER_SWAPPED
+    };
+
+    STATUS_SYNC status_sync = SYNC_NONE;
+    STATUS_RENDER status_render = RENDER_SWAPPED;
+};
+
 /* This is from another thread which handles drm event */
 void UpdateScheduler::pageFlipNotifier(WebOSCompositorWindow* win, unsigned int seq, unsigned int tv_sec, unsigned int tv_usec)
 {
@@ -146,10 +163,12 @@ void UpdateScheduler::init()
         connect(this, &UpdateScheduler::frameMissed, this, &UpdateScheduler::onFrameMissed);
         connect(m_window, &QQuickWindow::frameSwapped, this, &UpdateScheduler::onFrameSwapped);
 
+        connect(m_window, &QQuickWindow::beforeSynchronizing, this, &UpdateScheduler::onBeforeSynchronizing);
+        connect(m_window, &QQuickWindow::afterSynchronizing, this, &UpdateScheduler::onAfterSynchronizing);
         connect(m_window, &QQuickWindow::beforeRendering, this, &UpdateScheduler::onBeforeRendering);
-        connect(&m_frameWatcherTimer, &QTimer::timeout, this, &UpdateScheduler::frameTimeout);
-        m_frameWatcherTimer.setTimerType(Qt::PreciseTimer);
-        m_frameWatcherTimer.setSingleShot(true);
+        connect(m_window, &QQuickWindow::afterRendering, this, &UpdateScheduler::onAfterRendering);
+
+        connect(m_window, &QQuickWindow::renderingAborted, this, &UpdateScheduler::renderingAborted);
 
         // Debugging purpose
         if (debug_render)
@@ -164,7 +183,7 @@ bool UpdateScheduler::updateRequested()
     if (!m_adaptiveUpdate)
         return false;
 
-    if (m_updateTimer.isActive() || m_framesOnUpdate != 0) {
+    if (m_updateTimer.isActive() || status_render != RENDER_SWAPPED || m_framesOnUpdate != 0) {
         if (debug_render) {
             struct timespec ts;
             clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -190,9 +209,13 @@ void UpdateScheduler::deliverUpdateRequest()
     if (m_adaptiveUpdate) {
         // Send any unhandled UpdateRequest
         if (m_hasUnhandledUpdateRequest) {
+            if(status_render != RENDER_SWAPPED) {
+                return;
+            }
+
             m_hasUnhandledUpdateRequest = false;
 
-           // Start to keep track the frame
+            // Start to keep track the frame
             frameStarted();
             m_window->deliverUpdateRequest();
         } else if (debug_render) {
@@ -264,7 +287,7 @@ void UpdateScheduler::sendFrame()
         if (m_sinceSurfaceDamaged.isValid()) {
             qint64 damageToFrame = m_sinceSurfaceDamaged.elapsed();
             if (debug_render)
-                qDebug() << "vsyncElapsed" << m_vsyncElapsedTimer.elapsed() << "ms" << "frame interval" << frameInterval.elapsed() << "timer" << m_frameTimerInterval;
+                qDebug() << "damagedToFrame" <<  damageToFrame << "ms" << "vsyncElapsed" << m_vsyncElapsedTimer.elapsed() << "ms" << "frame interval" << frameInterval.elapsed() << "timer" << m_frameTimerInterval;
             if (damageToFrame > m_vsyncInterval * 2 && debug_render)
                 qDebug() << "Elapsed since surface damaged until sending a frame callback:" << damageToFrame << "ms";
 
@@ -315,21 +338,35 @@ void UpdateScheduler::onBeforeSynchronizing()
 {
     PMTRACE_FUNCTION;
     m_sinceSyncStart.start();
+
+    status_sync = SYNC_BEFORE;
+}
+
+void UpdateScheduler::onAfterSynchronizing()
+{
+    PMTRACE_FUNCTION;
+    status_sync = SYNC_AFTER;
 }
 
 void UpdateScheduler::onBeforeRendering()
 {
     PMTRACE_FUNCTION;
-    m_frameWatcherTimer.stop();
+    status_render = RENDER_BEFORE;
 }
 
-
-void UpdateScheduler::frameTimeout(){
+void UpdateScheduler::renderingAborted() {
     PMTRACE_FUNCTION;
 
     m_framesOnUpdate = 0;
+
+    status_sync = SYNC_NONE;
+
     if(m_hasUnhandledUpdateRequest){
         deliverUpdateRequest();
+    }
+
+    if(debug_render) {
+        m_frameTimerQueue.clear();
     }
 }
 
@@ -337,6 +374,8 @@ void UpdateScheduler::onAfterRendering()
 {
     PMTRACE_FUNCTION;
     m_timeSpentForRendering = m_sinceSyncStart.elapsed();
+
+    status_render = RENDER_AFTER;
 }
 
 void UpdateScheduler::setNextUpdateWithDefaultNotifier()
@@ -386,6 +425,9 @@ void UpdateScheduler::frameStarted()
     timer.start();
 
     m_framesOnUpdate++;
+    if (m_framesOnUpdate > 1) {
+        qWarning() << "frames on update is " << m_framesOnUpdate << " (over 1)";
+    }
 
     if (debug_render) {
         struct timespec ts;
@@ -393,8 +435,6 @@ void UpdateScheduler::frameStarted()
         qDebug() << "sinceDamaged:" << m_sinceSurfaceDamaged.elapsed() << "ms" << "sinceVsync" << m_vsyncElapsedTimer.elapsed() << "ms" << "timestamp" << ts.tv_sec << ts.tv_nsec / 1000 << "us";
         m_frameTimerQueue << timer;
     }
-
-    m_frameWatcherTimer.start(10);
 }
 
 void UpdateScheduler::onFrameSwapped()
@@ -413,6 +453,16 @@ void UpdateScheduler::onFrameSwapped()
             qDebug() << "updateRequestToSwap" << updateRequestToSwap << "us";
         }
     }
+
+    if(m_framesOnUpdate == 0) {
+        qDebug() << "onFrameSwapped is called after frameFinished";
+        if(!m_updateTimer.isActive()) {
+            m_updateTimer.start(0);
+        }
+    }
+
+    status_sync = SYNC_NONE;
+    status_render = RENDER_SWAPPED;
 }
 
 /* If there is page_flip_notifier, then the finish of the frame is regarded as on-screen presentation. */
