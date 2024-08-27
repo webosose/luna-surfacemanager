@@ -168,7 +168,9 @@ void UpdateScheduler::init()
         connect(m_window, &QQuickWindow::beforeRendering, this, &UpdateScheduler::onBeforeRendering);
         connect(m_window, &QQuickWindow::afterRendering, this, &UpdateScheduler::onAfterRendering);
 
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
         connect(m_window, &QQuickWindow::renderingAborted, this, &UpdateScheduler::renderingAborted);
+#endif
 
         // Debugging purpose
         if (debug_render)
