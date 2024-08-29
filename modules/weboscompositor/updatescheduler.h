@@ -64,8 +64,6 @@ private slots:
 
     void setNextUpdateWithDefaultNotifier();
     void onBeforeSynchronizing();
-    void onAfterSynchronizing();
-    void onBeforeRendering();
     void onAfterRendering();
     void onLegacyPageFlipped();
     void renderingAborted();
@@ -101,6 +99,8 @@ private:
     // Legacy adaptive update
     QElapsedTimer m_sinceSyncStart;
     int m_timeSpentForRendering;
+
+    bool m_frameSwapped = true;
 };
 
 #endif // UPDATESCHEDULER_H
