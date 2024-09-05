@@ -369,6 +369,8 @@ void UpdateScheduler::onLegacyPageFlipped()
 
     if (m_adaptiveFrame)
         m_frameTimer.start(m_frameTimerInterval);
+
+    m_frameSwapped = true;
 }
 // Legacy adaptive update
 
