@@ -192,7 +192,7 @@ void UpdateScheduler::deliverUpdateRequest()
         if (m_hasUnhandledUpdateRequest) {
             if (m_frameSwapped == false) {
                 if (debug_render) {
-                    qDebug() << "no update since onFrameSwapped is not called after frameFinished";
+                    qDebug() << "Skip update since onFrameSwapped is not called after frameFinished";
                 }
                 return;
             }
@@ -327,17 +327,18 @@ void UpdateScheduler::onBeforeSynchronizing()
 void UpdateScheduler::renderingAborted() {
     PMTRACE_FUNCTION;
 
-    m_framesOnUpdate = 0;
+    qInfo() << "renderingAborted" << "m_hasUnhandledUpdateRequest:" << m_hasUnhandledUpdateRequest;
 
-    if(m_hasUnhandledUpdateRequest){
-        deliverUpdateRequest();
-    }
+    m_framesOnUpdate = 0;
+    m_frameSwapped = true;
 
     if(debug_render) {
         m_frameTimerQueue.clear();
     }
 
-    m_frameSwapped = true;
+    if(m_hasUnhandledUpdateRequest){
+        deliverUpdateRequest();
+    }
 }
 
 void UpdateScheduler::onAfterRendering()
