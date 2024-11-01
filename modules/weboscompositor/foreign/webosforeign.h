@@ -32,10 +32,6 @@
 #define WEBOSEXPORTED_VERSION 2
 #define WEBOSIMPORTED_VERSION 2
 
-#define FULLSCREEN_VIDEO_SCALE_DEFAULT     1
-#define FULLSCREEN_VIDEO_SCALE_WIDE        1.3125
-#define FULLSCREEN_VIDEO_SCALE_ULTRAWIDE   1.5
-
 #define WIDE_VIDEO_RATIO 2
 
 class WebOSCoreCompositor;
@@ -95,8 +91,7 @@ public:
     enum FullscreenVideoMode {
         Default = 0,
         Auto,
-        Wide,
-        UltraWide
+        Fixed       // 17:9, 18:9, 19:9, 20:9, 21:9, 22:9, 23:9, 24:9
     };
 
     WebOSExported(WebOSForeign* foreign, struct wl_client* client,
@@ -196,7 +191,6 @@ protected:
     bool m_isVideoPlaying;
     bool m_isWideVideo;
     int m_fullscreenVideoMode;
-    double m_defaultRatio = 1.0;
     double m_fullscreenVideoRatio = 1.0;
     QRectF m_surfaceGlobalPosition = QRectF(0,0,0,0);
     bool m_fullscreenByApp = false;

@@ -30,6 +30,7 @@
 #include <QQuickWindow>
 #include <QWaylandCompositor>
 #include <limits>
+#include <QMap>
 
 #include <qpa/qplatformnativeinterface.h>
 
@@ -252,6 +253,17 @@ void WebOSForeign::webos_foreign_import_element(Resource *resource,
                << window_id;
 }
 
+const QMap<QString, double> FULLSCREEN_VIDEO_RATIOS = {
+        {"17:9", 1.063},
+        {"18:9", 1.125},
+        {"19:9", 1.187},
+        {"20:9", 1.25},
+        {"21:9", 1.312},
+        {"22:9", 1.376},
+        {"23:9", 1.437},
+        {"24:9", 1.5}
+    };
+
 WebOSExported::WebOSExported(
         WebOSForeign* foreign,
         struct wl_client* client,
@@ -272,7 +284,6 @@ WebOSExported::WebOSExported(
     , m_fullscreenVideoMode(FullscreenVideoMode::Default)
     , m_isVideoPlaying(false)
     , m_isWideVideo(false)
-    , m_defaultRatio(1.0)
     , m_fullscreenByApp(false)
 {
     qInfo() << this << "is created";
@@ -519,7 +530,7 @@ void WebOSExported::calculateExportedItemRatio()
                 m_destinationRect.setY(double2int(m_surfaceItem->height()/2 - m_h/2));
                 m_destinationRect.setWidth(double2int(m_w));
                 m_destinationRect.setHeight(double2int(m_h));
-            } else if (m_fullscreenVideoMode == FullscreenVideoMode::Wide || m_fullscreenVideoMode == FullscreenVideoMode::UltraWide) {
+            } else if (m_fullscreenVideoMode == FullscreenVideoMode::Fixed) {
                 // In the case of wide or ultra wide, if x and y of requestedRegion are multiplied by m_exportedWindowRatio,
                 // the video is displayed by moving to the bottom right of the screen.
                 // This calculation is designed to center the video on the screen.
@@ -1021,7 +1032,6 @@ void WebOSExported::setDestinationRegion(struct::wl_resource *destination_region
 {
     if (m_surfaceItem) {
         m_surfaceItem->setFullscreenVideo("default");
-        m_defaultRatio = m_surfaceItem->scale();
         m_exportedWindowRatio = 1.0;
     }
 
@@ -1073,27 +1083,22 @@ void WebOSExported::setFullscreenVideoMode(QString fullscreenVideoMode)
         return;
     }
 
-    if (fullscreenVideoMode.compare("auto") == 0) {
+    if (FULLSCREEN_VIDEO_RATIOS.contains(fullscreenVideoMode)) {
+        m_fullscreenVideoMode = FullscreenVideoMode::Fixed;
+        m_fullscreenVideoRatio = FULLSCREEN_VIDEO_RATIOS[fullscreenVideoMode];
+    } else if (fullscreenVideoMode.compare("auto") == 0 && m_compositorWindow && m_requestedRegion.isValid()) {
         m_fullscreenVideoMode = FullscreenVideoMode::Auto;
-        if (m_compositorWindow && m_requestedRegion.isValid()) {
-            m_fullscreenVideoRatio = qMin((double) m_compositorWindow->outputGeometry().width() / m_requestedRegion.width(), (double) m_compositorWindow->outputGeometry().height() / m_requestedRegion.height());
-            m_surfaceItem->setScale(m_fullscreenVideoRatio);
-            calculateAll();
-        }
-    } else if (fullscreenVideoMode.compare("21:9") == 0) {
-        m_fullscreenVideoMode = FullscreenVideoMode::Wide;
-        m_fullscreenVideoRatio = FULLSCREEN_VIDEO_SCALE_WIDE;
-        calculateAll();
-    } else if (fullscreenVideoMode.compare("24:9") == 0) {
-        m_fullscreenVideoMode = FullscreenVideoMode::UltraWide;
-        m_fullscreenVideoRatio = FULLSCREEN_VIDEO_SCALE_ULTRAWIDE;
-        calculateAll();
+        m_fullscreenVideoRatio = qMin((double) m_compositorWindow->outputGeometry().width() / m_requestedRegion.width(), (double) m_compositorWindow->outputGeometry().height() / m_requestedRegion.height());
     } else {
         m_fullscreenVideoMode = FullscreenVideoMode::Default;
-        m_fullscreenVideoRatio = m_defaultRatio;
-        m_surfaceItem->setScale(m_fullscreenVideoRatio);
-        calculateAll();
+        m_fullscreenVideoRatio = 1.0;
     }
+
+    // This is a case of scaling up video with UI
+    if (fullscreenVideoMode.compare("auto") == 0 || m_fullscreenVideoMode == FullscreenVideoMode::Default)
+        m_surfaceItem->setScale(m_fullscreenVideoRatio);
+
+    calculateAll();
 }
 
 void WebOSExported::webos_exported_set_exported_window(
