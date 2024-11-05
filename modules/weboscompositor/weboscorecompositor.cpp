@@ -247,7 +247,7 @@ WebOSCoreCompositor::WebOSCoreCompositor(ExtensionFlags extensions, const char *
     , m_registered(false)
     , m_extensionFlags(extensions)
 {
-    setSocketName(socketName);
+    checkDaemonFiles();
 
     connect(this, &QWaylandCompositor::surfaceRequested, this, [this] (QWaylandClient *client, uint id, int version) {
         WebOSSurface *surface = new WebOSSurface();
@@ -322,7 +322,6 @@ void WebOSCoreCompositor::create()
 {
     initializeExtensions(m_extensionFlags);
     QWaylandCompositor::create();
-    checkDaemonFiles();
 }
 
 void WebOSCoreCompositor::registerWindow(QQuickWindow *window, QString name)
@@ -413,19 +412,28 @@ void WebOSCoreCompositor::checkDaemonFiles()
 
     QByteArray name(socketName());
     // Similar logic as in wl_display_add_socket()
-    if (name.isEmpty()) {
-        name = qgetenv("WAYLAND_DISPLAY");
+    if (name.isEmpty())
+    {
+        name = qgetenv("WAYLAND_DISPLAY_LSM");
         if (name.isEmpty())
-            name = "wayland-0";
+        {
+            name = qgetenv("WAYLAND_DISPLAY");
+        }
 
+        if (name.isEmpty())
+        {
+            qWarning() << "Using default wayland display socket wayland-0";
+            name = "wayland-0";
+        }
         setSocketName(name);
     }
 
     QFileInfo sInfo(QString("%1/%2").arg(xdgDir.constData()).arg(name.data()));
     QFileInfo dInfo(sInfo.absoluteDir().absolutePath());
     if (QFile::setPermissions(sInfo.absoluteFilePath(),
-                QFileDevice::ReadOwner | QFileDevice::WriteOwner |
-                QFileDevice::ReadGroup | QFileDevice::WriteGroup)) {
+                QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner |
+                QFileDevice::ReadGroup | QFileDevice::WriteGroup | QFileDevice::ExeGroup |
+                QFileDevice::ReadOther | QFileDevice::WriteOther | QFileDevice::ExeOther)) {
         // TODO: Qt doesn't provide a method to chown at the moment
         qDebug() << "Setting ownership of" << sInfo.absoluteFilePath() << "using /bin/chown";
         QProcess::startDetached("/bin/chown", { QString("%1:%2").arg(dInfo.owner()).arg(dInfo.group()), sInfo.absoluteFilePath() }, "./");
