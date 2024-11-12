@@ -426,9 +426,11 @@ void WebOSCoreCompositor::checkDaemonFiles()
     if (QFile::setPermissions(sInfo.absoluteFilePath(),
                 QFileDevice::ReadOwner | QFileDevice::WriteOwner |
                 QFileDevice::ReadGroup | QFileDevice::WriteGroup)) {
-        // TODO: Qt doesn't provide a method to chown at the moment
-        qDebug() << "Setting ownership of" << sInfo.absoluteFilePath() << "using /bin/chown";
-        QProcess::startDetached("/bin/chown", { QString("%1:%2").arg(dInfo.owner()).arg(dInfo.group()), sInfo.absoluteFilePath() }, "./");
+        if (dInfo.groupId() != sInfo.groupId()) {
+            // TODO: Qt doesn't provide a method to chgrp at the moment
+            qDebug() << "Setting ownership of" << sInfo.absoluteFilePath() << "using /bin/chgrp";
+            QProcess::startDetached("/bin/chgrp", { dInfo.group(), sInfo.absoluteFilePath() }, "./");
+        }
     } else {
         qCritical() << "Unable to set permission for" << sInfo.absoluteFilePath();
     }
