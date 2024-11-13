@@ -43,24 +43,41 @@ export QML_XHR_ALLOW_FILE_READ=1
 export WEBOS_CURSOR_HIDE=0
 export WEBOS_CURSOR_TIMEOUT=5000
 # Compositor plugins
-export WEBOS_COMPOSITOR_PLATFORM="eglfs_webos"
 export WEBOS_COMPOSITOR_PLUGIN=
 export WEBOS_COMPOSITOR_EXTENSIONS=
 # Display setting
 export WEBOS_COMPOSITOR_DISPLAYS=1
 export WEBOS_COMPOSITOR_PRIMARY_SCREEN=
 export WEBOS_COMPOSITOR_DISPLAY_CONFIG=
+# Decide to scan Virtual output
+export WEBOS_VIRTUAL_DISPLAY_SUPPORT=@WEBOS_VIRTUAL_DISPLAY_SUPPORT@
 
 # Compositor geometry
 export WEBOS_COMPOSITOR_GEOMETRY=$(luna-send -n 1 -a com.webos.surfacemanager luna://com.webos.service.config/getConfigs '{"configNames":["com.webos.surfacemanager.compositorGeometry"]}' | grep -oE "[0-9]+x[0-9]+[\+\-][0-9]+[\+\-][0-9]+r[0-9]+s[0-9]+\.?[0-9]*" || echo "1920x1080+0+0r0s1")
 
 # Import product specific environment variables
-PRODUCT_ENVIRONMENT=@WEBOS_INSTALL_SYSCONFDIR@/surface-manager.d/product.env
-if [ -f ${PRODUCT_ENVIRONMENT} ]; then
-    pmlog info "Processing ${PRODUCT_ENVIRONMENT} for product specific environment variables."
-    source ${PRODUCT_ENVIRONMENT}
+product_environment="@WEBOS_INSTALL_SYSCONFDIR@/surface-manager.d/product.env"
+if [ -f ${product_environment} ]; then
+    pmlog info "Processing ${product_environment} for product specific environment variables."
+    source ${product_environment}
 else
-    pmlog warning "Missing ${PRODUCT_ENVIRONMENT}. Use default values."
+    pmlog warning "Missing ${product_environment}. Use default values."
+fi
+
+# Configure the backend.
+# Respect variables below if set by product.env.
+#   WEBOS_COMPOSITOR_PLATFORM, WEBOS_EGLFS_INTEGRATION
+# Otherwise use default values as configured at build time.
+if [ "x${WEBOS_COMPOSITOR_PLATFORM}" = "x" ]; then
+    export WEBOS_COMPOSITOR_PLATFORM="@WEBOS_COMPOSITOR_PLATFORM_DEFAULT@"
+    export QT_QPA_EGLFS_INTEGRATION="@WEBOS_EGLFS_INTEGRATION_DEFAULT@"
+    export WEBOS_DRM_FORMAT="@WEBOS_DRM_FORMAT_DEFAULT@"
+fi
+# Import eglfs integration specific settings if available
+eglfs_integration="@WEBOS_INSTALL_SYSCONFDIR@/surface-manager.d/eglfs-integrations/${QT_QPA_EGLFS_INTEGRATION}.env"
+if [ "${WEBOS_COMPOSITOR_PLATFORM}" = "eglfs_webos" -a -f ${eglfs_integration} ]; then
+    pmlog info "Processing ${eglfs_integration} for eglfs integration specific settings."
+    source ${eglfs_integration}
 fi
 
 pmlog info "Starting @WEBOS_INSTALL_BINS@/surface-manager with flags -platform ${WEBOS_COMPOSITOR_PLATFORM} ..."

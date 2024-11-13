@@ -1,4 +1,4 @@
-# Copyright (c) 2018 LG Electronics, Inc.
+# Copyright (c) 2018-2024 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +14,21 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+WEBOS_COMPOSITOR_PLATFORM_DEFAULT = ""
+WEBOS_EGLFS_INTEGRATION_DEFAULT = ""
+WEBOS_DRM_FORMAT_DEFAULT = ""
+WEBOS_VIRTUAL_DISPLAY_SUPPORT = 0
+
+backend_drm {
+    WEBOS_COMPOSITOR_PLATFORM_DEFAULT = eglfs_webos
+    WEBOS_EGLFS_INTEGRATION_DEFAULT = $${EGLFS_INTEGRATION}
+    WEBOS_DRM_FORMAT_DEFAULT = $${DRM_FORMAT}
+}
+
+virtual_display_support {
+   WEBOS_VIRTUAL_DISPLAY_SUPPORT = 1
+}
+
 defineReplace(replace_envs) {
     in = $${1}
     out = $${2}
@@ -25,7 +40,11 @@ defineReplace(replace_envs) {
     # Add variables to replace
     variables = WEBOS_INSTALL_DATADIR \
                 WEBOS_INSTALL_BINS \
-                WEBOS_INSTALL_SYSCONFDIR
+                WEBOS_INSTALL_SYSCONFDIR \
+                WEBOS_COMPOSITOR_PLATFORM_DEFAULT \
+                WEBOS_EGLFS_INTEGRATION_DEFAULT \
+                WEBOS_DRM_FORMAT_DEFAULT \
+                WEBOS_VIRTUAL_DISPLAY_SUPPORT
 
     command = "sed"
     for(var, variables) {

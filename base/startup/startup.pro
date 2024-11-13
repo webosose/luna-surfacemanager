@@ -1,4 +1,4 @@
-# Copyright (c) 2018 LG Electronics, Inc.
+# Copyright (c) 2018-2024 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ include(../config.pri)
 startup.path = $$WEBOS_INSTALL_BINS
 startup.files = $$replace_envs(surface-manager.sh.in, surface-manager.sh)
 
-envs.path = $$WEBOS_INSTALL_SYSCONFDIR/surface-manager.d
-envs.files = $$replace_envs(product.env.in, product.env)
+envs.path = $$WEBOS_INSTALL_SYSCONFDIR/surface-manager.d/eglfs-integrations
+envs.files = eglfs-integrations/*
 
 INSTALLS += startup envs
