@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2018-2023 LG Electronics, Inc.
+# Copyright (c) 2018-2024 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,13 +24,29 @@ pmlog() {
     fi
 }
 
+#
 # Default environments that can be overriden
+#
 export QT_IM_MODULE=none
+# Avoid waiting for coalescing touch events in QQuickWindow
+export QML_NO_TOUCH_COMPRESSION=1
+# Set atlas texture size to 1MB (512 * 512 * 4)
+export QSG_ATLAS_WIDTH=512
+export QSG_ATLAS_HEIGHT=512
+# Release QImages after creating texture
+export QSG_TRANSIENT_IMAGES=1
+# Keymap
+export QT_QPA_EVDEV_KEYBOARD_PARAMETERS=keymap=@WEBOS_INSTALL_DATADIR@/webos-keymap/webos-keymap.qmap
+# Needed since Qt 6.0
+export QML_XHR_ALLOW_FILE_READ=1
+# Cursor setting
+export WEBOS_CURSOR_HIDE=0
+export WEBOS_CURSOR_TIMEOUT=5000
+# Compositor plugins
+export WEBOS_COMPOSITOR_PLATFORM="eglfs_webos"
 export WEBOS_COMPOSITOR_PLUGIN=
 export WEBOS_COMPOSITOR_EXTENSIONS=
-export WEBOS_COMPOSITOR_PLATFORM=eglfs
-export WEBOS_CURSOR_HIDE=0
-export WEBOS_CURSOR_TIMEOUT=0
+# Display setting
 export WEBOS_COMPOSITOR_DISPLAYS=1
 export WEBOS_COMPOSITOR_PRIMARY_SCREEN=
 export WEBOS_COMPOSITOR_DISPLAY_CONFIG=
