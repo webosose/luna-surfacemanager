@@ -112,6 +112,8 @@ class WEBOS_COMPOSITOR_EXPORT WebOSSurfaceItem : public QWaylandQuickItem
     Q_PROPERTY(bool isVideoPlaying READ isVideoPlaying NOTIFY isVideoPlayingChanged)
     Q_PROPERTY(bool isWideVideo READ isWideVideo NOTIFY isWideVideoChanged)
 
+    Q_PROPERTY(bool uiScaleMode READ uiScaleMode WRITE setUIScaleMode NOTIFY uiScaleModeChanged)
+
 public:
 
     /*!
@@ -224,6 +226,8 @@ public:
     Q_INVOKABLE bool isClosing() const { return m_itemState == ItemStateClosing; }
 
     void setFullscreenVideo(QString fullscreenVideoMode);
+
+    void setUIScaleMode(bool uiScaleMode);
 
     /*!
      * Function to notify that key input
@@ -566,6 +570,8 @@ public:
     bool isVideoPlaying();
     bool isWideVideo();
 
+    bool uiScaleMode() { return m_uiScaleMode; }
+
     bool hasKeyEvent(){ return m_hasKeyEvent;}
     void updateHasKeyEvent(bool status);
 
@@ -641,6 +647,7 @@ signals:
     void addonFilterChanged();
     void directUpdateOnPlaneChanged();
 
+    void uiScaleModeChanged();
     void fullscreenVideoModeChanged();
     void isVideoPlayingChanged();
     void isWideVideoChanged();
@@ -746,6 +753,8 @@ private:
     QWaylandQuickHardwareLayer *m_hardwarelayer = nullptr;
 
     QString m_fullscreenVideoMode;
+
+    bool m_uiScaleMode;
 
     bool m_requestKeyEventStatus = false;
     bool m_hasKeyEvent = false;

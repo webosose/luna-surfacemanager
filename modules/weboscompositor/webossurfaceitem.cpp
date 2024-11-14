@@ -98,6 +98,7 @@ WebOSSurfaceItem::WebOSSurfaceItem(WebOSCoreCompositor* compositor, QWaylandQuic
         , m_fullscreenVideoMode("default")
         , m_requestKeyEventStatus(false)
         , m_hasKeyEvent(false)
+        , m_uiScaleMode(false)
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
     setAcceptTouchEvents(true);
@@ -1870,6 +1871,14 @@ WebOSSurfaceItem* WebOSSurfaceItem::currentKeyFocusedItem()
     } else {
         qInfo() << "Item does not have surfaceGroup";
         return NULL;
+    }
+}
+
+void WebOSSurfaceItem::setUIScaleMode(bool uiScaleMode)
+{
+    if (m_uiScaleMode != uiScaleMode) {
+        m_uiScaleMode = uiScaleMode;
+        qInfo() << "Set uiScaleMode " << m_uiScaleMode;
     }
 }
 

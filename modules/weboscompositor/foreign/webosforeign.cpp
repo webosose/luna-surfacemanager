@@ -1075,7 +1075,7 @@ void WebOSExported::updateCompositorWindow(QQuickWindow *window)
 
 void WebOSExported::setFullscreenVideoMode(QString fullscreenVideoMode)
 {
-    qInfo() << "Reqeuseted fullscreenVideoMode: " << fullscreenVideoMode;
+    qInfo() << "Reqeuseted fullscreenVideoMode: " << fullscreenVideoMode << ", uiScaleMode: " << m_surfaceItem->uiScaleMode();
 
     // It is assumed that setting fullscreenVideoMode by the app has higher priority.
     if (m_fullscreenByApp) {
@@ -1095,7 +1095,7 @@ void WebOSExported::setFullscreenVideoMode(QString fullscreenVideoMode)
     }
 
     // This is a case of scaling up video with UI
-    if (fullscreenVideoMode.compare("auto") == 0 || m_fullscreenVideoMode == FullscreenVideoMode::Default)
+    if (fullscreenVideoMode.compare("auto") == 0 || m_fullscreenVideoMode == FullscreenVideoMode::Default || m_surfaceItem->uiScaleMode())
         m_surfaceItem->setScale(m_fullscreenVideoRatio);
 
     calculateAll();
