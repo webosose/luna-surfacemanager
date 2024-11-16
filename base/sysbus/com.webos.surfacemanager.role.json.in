@@ -3,11 +3,20 @@
     \"type\": \"privileged\",
     \"trustLevel\": \"oem\",
     \"allowedNames\": [
-        \"com.webos.surfacemanager*\"
+        \"com.webos.surfacemanager*\",
+        \"com.webos.platformstarfish\"
     ],
     \"permissions\": [
         {
             \"service\": \"com.webos.surfacemanager*\",
+            \"outbound\": [
+                \"com.lge.*\",
+                \"com.palm.*\",
+                \"com.webos.*\"
+            ]
+        },
+        {
+            \"service\": \"com.webos.platformstarfish\",
             \"outbound\": [
                 \"com.lge.*\",
                 \"com.palm.*\",

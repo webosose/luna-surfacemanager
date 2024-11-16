@@ -1,6 +1,12 @@
 {
-    "allowedNames": ["com.webos.surfacemanager*"],
-    "surfacemanager.devutility": ["oem"],
-    "surfacemanager.operation": ["oem"],
-    "surfacemanager.query": ["oem"]
+    "surfacemanager.devutility":{
+        "trust": "oem",
+        "description": "Provides development utilities for Surface manager",
+        "privacy": false
+    },
+    "surfacemanager.query":{
+        "trust": "oem",
+        "description": "Query status of Surface manager or a specific surface",
+        "privacy": false
+    }
 }

@@ -3,17 +3,27 @@
         "account.query",
         "application.launcher",
         "application.operation",
+        "application.privilegedquery",
         "audio.operation",
         "audio.query",
         "boot.query",
         "database.operation",
-        "settings.management",
-        "settings.query",
-        "systemconfig.management",
-        "systemconfig.query",
-        "media.displayControl",
-        "media.displayInfo",
         "notification.management",
-        "notification.operation"
+        "notification.operation",
+        "settings.query",
+        "systemconfig.query"
+    ],
+    "com.webos.platformstarfish": [
+        "application.operation",
+        "application.privilegedquery",
+        "application.restricted",
+        "avmutemanager.management",
+        "boot.query",
+        "notification.management",
+        "settings.query",
+        "settings.operation",
+        "systemconfig.query",
+        "videooutput.management",
+        "videooutput.operation"
     ]
 }
