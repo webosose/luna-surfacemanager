@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 LG Electronics, Inc.
+// Copyright (c) 2017-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,6 +33,73 @@
 #ifdef CURSOR_THEME
 const char* EGLFS_CURSOR_DESCRIPTION = WEBOS_INSTALL_DATADIR "/icons/webos/cursors/cursor.json";
 #endif
+
+class EventFilter : public QObject {
+
+    Q_OBJECT
+
+public:
+    EventFilter(WebOSCoreCompositor *compositor)
+        : m_compositor(compositor)
+    {
+    }
+
+    bool eventFilter(QObject *object, QEvent *event)
+    {
+        Q_UNUSED(object);
+
+        // Shouldn't happen
+        if (!m_compositor)
+            return false;
+
+        bool eventAccepted = false;
+
+        if (event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease) {
+            QKeyEvent *ke = static_cast<QKeyEvent *>(event);
+            if (m_compositor->mouseEventEnabled()) {
+                switch (ke->key()) {
+                case Qt::Key_webOS_CursorShow:
+                    m_compositor->setCursorVisible(true);
+                    break;
+                case Qt::Key_webOS_CursorHide:
+                    m_compositor->setCursorVisible(false);
+                    break;
+                }
+            }
+        } else if (event->type() == QEvent::CursorChange) {
+            /* Handle post-processing of cursor realated stuff(such as event blocking on a blank cursor)
+             * after the cursor is changed by Compositor's QML framework or Wayland clients. */
+            if (m_compositor->window()->cursor().shape() != Qt::BlankCursor) {
+                m_compositor->setMouseEventEnabled(true);
+            } else {
+                /* Block all mouse event.
+                 * This will be released when
+                 * 1. When SurfaceItem lose its keyboard focus
+                 * 2. Set Arrow cursor or Bitmap cursor from QML framework or Wayland-clients */
+                m_compositor->setMouseEventEnabled(false);
+                m_compositor->setCursorVisible(false);
+
+                // If there is  mouseGrabberItem, mouse events will be sent to the item just after setMouseEventEnabled(true).
+                // It will cause unexpected behaviour. ex) Cursor shape changed, Missing mouse event.
+                if (QQuickItem *item = static_cast<QQuickWindow*>(m_compositor->window())->mouseGrabberItem())
+                    item->ungrabMouse();
+            }
+        }
+
+        if (!m_compositor->mouseEventEnabled() &&
+                (event->type() == QEvent::MouseMove ||
+                 event->type() == QEvent::MouseButtonPress ||
+                 event->type() == QEvent::MouseButtonRelease ||
+                 event->type() == QEvent::MouseButtonDblClick)){
+            eventAccepted = true;
+        }
+
+        return eventAccepted;
+    }
+
+private:
+    WebOSCoreCompositor *m_compositor;
+};
 
 static gboolean deferredDeleter(gpointer data)
 {
@@ -98,6 +165,16 @@ int main(int argc, char *argv[])
     // Profile LSM boot-up timestamps
     profiler.init(compositor, compositorWindow);
 
+    /* https://doc.qt.io/qt-5/qobject.html#installEventFilter
+       - "If multiple event filters are installed on a single object,
+          the filter that was installed last is activated first."
+       If there is an extended compositor, it can have event filters.
+       Considering inheritance, the extended event filters should be called first,
+       so that they can decide consume or pass events to base's event filter.
+       For that, the base's event filter should be installed prior to 'registerWindow'
+       where extended compositor installs filters. */
+    compositorWindow->installEventFilter(new EventFilter(compositor));
+
     compositor->create();
     compositor->registerWindow(compositorWindow, WebOSCompositorConfig::instance()->primaryScreen());
     compositor->registerTypes();
@@ -158,3 +235,5 @@ int main(int argc, char *argv[])
 
     return app.exec();
 }
+
+#include "main.moc"
