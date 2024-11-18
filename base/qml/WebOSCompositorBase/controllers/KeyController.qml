@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 LG Electronics, Inc.
+// Copyright (c) 2017-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ Item {
 
         function defaultKeyEventHandler(key, pressed, autoRepeat) {
             switch (key) {
+                case Qt.Key_Meta:
                 case Qt.Key_Super_L:
                     if (pressed && !autoRepeat)
                         root.homePressed();
