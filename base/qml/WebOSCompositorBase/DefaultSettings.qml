@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 LG Electronics, Inc.
+// Copyright (c) 2017-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -62,7 +62,8 @@ QtObject {
             "pinBox": imagePath + "pinprompt_box_n.png",
             "pinBoxFocused": imagePath + "pinprompt_box_f.png",
             "pinBoxDot": imagePath + "pinprompt_box_dot_n.png",
-            "pinBoxDotFocused": imagePath + "pinprompt_box_dot_f.png"
+            "pinBoxDotFocused": imagePath + "pinprompt_box_dot_f.png",
+            "launcherBg": imagePath + "bbrelaxed.jpg"
         },
         "keyboardView": {
             "height": 324,
@@ -70,8 +71,7 @@ QtObject {
         },
         "launcher": {
             "width": 800,
-            "opacity": 0.8,
-            "backgroundColor": "#383838",
+            "opacity": 0.9,
             "defaultMargin": 20,
             "settingsIconSize": 70,
             "slideAnimationDuration": 500,

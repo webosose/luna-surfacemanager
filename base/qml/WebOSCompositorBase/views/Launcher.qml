@@ -52,15 +52,15 @@ FocusableView {
         }
     }
 
-    Rectangle {
+    Image {
         id: background
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         anchors.right: parent.right
         anchors.rightMargin: -width
         width: Settings.local.launcher.width
-        color: Settings.local.launcher.backgroundColor
         opacity: Settings.local.launcher.opacity
+        source: Settings.local.imageResources.launcherBg
 
         AnimatedImage {
             anchors.centerIn: parent
