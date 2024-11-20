@@ -25,6 +25,7 @@ FullscreenView 1.0 views/FullscreenView.qml
 KeyboardView 1.0 views/KeyboardView.qml
 Launcher 1.0 views/Launcher.qml
 NotificationView 1.0 views/NotificationView.qml
+NotificationService 1.0 views/notification/NotificationService.qml
 OverlayView 1.0 views/OverlayView.qml
 PopupView 1.0 views/PopupView.qml
 Spinner 1.0 views/Spinner.qml
