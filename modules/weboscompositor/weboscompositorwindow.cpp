@@ -42,6 +42,7 @@
 #include "weboscompositortracer.h"
 #include "updatescheduler.h"
 #include "securecoding.h"
+#include "debugtypes.h"
 
 static int s_displays = 0;
 
@@ -832,6 +833,36 @@ void WebOSCompositorWindow::reportSurfaceDamaged(WebOSSurfaceItem* const item)
         m_updateScheduler->surfaceDamaged();
 }
 
+static WebOSSurfaceItem* findWebOSSurfaceItem(QQuickItem *base, const QPointF& point)
+{
+    if (!base)
+        return nullptr;
+
+    if (!base->isVisible() || !base->isEnabled() || QQuickItemPrivate::get(base)->culled)
+        return nullptr;
+
+    QList<QQuickItem*> children = QQuickItemPrivate::get(base)->paintOrderChildItems();
+    for (int ii = children.count() - 1; ii >= 0; --ii) {
+        QQuickItem *child = children.at(ii);
+        WebOSSurfaceItem *webosSurfaceItem = findWebOSSurfaceItem(child, point);
+        if (webosSurfaceItem)
+            return webosSurfaceItem;
+    }
+
+    WebOSSurfaceItem *webosSurfaceItem = qobject_cast<WebOSSurfaceItem*>(base);
+    if (webosSurfaceItem) {
+        if (webosSurfaceItem->isVisible() && webosSurfaceItem->QQuickItem::contains(webosSurfaceItem->mapFromScene(point)))
+            return webosSurfaceItem;
+    }
+
+    return nullptr;
+}
+
+WebOSSurfaceItem* WebOSCompositorWindow::itemAt(const QPointF& point)
+{
+    return findWebOSSurfaceItem(contentItem(), point);
+}
+
 bool WebOSCompositorWindow::event(QEvent *e)
 {
     PMTRACE_FUNCTION;
@@ -844,11 +875,40 @@ bool WebOSCompositorWindow::event(QEvent *e)
         if (m_updateScheduler && m_updateScheduler->updateRequested())
             return true;
         break;
+
+    case QEvent::TouchBegin:
+    case QEvent::TouchEnd:
+    case QEvent::TouchUpdate: {
+        QTouchEvent *touchEvent = static_cast<QTouchEvent*>(e);
+        DebugTouchEvent debugTouchEvent;
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        foreach (const QTouchEvent::TouchPoint &touchPoint, touchEvent->points()) {
+            DebugTouchPoint *point = new DebugTouchPoint(touchPoint.id());
+            point->setPos(touchPoint.position());
+            point->setNormalizedPos(touchPoint.normalizedPosition());
+            point->setState(touchPoint.state());
+            debugTouchEvent.appendDebugTouchPoint(point);
+        }
+#else
+        foreach (const QTouchEvent::TouchPoint &touchPoint, touchEvent->touchPoints()) {
+            DebugTouchPoint *point = new DebugTouchPoint(touchPoint.id());
+            point->setPos(touchPoint.pos());
+            point->setNormalizedPos(touchPoint.normalizedPos());
+            point->setState(touchPoint.state());
+            debugTouchEvent.appendDebugTouchPoint(point);
+        }
+#endif
+        emit debugTouchUpdated(&debugTouchEvent);
+        break;
+    }
+
     case QEvent::TabletPress:
     case QEvent::TabletMove:
     case QEvent::TabletRelease:
         handleTabletEvent(QQuickWindowPrivate::get(this)->contentItem, static_cast<QTabletEvent *>(e));
         return true;
+
     default:
         break;
     }

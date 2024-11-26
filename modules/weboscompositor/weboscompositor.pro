@@ -71,7 +71,8 @@ HEADERS += \
     compositorextensionfactory.h \
     unixsignalhandler.h \
     updatescheduler.h \
-    profiler.h
+    profiler.h \
+    debugtypes.h
 
 SOURCES += \
     weboswindowmodel.cpp \
@@ -93,7 +94,8 @@ SOURCES += \
     compositorextensionfactory.cpp \
     unixsignalhandler.cpp \
     updatescheduler.cpp \
-    profiler.cpp
+    profiler.cpp \
+    debugtypes.cpp
 
 !no_multi_input {
     # Multiple input support

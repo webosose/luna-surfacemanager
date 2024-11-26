@@ -31,6 +31,7 @@
 #include <QWaylandQuickOutput>
 
 class QWaylandSeat;
+class DebugTouchEvent;
 class WebOSCoreCompositor;
 class WebOSSurfaceItem;
 class WebOSCompositorPluginLoader;
@@ -151,6 +152,8 @@ public:
 
     bool isWideOutputGeometry();
 
+    Q_INVOKABLE WebOSSurfaceItem* itemAt(const QPointF& point);
+
 private:
     int stopAppMirroringInternal(WebOSSurfaceItem *source, WebOSSurfaceItem *mirror);
 
@@ -188,6 +191,8 @@ signals:
     void geometryConfigChanged();
 
     void frameProfileUpdated(int sinceUpdateRequest, int flipInterval); //in us
+
+    void debugTouchUpdated(DebugTouchEvent* evt);
 
 private:
     // classes

@@ -70,6 +70,8 @@
 
 #include "weboswaylandseat.h"
 
+#include "debugtypes.h"
+
 // Need to access QtWayland::Keyboard::focusChanged
 #include <QtWaylandCompositor/private/qwaylandsurface_p.h>
 
@@ -462,6 +464,9 @@ void WebOSCoreCompositor::registerTypes()
     qmlRegisterUncreatableType<WebOSKeyPolicy>("WebOSCoreCompositor", 1, 0, "KeyPolicy", QLatin1String("Not allowed to create KeyPolicy instance"));
     qmlRegisterUncreatableType<WebOSCompositorWindow>("WebOSCoreCompositor", 1, 0, "CompositorWindow", QLatin1String("Not allowed to create CompositorWindow"));
     qmlRegisterType<WebOSSurfaceItemMirror>("WebOSCoreCompositor", 1, 0, "SurfaceItemMirror");
+
+    qmlRegisterType<DebugTouchPoint>("WebOSCoreCompositor", 1, 0, "DebugTouchPoint");
+    qmlRegisterType<DebugTouchEvent>("WebOSCoreCompositor", 1, 0, "DebugTouchEvent");
 }
 
 QWaylandQuickSurface* WebOSCoreCompositor::fullscreenSurface() const
