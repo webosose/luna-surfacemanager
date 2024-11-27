@@ -1,17 +1,34 @@
 {
     "com.webos.surfacemanager": {
+        "devel": @WEBOS_DEVEL_MODE@,
         "debug": {
             "enable": false,
             "compositorBorder": false,
             "focusHighlight": false,
+            "focusConsole": false,
             "surfaceHighlight": false,
+            "surfaceStack": false,
+            "surfaceConsole": false,
             "fpsGraphOverlay": false,
             "spinnerRepaint": false,
+            "touchHighlight": false,
             "touchOverlay": false,
+            "mouseOverlay": false,
             "resourceMonitor": false,
             "logConsole": false,
-            "focusConsole": false,
-            "surfaceConsole": false
+            "logFilter": {
+                "debug": true,
+                "warning": true,
+                "critical": true,
+                "fatal": true
+            },
+            "debugWindow": {
+                "x": 100,
+                "y": 100,
+                "width": 600,
+                "height": 500,
+                "opacity": 0.8
+            }
         }
     }
 }

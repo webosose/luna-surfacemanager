@@ -32,10 +32,13 @@ QtObject {
             "enable": false,
             "compositorBorder": false,
             "focusHighlight": false,
+            "focusConsole": false,
             "surfaceHighlight": false,
             "surfaceStack": false,
+            "surfaceConsole": false,
             "fpsGraphOverlay": false,
             "spinnerRepaint": false,
+            "touchHighlight": false,
             "touchOverlay": false,
             "mouseOverlay": false,
             "resourceMonitor": false,
@@ -46,8 +49,6 @@ QtObject {
                 "critical": true,
                 "fatal": true
             },
-            "focusConsole": false,
-            "surfaceConsole": false,
             "debugWindow": {
                 "x": 100,
                 "y": 100,

@@ -83,7 +83,7 @@ FocusScope {
 
         Loader {
             anchors.fill: parent
-            source: Settings.local.debug.enable ? "views/debug/DebugOverlay.qml" : ""
+            source: Settings.local.devel && Settings.local.debug.enable ? "views/debug/DebugOverlay.qml" : ""
         }
     }
 

@@ -18,6 +18,7 @@ WEBOS_COMPOSITOR_PLATFORM_DEFAULT = ""
 WEBOS_EGLFS_INTEGRATION_DEFAULT = ""
 WEBOS_DRM_FORMAT_DEFAULT = ""
 WEBOS_VIRTUAL_DISPLAY_SUPPORT = 0
+WEBOS_DEVEL_MODE = "false"
 
 backend_drm {
     WEBOS_COMPOSITOR_PLATFORM_DEFAULT = eglfs_webos
@@ -27,6 +28,10 @@ backend_drm {
 
 virtual_display_support {
    WEBOS_VIRTUAL_DISPLAY_SUPPORT = 1
+}
+
+devel {
+    WEBOS_DEVEL_MODE = "true"
 }
 
 defineReplace(replace_envs) {
@@ -44,7 +49,8 @@ defineReplace(replace_envs) {
                 WEBOS_COMPOSITOR_PLATFORM_DEFAULT \
                 WEBOS_EGLFS_INTEGRATION_DEFAULT \
                 WEBOS_DRM_FORMAT_DEFAULT \
-                WEBOS_VIRTUAL_DISPLAY_SUPPORT
+                WEBOS_VIRTUAL_DISPLAY_SUPPORT \
+                WEBOS_DEVEL_MODE
 
     command = "sed"
     for(var, variables) {

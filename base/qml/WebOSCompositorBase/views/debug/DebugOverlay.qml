@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2023 LG Electronics, Inc.
+// Copyright (c) 2014-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,6 +48,12 @@ Item {
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         source: Settings.local.debug.surfaceStack ? "SurfaceStack.qml" : ""
+    }
+
+    Loader {
+        id: touchHighlightId
+        anchors.fill: parent
+        source: Settings.local.debug.touchHighlight ? "TouchHighlight.qml" : ""
     }
 
     Item {
