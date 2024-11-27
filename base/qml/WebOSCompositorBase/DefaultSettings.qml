@@ -76,7 +76,8 @@ QtObject {
             "settingsIconSize": 70,
             "slideAnimationDuration": 500,
             "hotspotThickness": 10,
-            "hotspotThreshold": 100
+            "hotspotThreshold": 100,
+            "settingsAppId": "com.palm.app.settings"
         },
         "localization": {
             "imports": []
