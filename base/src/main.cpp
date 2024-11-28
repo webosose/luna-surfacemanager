@@ -180,6 +180,7 @@ int main(int argc, char *argv[])
     compositor->registerTypes();
 
     // Register resource files if exist (the first takes precedence)
+    QResource::registerResource(WEBOS_INSTALL_QML "/WebOSCompositorExtended/WebOSCompositorExtended.rcc");
     QResource::registerResource(WEBOS_INSTALL_QML "/WebOSCompositor/WebOSCompositor.rcc");
     QResource::registerResource(WEBOS_INSTALL_QML "/WebOSCompositorBase/WebOSCompositorBase.rcc");
 
