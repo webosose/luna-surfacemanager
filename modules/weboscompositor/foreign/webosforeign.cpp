@@ -422,10 +422,10 @@ void WebOSExported::updateDisplayPosition(bool forceUpdate)
         return;
     }
 
-    QPointF globalPosition = m_surfaceItem->mapToItem(m_compositorWindow->viewsRoot(), QPointF(0.0, 0.0));
+    QPoint globalPosition = m_surfaceItem->mapToItem(m_compositorWindow->viewsRoot(), QPointF(0.0,0.0)).toPoint();
 
     if (m_fullscreenByApp)
-        globalPosition = QPointF(0.0,0.0);
+        globalPosition = QPoint(0,0);
     qDebug() << "globalPosition : " << globalPosition  << ", previous position : " << m_surfaceGlobalPosition << ", forceUpdate : " << forceUpdate << " on " << m_windowId << ", m_fullscreenByApp : " << m_fullscreenByApp;
 
     if (globalPosition != m_surfaceGlobalPosition || forceUpdate) {
@@ -449,9 +449,9 @@ void WebOSExported::calculateVideoDispRatio()
 
     QRect outputGeometry = m_compositorWindow->outputGeometry();
     if (m_fullscreenByApp)
-        m_surfaceGlobalPosition = QPointF(0.0, 0.0);
+        m_surfaceGlobalPosition = QPoint(0,0);
     else
-        m_surfaceGlobalPosition = m_surfaceItem->mapToItem(m_compositorWindow->viewsRoot(), QPointF(0.0, 0.0));
+        m_surfaceGlobalPosition = m_surfaceItem->mapToItem(m_compositorWindow->viewsRoot(), QPointF(0.0,0.0)).toPoint();
 
     if (outputGeometry.isValid() && m_surfaceItem->surface()) {
         //TODO: m_videoDispRatio will be replaced by m_surfaceItem->scale();
@@ -709,8 +709,8 @@ void WebOSExported::updateVideoWindowList(QString contextId, QRect videoDisplayR
                     double2int(m_activeRegion.height()*scaleFactor));
             } else {
                 appWindow = QRect(
-                    m_surfaceGlobalPosition.toPoint().x(),
-                    m_surfaceGlobalPosition.toPoint().y(),
+                    m_surfaceGlobalPosition.x(),
+                    m_surfaceGlobalPosition.y(),
                     double2int(m_surfaceItem->width()*scaleFactor),
                     double2int(m_surfaceItem->height()*scaleFactor));
             }
@@ -918,8 +918,8 @@ void WebOSExported::setVideoDisplayRect() {
             h_r = (int)bottom - y_r;
         }
 
-        qInfo() << "global x:" << m_surfaceGlobalPosition.x() << ", int(x):" << int(m_surfaceGlobalPosition.x()) << ", round x:" << x << ", int(round x):" << int(x);
-        qInfo() << "global y:" << m_surfaceGlobalPosition.y() << ", int(y):" << int(m_surfaceGlobalPosition.y()) << ", round y:" << y << ", int(round y):" << int(y);
+        qInfo() << "global x:" << m_surfaceGlobalPosition.x() << ", round x:" << x << ", int(round x):" << int(x);
+        qInfo() << "global y:" << m_surfaceGlobalPosition.y() << ", round y:" << y << ", int(round y):" << int(y);
 
         m_videoDisplayRect = QRect(x_r, y_r, w_r, h_r);
     } else if (m_fullscreenByApp) {
@@ -944,8 +944,8 @@ void WebOSExported::setVideoDisplayRect() {
         double w_p = w - int(w);
         double h_p = h - int(h);
 
-        qInfo() << "global x:" << m_surfaceGlobalPosition.x() << ", int(x):" << int(m_surfaceGlobalPosition.x()) << ", round x:" << x << ", int(round x):" << int(x);
-        qInfo() << "global y:" << m_surfaceGlobalPosition.y() << ", int(y):" << int(m_surfaceGlobalPosition.y()) << ", round y:" << y << ", int(round y):" << int(y);
+        qInfo() << "global x:" << m_surfaceGlobalPosition.x() << ", round x:" << x << ", int(round x):" << int(x);
+        qInfo() << "global y:" << m_surfaceGlobalPosition.y() << ", round y:" << y << ", int(round y):" << int(y);
 
         /* TVWBS_24-53699 : If different aspect ration video playing in PIP then small transparent line is displayed in one of the corner of video.
          * Suspecting this is due to surfaceItem follows QRectF and other display rect in foreign class follows QRect.
@@ -1008,16 +1008,16 @@ QRect WebOSExported::getAppWindow() {
 
     if (m_activeRegion.isValid()) {
         appWindow = QRect(
-                m_surfaceGlobalPosition.x() + m_activeRegion.x()*scaleFactor,
-                m_surfaceGlobalPosition.y() + m_activeRegion.y()*scaleFactor,
-                m_activeRegion.width()*scaleFactor,
-                m_activeRegion.height()*scaleFactor);
+                double2int(m_surfaceGlobalPosition.x() + m_activeRegion.x()*scaleFactor),
+                double2int(m_surfaceGlobalPosition.y() + m_activeRegion.y()*scaleFactor),
+                double2int(m_activeRegion.width()*scaleFactor),
+                double2int(m_activeRegion.height()*scaleFactor));
     } else {
         appWindow = QRect(
                 m_surfaceGlobalPosition.x(),
                 m_surfaceGlobalPosition.y(),
-                m_surfaceItem->width()*scaleFactor,
-                m_surfaceItem->height()*scaleFactor);
+                double2int(m_surfaceItem->width()*scaleFactor),
+                double2int(m_surfaceItem->height()*scaleFactor));
     }
     return appWindow;
 }

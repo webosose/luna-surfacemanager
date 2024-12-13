@@ -193,7 +193,7 @@ protected:
     int m_fullscreenVideoMode;
     double m_defaultRatio = 1.0;
     double m_fullscreenVideoRatio = 1.0;
-    QPointF m_surfaceGlobalPosition = QPointF(0.0,0.0);
+    QPoint m_surfaceGlobalPosition = QPoint(0,0);
     bool m_fullscreenByApp = false;
 
     friend class WebOSForeign;
