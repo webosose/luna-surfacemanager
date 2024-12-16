@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 LG Electronics, Inc.
+// Copyright (c) 2017-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -164,14 +164,15 @@ Item {
     Connections {
         target: Settings.system
         function onScreenRotationChanged() {
+            // Should take account compositorWindow.baseRotation
             if (Settings.system.screenRotation == "off")
-                compositorWindow.updateOutputGeometry(0);
+                compositorWindow.updateOutputGeometry(compositorWindow.baseRotation + 0);
             else if (Settings.system.screenRotation == "90")
-                compositorWindow.updateOutputGeometry(90);
+                compositorWindow.updateOutputGeometry(compositorWindow.baseRotation + 90);
             else if (Settings.system.screenRotation == "180")
-                compositorWindow.updateOutputGeometry(180);
+                compositorWindow.updateOutputGeometry(compositorWindow.baseRotation + 180);
             else if (Settings.system.screenRotation == "270")
-                compositorWindow.updateOutputGeometry(270);
+                compositorWindow.updateOutputGeometry(compositorWindow.baseRotation + 270);
         }
     }
 }
