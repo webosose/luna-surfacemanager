@@ -45,6 +45,7 @@ class WEBOS_COMPOSITOR_EXPORT WebOSCompositorWindow : public QQuickView {
     Q_PROPERTY(QString displayName READ displayName CONSTANT)
     Q_PROPERTY(bool accessible READ accessible WRITE setAccessible NOTIFY accessibleChanged)
     Q_PROPERTY(QRect outputGeometry READ outputGeometry NOTIFY outputGeometryChanged)
+    Q_PROPERTY(int baseRotation READ baseRotation CONSTANT)
     Q_PROPERTY(int outputRotation READ outputRotation NOTIFY outputRotationChanged)
     Q_PROPERTY(bool outputClip READ outputClip NOTIFY outputClipChanged)
     Q_PROPERTY(bool outputGeometryPending READ outputGeometryPending WRITE setOutputGeometryPending NOTIFY outputGeometryPendingChanged)
@@ -92,6 +93,7 @@ public:
     bool accessible() const { return m_accessible; }
     void setAccessible(bool enable);
 
+    int baseRotation() const;
     QRect outputGeometry() const;
     int outputRotation() const;
     bool outputClip() const;
@@ -236,6 +238,7 @@ private:
 
     QRect m_baseGeometry;
     QRect m_outputGeometry;
+    int m_baseRotation;
     int m_outputRotation;
     bool m_outputClip;
     double m_outputRatio;

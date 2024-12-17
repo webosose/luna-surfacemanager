@@ -51,6 +51,7 @@ WebOSCompositorWindow::WebOSCompositorWindow(QString screenName, QString geometr
     , m_compositor(0)
     , m_displayId(s_displays++)
     , m_baseGeometry(QRect(0, 0, 1920, 1080))
+    , m_baseRotation(0)
     , m_outputGeometry(QRect())
     , m_outputRotation(0)
     , m_outputClip(false)
@@ -327,6 +328,11 @@ void WebOSCompositorWindow::setAccessible(bool enable)
     }
 }
 
+int WebOSCompositorWindow::baseRotation() const
+{
+    return m_baseRotation;
+}
+
 QRect WebOSCompositorWindow::outputGeometry() const
 {
     return m_outputGeometry.isValid() ? m_outputGeometry : m_baseGeometry;
@@ -346,6 +352,9 @@ void WebOSCompositorWindow::setBaseGeometry(const QRect& baseGeometry, const int
 {
     qInfo() << "OutputGeometry:" << this << "baseGeometry:" << m_baseGeometry << "->" << baseGeometry;
     m_baseGeometry = baseGeometry;
+
+    qInfo() << "OutputGeometry:" << this << "baseRotation:" << m_baseRotation << "->" << rotation;
+    m_baseRotation = rotation;
 
     qInfo() << "OutputGeometry:" << this << "outputRatio:" << m_outputRatio << "->" << outputRatio;
     m_outputRatio = outputRatio;
