@@ -519,18 +519,8 @@ void WebOSCompositorWindow::setDefaultCursor()
 
 void WebOSCompositorWindow::invalidateCursor()
 {
-    qDebug() << "Cursor:" << this << "make cursor transparent and invalidate cursor item";
-
-    static QCursor transparentCursor;
-    static bool set = false;
-    if (Q_UNLIKELY(!set)) {
-        QPixmap p(1, 1);
-        p.fill(Qt::transparent);
-        transparentCursor = QCursor(p);
-        set = true;
-    }
-
-    setCursor(transparentCursor);
+    // Do nothing while we had some consideration here with transparent cursor.
+    // Method intentionally left blank for extended compositors.
 }
 
 void WebOSCompositorWindow::setCursorVisible(bool visibility)
