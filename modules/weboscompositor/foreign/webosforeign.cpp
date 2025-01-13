@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024 LG Electronics, Inc.
+// Copyright (c) 2018-2025 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1065,12 +1065,14 @@ void WebOSExported::updateCompositorWindow(QQuickWindow *window)
             disconnect(m_compositorWindow, &WebOSCompositorWindow::outputGeometryChanged, this, &WebOSExported::calculateAll);
         m_compositorWindow = static_cast<WebOSCompositorWindow *>(window);
         connect(m_compositorWindow, &WebOSCompositorWindow::outputGeometryChanged, this, &WebOSExported::calculateAll);
+
+        calculateAll();
     }
 }
 
 void WebOSExported::setFullscreenVideoMode(QString fullscreenVideoMode)
 {
-    qInfo() << "Reqeuseted fullscreenVideoMode: " << fullscreenVideoMode << ", uiScaleMode: " << m_surfaceItem->uiScaleMode();
+    qInfo() << "Requested fullscreenVideoMode: " << fullscreenVideoMode << ", uiScaleMode: " << m_surfaceItem->uiScaleMode();
 
     // It is assumed that setting fullscreenVideoMode by the app has higher priority.
     if (m_fullscreenByApp) {
