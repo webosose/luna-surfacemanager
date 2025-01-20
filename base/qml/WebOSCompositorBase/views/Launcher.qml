@@ -153,4 +153,8 @@ FocusableView {
             console.warn("AccessControl: Launcher is restricted by the access control policy.");
         }
     }
+
+    Component.onCompleted: {
+        toggleHome();
+    }
 }
